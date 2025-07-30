@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance Records</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        h1 { text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Attendance Records</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Timestamp</th>
+        </tr>
+        {% for name, timestamp in records %}
+        <tr>
+            <td>{{ name }}</td>
+            <td>{{ timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
+<!-- This is the view.html file for displaying attendance records -->
+<!-- Ensure that the Flask app is set up to render this template with the correct data -->
+
+# This is the view.html file for displaying attendance records, run this localhost server to see the output:
+# http://localhost:5000/view
