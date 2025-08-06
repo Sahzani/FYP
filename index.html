@@ -1,254 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Combined Layout</title>
-<style>
-  /* Reset margin/padding */
-  body, html {
-    margin: 0; padding: 0; height: 100%;
-  }
-
-  /* Header fixed on top */
-  header {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 60px;
-    background: #fff;
-    box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
-    display: flex;
-    align-items: center;
-    padding-left: 20px;
-    font-family: 'Nunito', sans-serif;
-    font-weight: 700;
-    font-size: 26px;
-    color: #212529;
-    z-index: 10;
-  }
-
-  /* Gradient background fills below header, full width, full remaining height */
-  .gradient-background {
-    position: fixed;
-    top: 60px;
-    left: 0; right: 0; bottom: 0;
-    background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-    z-index: 0;
-  }
-
-  /* Group 13 container */
-  .group13 {
-    position: absolute;
-    width: 621px;
-    height: 278px;
-    left: 116px;
-    top: 277px;
-    z-index: 4;
-  }
-
-  .attendance {
-    position: absolute;
-    width: 345px;
-    height: 77px;
-    left: 0;
-    top: 0;
-
-    font-family: 'Roboto', sans-serif;
-    font-style: normal;
-    font-weight: 400;
-    font-size: 64px;
-    line-height: 77px;
-    color: #212529;
-    margin: 0;
-  }
-
-  .for-your-business {
-    position: absolute;
-    width: 516px;
-    height: 77px;
-    left: 0;
-    top: 77px;
-
-    font-family: 'Roboto', sans-serif;
-    font-style: normal;
-    font-weight: 400;
-    font-size: 64px;
-    line-height: 77px;
-    color: #000000;
-    margin: 0;
-  }
-
-  .description {
-    position: absolute;
-    width: 621px;
-    height: 72px;
-    left: 0;
-    top: 154px;
-
-    font-family: 'Roboto', sans-serif;
-    font-style: normal;
-    font-weight: 400;
-    font-size: 16px;
-    line-height: 24px;
-    color: #757F8E;
-    margin: 0;
-  }
-
-  /* Sign-in form */
-  .frame3 {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 3rem 3rem;
-    gap: 1.5rem;
-
-    width: 90%;
-    max-width: 624px;
-    background: #fff;
-    border: 1px solid rgba(0,0,0,0.125);
-    border-radius: 4px;
-
-    position: absolute;
-    top: 277px;
-    right: 116px;
-    z-index: 5;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
-  }
-
-  .frame3 label {
-    font-family: 'Roboto', sans-serif;
-    font-size: 1rem;
-    color: #212529;
-  }
-
-  .frame3 input {
-    width: 100%;
-    max-width: 526px;
-    height: 2.5rem;
-    padding: 0.5rem;
-    border: 1px solid #CED4DA;
-    border-radius: 4px;
-    font-family: 'Roboto', sans-serif;
-    font-size: 1rem;
-  }
-
-  .frame3 button {
-    width: 74px;
-    height: 38px;
-    background: #4154F1;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    font-family: 'Roboto', sans-serif;
-    font-size: 1rem;
-    cursor: pointer;
-    align-self: flex-start;
-  }
-
-  .frame3 .forgot-password {
-    font-family: 'Roboto', sans-serif;
-    font-size: 0.85rem;
-    color: #6C757D;
-    text-decoration: none;
-    align-self: flex-end;
-    margin-top: -1.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .frame3 .register-text {
-    font-family: 'Roboto', sans-serif;
-    font-size: 1rem;
-    color: #212529;
-  }
-
-  .frame3 .register-link {
-    font-family: 'Roboto', sans-serif;
-    font-size: 0.95rem;
-    color: #0DCAF0;
-    text-decoration: none;
-    margin-left: 0.5rem;
-  }
-
-  /* Responsive tweaks */
-  @media (max-width: 768px) {
-    .group13, .frame3 {
-      position: static;
-      width: 90%;
-      max-width: none;
-      margin: 1.5rem auto 0;
-      box-shadow: none;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Centered Sign-In</title>
+  <style>
+    /* Reset margin/padding */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-  }
 
-  @media (max-width: 480px) {
+    html, body {
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
+
+    /* Header fixed on top */
     header {
-      font-size: 20px;
-      padding-left: 10px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 10;
     }
+
+    /* Centered container */
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 60px); /* min-height for flexibility */
+      /* Removed padding-top to center perfectly */
+    }
+
+    /* Sign-in form */
     .frame3 {
-      padding: 2rem 1.5rem;
-      margin-top: 80px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 2.5rem;
+      gap: 1rem;
+      width: 90%;
+      max-width: 400px;
+      background: #fff;
+      border: 1px solid rgba(0,0,0,0.125);
+      border-radius: 4px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
     }
+
+    .frame3 label {
+      font-size: 1rem;
+      color: #212529;
+      margin-bottom: 0.25rem;
+    }
+
+    .frame3 input {
+      width: 100%;
+      height: 2.5rem;
+      padding: 0.5rem;
+      border: 1px solid #CED4DA;
+      border-radius: 4px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
     .frame3 button {
       width: 100%;
-      text-align: center;
-    }
-    .frame3 .forgot-password {
+      height: 40px;
+      background: #4154F1;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
       margin-top: 0.5rem;
       margin-bottom: 1rem;
-      align-self: flex-start;
     }
-    .attendance, .for-your-business {
-      position: static;
-      font-size: 2rem;
-      line-height: 2.5rem;
-      width: 100%;
-      height: auto;
-      margin: 0.2rem 0;
+
+    .frame3 .forgot-password {
+      font-size: 0.85rem;
+      color: #6C757D;
+      text-decoration: none;
+      align-self: flex-end;
+      margin-top: -1rem;
+      margin-bottom: 1rem;
     }
-    .description {
-      position: static;
+
+    .frame3 .register-text {
       font-size: 1rem;
-      line-height: 1.5rem;
+      color: #212529;
+      text-align: center;
       width: 100%;
-      height: auto;
-      margin-top: 1rem;
     }
-  }
-</style>
+
+    .frame3 .register-link {
+      font-size: 0.95rem;
+      color: #0DCAF0;
+      text-decoration: none;
+      margin-left: 0.5rem;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 480px) {
+      header {
+        font-size: 20px;
+        padding-left: 10px;
+      }
+
+      .frame3 {
+        padding: 2rem 1.5rem;
+      }
+
+      .frame3 button {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<header>iAttend</header>
-<div class="gradient-background"></div>
+  <header>iAttend</header>
 
-<!-- Group 13 text block -->
-<div class="group13">
-  <h1 class="attendance">Attendance</h1>
-  <h1 class="for-your-business">for your business</h1>
-  <p class="description">
-    Lorem ipsum dolor sit amet consectetur adipisicing elit. Eveniet, itaque accusantium odio, soluta, corrupti aliquam quibusdam tempora at cupiditate quis eum maiores libero veritatis? Dicta facilis sint aliquid ipsum atque?
-  </p>
-</div>
+  <div class="container">
+    <!-- Sign-in form -->
+    <div class="frame3">
+      <label for="matrix-number">Matrix Number</label>
+      <input type="text" id="matrix-number" name="matrix-number" placeholder="Enter your matrix number" />
 
-<!-- Sign-in form -->
-<div class="frame3">
-  <label for="matrix-number">Matrix Number</label>
-  <input type="text" id="matrix-number" name="matrix-number" placeholder="Enter your matrix number" />
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter your password" />
 
-  <label for="password">Password</label>
-  <input type="password" id="password" name="password" placeholder="Enter your password" />
+      <button type="submit">Sign in</button>
 
-  <button type="submit">Sign in</button>
+      <a href="#" class="forgot-password">Forgot password?</a>
 
-  <a href="#" class="forgot-password">Forgot password?</a>
-
-  <p class="register-text">
-    Don't have an account?
-    <a href="#" class="register-link">Register here</a>
-  </p>
-</div>
+      <p class="register-text">
+        Don't have an account?
+        <a href="#" class="register-link">Register here</a>
+      </p>
+    </div>
+  </div>
 
 </body>
 </html>
