@@ -2,47 +2,200 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>User Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sidebar with Dropdown</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #F4F6F8;
-      padding: 60px 20px 20px;
+    /* Reset & Base */
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
     }
 
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 260px;
+      height: calc(100% - 60px);
+      background: #FFEED3;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+      font-family: 'Open Sans', sans-serif;
+      overflow-y: auto;
+    }
+
+    .sidebar-section {
+      margin-bottom: 30px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #899BBD;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Sidebar Links */
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #FFEED3;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #012970;
+      text-decoration: none;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+
+    .sidebar-link:hover {
+      background: #ffe1ab;
+    }
+
+    .sidebar-link.active {
+      background: rgba(221, 168, 83, 0.44);
+      color: #4154F1;
+    }
+
+    /* Dropdown */
+    .dropdown-toggle {
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .dropdown-toggle::after {
+      content: "▾";
+      font-size: 0.8em;
+      transition: transform 0.3s ease;
+    }
+
+    .dropdown-toggle.active::after {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-content {
+      display: none;
+      flex-direction: column;
+      padding-left: 20px;
+    }
+
+    .dropdown-content .sidebar-link {
+      margin-bottom: 8px;
+      background: transparent;
+      padding-left: 20px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .dropdown-content .sidebar-link:hover {
+      background: #ffe1ab;
+      border-radius: 4px;
+    }
+
+    .dropdown-toggle.active + .dropdown-content {
+      display: flex;
+    }
+
+    /* Header */
     header {
       position: fixed;
       top: 0; left: 0; right: 0;
-      background: #fff;
       height: 60px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
       display: flex;
       align-items: center;
       padding-left: 20px;
-      font-size: 24px;
-      font-weight: bold;
-      z-index: 100;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 10;
     }
 
-    .tabs {
-      display: flex;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #ddd;
+    /* Main content padding to avoid sidebar overlap */
+    .main {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      font-family: 'Nunito', sans-serif;
     }
 
-    .tab {
-      padding: 10px 20px;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-    }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        top: 0;
+        box-shadow: none;
+      }
 
-    .tab.active {
-      border-color: #4154F1;
-      font-weight: bold;
-    }
+      header {
+        position: relative;
+      }
 
-    .tab-content {
-      display: none;
+      .main {
+        margin-left: 0;
+        padding: 20px;
+      }
     }
+  </style>
+</head>
+<body>
+
+  <header>iAttend Admin</header>
+
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link active" href="#">Dashboard</a>
+      <a class="sidebar-link" href="#">Attendance</a>
+      <a class="sidebar-link" href="#">Absence</a>
+      <a class="sidebar-link" href="#">Report</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Manage</div>
+      <a class="sidebar-link" href="#">Teacher</a>
+      <a class="sidebar-link" href="#">Student</a>
+      <a class="sidebar-link" href="#">Subject</a>
+
+      <!-- Dropdown for User Management -->
+      <div class="sidebar-link dropdown-toggle">User Management</div>
+      <div class="dropdown-content">
+        <a class="sidebar-link" href="#">Pending Approvals</a>
+        <a class="sidebar-link" href="#">All Users</a>
+        <a class="sidebar-link" href="#">Add New User</a>
+        <a class="sidebar-link" href="#">Edit/Delete User</a>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="#">Logout</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Your main page content here -->
+  </div>
+
+  <script>
+    const toggle = document.querySelector('.dropdown-toggle');
+    toggle.addEventListener('click', () => {
+      toggle.classList.toggle('active');
+    });
+  </script>
+
+</body>
+</html>
