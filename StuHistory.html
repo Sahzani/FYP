@@ -6,7 +6,6 @@
   <title>iAttend Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
   <style>
-    /* Reset & Base */
     * {
       margin: 0;
       padding: 0;
@@ -19,7 +18,6 @@
       background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
     }
 
-    /* Header */
     header {
       position: fixed;
       top: 0;
@@ -38,7 +36,6 @@
       z-index: 10;
     }
 
-    /* Sidebar */
     .sidebar {
       position: fixed;
       top: 60px;
@@ -65,7 +62,6 @@
       font-weight: 600;
     }
 
-    /* Sidebar Links */
     .sidebar-link {
       display: flex;
       align-items: center;
@@ -91,33 +87,28 @@
       color: #4154F1;
     }
 
-    /* Main content */
     .main {
       margin-left: 260px;
       padding: 100px 30px 30px;
       font-family: 'Nunito', sans-serif;
     }
 
-    /* Attendance History Heading */
     .attendance-history {
       font-family: 'Nunito', sans-serif;
-      font-weight: 600; /* SemiBold */
+      font-weight: 600;
       font-size: 24px;
       line-height: 28.8px;
-      letter-spacing: 0;
       color: #444444;
       margin-top: 40px;
       margin-left: 50px;
       margin-bottom: 20px;
     }
 
-    /* White box */
     .card {
       background: #fff;
       border-radius: 8px;
       box-shadow: 0px 0px 30px rgba(1, 41, 112, 0.1);
       padding: 20px;
-      flex: 1 1 300px;
       max-width: 800px;
       min-width: 460px;
       display: flex;
@@ -126,16 +117,14 @@
       margin-left: 50px;
     }
 
-    /* Recent Attendance heading */
     .recent-attendance {
       font-family: 'Poppins', sans-serif;
       font-size: 15px;
-      font-weight: 500; /* Medium */
+      font-weight: 500;
       color: #0d47a1;
       margin-bottom: 15px;
     }
 
-    /* Table styles */
     .attendance-table {
       width: 100%;
       border-collapse: collapse;
@@ -154,7 +143,6 @@
       border-top: 1px solid #ddd;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
       .sidebar {
         position: relative;
@@ -179,26 +167,8 @@
 
   <header>iAttend</header>
 
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="#">Dashboard</a>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Analyse</div>
-      <a class="sidebar-link active" href="#">Attendance</a>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Requests</div>
-      <a class="sidebar-link" href="#">Absent Application</a>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Logout</div>
-      <a class="sidebar-link" href="#">Logout</a>
-    </div>
-  </div>
+  <!-- Sidebar will be loaded here -->
+  <div id="sidebar-container"></div>
 
   <div class="main">
     <h1 class="attendance-history">Attendance History</h1>
@@ -231,6 +201,23 @@
       </table>
     </div>
   </div>
+
+  <script>
+    // Load sidebar dynamically
+    fetch("sidebar.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("sidebar-container").innerHTML = data;
+
+        // Highlight current page link
+        const currentPage = location.pathname.split("/").pop();
+        document.querySelectorAll(".sidebar-link").forEach(link => {
+          if (link.getAttribute("href") === currentPage) {
+            link.classList.add("active");
+          }
+        });
+      });
+  </script>
 
 </body>
 </html>
