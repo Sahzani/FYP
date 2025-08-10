@@ -3,16 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>iAttend Sidebar</title>
+  <title>iAttend Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     /* Reset & Base */
     * {
-      margin: 0; padding: 0; box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
+
     html, body {
       height: 100%;
       font-family: 'Roboto', sans-serif;
       background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 10;
     }
 
     /* Sidebar */
@@ -68,28 +91,67 @@
       color: #4154F1;
     }
 
-    /* Header */
-    header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 60px;
-      background: #fff;
-      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
-      display: flex;
-      align-items: center;
-      padding-left: 20px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-      font-size: 26px;
-      color: #212529;
-      z-index: 10;
-    }
-
     /* Main content */
     .main {
       margin-left: 260px;
       padding: 100px 30px 30px;
       font-family: 'Nunito', sans-serif;
+    }
+
+    /* Attendance History Heading */
+    .attendance-history {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600; /* SemiBold */
+      font-size: 24px;
+      line-height: 28.8px;
+      letter-spacing: 0;
+      color: #444444;
+      margin-top: 40px;
+      margin-left: 50px;
+      margin-bottom: 20px;
+    }
+
+    /* White box */
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0px 0px 30px rgba(1, 41, 112, 0.1);
+      padding: 20px;
+      flex: 1 1 300px;
+      max-width: 800px;
+      min-width: 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-left: 50px;
+    }
+
+    /* Recent Attendance heading */
+    .recent-attendance {
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      font-weight: 500; /* Medium */
+      color: #0d47a1;
+      margin-bottom: 15px;
+    }
+
+    /* Table styles */
+    .attendance-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+    }
+
+    .attendance-table th {
+      background-color: #f8f7ff;
+      text-align: left;
+      padding: 10px;
+    }
+
+    .attendance-table td {
+      padding: 10px;
+      border-top: 1px solid #ddd;
     }
 
     /* Responsive */
@@ -140,7 +202,35 @@
   </div>
 
   <div class="main">
-    <!-- Your main page content here -->
+    <h1 class="attendance-history">Attendance History</h1>
+    
+    <div class="card">
+      <h2 class="recent-attendance">Recent Attendance</h2>
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Module</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>05-08-2025</td>
+            <td>8:00am - 11:00am</td>
+            <td>Programming</td>
+            <td>Present</td>
+          </tr>
+          <tr>
+            <td>05-08-2025</td>
+            <td>2:00pm - 4:00pm</td>
+            <td>Computer System</td>
+            <td>Present</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </body>
