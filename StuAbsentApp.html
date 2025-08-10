@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>iAttend Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
   <style>
-    /* Reset */
+    /* Reset & Base */
     * {
       margin: 0;
       padding: 0;
@@ -41,7 +41,7 @@
     /* Sidebar */
     .sidebar {
       position: fixed;
-      top: 60px; /* under the header */
+      top: 60px;
       left: 0;
       width: 260px;
       height: calc(100% - 60px);
@@ -65,6 +65,7 @@
       font-weight: 600;
     }
 
+    /* Sidebar Links */
     .sidebar-link {
       display: flex;
       align-items: center;
@@ -90,6 +91,71 @@
       color: #4154F1;
     }
 
+    /* Main content */
+    .main {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    /* Absence Records Heading */
+    .absence-records1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      font-weight: 500; /* Medium */
+      color: #0d47a1;
+      margin-bottom: 15px;
+    }
+
+    /* White box */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0px 0px 30px rgba(1, 41, 112, 0.1);
+      padding: 20px;
+      max-width: 900px;
+      min-width: 460px;
+      margin-left: 50px;
+    }
+
+    /* Table styles */
+    .attendance-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+    }
+
+    .attendance-table th {
+      background-color: #f8f7ff;
+      text-align: left;
+      padding: 12px;
+      font-weight: 500;
+    }
+
+    .attendance-table td {
+      padding: 12px;
+      border-top: 1px solid #ddd;
+    }
+
+    /* Status Badges */
+    .status {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .status.in-progress {
+      background-color: #3b5bfd; /* Blue */
+    }
+
+    .status.approved {
+      background-color: #2cd4b4; /* Green */
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar {
@@ -102,6 +168,11 @@
 
       header {
         position: relative;
+      }
+
+      .main {
+        margin-left: 0;
+        padding: 20px;
       }
     }
   </style>
@@ -129,6 +200,42 @@
     <div class="sidebar-section">
       <div class="sidebar-section-title">Logout</div>
       <a class="sidebar-link" href="#">Logout</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="card">
+      <h2 class="absence-records1">Absence records</h2>
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student name</th>
+            <th>Course</th>
+            <th>Absence reason</th>
+            <th>Absence for</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Maria</td>
+            <td>BICT</td>
+            <td>Sick</td>
+            <td>1 day</td>
+            <td><span class="status in-progress">In Progress</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Maria</td>
+            <td>BICT</td>
+            <td>Sick</td>
+            <td>1 day</td>
+            <td><span class="status approved">Approved</span></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
