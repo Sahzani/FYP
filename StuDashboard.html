@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>iAttend Header</title>
+  <title>iAttend Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    /* Reset margin/padding */
+    /* Reset */
     * {
       margin: 0;
       padding: 0;
@@ -18,7 +19,7 @@
       background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
     }
 
-    /* Header fixed on top */
+    /* Header */
     header {
       position: fixed;
       top: 0;
@@ -36,11 +37,100 @@
       color: #212529;
       z-index: 10;
     }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 60px; /* under the header */
+      left: 0;
+      width: 260px;
+      height: calc(100% - 60px);
+      background: #FFEED3;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+      font-family: 'Open Sans', sans-serif;
+      overflow-y: auto;
+    }
+
+    .sidebar-section {
+      margin-bottom: 30px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #899BBD;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #FFEED3;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #012970;
+      text-decoration: none;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+
+    .sidebar-link:hover {
+      background: #ffe1ab;
+    }
+
+    .sidebar-link.active {
+      background: none;
+      color: #4154F1;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        top: 0;
+        box-shadow: none;
+      }
+
+      header {
+        position: relative;
+      }
+    }
   </style>
 </head>
 <body>
 
   <header>iAttend</header>
+
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="#">Dashboard</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link active" href="#">Attendance</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Requests</div>
+      <a class="sidebar-link" href="#">Absent Application</a>
+      <a class="sidebar-link" href="#">Student</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Logout</div>
+      <a class="sidebar-link" href="#">Logout</a>
+    </div>
+  </div>
 
 </body>
 </html>
