@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iAttend Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* Reset & Base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 10;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 260px;
+      height: calc(100% - 60px);
+      background: #FFEED3;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+      font-family: 'Open Sans', sans-serif;
+      overflow-y: auto;
+    }
+
+    .sidebar-section {
+      margin-bottom: 30px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #899BBD;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Sidebar Links */
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #FFEED3;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #012970;
+      text-decoration: none;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+
+    .sidebar-link:hover {
+      background: #ffe1ab;
+    }
+
+    .sidebar-link.active {
+      background: none;
+      color: #4154F1;
+    }
+
+    /* Main content */
+    .main {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    /* Absence Records Heading */
+    .absence-records1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      font-weight: 500; /* Medium */
+      color: #0d47a1;
+      margin-bottom: 15px;
+    }
+
+    /* White box */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0px 0px 30px rgba(1, 41, 112, 0.1);
+      padding: 20px;
+      max-width: 900px;
+      min-width: 460px;
+      margin-left: 50px;
+    }
+
+    /* Table styles */
+    .attendance-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+    }
+
+    .attendance-table th {
+      background-color: #f8f7ff;
+      text-align: left;
+      padding: 12px;
+      font-weight: 500;
+    }
+
+    .attendance-table td {
+      padding: 12px;
+      border-top: 1px solid #ddd;
+    }
+
+    /* Status Badges */
+    .status {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .status.in-progress {
+      background-color: #3b5bfd; /* Blue */
+    }
+
+    .status.approved {
+      background-color: #2cd4b4; /* Green */
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        top: 0;
+        box-shadow: none;
+      }
+
+      header {
+        position: relative;
+      }
+
+      .main {
+        margin-left: 0;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>iAttend</header>
+
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="#">Dashboard</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link" href="#">Attendance</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Requests</div>
+      <a class="sidebar-link active" href="#">Absent Application</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Logout</div>
+      <a class="sidebar-link" href="#">Logout</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="card">
+      <h2 class="absence-records1">Absence records</h2>
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student name</th>
+            <th>Course</th>
+            <th>Absence reason</th>
+            <th>Absence for</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Maria</td>
+            <td>BICT</td>
+            <td>Sick</td>
+            <td>1 day</td>
+            <td><span class="status in-progress">In Progress</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Maria</td>
+            <td>BICT</td>
+            <td>Sick</td>
+            <td>1 day</td>
+            <td><span class="status approved">Approved</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</body>
+</html>
