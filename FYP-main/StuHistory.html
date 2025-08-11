@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iAttend Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 10;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 260px;
+      height: calc(100% - 60px);
+      background: #FFEED3;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+      font-family: 'Open Sans', sans-serif;
+      overflow-y: auto;
+    }
+
+    .sidebar-section {
+      margin-bottom: 30px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #899BBD;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #FFEED3;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #012970;
+      text-decoration: none;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+
+    .sidebar-link:hover {
+      background: #ffe1ab;
+    }
+
+    .sidebar-link.active {
+      background: none;
+      color: #4154F1;
+    }
+
+    .main {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .attendance-history {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 28.8px;
+      color: #444444;
+      margin-top: 40px;
+      margin-left: 50px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0px 0px 30px rgba(1, 41, 112, 0.1);
+      padding: 20px;
+      max-width: 800px;
+      min-width: 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-left: 50px;
+    }
+
+    .recent-attendance {
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: #0d47a1;
+      margin-bottom: 15px;
+    }
+
+    .attendance-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+    }
+
+    .attendance-table th {
+      background-color: #f8f7ff;
+      text-align: left;
+      padding: 10px;
+    }
+
+    .attendance-table td {
+      padding: 10px;
+      border-top: 1px solid #ddd;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        top: 0;
+        box-shadow: none;
+      }
+
+      header {
+        position: relative;
+      }
+
+      .main {
+        margin-left: 0;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>iAttend</header>
+
+  <!-- Sidebar will be loaded here -->
+  <div id="sidebar-container"></div>
+
+  <div class="main">
+    <h1 class="attendance-history">Attendance History</h1>
+    
+    <div class="card">
+      <h2 class="recent-attendance">Recent Attendance</h2>
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Module</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>05-08-2025</td>
+            <td>8:00am - 11:00am</td>
+            <td>Programming</td>
+            <td>Present</td>
+          </tr>
+          <tr>
+            <td>05-08-2025</td>
+            <td>2:00pm - 4:00pm</td>
+            <td>Computer System</td>
+            <td>Present</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Load sidebar dynamically
+    fetch("sidebar.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("sidebar-container").innerHTML = data;
+
+        // Highlight current page link
+        const currentPage = location.pathname.split("/").pop();
+        document.querySelectorAll(".sidebar-link").forEach(link => {
+          if (link.getAttribute("href") === currentPage) {
+            link.classList.add("active");
+          }
+        });
+      });
+  </script>
+
+</body>
+</html>

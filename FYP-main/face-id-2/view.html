@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Face Recognition</title>
+</head>
+<body>
+    <h1>Face Recognition Live Stream</h1>
+    <img src="{{ url_for('video') }}" style="width:720px; height:auto;" />
+    <h2>Attendance Data</h2>
+    <ul id="attendance"></ul>
+
+    <script>
+        async function fetchAttendance() {
+            const response = await fetch('/attendance_data');
+            const data = await response.json();
+            const list = document.getElementById('attendance');
+            list.innerHTML = '';
+            data.forEach(entry => {
+                const li = document.createElement('li');
+                li.textContent = `${entry.name} - ${entry.time}`;
+                list.appendChild(li);
+            });
+        }
+        setInterval(fetchAttendance, 5000);
+        fetchAttendance();
+    </script>
+</body>
+</html>
