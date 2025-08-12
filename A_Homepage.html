@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iAttend Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Reset & Base */
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 260px;
+      height: calc(100% - 60px);
+      background: #FFEED3;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+      font-family: 'Open Sans', sans-serif;
+      overflow-y: auto;
+    }
+
+    .sidebar-section {
+      margin-bottom: 30px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #899BBD;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Sidebar Links */
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #FFEED3;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #012970;
+      text-decoration: none;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+
+    .sidebar-link:hover {
+      background: #ffe1ab;
+    }
+
+    .sidebar-link.active {
+      background: rgba(221, 168, 83, 0.44);
+      color: #4154F1;
+    }
+
+    /* Dropdown */
+    .dropdown-toggle {
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .dropdown-toggle::after {
+      content: "▾";
+      font-size: 0.8em;
+      transition: transform 0.3s ease;
+    }
+
+    .dropdown-toggle.active::after {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-content {
+      display: none;
+      flex-direction: column;
+      padding-left: 20px;
+    }
+
+    .dropdown-content .sidebar-link {
+      margin-bottom: 8px;
+      background: transparent;
+      padding-left: 20px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .dropdown-content .sidebar-link:hover {
+      background: #ffe1ab;
+      border-radius: 4px;
+    }
+
+    .dropdown-toggle.active + .dropdown-content {
+      display: flex;
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 10;
+    }
+
+    /* Main content padding to avoid sidebar overlap */
+    .main {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    /* Stats row container - all 4 cards side by side, equal size */
+    .stats-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 40px;
+      flex-wrap: nowrap;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      flex: 1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .stat-card h3 {
+      margin-bottom: 15px;
+      color: #003366;
+      font-weight: 700;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #3a3aff;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .stat-change {
+      font-size: 14px;
+      font-weight: 600;
+      color: #003366;
+      text-align: center;
+    }
+
+    /* Chart container */
+    #attendanceBarContainer {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .stats-row {
+        flex-wrap: wrap;
+      }
+      .stat-card {
+        flex: 1 1 100%;
+        margin-bottom: 20px;
+      }
+      #attendanceBarContainer {
+        max-width: 100%;
+      }
+      .main {
+        margin-left: 0;
+        padding: 80px 15px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>iAttend Admin</header>
+
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link active" href="#">Dashboard</a>
+      <a class="sidebar-link" href="#">Attendance</a>
+      <a class="sidebar-link" href="#">Absence</a>
+      <a class="sidebar-link" href="#">Report</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Manage</div>
+      <a class="sidebar-link" href="#">Teacher</a>
+      <a class="sidebar-link" href="#">Student</a>
+      <a class="sidebar-link" href="#">Subject</a>
+
+      <div class="sidebar-link dropdown-toggle">User Management</div>
+      <div class="dropdown-content">
+        <a class="sidebar-link" href="#">Pending Approvals</a>
+        <a class="sidebar-link" href="#">All Users</a>
+        <a class="sidebar-link" href="#">Add New User</a>
+        <a class="sidebar-link" href="#">Edit/Delete User</a>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="#">Logout</a>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- Stats Cards -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <h3>Present | Today</h3>
+        <div class="stat-number">145</div>
+        <div class="stat-change">12% increase</div>
+      </div>
+      <div class="stat-card">
+        <h3>Absent | Today</h3>
+        <div class="stat-number">18</div>
+        <div class="stat-change">5% decrease</div>
+      </div>
+      <div class="stat-card">
+        <h3>Attendance | This Month</h3>
+        <div class="stat-number">92%</div>
+        <div class="stat-change">Stable</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Classes</h3>
+        <div class="stat-number">42</div>
+      </div>
+    </div>
+
+    <!-- Bar Chart Container -->
+    <div id="attendanceBarContainer">
+      <canvas id="attendanceBar" width="600" height="350"></canvas>
+    </div>
+
+  </div>
+
+  <script>
+    // Dropdown toggle for sidebar
+    const toggle = document.querySelector('.dropdown-toggle');
+    toggle.addEventListener('click', () => {
+      toggle.classList.toggle('active');
+    });
+
+    // Sample bar chart data
+    const ctx = document.getElementById('attendanceBar').getContext('2d');
+    const attendanceChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Present', 'Late', 'Absent'],
+        datasets: [{
+          label: 'Number of Students',
+          data: [145, 10, 18],
+          backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
+          borderRadius: 6,
+          barPercentage: 0.6,
+          categoryPercentage: 0.6,
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            stepSize: 10,
+            grid: {
+              color: '#e0e0e0'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            enabled: true
+          }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
