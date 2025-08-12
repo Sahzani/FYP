@@ -1,0 +1,52 @@
+<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: 'Roboto', sans-serif;
+        background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+    header { position: fixed; top: 0; left: 0; right: 0; height: 60px;
+        background: #fff; box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+        display: flex; align-items: center; padding-left: 20px;
+        font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 26px;
+        color: #212529; z-index: 10; }
+    .sidebar { position: fixed; top: 60px; left: 0; width: 260px;
+        height: calc(100% - 60px); background: #FFEED3; padding: 20px;
+        box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1); font-family: 'Open Sans', sans-serif; }
+    .sidebar-section { margin-bottom: 30px; }
+    .sidebar-section-title { font-size: 11px; text-transform: uppercase; color: #899BBD; margin-bottom: 10px; }
+    .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 10px;
+        background: #FFEED3; border-radius: 4px; font-size: 15px; font-weight: 600;
+        color: #012970; text-decoration: none; transition: background 0.3s; }
+    .sidebar-link.active { background: rgba(221, 168, 83, 0.44); color: #4154F1; }
+    .sidebar-link:hover { background: #ffe1ab; }
+    .main { margin-left: 260px; padding: 100px 30px 30px; }
+    .breadcrumb-container { max-width: 1200px; font-family: 'Nunito', sans-serif; margin-bottom: 30px; }
+    .breadcrumb-title { font-size: 24px; font-weight: 600; color: #27548A; margin-bottom: 5px; }
+    .breadcrumb-nav { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+    .breadcrumb-nav .home, .breadcrumb-nav .divider { color: #989797; }
+    .breadcrumb-nav .current { color: #444444; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background: #f2f2f2; }
+    button { margin-top: 20px; padding: 12px 20px; font-size: 16px; font-weight: bold; background: #4154F1; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #293ad1; }
+</style>
+
+<title>Attendance Report</title></head><body>
+<header>iAttend</header>
+<div class="sidebar">
+<a class="sidebar-link" href="teacher_dashboard.html">Dashboard</a>
+<a class="sidebar-link" href="class_list.html">Class List</a>
+<a class="sidebar-link active" href="attendance_report.html">Attendance Report</a>
+<a class="sidebar-link" href="role_selection.html">Logout</a>
+</div>
+<div class="main">
+<div class="breadcrumb-container">
+<div class="breadcrumb-title">Attendance Report</div>
+<div class="breadcrumb-nav"><span class="home">Home</span><span class="divider">/</span><span class="current">Attendance Report</span></div>
+</div>
+<table>
+<tr><th>Date</th><th>Class</th><th>Present</th><th>Absent</th></tr>
+<tr><td>2025-08-01</td><td>Class A</td><td>28</td><td>2</td></tr>
+<tr><td>2025-08-02</td><td>Class B</td><td>27</td><td>1</td></tr>
+</table>
+</div></body></html>
