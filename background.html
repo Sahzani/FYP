@@ -34,9 +34,18 @@
       font-weight: 700;
       font-size: 26px;
       color: #212529;
-      z-index: 10;
+      z-index: 1000;
     }
-    
+
+    /* Mobile hamburger */
+    #menu-toggle {
+      display: none;
+      font-size: 28px;
+      margin-right: 15px;
+      cursor: pointer;
+    }
+
+    /* Sidebar */
     .sidebar {
       position: fixed;
       top: 60px;
@@ -47,6 +56,8 @@
       padding: 20px;
       box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1);
       font-family: 'Open Sans', sans-serif;
+      transition: left 0.3s ease;
+      z-index: 999;
     }
 
     .sidebar-section {
@@ -84,130 +95,40 @@
       background: #ffe1ab;
     }
 
+    /* Main content */
     .main {
       margin-left: 260px;
       padding: 100px 30px 30px;
     }
 
-    .breadcrumb-container {
-      max-width: 1200px;
-      font-family: 'Nunito', sans-serif;
-      margin-bottom: 30px;
-    }
-
-    .breadcrumb-title {
-      font-size: 24px;
-      font-weight: 600;
-      color: #27548A;
-      margin-bottom: 5px;
-    }
-
-    .breadcrumb-nav {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .breadcrumb-nav .home,
-    .breadcrumb-nav .divider {
-      color: #989797;
-    }
-
-    .breadcrumb-nav .current {
-      color: #444444;
-    }
-
-    .cards-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: flex-start;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0px 0px 30px rgba(1, 41, 112, 0.1);
-      padding: 20px;
-      flex: 1 1 300px;
-      max-width: 388px;
-      min-width: 260px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .card h5 {
-      font-family: 'Poppins';
-      font-size: 18px;
-      color: #012970;
-    }
-
-    .card .icon-box {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .circle {
-      background: #F6F6FE;
-      border-radius: 50%;
-      width: 64px;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      color: #4154F1;
-      font-family: 'Inter';
-    }
-
-    .card .data {
-      display: flex;
-      flex-direction: column;
-      font-family: 'Nunito';
-    }
-
-    .card .data .value {
-     font-family: 'Nunito', sans-serif;
-    font-size: 28px;
-     font-weight: 700;
-     color: #4154F1;
-    }
-
-    .card .data .change {
-      font-family: 'Open Sans';
-      font-size: 14px;
-      font-weight: 700;
-      color: #012970;
-    }
-
-    /* Responsive Fixes */
+    /* Responsive */
     @media (max-width: 768px) {
-      .sidebar {
-        position: relative;
-        width: 100%;
-        height: auto;
-        top: 0;
-        box-shadow: none;
+      #menu-toggle {
+        display: block;
       }
 
-      header {
-        position: relative;
+      .sidebar {
+        left: -260px; /* hide sidebar off-screen */
+        width: 260px;
+      }
+
+      .sidebar.show {
+        left: 0; /* show sidebar */
       }
 
       .main {
         margin-left: 0;
-        padding: 20px;
+        padding: 80px 20px 20px;
       }
     }
   </style>
 </head>
 <body>
 
-  <header>iAttend</header>
+  <header>
+    <span id="menu-toggle">&#9776;</span>
+    iAttend
+  </header>
 
   <div class="sidebar">
     <div class="sidebar-section">
@@ -228,13 +149,29 @@
     </div>
   </div>
 
+  <div class="main">
+    <h1>Welcome to iAttend</h1>
+    <p>Main content goes here...</p>
+  </div>
 
+  <script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
 
-  </style>
-</head>
-<body>
+    // Toggle sidebar on mobile
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('show');
+    });
 
-  <header>iAttend</header>
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768 && sidebar.classList.contains('show')) {
+        if (!sidebar.contains(e.target) && e.target !== menuToggle) {
+          sidebar.classList.remove('show');
+        }
+      }
+    });
+  </script>
 
 </body>
 </html>
