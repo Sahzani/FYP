@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iAttend Admin - Add User</title>
+  <style>
+    /* Reset & Base */
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      font-family: 'Nunito', sans-serif;
+      color: #212529;
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 10;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 260px;
+      height: calc(100% - 60px);
+      background: #FFEED3;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+      font-family: 'Open Sans', sans-serif;
+      overflow-y: auto;
+      z-index: 9;
+    }
+
+    .sidebar-section {
+      margin-bottom: 30px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #899BBD;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Sidebar Links */
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #FFEED3;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #012970;
+      text-decoration: none;
+      transition: background 0.3s;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sidebar-link:hover {
+      background: #ffe1ab;
+    }
+
+    .sidebar-link.active {
+      background: rgba(221, 168, 83, 0.44);
+      color: #4154F1;
+    }
+
+    /* Dropdown toggle caret */
+    .dropdown-toggle::after {
+      content: "▾";
+      font-size: 0.8em;
+      transition: transform 0.3s ease;
+    }
+    .dropdown-toggle.active::after {
+      transform: rotate(180deg);
+    }
+
+    /* Dropdown content */
+    .dropdown-content {
+      display: none;
+      flex-direction: column;
+      padding-left: 20px;
+      margin-top: -8px;
+    }
+    .dropdown-content .sidebar-link {
+      margin-bottom: 8px;
+      background: transparent;
+      padding-left: 20px;
+      font-weight: 500;
+      font-size: 14px;
+      justify-content: flex-start;
+    }
+    .dropdown-content .sidebar-link:hover {
+      background: #ffe1ab;
+      border-radius: 4px;
+    }
+    .dropdown-toggle.active + .dropdown-content {
+      display: flex;
+    }
+
+    /* Main content */
+    .main {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      min-height: calc(100vh - 60px);
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
+
+    /* Add User styles */
+    h1 {
+      margin-bottom: 20px;
+      color: #4154F1;
+      font-weight: 700;
+      font-size: 28px;
+    }
+    section {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+      margin-bottom: 40px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #444444;
+    }
+    input[type="text"], input[type="email"], select {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1.5px solid #CED4DA;
+      border-radius: 6px;
+      margin-bottom: 14px;
+      transition: border-color 0.3s;
+    }
+    input[type="text"]:focus, input[type="email"]:focus, select:focus {
+      border-color: #4154F1;
+      outline: none;
+    }
+    button {
+      background: #4154F1;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #2e3bb3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background: #f0f0f0;
+      font-weight: 700;
+    }
+    .actions button {
+      margin-right: 8px;
+      padding: 6px 10px;
+      font-size: 13px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .actions button.delete {
+      background: #dc3545;
+      color: white;
+    }
+    .actions button.delete:hover {
+      background: #b52a2a;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        top: 0;
+        box-shadow: none;
+      }
+      header {
+        position: relative;
+      }
+      .main {
+        margin-left: 0;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>iAttend Admin</header>
+
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link" href="#">Dashboard</a>
+      <a class="sidebar-link" href="#">Attendance</a>
+      <a class="sidebar-link" href="#">Absence</a>
+      <a class="sidebar-link" href="#">Report</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Manage</div>
+      <a class="sidebar-link" href="#">Teacher</a>
+      <a class="sidebar-link" href="#">Student</a>
+      <a class="sidebar-link" href="#">Subject</a>
+
+      <!-- Dropdown for User Management -->
+      <div class="sidebar-link dropdown-toggle active">User Management</div>
+      <div class="dropdown-content">
+        <a class="sidebar-link" href="#">Pending Approvals</a>
+        <a class="sidebar-link active" href="#">Add User</a>
+        <a class="sidebar-link" href="#">All Users</a>
+        <a class="sidebar-link" href="#">Module Management</a>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="#">Logout</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <h1>Add User</h1>
+
+    <section>
+      <form id="add-user-form">
+        <label for="user-name">Full Name</label>
+        <input type="text" id="user-name" placeholder="Enter full name" required />
+
+        <label for="user-email">Email</label>
+        <input type="email" id="user-email" placeholder="Enter email address" required />
+
+        <label for="user-role">Role</label>
+        <select id="user-role" required>
+          <option value="" disabled selected>Select Role</option>
+          <option value="Teacher">Teacher</option>
+          <option value="Student">Student</option>
+          <option value="Admin">Admin</option>
+          <!-- Add more roles if needed -->
+        </select>
+
+        <button type="submit">Add User</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Users List</h2>
+      <table id="users-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Users will appear here -->
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    const addUserForm = document.getElementById('add-user-form');
+    const usersTableBody = document.querySelector('#users-table tbody');
+
+    // In-memory users storage
+    const users = [];
+
+    // Render users table rows
+    function renderUsers() {
+      usersTableBody.innerHTML = '';
+      users.forEach((user, index) => {
+        const tr = document.createElement('tr');
+
+        const nameTd = document.createElement('td');
+        nameTd.textContent = user.name;
+        tr.appendChild(nameTd);
+
+        const emailTd = document.createElement('td');
+        emailTd.textContent = user.email;
+        tr.appendChild(emailTd);
+
+        const roleTd = document.createElement('td');
+        roleTd.textContent = user.role;
+        tr.appendChild(roleTd);
+
+        const actionsTd = document.createElement('td');
+        actionsTd.className = 'actions';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'delete';
+        deleteBtn.onclick = () => {
+          if(confirm(`Delete user "${user.name}"?`)) {
+            users.splice(index, 1);
+            renderUsers();
+          }
+        };
+        actionsTd.appendChild(deleteBtn);
+
+        tr.appendChild(actionsTd);
+
+        usersTableBody.appendChild(tr);
+      });
+    }
+
+    // Handle Add User form submission
+    addUserForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('user-name').value.trim();
+      const email = document.getElementById('user-email').value.trim();
+      const role = document.getElementById('user-role').value;
+
+      // Check for duplicate email
+      const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
+      if (exists) {
+        alert('A user with this email already exists.');
+        return;
+      }
+
+      users.push({ name, email, role });
+      renderUsers();
+      addUserForm.reset();
+      alert('User added successfully!');
+    });
+
+    // Sidebar dropdown toggle
+    const toggle = document.querySelector('.dropdown-toggle');
+    toggle.addEventListener('click', () => {
+      toggle.classList.toggle('active');
+    });
+
+  </script>
+
+</body>
+</html>
