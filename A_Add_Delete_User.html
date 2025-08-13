@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iAttend Admin - Users</title>
+<style>
+  /* Reset & Base */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; font-family: 'Nunito', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+
+  /* Header */
+  header {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 60px; background: #fff;
+    box-shadow: 0 2px 20px rgba(1,41,112,0.1);
+    display: flex; align-items: center;
+    padding-left: 20px; font-weight: 700;
+    font-size: 26px; color: #212529;
+    z-index: 1000;
+  }
+  #menu-toggle { display: none; font-size: 24px; margin-right: 15px; cursor: pointer; }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed; top: 60px; left: 0;
+    width: 260px; height: calc(100% - 60px);
+    background: #FFEED3; padding: 20px;
+    box-shadow: 0 0 20px rgba(1,41,112,0.1);
+    font-family: 'Open Sans', sans-serif; overflow-y: auto;
+    z-index: 999; transition: left 0.3s ease;
+  }
+  .sidebar-section { margin-bottom: 30px; }
+  .sidebar-section-title { font-size: 11px; text-transform: uppercase; color: #899BBD; margin-bottom: 10px; font-weight: 600; }
+  .sidebar-link {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; margin-bottom: 10px; background: #FFEED3;
+    border-radius: 4px; font-size: 15px; font-weight: 600; color: #012970;
+    text-decoration: none; cursor: pointer; user-select: none;
+  }
+  .sidebar-link:hover { background: #ffe1ab; }
+  .sidebar-link.active { background: rgba(221,168,83,0.44); color: #4154F1; }
+  .dropdown-toggle::after { content: "▾"; font-size: 0.8em; transition: transform 0.3s ease; }
+  .dropdown-toggle.active::after { transform: rotate(180deg); }
+  .dropdown-content { display: none; flex-direction: column; padding-left: 20px; margin-top: -8px; }
+  .dropdown-content .sidebar-link { margin-bottom: 8px; background: transparent; padding-left: 20px; font-weight: 500; font-size: 14px; justify-content: flex-start; }
+  .dropdown-content .sidebar-link:hover { background: #ffe1ab; border-radius: 4px; }
+  .dropdown-toggle.active + .dropdown-content { display: flex; }
+
+  /* Main content */
+  .main {
+    margin-left: 260px; padding: 100px 30px 30px;
+    min-height: 100vh; /* ensure full height */
+  }
+  section {
+    background: #fff; padding: 20px; border-radius: 8px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.1); margin-bottom: 40px;
+  }
+  h1 { margin-bottom: 20px; color: #4154F1; font-weight: 700; font-size: 28px; }
+  h2 { margin-bottom: 15px; color: #012970; font-weight: 600; font-size: 20px; }
+
+  label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #444444; }
+  input, select { width: 100%; padding: 8px 12px; font-size: 14px; border: 1.5px solid #CED4DA; border-radius: 6px; margin-bottom: 14px; transition: border-color 0.3s; }
+  input:focus, select:focus { border-color: #4154F1; outline: none; }
+  button { background: #4154F1; color: #fff; border: none; padding: 10px 20px; font-weight: 600; border-radius: 6px; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+  button:hover { background: #2e3bb3; }
+  table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+  th, td { padding: 12px 15px; border-bottom: 1px solid #ddd; text-align: left; font-size: 14px; }
+  th { background: #f0f0f0; font-weight: 700; }
+  .actions button { margin-right: 8px; padding: 6px 10px; font-size: 13px; border-radius: 4px; border: none; cursor: pointer; transition: 0.3s; }
+  .actions button.delete { background: #dc3545; color: white; }
+  .actions button.delete:hover { background: #b52a2a; }
+  .actions button.edit { background: #ffc107; color: white; }
+  .actions button.edit:hover { background: #e6ac00; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    #menu-toggle { display: block; }
+    .sidebar { left: -260px; }
+    .sidebar.show { left: 0; }
+    .main { margin-left: 0; padding: 80px 20px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  iAttend Admin
+</header>
+
+<div class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Analyse</div>
+    <a class="sidebar-link" href="#">Dashboard</a>
+    <a class="sidebar-link" href="#">Attendance</a>
+    <a class="sidebar-link" href="#">Absence</a>
+    <a class="sidebar-link" href="#">Report</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Manage</div>
+    <a class="sidebar-link" href="#">Teacher</a>
+    <a class="sidebar-link" href="#">Student</a>
+    <a class="sidebar-link" href="#">Subject</a>
+    <div class="sidebar-link active">Add User</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="#">Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <h1>Users Management</h1>
+
+  <!-- Add User -->
+  <section>
+    <h2>Add / Edit User</h2>
+    <form id="user-form">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" placeholder="Enter full name" required />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Enter email" required />
+
+      <label for="role">Role</label>
+      <select id="role" required>
+        <option value="" disabled selected>Select Role</option>
+        <option value="Teacher">Teacher</option>
+        <option value="Student">Student</option>
+      </select>
+
+      <label for="class">Class</label>
+      <select id="class" required>
+        <option value="" disabled selected>Select Class</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+      </select>
+
+      <label for="subject">Subject</label>
+      <select id="subject" required>
+        <option value="" disabled selected>Select Subject</option>
+        <option value="Math">Math</option>
+        <option value="Science">Science</option>
+      </select>
+
+      <button type="submit">Save User</button>
+    </form>
+  </section>
+
+  <!-- Filters & Users Table -->
+  <section>
+    <h2>Users List</h2>
+    <label for="filter-role">Filter by Role</label>
+    <select id="filter-role">
+      <option value="">All Roles</option>
+      <option value="Teacher">Teacher</option>
+      <option value="Student">Student</option>
+    </select>
+
+    <label for="filter-class">Filter by Class</label>
+    <select id="filter-class">
+      <option value="">All Classes</option>
+      <option value="A">A</option>
+      <option value="B">B</option>
+    </select>
+
+    <label for="filter-subject">Filter by Subject</label>
+    <select id="filter-subject">
+      <option value="">All Subjects</option>
+      <option value="Math">Math</option>
+      <option value="Science">Science</option>
+    </select>
+
+    <table id="users-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Class</th>
+          <th>Subject</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+</div>
+
+<script>
+const userForm = document.getElementById('user-form');
+const usersTable = document.querySelector('#users-table tbody');
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+
+let users = [];
+let editIndex = null;
+
+// Render users table with filters
+function renderUsers() {
+  const roleFilter = document.getElementById('filter-role').value;
+  const classFilter = document.getElementById('filter-class').value;
+  const subjectFilter = document.getElementById('filter-subject').value;
+
+  usersTable.innerHTML = '';
+  users.forEach((user, index) => {
+    if ((roleFilter && user.role !== roleFilter) ||
+        (classFilter && user.class !== classFilter) ||
+        (subjectFilter && user.subject !== subjectFilter)) return;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${user.name}</td>
+      <td>${user.email}</td>
+      <td>${user.role}</td>
+      <td>${user.class}</td>
+      <td>${user.subject}</td>
+      <td class="actions">
+        <button class="edit">Edit</button>
+        <button class="delete">Delete</button>
+      </td>
+    `;
+    tr.querySelector('.edit').onclick = () => editUser(index);
+    tr.querySelector('.delete').onclick = () => deleteUser(index);
+    usersTable.appendChild(tr);
+  });
+}
+
+// Add or Update User
+userForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const role = document.getElementById('role').value;
+  const className = document.getElementById('class').value;
+  const subject = document.getElementById('subject').value;
+
+  if (editIndex !== null) {
+    users[editIndex] = { name, email, role, class: className, subject };
+    editIndex = null;
+  } else {
+    users.push({ name, email, role, class: className, subject });
+  }
+
+  userForm.reset();
+  renderUsers();
+});
+
+// Edit user
+function editUser(index) {
+  const user = users[index];
+  document.getElementById('name').value = user.name;
+  document.getElementById('email').value = user.email;
+  document.getElementById('role').value = user.role;
+  document.getElementById('class').value = user.class;
+  document.getElementById('subject').value = user.subject;
+  editIndex = index;
+}
+
+// Delete user
+function deleteUser(index) {
+  if(confirm(`Delete ${users[index].name}?`)) {
+    users.splice(index,1);
+    renderUsers();
+  }
+}
+
+// Filters
+document.getElementById('filter-role').addEventListener('change', renderUsers);
+document.getElementById('filter-class').addEventListener('change', renderUsers);
+document.getElementById('filter-subject').addEventListener('change', renderUsers);
+
+// Sidebar toggle
+document.querySelector('.dropdown-toggle').addEventListener('click', e => e.target.classList.toggle('active'));
+menuToggle.addEventListener('click', () => sidebar.classList.toggle('show'));
+document.addEventListener('click', (e) => {
+  if(window.innerWidth <= 768 && sidebar.classList.contains('show')){
+    if(!sidebar.contains(e.target) && e.target !== menuToggle){
+      sidebar.classList.remove('show');
+    }
+  }
+});
+</script>
+
+</body>
+</html>
