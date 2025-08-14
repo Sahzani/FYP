@@ -30,12 +30,10 @@
   .status{display:inline-block;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;color:#fff;}
   .status.in-progress{background-color:#3b5bfd;}
   .status.approved{background-color:#2cd4b4;}
+  .status.rejected{background-color:#ff4c4c;}
   .send-application-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;box-shadow:0px 4px 12px rgba(0,102,255,0.3);position:absolute;top:-50px;right:2px;text-decoration:none;display:inline-block;}
   .send-application-btn:hover{transform:translateY(-1px);box-shadow:0px 6px 16px rgba(0,102,255,0.4);}
   .send-application-btn:active{transform:translateY(0px);box-shadow:0px 3px 8px rgba(0,102,255,0.25);}
-  .edit-btn, .delete-btn {padding:4px 8px;margin:0 2px;border:none;border-radius:6px;cursor:pointer;color:#fff;font-size:12px;}
-  .edit-btn{background:#ffa500;}
-  .delete-btn{background:#ff4c4c;}
   .modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,0.5);justify-content:center;align-items:center;transition:opacity 0.3s;}
   .modal.show{display:flex;opacity:1;}
   .modal-content{background:#fff;margin:auto;padding:0;border-radius:12px;width:90%;max-width:450px;position:relative;overflow:hidden;transform:translateY(-50px);transition:transform 0.3s;}
@@ -51,7 +49,6 @@
   .modal .save-btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,102,255,0.4);}
   .modal .cancel-btn{background:#ccc;color:#000;}
   .close{font-size:26px;font-weight:bold;cursor:pointer;}
-  .edited-badge{display:inline-block;background-color:#ffc107;color:#212529;font-size:12px;font-weight:600;padding:2px 6px;border-radius:4px;margin-left:8px;opacity:0;transition:opacity 1s ease;}
   .toast{position:fixed;bottom:20px;right:20px;background:#1e90ff;color:white;padding:12px 20px;border-radius:8px;font-family:'Poppins',sans-serif;font-size:14px;box-shadow:0 4px 12px rgba(0,102,255,0.3);opacity:0;transform:translateY(20px);transition:all 0.5s;z-index:9999;}
   .toast.show{opacity:1;transform:translateY(0);}
   @media(max-width:768px){#menu-toggle{display:block;} .sidebar{left:-260px;width:260px;} .sidebar.show{left:0;} .main{margin-left:0;padding:80px 20px 20px;}}
@@ -98,7 +95,6 @@
           <th>Absence reason</th>
           <th>Absence for</th>
           <th>Status</th>
-          <th>Actions</th>
         </tr>
       </thead>
       <tbody id="recordsBody"></tbody>
@@ -106,11 +102,11 @@
   </div>
 </div>
 
-<!-- Edit / Send Application Modal -->
+<!-- Send Application Modal -->
 <div id="editModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <span id="modalTitle">Edit Absence Record</span>
+      <span>New Absence Application</span>
       <span class="close">&times;</span>
     </div>
     <div class="modal-body">
@@ -127,31 +123,9 @@
         <option value="3 days">3 days</option>
         <option value="1 week">1 week</option>
       </select>
-      <label>Status</label>
-      <select id="modalStatus">
-        <option value="In Progress">In Progress</option>
-        <option value="Approved">Approved</option>
-      </select>
       <div class="modal-buttons">
-        <button class="save-btn" id="saveBtn">Save</button>
+        <button class="save-btn" id="saveBtn">Send</button>
         <button class="cancel-btn" id="cancelBtn">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      Confirm Deletion
-      <span class="close" id="deleteClose">&times;</span>
-    </div>
-    <div class="modal-body">
-      <p>Are you sure you want to delete this record?</p>
-      <div class="modal-buttons">
-        <button class="save-btn" id="confirmDelete">Yes</button>
-        <button class="cancel-btn" id="cancelDelete">No</button>
       </div>
     </div>
   </div>
@@ -164,27 +138,14 @@ const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 const recordsBody = document.getElementById('recordsBody');
 menuToggle.addEventListener('click',()=>{sidebar.classList.toggle('show');});
-document.addEventListener('click',(e)=>{
-  if(window.innerWidth<=768 && sidebar.classList.contains('show')){
-    if(!sidebar.contains(e.target) && e.target!==menuToggle) sidebar.classList.remove('show');
-  }
-});
+document.addEventListener('click',(e)=>{if(window.innerWidth<=768 && sidebar.classList.contains('show')){if(!sidebar.contains(e.target) && e.target!==menuToggle) sidebar.classList.remove('show');}});
 
-let editIndex = null;
 const modal = document.getElementById('editModal');
-const closeBtn = document.querySelector('.close');
+const closeBtn = modal.querySelector('.close');
 const saveBtn = document.getElementById('saveBtn');
 const cancelBtn = document.getElementById('cancelBtn');
-const modalTitle = document.getElementById('modalTitle');
 const openApplicationModal = document.getElementById('openApplicationModal');
 const toast = document.getElementById('toast');
-
-// Delete Modal
-const deleteModal = document.getElementById('deleteModal');
-const deleteClose = document.getElementById('deleteClose');
-const confirmDelete = document.getElementById('confirmDelete');
-const cancelDelete = document.getElementById('cancelDelete');
-let deleteIndex = null;
 
 function showToast(message){
   toast.textContent=message;
@@ -192,7 +153,7 @@ function showToast(message){
   setTimeout(()=>{toast.classList.remove('show');},2000);
 }
 
-function renderRecords(highlightIndex=null){
+function renderRecords(){
   const records = JSON.parse(localStorage.getItem('absenceRecords'))||[];
   recordsBody.innerHTML='';
   records.forEach((rec, idx)=>{
@@ -203,96 +164,45 @@ function renderRecords(highlightIndex=null){
       <td>${rec.course}</td>
       <td>${rec.reason}</td>
       <td>${rec.duration}</td>
-      <td>
-        <span class="status ${rec.status==='Approved'?'approved':'in-progress'}">${rec.status}</span>
-        ${idx===highlightIndex?'<span class="edited-badge">Edited</span>':''}
-      </td>
-      <td>
-        <button class="edit-btn" onclick="openEditModal(${idx})">Edit</button>
-        <button class="delete-btn" onclick="deleteRecord(${idx})">Delete</button>
-      </td>
+      <td><span class="status ${rec.status.toLowerCase().replace(' ','-')}">${rec.status}</span></td>
     `;
-    if(idx===highlightIndex){
-      tr.style.backgroundColor='#fff3cd';
-      const badge = tr.querySelector('.edited-badge');
-      if(badge){setTimeout(()=>{badge.style.opacity=1;},50); setTimeout(()=>{badge.style.opacity=0;},2000);}
-      setTimeout(()=>{tr.style.backgroundColor='';},1500);
-    }
     recordsBody.appendChild(tr);
   });
 }
 
-function openEditModal(index=null){
-  const records = JSON.parse(localStorage.getItem('absenceRecords'))||[];
-  if(index!==null){
-    editIndex=index;
-    modalTitle.textContent='Edit Absence Record';
-    const rec = records[index];
-    document.getElementById('modalStudentName').value=rec.studentName;
-    document.getElementById('modalCourse').value=rec.course;
-    document.getElementById('modalReason').value=rec.reason;
-    document.getElementById('modalDuration').value=rec.duration;
-    document.getElementById('modalStatus').value=rec.status;
-  } else {
-    editIndex=null;
-    modalTitle.textContent='New Absence Application';
-    document.getElementById('modalStudentName').value='';
-    document.getElementById('modalCourse').value='';
-    document.getElementById('modalReason').value='';
-    document.getElementById('modalDuration').value='1 day';
-    document.getElementById('modalStatus').value='In Progress';
-  }
-  modal.classList.add('show');
-}
-
-closeBtn.onclick=cancelBtn.onclick=()=>{modal.classList.remove('show');}
-
-saveBtn.onclick=()=>{
-  const records = JSON.parse(localStorage.getItem('absenceRecords'))||[];
-  const newRecord={
-    studentName: document.getElementById('modalStudentName').value,
-    course: document.getElementById('modalCourse').value,
-    reason: document.getElementById('modalReason').value,
-    duration: document.getElementById('modalDuration').value,
-    status: document.getElementById('modalStatus').value
-  };
-  if(editIndex!==null){
-    records[editIndex]=newRecord;
-    localStorage.setItem('absenceRecords',JSON.stringify(records));
-    renderRecords(editIndex);
-    showToast('Record updated successfully!');
-  } else {
-    records.push(newRecord);
-    localStorage.setItem('absenceRecords',JSON.stringify(records));
-    renderRecords(records.length-1);
-    showToast('Application sent successfully!');
-  }
-  modal.classList.remove('show');
-}
-
-function deleteRecord(index){
-  deleteIndex = index;
-  deleteModal.classList.add('show');
-}
-
-deleteClose.onclick = cancelDelete.onclick = () => {
-  deleteModal.classList.remove('show');
-  deleteIndex = null;
-}
-
-confirmDelete.onclick = () => {
-  const records = JSON.parse(localStorage.getItem('absenceRecords'))||[];
-  records.splice(deleteIndex,1);
-  localStorage.setItem('absenceRecords',JSON.stringify(records));
-  renderRecords();
-  showToast('Record deleted successfully!');
-  deleteModal.classList.remove('show');
-  deleteIndex = null;
-}
-
-openApplicationModal.onclick=()=>{openEditModal();}
-
+// Auto-update when localStorage changes (e.g., admin updates status)
 window.addEventListener('storage', renderRecords);
+
+function openModal(){
+  modal.classList.add('show');
+  document.getElementById('modalStudentName').value='';
+  document.getElementById('modalCourse').value='';
+  document.getElementById('modalReason').value='';
+  document.getElementById('modalDuration').value='1 day';
+}
+
+closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
+
+saveBtn.onclick = () => {
+  const studentName = document.getElementById('modalStudentName').value.trim();
+  const course = document.getElementById('modalCourse').value.trim();
+  const reason = document.getElementById('modalReason').value.trim();
+  const duration = document.getElementById('modalDuration').value;
+
+  if(!studentName || !course || !reason){
+    alert('Please fill in all fields!');
+    return;
+  }
+
+  const records = JSON.parse(localStorage.getItem('absenceRecords'))||[];
+  records.push({studentName, course, reason, duration, status:'In Progress'});
+  localStorage.setItem('absenceRecords', JSON.stringify(records));
+  renderRecords();
+  modal.classList.remove('show');
+  showToast('Application sent successfully!');
+}
+
+openApplicationModal.onclick = openModal;
 renderRecords();
 </script>
 
