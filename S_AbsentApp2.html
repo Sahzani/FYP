@@ -38,119 +38,128 @@
 </head>
 <body>
 
-  <header>
-    <span id="menu-toggle">&#9776;</span>
-    iAttend
-  </header>
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  iAttend
+</header>
 
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="#">Dashboard</a>
-      <div class="sidebar-section-title">Analyse</div>
-      <a class="sidebar-link" href="#">Attendance</a>
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="#">Dashboard</a>
+    <div class="sidebar-section-title">Analyse</div>
+    <a class="sidebar-link" href="#">Attendance</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Request</div>
+    <a class="sidebar-link active" id="absentAppToggle">Absent Application &#9662;</a>
+    <div class="dropdown">
+      <a href="S_AbsentApp1.html">Absence Records</a>
+      <a href="S_AbsentApp2.html" class="active">Send Application</a>
     </div>
+  </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Request</div>
-      <a class="sidebar-link active" id="absentAppToggle">Absent Application &#9662;</a>
-      <div class="dropdown">
-        <a href="S_AbsentApp1.html">Absence Records</a>
-        <a href="S_AbsentApp2.html" class="active">Send Application</a>
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="#">Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <h1 class="page-title">Send Absent Application</h1>
+  <h2 class="breadcrumb">
+    <span class="section">Absent Application</span> / 
+    <a href="S_AbsentApp1.html" class="section">Absence Records</a> / 
+    <span class="current">Send Application</span> 
+  </h2>
+
+  <div class="card">
+    <form id="absentForm">
+      <div class="form-group">
+        <label for="studentName">Student Name</label>
+        <input type="text" id="studentName" name="studentName" placeholder="Enter your name" required>
       </div>
-    </div>
 
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="#">Logout</a>
-    </div>
+      <div class="form-group">
+        <label for="course">Course</label>
+        <input type="text" id="course" name="course" placeholder="Enter course" required>
+      </div>
+
+      <div class="form-group">
+        <label for="reason">Absence Reason</label>
+        <textarea id="reason" name="reason" rows="3" placeholder="Enter reason" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="duration">Absence Duration</label>
+        <select id="duration" name="duration" required>
+          <option value="">Select duration</option>
+          <option value="1 day">1 day</option>
+          <option value="2 days">2 days</option>
+          <option value="3 days">3 days</option>
+          <option value="1 week">1 week</option>
+        </select>
+      </div>
+
+      <button type="submit" class="submit-btn">Submit Application</button>
+    </form>
   </div>
+</div>
 
-  <div class="main">
-    <h1 class="page-title">Send Absent Application</h1>
-    <h2 class="breadcrumb">
-      <span class="section">Absent Application</span> / 
-      <a href="S_AbsentApp1.html" class="section">Absence Records</a> / 
-      <span class="current">Send Application</span> 
-    </h2>
+<script>
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const absentAppToggle = document.getElementById('absentAppToggle');
+  const dropdown = document.querySelector('.dropdown');
+  const form = document.getElementById('absentForm');
 
-    <div class="card">
-      <form id="absentForm">
-        <div class="form-group">
-          <label for="studentName">Student Name</label>
-          <input type="text" id="studentName" name="studentName" placeholder="Enter your name" required>
-        </div>
+  // Toggle sidebar on mobile
+  menuToggle.addEventListener('click', () => { sidebar.classList.toggle('show'); });
 
-        <div class="form-group">
-          <label for="course">Course</label>
-          <input type="text" id="course" name="course" placeholder="Enter course" required>
-        </div>
+  // Toggle dropdown
+  absentAppToggle.addEventListener('click', () => {
+    dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
+  });
 
-        <div class="form-group">
-          <label for="reason">Absence Reason</label>
-          <textarea id="reason" name="reason" rows="3" placeholder="Enter reason" required></textarea>
-        </div>
+  // Close sidebar when clicking outside on mobile
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768 && sidebar.classList.contains('show')) {
+      if (!sidebar.contains(e.target) && e.target !== menuToggle) sidebar.classList.remove('show');
+    }
+  });
 
-        <div class="form-group">
-          <label for="duration">Absence Duration</label>
-          <select id="duration" name="duration" required>
-            <option value="">Select duration</option>
-            <option value="1 day">1 day</option>
-            <option value="2 days">2 days</option>
-            <option value="3 days">3 days</option>
-            <option value="1 week">1 week</option>
-          </select>
-        </div>
+  // Auto-fill student name if stored in localStorage
+  const storedStudentName = localStorage.getItem('loggedInStudentName');
+  if(storedStudentName) {
+    document.getElementById('studentName').value = storedStudentName;
+  }
 
-        <button type="submit" class="submit-btn">Submit Application</button>
-      </form>
-    </div>
-  </div>
+  // Handle form submission
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const studentName = document.getElementById('studentName').value;
+    const course = document.getElementById('course').value;
+    const reason = document.getElementById('reason').value;
+    const duration = document.getElementById('duration').value;
 
-  <script>
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const absentAppToggle = document.getElementById('absentAppToggle');
-    const dropdown = document.querySelector('.dropdown');
-    const form = document.getElementById('absentForm');
+    // Store student name for future auto-fill
+    localStorage.setItem('loggedInStudentName', studentName);
 
-    // Toggle sidebar on mobile
-    menuToggle.addEventListener('click', () => { sidebar.classList.toggle('show'); });
-
-    // Toggle dropdown
-    absentAppToggle.addEventListener('click', () => {
-      dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
+    const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
+    records.push({
+      studentName,
+      course,
+      reason,
+      duration,
+      status: 'In Progress'
     });
+    localStorage.setItem('absenceRecords', JSON.stringify(records));
 
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', (e) => {
-      if (window.innerWidth <= 768 && sidebar.classList.contains('show')) {
-        if (!sidebar.contains(e.target) && e.target !== menuToggle) sidebar.classList.remove('show');
-      }
-    });
-
-    // Handle form submission
-    form.addEventListener('submit', function(e){
-      e.preventDefault();
-      const studentName = document.getElementById('studentName').value;
-      const course = document.getElementById('course').value;
-      const reason = document.getElementById('reason').value;
-      const duration = document.getElementById('duration').value;
-
-      const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
-      records.push({
-        studentName,
-        course,
-        reason,
-        duration,
-        status: 'In Progress'
-      });
-      localStorage.setItem('absenceRecords', JSON.stringify(records));
-
-      alert('Application submitted successfully!');
-      form.reset();
-      // Redirect to absence records page
-      window.location.href = 'S_AbsentApp1.html';
-    });
-  </script>
+    alert('Application submitted successfully!');
+    form.reset();
+    // Redirect to absence records page
+    window.location.href = 'S_AbsentApp1.html';
+  });
+</script>
 
 </body>
 </html>
