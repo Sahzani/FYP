@@ -30,7 +30,6 @@
     .status{display:inline-block;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;color:#fff;}
     .status.in-progress{background-color:#3b5bfd;}
     .status.approved{background-color:#2cd4b4;}
-    .approve-btn{background:#1e90ff;color:white;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;}
     .send-application-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;box-shadow:0px 4px 12px rgba(0,102,255,0.3);position:absolute;top:-50px;right:2px;text-decoration:none;display:inline-block;}
     .send-application-btn:hover{transform:translateY(-1px);box-shadow:0px 6px 16px rgba(0,102,255,0.4);}
     .send-application-btn:active{transform:translateY(0px);box-shadow:0px 3px 8px rgba(0,102,255,0.25);}
@@ -78,7 +77,6 @@
           <th>Absence reason</th>
           <th>Absence for</th>
           <th>Status</th>
-          <th>Action</th>
         </tr>
       </thead>
       <tbody id="recordsBody">
@@ -93,6 +91,7 @@
   const sidebar = document.querySelector('.sidebar');
   const recordsBody = document.getElementById('recordsBody');
 
+  // Toggle sidebar on mobile
   menuToggle.addEventListener('click',()=>{sidebar.classList.toggle('show');});
   document.addEventListener('click',(e)=>{
     if(window.innerWidth<=768 && sidebar.classList.contains('show')){
@@ -100,10 +99,10 @@
     }
   });
 
-  // Function to render records
+  // Function to render records from localStorage
   function renderRecords() {
     const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
-    recordsBody.innerHTML = '';
+    recordsBody.innerHTML = ''; // Clear table
     records.forEach((rec, idx) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -113,26 +112,15 @@
         <td>${rec.reason}</td>
         <td>${rec.duration}</td>
         <td><span class="status ${rec.status==='Approved'?'approved':'in-progress'}">${rec.status}</span></td>
-        <td>${rec.status==='In Progress'?'<button class="approve-btn">Approve</button>':''}</td>
       `;
       recordsBody.appendChild(tr);
-
-      // Add approve functionality
-      const approveBtn = tr.querySelector('.approve-btn');
-      if(approveBtn){
-        approveBtn.addEventListener('click', ()=>{
-          rec.status = 'Approved';
-          localStorage.setItem('absenceRecords', JSON.stringify(records));
-          renderRecords();
-        });
-      }
     });
   }
 
   // Initial render
   renderRecords();
 
-  // Update live if storage changes
+  // Live update if another tab/page submits
   window.addEventListener('storage', renderRecords);
 </script>
 
