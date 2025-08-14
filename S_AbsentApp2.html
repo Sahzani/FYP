@@ -1,145 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Send Absent Application</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-  <style>
-    /* Reset & Base */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; font-family: 'Roboto', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-
-    /* Header */
-    header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1); display: flex; align-items: center; padding-left: 20px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 26px; color: #212529; z-index: 1000; }
-    #menu-toggle { display: none; font-size: 28px; margin-right: 15px; cursor: pointer; }
-
-    /* Sidebar */
-    .sidebar { position: fixed; top: 60px; left: 0; width: 260px; height: calc(100% - 60px); background: #FFEED3; padding: 20px; box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1); font-family: 'Open Sans', sans-serif; transition: left 0.3s ease; z-index: 999; }
-    .sidebar-section { margin-bottom: 30px; }
-    .sidebar-section-title { font-size: 11px; text-transform: uppercase; color: #899BBD; margin-bottom: 10px; }
-    .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 10px; background: #FFEED3; border-radius: 4px; font-size: 15px; font-weight: 600; color: #012970; text-decoration: none; transition: background 0.3s; cursor: pointer; }
-    .sidebar-link.active { background: rgba(221, 168, 83, 0.44); color: #4154F1; }
-    .sidebar-link:hover { background: #ffe1ab; }
-
-    /* Dropdown */
-    .dropdown { display: none; flex-direction: column; margin-left: 10px; }
-    .dropdown a { padding: 8px 10px; font-size: 14px; color: #012970; text-decoration: none; border-radius: 4px; }
-    .dropdown a:hover { background: #ffe1ab; }
-    .dropdown a.active { background: rgba(221, 168, 83, 0.44); color: #4154F1; }
-
-    /* Main content */
-    .main { margin-left: 260px; padding: 100px 30px 30px; font-family: 'Nunito', sans-serif; }
-    .page-title { font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 500; color: #444444; margin-left: 50px; margin-top: 10px; margin-bottom: -1px; }
-    .breadcrumb { font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 600; margin-left: 50px; margin-bottom: 30px; }
-    .breadcrumb .section { color: #989797; }
-    .breadcrumb .current { color: #444444; }
-    .breadcrumb a.section { text-decoration: none; color: #989797; }
-
-    .card { background: #fff; border-radius: 10px; box-shadow: 0px 0px 30px rgba(1, 41, 112, 0.1); padding: 30px; max-width: 600px; margin-left: 50px; position: relative; }
-    .form-group { margin-bottom: 20px; }
-    label { display: block; margin-bottom: 6px; font-weight: 600; color: #012970; }
-    input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; }
-    textarea { resize: vertical; }
-    .submit-btn { background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%); color: white; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 500; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; transition: all 0.25s ease; }
-    .submit-btn:hover { transform: translateY(-1px); box-shadow: 0px 6px 16px rgba(0, 102, 255, 0.4); }
-
-    /* Responsive */
-    @media (max-width: 768px) { #menu-toggle { display: block; } .sidebar { left: -260px; width: 260px; } .sidebar.show { left: 0; } .main { margin-left: 0; padding: 80px 20px 20px; } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Send Absent Application</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; font-family:'Roboto',sans-serif; background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%); }
+  header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+  #menu-toggle { display:none; font-size:28px; margin-right:15px; cursor:pointer; }
+  .sidebar { position: fixed; top:60px; left:0; width:260px; height:calc(100%-60px); background:#FFEED3; padding:20px; box-shadow:0px 0px 20px rgba(1,41,112,0.1); font-family:'Open Sans',sans-serif; transition:left 0.3s ease; z-index:999; }
+  .sidebar-section { margin-bottom:30px; }
+  .sidebar-section-title { font-size:11px; text-transform:uppercase; color:#899BBD; margin-bottom:10px; }
+  .sidebar-link { display:flex; align-items:center; gap:10px; padding:10px; margin-bottom:10px; background:#FFEED3; border-radius:4px; font-size:15px; font-weight:600; color:#012970; text-decoration:none; transition:background 0.3s; cursor:pointer; }
+  .sidebar-link.active { background: rgba(221,168,83,0.44); color:#4154F1; }
+  .sidebar-link:hover { background:#ffe1ab; }
+  .dropdown { display:none; flex-direction:column; margin-left:10px; }
+  .dropdown a { padding:8px 10px; font-size:14px; color:#012970; text-decoration:none; border-radius:4px; }
+  .dropdown a:hover { background:#ffe1ab; }
+  .dropdown a.active { background: rgba(221,168,83,0.44); color:#4154F1; }
+  .main { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; }
+  .page-title { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#444444; margin-left:50px; margin-top:10px; margin-bottom:-1px; }
+  .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-left:50px; margin-bottom:30px; }
+  .breadcrumb .section { color:#989797; }
+  .breadcrumb .current { color:#444444; }
+  .breadcrumb a.section { text-decoration:none; color:#989797; }
+  .card { background:#fff; border-radius:10px; box-shadow:0px 0px 30px rgba(1,41,112,0.1); padding:30px; max-width:600px; margin-left:50px; position:relative; }
+  .form-group { margin-bottom:20px; }
+  label { display:block; margin-bottom:6px; font-weight:600; color:#012970; }
+  input, select, textarea { width:100%; padding:10px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
+  textarea { resize:vertical; }
+  .submit-btn { background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); color:white; font-family:'Poppins',sans-serif; font-size:14px; font-weight:500; padding:10px 20px; border:none; border-radius:8px; cursor:pointer; transition:all 0.25s ease; }
+  .submit-btn:hover { transform:translateY(-1px); box-shadow:0px 6px 16px rgba(0,102,255,0.4); }
+  @media(max-width:768px){ #menu-toggle{display:block;} .sidebar{left:-260px;} .sidebar.show{left:0;} .main{margin-left:0;padding:80px 20px 20px;} }
+</style>
 </head>
 <body>
 
-  <header>
-    <span id="menu-toggle">&#9776;</span>
-    iAttend
-  </header>
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  iAttend
+</header>
 
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="#">Dashboard</a>
-      <div class="sidebar-section-title">Analyse</div>
-      <a class="sidebar-link" href="#">Attendance</a>
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="#">Dashboard</a>
+    <div class="sidebar-section-title">Analyse</div>
+    <a class="sidebar-link" href="#">Attendance</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Request</div>
+    <a class="sidebar-link" id="absentAppToggle">Absent Application &#9662;</a>
+    <div class="dropdown">
+      <a href="S_AbsentApp1.html">Absence Records</a>
+      <a href="S_AbsentApp2.html" class="active">Send Application</a>
     </div>
+  </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Request</div>
-      
-      <!-- Dropdown trigger -->
-      <a class="sidebar-link" id="absentAppToggle">Absent Application &#9662;</a>
-      <div class="dropdown">
-        <a href="S_AbsentApp1.html">Absence Records</a>
-        <a href="S_AbsentApp2.html" class="active">Send Application</a>
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="#">Logout</a>
+  </div>
+</div>
+
+<div class="main">
+  <h1 class="page-title">Send Absent Application</h1>
+  <h2 class="breadcrumb">
+    <span class="section">Absent Application</span> / 
+    <a href="S_AbsentApp1.html" class="section">Absence Records</a> / 
+    <span class="current">Send Application</span>
+  </h2>
+
+  <div class="card">
+    <form>
+      <div class="form-group">
+        <label for="studentName">Student Name</label>
+        <input type="text" id="studentName" name="studentName" placeholder="Enter your name" required>
       </div>
-    </div>
 
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="#">Logout</a>
-    </div>
+      <div class="form-group">
+        <label for="course">Course</label>
+        <input type="text" id="course" name="course" placeholder="Enter course" required>
+      </div>
+
+      <div class="form-group">
+        <label for="reason">Absence Reason</label>
+        <textarea id="reason" name="reason" rows="3" placeholder="Enter reason" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="duration">Absence Duration</label>
+        <select id="duration" name="duration" required>
+          <option value="">Select duration</option>
+          <option value="1 day">1 day</option>
+          <option value="2 days">2 days</option>
+          <option value="3 days">3 days</option>
+          <option value="1 week">1 week</option>
+        </select>
+      </div>
+
+      <button type="submit" class="submit-btn">Submit Application</button>
+    </form>
   </div>
+</div>
 
-  <div class="main">
-    <h1 class="page-title">Send Absent Application</h1>
-    <h2 class="breadcrumb">
-      <span class="section">Absent Application</span> / 
-      <a href="S_AbsentApp1.html" class="section">Absence Records</a> / 
-      <span class="current">Send Application</span> 
-    </h2>
+<script>
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const absentAppToggle = document.getElementById('absentAppToggle');
+  const dropdown = document.querySelector('.dropdown');
 
-    <div class="card">
-      <form>
-        <div class="form-group">
-          <label for="studentName">Student Name</label>
-          <input type="text" id="studentName" name="studentName" placeholder="Enter your name" required>
-        </div>
+  // Mobile toggle
+  menuToggle.addEventListener('click', () => { sidebar.classList.toggle('show'); });
 
-        <div class="form-group">
-          <label for="course">Course</label>
-          <input type="text" id="course" name="course" placeholder="Enter course" required>
-        </div>
+  // Dropdown toggle
+  absentAppToggle.addEventListener('click', () => {
+    dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
+  });
 
-        <div class="form-group">
-          <label for="reason">Absence Reason</label>
-          <textarea id="reason" name="reason" rows="3" placeholder="Enter reason" required></textarea>
-        </div>
+  // Form submit -> save to localStorage
+  const form = document.querySelector('form');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const studentName = document.getElementById('studentName').value;
+    const course = document.getElementById('course').value;
+    const reason = document.getElementById('reason').value;
+    const duration = document.getElementById('duration').value;
 
-        <div class="form-group">
-          <label for="duration">Absence Duration</label>
-          <select id="duration" name="duration" required>
-            <option value="">Select duration</option>
-            <option value="1 day">1 day</option>
-            <option value="2 days">2 days</option>
-            <option value="3 days">3 days</option>
-            <option value="1 week">1 week</option>
-          </select>
-        </div>
+    const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
+    records.push({ studentName, course, reason, duration, status:'In Progress' });
+    localStorage.setItem('absenceRecords', JSON.stringify(records));
 
-        <button type="submit" class="submit-btn">Submit Application</button>
-      </form>
-    </div>
-  </div>
+    // Redirect to records page
+    window.location.href = 'S_AbsentApp1.html';
+  });
 
-  <script>
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const absentAppToggle = document.getElementById('absentAppToggle');
-    const dropdown = document.querySelector('.dropdown');
-
-    // Toggle sidebar on mobile
-    menuToggle.addEventListener('click', () => { sidebar.classList.toggle('show'); });
-
-    // Toggle dropdown
-    absentAppToggle.addEventListener('click', () => {
-      dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
-    });
-
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', (e) => {
-      if (window.innerWidth <= 768 && sidebar.classList.contains('show')) {
-        if (!sidebar.contains(e.target) && e.target !== menuToggle) sidebar.classList.remove('show');
-      }
-    });
-  </script>
+  // Close sidebar clicking outside
+  document.addEventListener('click', (e) => {
+    if(window.innerWidth<=768 && sidebar.classList.contains('show')) {
+      if(!sidebar.contains(e.target) && e.target!==menuToggle) sidebar.classList.remove('show');
+    }
+  });
+</script>
 
 </body>
 </html>
