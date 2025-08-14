@@ -7,39 +7,34 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { height:100%; font-family:'Roboto',sans-serif; background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%); }
-    header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
-    #menu-toggle { display:none; font-size:28px; margin-right:15px; cursor:pointer; }
-    .sidebar { position: fixed; top:60px; left:0; width:260px; height:calc(100%-60px); background:#FFEED3; padding:20px; box-shadow:0px 0px 20px rgba(1,41,112,0.1); font-family:'Open Sans',sans-serif; transition:left 0.3s ease; z-index:999; }
-    .sidebar-section { margin-bottom:30px; }
-    .sidebar-section-title { font-size:11px; text-transform:uppercase; color:#899BBD; margin-bottom:10px; }
-    .sidebar-link { display:flex; align-items:center; gap:10px; padding:10px; margin-bottom:10px; background:#FFEED3; border-radius:4px; font-size:15px; font-weight:600; color:#012970; text-decoration:none; transition:background 0.3s; cursor:pointer; }
-    .sidebar-link.active { background: rgba(221,168,83,0.44); color:#4154F1; }
-    .sidebar-link:hover { background:#ffe1ab; }
-    .dropdown { display:none; flex-direction:column; margin-left:10px; }
-    .dropdown a { padding:8px 10px; font-size:14px; color:#012970; text-decoration:none; border-radius:4px; }
-    .dropdown a:hover { background:#ffe1ab; }
-    .dropdown a.active { background: rgba(221,168,83,0.44); color:#4154F1; }
-    .main { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; }
-    .page-title { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#444444; margin-left:50px; margin-top:10px; margin-bottom:-1px; }
-    .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-left:50px; margin-bottom:30px; }
-    .breadcrumb .section { color:#989797; }
-    .breadcrumb .current { color:#444444; }
-    .breadcrumb a.section { text-decoration:none; color:#989797; }
-    .absence-records1 { font-family:'Poppins',sans-serif; font-size:15px; font-weight:500; color:#0d47a1; margin-bottom:15px; }
-    .card { background:#fff; border-radius:10px; box-shadow:0px 0px 30px rgba(1,41,112,0.1); padding:20px; max-width:1111px; min-width:460px; margin-left:50px; position:relative; }
-    .attendance-table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; font-size:14px; }
-    .attendance-table th { background-color:#f8f7ff; text-align:left; padding:12px; font-weight:500; }
-    .attendance-table td { padding:12px; border-top:1px solid #ddd; }
-    .status { display:inline-block; padding:6px 14px; border-radius:6px; font-size:13px; font-weight:500; color:#fff; }
-    .status.in-progress { background-color:#3b5bfd; }
-    .status.approved { background-color:#2cd4b4; }
-    .approve-btn { background:#1e90ff; color:#fff; padding:6px 12px; border:none; border-radius:6px; cursor:pointer; font-size:13px; transition:0.2s; }
-    .approve-btn:hover { background:#0066ff; }
-    .send-application-btn { background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); color:white; font-family:'Poppins',sans-serif; font-size:13px; font-weight:500; padding:8px 16px; border:none; border-radius:8px; cursor:pointer; transition:all 0.25s ease; position:absolute; top:-50px; right:2px; text-decoration:none; display:inline-block; box-shadow:0px 4px 12px rgba(0,102,255,0.3); }
-    .send-application-btn:hover { transform:translateY(-1px); box-shadow:0px 6px 16px rgba(0,102,255,0.4); }
-    .send-application-btn:active { transform:translateY(0px); box-shadow:0px 3px 8px rgba(0,102,255,0.25); }
-    @media(max-width:768px){ #menu-toggle{display:block;} .sidebar{left:-260px;} .sidebar.show{left:0;} .main{margin-left:0;padding:80px 20px 20px;} }
+    html,body{height:100%;font-family:'Roboto',sans-serif;background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
+    header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
+    #menu-toggle{display:none;font-size:28px;margin-right:15px;cursor:pointer;}
+    .sidebar{position: fixed; top:60px; left:0; width:260px; height:calc(100%-60px); background:#FFEED3; padding:20px; box-shadow:0px 0px 20px rgba(1,41,112,0.1); font-family:'Open Sans',sans-serif; transition:left 0.3s ease; z-index:999;}
+    .sidebar-section{margin-bottom:30px;}
+    .sidebar-section-title{font-size:11px;text-transform:uppercase;color:#899BBD;margin-bottom:10px;}
+    .sidebar-link{display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:10px;background:#FFEED3;border-radius:4px;font-size:15px;font-weight:600;color:#012970;text-decoration:none;transition:background 0.3s;cursor:pointer;}
+    .sidebar-link.active{background: rgba(221,168,83,0.44); color:#4154F1;}
+    .sidebar-link:hover{background:#ffe1ab;}
+    .main{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;}
+    .page-title{font-family:'Poppins',sans-serif;font-size:28px;font-weight:500;color:#444444;margin-left:50px;margin-top:10px;margin-bottom:-1px;}
+    .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-left:50px;margin-bottom:30px;}
+    .breadcrumb .section{color:#989797;}
+    .breadcrumb .current{color:#444444;}
+    .breadcrumb a.section{text-decoration:none;color:#989797;}
+    .absence-records1{font-family:'Poppins',sans-serif;font-size:15px;font-weight:500;color:#0d47a1;margin-bottom:15px;}
+    .card{background:#fff;border-radius:10px;box-shadow:0px 0px 30px rgba(1,41,112,0.1);padding:20px;max-width:1111px;min-width:460px;margin-left:50px;position:relative;}
+    .attendance-table{width:100%;border-collapse:collapse;font-family:'Poppins',sans-serif;font-size:14px;}
+    .attendance-table th{background-color:#f8f7ff;text-align:left;padding:12px;font-weight:500;}
+    .attendance-table td{padding:12px;border-top:1px solid #ddd;}
+    .status{display:inline-block;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;color:#fff;}
+    .status.in-progress{background-color:#3b5bfd;}
+    .status.approved{background-color:#2cd4b4;}
+    .approve-btn{background:#1e90ff;color:white;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;}
+    .send-application-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;box-shadow:0px 4px 12px rgba(0,102,255,0.3);position:absolute;top:-50px;right:2px;text-decoration:none;display:inline-block;}
+    .send-application-btn:hover{transform:translateY(-1px);box-shadow:0px 6px 16px rgba(0,102,255,0.4);}
+    .send-application-btn:active{transform:translateY(0px);box-shadow:0px 3px 8px rgba(0,102,255,0.25);}
+    @media(max-width:768px){#menu-toggle{display:block;} .sidebar{left:-260px;width:260px;} .sidebar.show{left:0;} .main{margin-left:0;padding:80px 20px 20px;}}
   </style>
 </head>
 <body>
@@ -55,16 +50,10 @@
     <div class="sidebar-section-title">Analyse</div>
     <a class="sidebar-link" href="#">Attendance</a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">Request</div>
-    <a class="sidebar-link" id="absentAppToggle">Absent Application &#9662;</a>
-    <div class="dropdown">
-      <a href="S_AbsentApp1.html" class="active">Absence Records</a>
-      <a href="S_AbsentApp2.html">Send Application</a>
-    </div>
+    <a class="sidebar-link active" href="S_AbsentApp1.html">Absent Application</a>
   </div>
-
   <div class="sidebar-section">
     <a class="sidebar-link" href="#">Logout</a>
   </div>
@@ -92,8 +81,8 @@
           <th>Action</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- records will be loaded here -->
+      <tbody id="recordsBody">
+        <!-- Records will appear here -->
       </tbody>
     </table>
   </div>
@@ -102,25 +91,23 @@
 <script>
   const menuToggle = document.getElementById('menu-toggle');
   const sidebar = document.querySelector('.sidebar');
-  const absentAppToggle = document.getElementById('absentAppToggle');
-  const dropdown = document.querySelector('.dropdown');
-  const tableBody = document.querySelector('.attendance-table tbody');
+  const recordsBody = document.getElementById('recordsBody');
 
-  // Mobile toggle
-  menuToggle.addEventListener('click', () => { sidebar.classList.toggle('show'); });
-  // Dropdown toggle
-  absentAppToggle.addEventListener('click', () => {
-    dropdown.style.display = dropdown.style.display==='flex'?'none':'flex';
+  menuToggle.addEventListener('click',()=>{sidebar.classList.toggle('show');});
+  document.addEventListener('click',(e)=>{
+    if(window.innerWidth<=768 && sidebar.classList.contains('show')){
+      if(!sidebar.contains(e.target) && e.target!==menuToggle) sidebar.classList.remove('show');
+    }
   });
 
-  // Load and display records
-  function loadRecords() {
+  // Function to render records
+  function renderRecords() {
     const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
-    tableBody.innerHTML = '';
-    records.forEach((rec,index)=>{
+    recordsBody.innerHTML = '';
+    records.forEach((rec, idx) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${index+1}</td>
+        <td>${idx+1}</td>
         <td>${rec.studentName}</td>
         <td>${rec.course}</td>
         <td>${rec.reason}</td>
@@ -128,27 +115,25 @@
         <td><span class="status ${rec.status==='Approved'?'approved':'in-progress'}">${rec.status}</span></td>
         <td>${rec.status==='In Progress'?'<button class="approve-btn">Approve</button>':''}</td>
       `;
-      tableBody.appendChild(tr);
+      recordsBody.appendChild(tr);
 
       // Add approve functionality
-      if(rec.status==='In Progress'){
-        tr.querySelector('.approve-btn').addEventListener('click', ()=>{
-          rec.status='Approved';
-          localStorage.setItem('absenceRecords',JSON.stringify(records));
-          loadRecords();
+      const approveBtn = tr.querySelector('.approve-btn');
+      if(approveBtn){
+        approveBtn.addEventListener('click', ()=>{
+          rec.status = 'Approved';
+          localStorage.setItem('absenceRecords', JSON.stringify(records));
+          renderRecords();
         });
       }
     });
   }
 
-  window.addEventListener('load', loadRecords);
+  // Initial render
+  renderRecords();
 
-  // Close sidebar clicking outside
-  document.addEventListener('click', (e)=>{
-    if(window.innerWidth<=768 && sidebar.classList.contains('show')){
-      if(!sidebar.contains(e.target) && e.target!==menuToggle) sidebar.classList.remove('show');
-    }
-  });
+  // Update live if storage changes
+  window.addEventListener('storage', renderRecords);
 </script>
 
 </body>
