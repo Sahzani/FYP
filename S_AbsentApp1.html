@@ -33,6 +33,9 @@
     .send-application-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;box-shadow:0px 4px 12px rgba(0,102,255,0.3);position:absolute;top:-50px;right:2px;text-decoration:none;display:inline-block;}
     .send-application-btn:hover{transform:translateY(-1px);box-shadow:0px 6px 16px rgba(0,102,255,0.4);}
     .send-application-btn:active{transform:translateY(0px);box-shadow:0px 3px 8px rgba(0,102,255,0.25);}
+    .action-btn{padding:5px 10px;margin-right:5px;border:none;border-radius:6px;color:white;cursor:pointer;}
+    .edit-btn{background-color:#ff9800;}
+    .delete-btn{background-color:#f44336;}
     @media(max-width:768px){#menu-toggle{display:block;} .sidebar{left:-260px;width:260px;} .sidebar.show{left:0;} .main{margin-left:0;padding:80px 20px 20px;}}
   </style>
 </head>
@@ -77,6 +80,7 @@
           <th>Absence reason</th>
           <th>Absence for</th>
           <th>Status</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody id="recordsBody">
@@ -91,7 +95,6 @@
   const sidebar = document.querySelector('.sidebar');
   const recordsBody = document.getElementById('recordsBody');
 
-  // Toggle sidebar on mobile
   menuToggle.addEventListener('click',()=>{sidebar.classList.toggle('show');});
   document.addEventListener('click',(e)=>{
     if(window.innerWidth<=768 && sidebar.classList.contains('show')){
@@ -99,10 +102,9 @@
     }
   });
 
-  // Function to render records from localStorage
   function renderRecords() {
     const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
-    recordsBody.innerHTML = ''; // Clear table
+    recordsBody.innerHTML = '';
     records.forEach((rec, idx) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -112,15 +114,42 @@
         <td>${rec.reason}</td>
         <td>${rec.duration}</td>
         <td><span class="status ${rec.status==='Approved'?'approved':'in-progress'}">${rec.status}</span></td>
+        <td>
+          <button class="action-btn edit-btn" onclick="editRecord(${idx})">Edit</button>
+          <button class="action-btn delete-btn" onclick="deleteRecord(${idx})">Delete</button>
+        </td>
       `;
       recordsBody.appendChild(tr);
     });
   }
 
-  // Initial render
-  renderRecords();
+  function deleteRecord(index){
+    const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
+    if(confirm("Are you sure you want to delete this record?")){
+      records.splice(index,1);
+      localStorage.setItem('absenceRecords', JSON.stringify(records));
+      renderRecords();
+    }
+  }
 
-  // Live update if another tab/page submits
+  function editRecord(index){
+    const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
+    const rec = records[index];
+    if(rec){
+      const newName = prompt("Edit student name:", rec.studentName);
+      if(newName!==null) rec.studentName = newName;
+      const newCourse = prompt("Edit course:", rec.course);
+      if(newCourse!==null) rec.course = newCourse;
+      const newReason = prompt("Edit reason:", rec.reason);
+      if(newReason!==null) rec.reason = newReason;
+      const newDuration = prompt("Edit duration:", rec.duration);
+      if(newDuration!==null) rec.duration = newDuration;
+      localStorage.setItem('absenceRecords', JSON.stringify(records));
+      renderRecords();
+    }
+  }
+
+  renderRecords();
   window.addEventListener('storage', renderRecords);
 </script>
 
