@@ -5,181 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>iAttend Login</title>
   <style>
-    /* Reset margin/padding */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html, body {
-      height: 100%;
-      font-family: 'Roboto', sans-serif;
-      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-    }
-
-    /* Header fixed on top */
-    header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 60px;
-      background: #fff;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: 'Roboto', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+    header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff;
       box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
-      display: flex;
-      align-items: center;
-      padding-left: 20px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-      font-size: 26px;
-      color: #212529;
-      z-index: 10;
-    }
-
-    /* Centered container */
-    .container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: calc(100vh - 60px); /* account for header */
-    }
-
-    /* Sign-in form */
-    .frame3 {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2.5rem;
-      gap: 1rem;
-      width: 90%;
-      max-width: 700px;
-      background: #fff;
-      border: 1px solid rgba(0,0,0,0.125);
-      border-radius: 4px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-
-    /* Icon on top */
-    .frame3 .icon {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: #F9F0D9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 1rem;
-      font-size: 48px;
-      color: #7a5531;
-    }
-
-    .frame3 h2 {
-      font-weight: 700;
-      font-size: 24px;
-      color: #002d72;
-      margin-bottom: 0.25rem;
-    }
-
-    .frame3 p.subtitle {
-      font-weight: 400;
-      font-size: 14px;
-      color: #777777;
-      margin-bottom: 1.5rem;
-    }
-
-    .frame3 label {
-      font-size: 0.95rem;
-      color: #212529;
-      align-self: flex-start;
-      margin-bottom: 0.25rem;
-    }
-
-    .frame3 input[type="text"],
-    .frame3 input[type="password"] {
-      width: 100%;
-      height: 2.5rem;
-      padding: 0.5rem;
-      border: 1px solid #CED4DA;
-      border-radius: 4px;
-      font-size: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    /* Remember me checkbox */
-    .remember-me {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      font-size: 0.9rem;
-      color: #212529;
-      margin-bottom: 1.25rem;
-      user-select: none;
-    }
-
-    .remember-me input[type="checkbox"] {
-      margin-right: 0.5rem;
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
-    }
-
-    .frame3 button {
-      width: 100%;
-      height: 40px;
-      background: #4154F1;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-top: 0.25rem;
-      margin-bottom: 1rem;
-      transition: background 0.3s ease;
-    }
-
-    .frame3 button:hover {
-      background: #2f3fcc;
-    }
-
-    .frame3 .forgot-password {
-      font-size: 0.85rem;
-      color: #6C757D;
-      text-decoration: none;
-      align-self: flex-start;
-      margin-bottom: 1.5rem;
-      cursor: pointer;
-    }
-
-    .frame3 .register-text {
-      font-size: 1rem;
-      color: #212529;
-      text-align: center;
-      width: 100%;
-    }
-
-    .frame3 .register-link {
-      font-size: 0.95rem;
-      color: #0DCAF0;
-      text-decoration: none;
-      margin-left: 0.25rem;
-      cursor: pointer;
-    }
-
-    /* Responsive tweaks */
-    @media (max-width: 480px) {
-      header {
-        font-size: 20px;
-        padding-left: 10px;
-      }
-
-      .frame3 {
-        padding: 2rem 1.5rem;
-      }
-
-      .frame3 button {
-        width: 100%;
-      }
-    }
+      display: flex; align-items: center; padding-left: 20px;
+      font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 26px; color: #212529; z-index: 10; }
+    .container { display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 60px); }
+    .frame3 { display: flex; flex-direction: column; align-items: center; padding: 2.5rem; gap: 1rem; width: 90%; max-width: 700px; background: #fff;
+      border: 1px solid rgba(0,0,0,0.125); border-radius: 4px; box-shadow: 0 0 15px rgba(0,0,0,0.1); text-align: center; }
+    .icon { width: 80px; height: 80px; border-radius: 50%; background: #F9F0D9;
+      display: flex; justify-content: center; align-items: center; margin-bottom: 1rem; font-size: 48px; color: #7a5531; }
+    .frame3 h2 { font-weight: 700; font-size: 24px; color: #002d72; margin-bottom: 0.25rem; }
+    .frame3 p.subtitle { font-weight: 400; font-size: 14px; color: #777777; margin-bottom: 1.5rem; }
+    .frame3 label { font-size: 0.95rem; color: #212529; align-self: flex-start; margin-bottom: 0.25rem; }
+    .frame3 input[type="text"], .frame3 input[type="password"] { width: 100%; height: 2.5rem; padding: 0.5rem; border: 1px solid #CED4DA; border-radius: 4px; font-size: 1rem; margin-bottom: 1rem; }
+    .remember-me { width: 100%; display: flex; align-items: center; font-size: 0.9rem; color: #212529; margin-bottom: 1.25rem; user-select: none; }
+    .remember-me input[type="checkbox"] { margin-right: 0.5rem; width: 16px; height: 16px; cursor: pointer; }
+    .frame3 button { width: 100%; height: 40px; background: #4154F1; color: #fff; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-top: 0.25rem; margin-bottom: 1rem; transition: background 0.3s ease; }
+    .frame3 button:hover { background: #2f3fcc; }
+    .forgot-password { font-size: 0.85rem; color: #6C757D; text-decoration: none; align-self: flex-start; margin-bottom: 1.5rem; cursor: pointer; }
+    .register-text { font-size: 1rem; color: #212529; text-align: center; width: 100%; }
+    .register-link { font-size: 0.95rem; color: #0DCAF0; text-decoration: none; margin-left: 0.25rem; cursor: pointer; }
+    @media (max-width: 480px) { header { font-size: 20px; padding-left: 10px; } .frame3 { padding: 2rem 1.5rem; } }
   </style>
 </head>
 <body>
@@ -189,33 +38,23 @@
   <div class="container">
     <div class="frame3">
       <div class="icon">👤</div>
-
       <h2>Login</h2>
       <p class="subtitle">Enter your credentials to access your account</p>
-
       <label for="username">Email</label>
-      <input type="text" id="username" name="username" placeholder="Enter your email" />
-
+      <input type="text" id="username" placeholder="Enter your email" />
       <label for="password">Password</label>
-      <input type="password" id="password" name="password" placeholder="Enter your password" />
-
+      <input type="password" id="password" placeholder="Enter your password" />
       <div class="remember-me">
-        <input type="checkbox" id="remember" name="remember" />
+        <input type="checkbox" id="remember" />
         <label for="remember">Remember me</label>
       </div>
-
-      <button id="loginBtn" type="submit">Log in</button>
-
+      <button id="loginBtn">Log in</button>
       <a href="#" class="forgot-password">Forgot password?</a>
-
-      <p class="register-text">
-        Don't have an account?
-        <a href="#" class="register-link">Sign up</a>
-      </p>
+      <p class="register-text">Don't have an account?<a href="#" class="register-link">Sign up</a></p>
     </div>
   </div>
 
-  <!-- Firebase JS -->
+  <!-- Firebase JS SDK -->
   <script type="module" src="script.js"></script>
 </body>
 </html>
