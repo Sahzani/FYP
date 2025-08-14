@@ -33,17 +33,13 @@
     .send-application-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;box-shadow:0px 4px 12px rgba(0,102,255,0.3);position:absolute;top:-50px;right:2px;text-decoration:none;display:inline-block;}
     .send-application-btn:hover{transform:translateY(-1px);box-shadow:0px 6px 16px rgba(0,102,255,0.4);}
     .send-application-btn:active{transform:translateY(0px);box-shadow:0px 3px 8px rgba(0,102,255,0.25);}
-    .action-btn{padding:5px 10px;margin-right:5px;border:none;border-radius:6px;color:white;cursor:pointer;}
-    .edit-btn{background-color:#ff9800;}
-    .delete-btn{background-color:#f44336;}
-    /* Modal Styles */
-    .modal { display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.4); }
-    .modal-content { background-color:#fff; margin:10% auto; padding:20px; border-radius:10px; width:400px; position:relative; }
-    .close { color:#aaa; float:right; font-size:28px; font-weight:bold; cursor:pointer; }
-    .close:hover { color:#000; }
-    .modal input, .modal select, .modal textarea { width:100%; padding:10px; margin-bottom:15px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
-    .modal button { width:100%; padding:10px; border:none; border-radius:8px; background: #1e90ff; color:#fff; font-size:14px; font-weight:500; cursor:pointer; transition:0.25s; }
-    .modal button:hover{ background:#0066ff; }
+    .edit-btn, .delete-btn {padding:4px 8px;margin:0 2px;border:none;border-radius:6px;cursor:pointer;color:#fff;font-size:12px;}
+    .edit-btn{background:#ffa500;}
+    .delete-btn{background:#ff4c4c;}
+    /* Modal */
+    .modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,0.4);}
+    .modal-content{background:#fff;margin:10% auto;padding:20px;border-radius:10px;width:90%;max-width:500px;position:relative;}
+    .close{position:absolute;top:10px;right:20px;font-size:28px;font-weight:bold;cursor:pointer;}
     @media(max-width:768px){#menu-toggle{display:block;} .sidebar{left:-260px;width:260px;} .sidebar.show{left:0;} .main{margin-left:0;padding:80px 20px 20px;}}
   </style>
 </head>
@@ -91,108 +87,114 @@
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody id="recordsBody"></tbody>
+      <tbody id="recordsBody">
+        <!-- Records will appear here -->
+      </tbody>
     </table>
   </div>
 </div>
 
-<!-- Modal for editing -->
+<!-- Edit Modal -->
 <div id="editModal" class="modal">
   <div class="modal-content">
     <span class="close">&times;</span>
-    <h3>Edit Record</h3>
-    <input type="text" id="modalStudentName" placeholder="Student Name">
-    <input type="text" id="modalCourse" placeholder="Course">
-    <textarea id="modalReason" rows="3" placeholder="Absence Reason"></textarea>
+    <h2>Edit Record</h2>
+    <label>Student Name</label><input type="text" id="modalStudentName">
+    <label>Course</label><input type="text" id="modalCourse">
+    <label>Reason</label><input type="text" id="modalReason">
+    <label>Duration</label>
     <select id="modalDuration">
-      <option value="">Select duration</option>
       <option value="1 day">1 day</option>
       <option value="2 days">2 days</option>
       <option value="3 days">3 days</option>
       <option value="1 week">1 week</option>
     </select>
-    <button id="saveChanges">Save Changes</button>
+    <label>Status</label>
+    <select id="modalStatus">
+      <option value="In Progress">In Progress</option>
+      <option value="Approved">Approved</option>
+    </select>
+    <button id="saveBtn" style="margin-top:10px;padding:8px 12px;border:none;border-radius:6px;background:#1e90ff;color:white;cursor:pointer;">Save</button>
   </div>
 </div>
 
 <script>
-const menuToggle = document.getElementById('menu-toggle');
-const sidebar = document.querySelector('.sidebar');
-const recordsBody = document.getElementById('recordsBody');
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const recordsBody = document.getElementById('recordsBody');
 
-menuToggle.addEventListener('click',()=>{sidebar.classList.toggle('show');});
-document.addEventListener('click',(e)=>{
-  if(window.innerWidth<=768 && sidebar.classList.contains('show')){
-    if(!sidebar.contains(e.target) && e.target!==menuToggle) sidebar.classList.remove('show');
-  }
-});
-
-let editIndex = null;
-const modal = document.getElementById('editModal');
-const closeModal = document.querySelector('.close');
-const saveBtn = document.getElementById('saveChanges');
-
-function renderRecords() {
-  const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
-  recordsBody.innerHTML = '';
-  records.forEach((rec, idx) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${idx+1}</td>
-      <td>${rec.studentName}</td>
-      <td>${rec.course}</td>
-      <td>${rec.reason}</td>
-      <td>${rec.duration}</td>
-      <td><span class="status ${rec.status==='Approved'?'approved':'in-progress'}">${rec.status}</span></td>
-      <td>
-        <button class="action-btn edit-btn" onclick="openEditModal(${idx})">Edit</button>
-        <button class="action-btn delete-btn" onclick="deleteRecord(${idx})">Delete</button>
-      </td>
-    `;
-    recordsBody.appendChild(tr);
+  menuToggle.addEventListener('click',()=>{sidebar.classList.toggle('show');});
+  document.addEventListener('click',(e)=>{
+    if(window.innerWidth<=768 && sidebar.classList.contains('show')){
+      if(!sidebar.contains(e.target) && e.target!==menuToggle) sidebar.classList.remove('show');
+    }
   });
-}
 
-function deleteRecord(index){
-  const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
-  if(confirm("Are you sure you want to delete this record?")){
+  let editIndex = null;
+  const modal = document.getElementById('editModal');
+  const closeBtn = document.querySelector('.close');
+  const saveBtn = document.getElementById('saveBtn');
+
+  function renderRecords() {
+    const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
+    recordsBody.innerHTML='';
+    records.forEach((rec, idx)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML=`
+        <td>${idx+1}</td>
+        <td>${rec.studentName}</td>
+        <td>${rec.course}</td>
+        <td>${rec.reason}</td>
+        <td>${rec.duration}</td>
+        <td><span class="status ${rec.status==='Approved'?'approved':'in-progress'}">${rec.status}</span></td>
+        <td>
+          <button class="edit-btn" onclick="openEditModal(${idx})">Edit</button>
+          <button class="delete-btn" onclick="deleteRecord(${idx})">Delete</button>
+        </td>
+      `;
+      recordsBody.appendChild(tr);
+    });
+  }
+
+  function openEditModal(index){
+    const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
+    const rec = records[index];
+    if(rec){
+      editIndex = index;
+      document.getElementById('modalStudentName').value = rec.studentName;
+      document.getElementById('modalCourse').value = rec.course;
+      document.getElementById('modalReason').value = rec.reason;
+      document.getElementById('modalDuration').value = rec.duration;
+      document.getElementById('modalStatus').value = rec.status;
+      modal.style.display='block';
+    }
+  }
+
+  closeBtn.onclick = () => { modal.style.display='none'; }
+
+  saveBtn.onclick = () => {
+    const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
+    if(editIndex!==null){
+      records[editIndex].studentName = document.getElementById('modalStudentName').value;
+      records[editIndex].course = document.getElementById('modalCourse').value;
+      records[editIndex].reason = document.getElementById('modalReason').value;
+      records[editIndex].duration = document.getElementById('modalDuration').value;
+      records[editIndex].status = document.getElementById('modalStatus').value;
+      localStorage.setItem('absenceRecords', JSON.stringify(records));
+      renderRecords();
+      modal.style.display='none';
+    }
+  }
+
+  function deleteRecord(index){
+    const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
     records.splice(index,1);
     localStorage.setItem('absenceRecords', JSON.stringify(records));
     renderRecords();
   }
-}
 
-function openEditModal(index){
-  const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
-  const rec = records[index];
-  if(rec){
-    editIndex = index;
-    document.getElementById('modalStudentName').value = rec.studentName;
-    document.getElementById('modalCourse').value = rec.course;
-    document.getElementById('modalReason').value = rec.reason;
-    document.getElementById('modalDuration').value = rec.duration;
-    modal.style.display = 'block';
-  }
-}
-
-closeModal.onclick = () => { modal.style.display = 'none'; }
-window.onclick = (e) => { if(e.target===modal) modal.style.display='none'; }
-
-saveBtn.onclick = () => {
-  const records = JSON.parse(localStorage.getItem('absenceRecords')) || [];
-  if(editIndex!==null){
-    records[editIndex].studentName = document.getElementById('modalStudentName').value;
-    records[editIndex].course = document.getElementById('modalCourse').value;
-    records[editIndex].reason = document.getElementById('modalReason').value;
-    records[editIndex].duration = document.getElementById('modalDuration').value;
-    localStorage.setItem('absenceRecords', JSON.stringify(records));
-    renderRecords();
-    modal.style.display='none';
-  }
-}
-
-renderRecords();
-window.addEventListener('storage', renderRecords);
+  window.addEventListener('storage', renderRecords);
+  renderRecords();
 </script>
 
 </body>
