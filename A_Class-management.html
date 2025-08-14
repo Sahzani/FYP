@@ -1,307 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>iAttend Admin - Class & Subject Management</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    body { font-family: 'Nunito', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-    
-    /* Header */
-    header { 
-      position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; 
-      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1); display: flex; align-items: center; padding-left: 20px;
-      font-weight: 700; font-size: 26px; color: #212529; z-index: 1000; 
-    }
-
-    #menu-toggle { display: none; font-size: 28px; margin-right: 15px; cursor: pointer; }
-
-    /* Sidebar */
-    .sidebar { position: fixed; top: 60px; left: 0; width: 260px; height: calc(100% - 60px); background: #FFEED3; padding: 20px; box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1); transition: left 0.3s ease; z-index: 999; }
-    .sidebar-section { margin-bottom: 30px; }
-    .sidebar-section-title { font-size: 11px; text-transform: uppercase; color: #899BBD; margin-bottom: 10px; }
-    .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 10px; background: #FFEED3; border-radius: 4px; font-size: 15px; font-weight: 600; color: #012970; text-decoration: none; transition: background 0.3s; }
-    .sidebar-link.active { background: rgba(221, 168, 83, 0.44); color: #4154F1; }
-    .sidebar-link:hover { background: #ffe1ab; }
-
-    /* Main content */
-    .main { margin-left: 260px; padding: 100px 30px 30px; }
-
-    /* Breadcrumb */
-    .page-header { margin-bottom: 2rem; }
-    .page-title { font-size: 1.875rem; font-weight: 700; color: #4154F1; }
-    .breadcrumb { font-size: 0.875rem; color: #555; margin-top: 0.25rem; }
-    .breadcrumb a { color: #4154F1; text-decoration: underline; }
-
-    table th, table td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #ddd; font-size: 14px; }
-    table th { background: #f0f0f0; font-weight: 700; }
-    .actions button { margin-right: 0.5rem; padding: 0.35rem 0.6rem; font-size: 13px; border-radius: 4px; cursor: pointer; }
-    .actions button.edit { background: #ffc107; color: #212529; }
-    .actions button.delete { background: #dc3545; color: white; }
-    .actions button.edit:hover { background: #e6b800; }
-    .actions button.delete:hover { background: #b52a2a; }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      #menu-toggle { display: block; }
-      .sidebar { left: -260px; width: 260px; }
-      .sidebar.show { left: 0; }
-      .main { margin-left: 0; padding: 80px 20px 20px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iAttend Admin - Class & Subject Management</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+  body { font-family: 'Nunito', sans-serif; background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%); }
+  /* Sidebar transition for mobile */
+  #sidebar { transition: left 0.3s ease; }
+  @media (max-width: 768px){
+    #sidebar { left: -16rem; position: fixed; top: 0; height: 100%; z-index: 30; }
+    #sidebar.show { left: 0; }
+  }
+</style>
 </head>
-<body>
+<body class="min-h-screen">
 
-  <!-- Header -->
-  <header>
-    <span id="menu-toggle">&#9776;</span>
-    iAttend Admin
-  </header>
+<!-- Header -->
+<header class="fixed top-0 left-0 right-0 h-16 bg-white shadow flex justify-between items-center px-4 z-40">
+  <div class="flex items-center space-x-4">
+    <button id="menu-toggle" class="text-2xl md:hidden"><i class="fas fa-bars"></i></button>
+    <div class="text-2xl font-bold text-gray-800">iAttend Admin</div>
+  </div>
+  <div class="flex items-center space-x-4">
+    <div class="relative w-64 hidden md:block">
+      <input type="text" placeholder="Search" class="w-full pl-10 pr-4 py-2 text-sm rounded-full border border-gray-200 focus:ring-2 focus:ring-blue-500">
+      <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+    </div>
+    <a href="#" class="flex items-center space-x-2">
+      <span class="font-semibold text-gray-800">Admin</span>
+      <div class="h-10 w-10 rounded-full overflow-hidden">
+        <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=A" alt="Admin" class="w-full h-full object-cover">
+      </div>
+    </a>
+  </div>
+</header>
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Analyse</div>
-      <a class="sidebar-link " href="#">Dashboard</a>
-      <a class="sidebar-link" href="#">Attendance</a>
-      <a class="sidebar-link" href="#">Report</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Manage</div>
-      <a class="sidebar-link" href="#">Teacher</a>
-      <a class="sidebar-link" href="#">Student</a>
-      <a class="sidebar-link" href="#">Class Management</a>
-      <a class="sidebar-link" href="#">Add User</a>
-    </div>
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="#">Logout</a>
-    </div>
+<!-- Sidebar -->
+<div id="sidebar" class="fixed top-16 left-0 w-64 h-[calc(100%-4rem)] bg-[#FFEED3] p-4 shadow overflow-y-auto z-30">
+  <div class="mb-6">
+    <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Analyse</div>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold bg-[#e5d7b8]"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-calendar-check"></i> Attendance</a>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-file-alt"></i> Reports</a>
+  </div>
+  <div class="mb-6">
+    <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Manage</div>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-chalkboard-teacher"></i> Teacher</a>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-user-graduate"></i> Student</a>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-school"></i> Class Management</a>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-user-plus"></i> Add User</a>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-book"></i> Subjects</a>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-camera"></i> Face Recognition</a>
+  </div>
+  <div class="mb-6">
+    <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Logs</div>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-history"></i> Admin Actions</a>
+  </div>
+  <div>
+    <a class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-red-600 font-semibold"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<!-- Main Content -->
+<main class="pt-20 px-6 md:ml-64 transition-all duration-300 space-y-8">
+
+  <!-- Create Class Card -->
+  <div class="bg-white p-6 rounded-2xl shadow">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">Create Class</h2>
+    <form id="create-class-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <input type="text" id="class-name" placeholder="Class Name (e.g. DCNG 03)" class="border rounded px-3 py-2" required>
+      <input type="text" id="section" placeholder="Section (e.g. A)" class="border rounded px-3 py-2" required>
+      <select id="year-level" class="border rounded px-3 py-2" required>
+        <option value="" disabled selected>Select Year Level</option>
+        <option value="1">Year 1</option>
+        <option value="2">Year 2</option>
+        <option value="3">Year 3</option>
+        <option value="4">Year 4</option>
+      </select>
+      <button type="submit" class="md:col-span-3 bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Create Class</button>
+    </form>
   </div>
 
-  <!-- Main Content -->
-  <div class="main">
+  <!-- Assign Subjects Card -->
+  <div class="bg-white p-6 rounded-2xl shadow">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">Assign Subjects to Class</h2>
+    <form id="assign-subject-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <select id="assign-class" class="border rounded px-3 py-2" required>
+        <option value="" disabled selected>Select Class</option>
+      </select>
+      <select id="assign-subject" class="border rounded px-3 py-2" required>
+        <option value="" disabled selected>Select Subject</option>
+        <option value="Math 101">Math 101</option>
+        <option value="English">English</option>
+        <option value="Science">Science</option>
+        <option value="History">History</option>
+      </select>
+      <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Assign Subject</button>
+    </form>
 
-    <!-- Create Class Section -->
-    <div class="page-header">
-      <h1 class="page-title">Create Class</h1>
-      <h2 class="breadcrumb">
-        <span class="section">Class Management</span> / 
-        <span class="current">Create Class</span>
-      </h2>
-    </div>
-    <section class="bg-white p-6 rounded-2xl shadow mb-6">
-      <form id="create-class-form" class="space-y-4">
-        <div class="flex gap-4 flex-wrap">
-          <div class="flex-1">
-            <label for="class-name" class="block font-medium mb-1">Class Name</label>
-            <input type="text" id="class-name" placeholder="e.g. DCNG 03" class="w-full border rounded px-3 py-2" required>
-          </div>
-          <div class="flex-1">
-            <label for="section" class="block font-medium mb-1">Section</label>
-            <input type="text" id="section" placeholder="e.g. A" class="w-full border rounded px-3 py-2" required>
-          </div>
-          <div class="flex-1">
-            <label for="year-level" class="block font-medium mb-1">Year Level</label>
-            <select id="year-level" class="w-full border rounded px-3 py-2" required>
-              <option value="" disabled selected>Select Year Level</option>
-              <option value="1">Year 1</option>
-              <option value="2">Year 2</option>
-              <option value="3">Year 3</option>
-              <option value="4">Year 4</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Create Class</button>
-      </form>
-    </section>
-
-    <!-- Assign Subjects Section -->
-    <div class="page-header">
-      <h1 class="page-title">Assign Subjects to Class</h1>
-      <h2 class="breadcrumb">
-        <span class="section">Class Management</span> / 
-        <span class="current">Assign Subjects</span>
-      </h2>
-    </div>
-    <section class="bg-white p-6 rounded-2xl shadow mb-6">
-      <form id="assign-subject-form" class="space-y-4">
-        <div class="flex gap-4 flex-wrap">
-          <div class="flex-1">
-            <label for="assign-class" class="block font-medium mb-1">Select Class</label>
-            <select id="assign-class" class="w-full border rounded px-3 py-2" required>
-              <option value="" disabled selected>Select Class</option>
-            </select>
-          </div>
-          <div class="flex-1">
-            <label for="assign-subject" class="block font-medium mb-1">Select Subject</label>
-            <select id="assign-subject" class="w-full border rounded px-3 py-2" required>
-              <option value="" disabled selected>Select Subject</option>
-              <option value="Math 101">Math 101</option>
-              <option value="English">English</option>
-              <option value="Science">Science</option>
-              <option value="History">History</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Assign Subject</button>
-      </form>
-
-      <table class="w-full mt-4 rounded overflow-hidden">
-        <thead>
-          <tr>
-            <th>Class</th>
-            <th>Subject</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="class-subject-table"></tbody>
-      </table>
-    </section>
-
-    <!-- Assign Teachers/Students Section -->
-    <div class="page-header">
-      <h1 class="page-title">Assign Teachers/Students</h1>
-      <h2 class="breadcrumb">
-        <span class="section">Class Management</span> / 
-        <span class="current">Assign People</span>
-      </h2>
-    </div>
-    <section class="bg-white p-6 rounded-2xl shadow mb-6">
-      <form id="assign-people-form" class="space-y-4">
-        <div class="flex gap-4 flex-wrap">
-          <div class="flex-1">
-            <label for="assign-person-class" class="block font-medium mb-1">Select Class</label>
-            <select id="assign-person-class" class="w-full border rounded px-3 py-2" required>
-              <option value="" disabled selected>Select Class</option>
-            </select>
-          </div>
-          <div class="flex-1">
-            <label for="person-type" class="block font-medium mb-1">Assign Type</label>
-            <select id="person-type" class="w-full border rounded px-3 py-2" required>
-              <option value="" disabled selected>Select Type</option>
-              <option value="Teacher">Teacher</option>
-              <option value="Student">Student</option>
-            </select>
-          </div>
-          <div class="flex-1">
-            <label for="person-name" class="block font-medium mb-1">Name</label>
-            <input type="text" id="person-name" placeholder="Enter name" class="w-full border rounded px-3 py-2" required>
-          </div>
-        </div>
-        <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Assign</button>
-      </form>
-
-      <table class="w-full mt-4 rounded overflow-hidden">
-        <thead>
-          <tr>
-            <th>Class</th>
-            <th>Type</th>
-            <th>Name</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="people-class-table"></tbody>
-      </table>
-    </section>
-
+    <table class="w-full rounded overflow-hidden text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 text-left">Class</th>
+          <th class="px-4 py-2 text-left">Subject</th>
+          <th class="px-4 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="class-subject-table"></tbody>
+    </table>
   </div>
 
-  <script>
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    menuToggle.addEventListener('click', () => sidebar.classList.toggle('show'));
-    document.addEventListener('click', (e) => {
-      if (window.innerWidth <= 768 && sidebar.classList.contains('show')) {
-        if (!sidebar.contains(e.target) && e.target !== menuToggle) sidebar.classList.remove('show');
-      }
-    });
+  <!-- Assign People Card -->
+  <div class="bg-white p-6 rounded-2xl shadow">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">Assign Teachers/Students</h2>
+    <form id="assign-people-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+      <select id="assign-person-class" class="border rounded px-3 py-2" required>
+        <option value="" disabled selected>Select Class</option>
+      </select>
+      <select id="person-type" class="border rounded px-3 py-2" required>
+        <option value="" disabled selected>Select Type</option>
+        <option value="Teacher">Teacher</option>
+        <option value="Student">Student</option>
+      </select>
+      <input type="text" id="person-name" placeholder="Enter Name" class="border rounded px-3 py-2" required>
+      <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Assign</button>
+    </form>
 
-    // In-memory data
-    const classes = [], classSubjects = [], peopleAssignments = [];
-    const createClassForm = document.getElementById('create-class-form');
-    const assignSubjectForm = document.getElementById('assign-subject-form');
-    const assignPeopleForm = document.getElementById('assign-people-form');
-    const assignClassSelect = document.getElementById('assign-class');
-    const assignPersonClassSelect = document.getElementById('assign-person-class');
-    const classSubjectTableBody = document.getElementById('class-subject-table');
-    const peopleClassTableBody = document.getElementById('people-class-table');
+    <table class="w-full rounded overflow-hidden text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 text-left">Class</th>
+          <th class="px-4 py-2 text-left">Type</th>
+          <th class="px-4 py-2 text-left">Name</th>
+          <th class="px-4 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="people-class-table"></tbody>
+    </table>
+  </div>
 
-    function updateClassSelectOptions() {
-      [assignClassSelect, assignPersonClassSelect].forEach(select => {
-        select.innerHTML = '<option value="" disabled selected>Select Class</option>';
-        classes.forEach((cls, idx) => {
-          const option = document.createElement('option');
-          option.value = idx;
-          option.textContent = `${cls.name} - Section ${cls.section} (Year ${cls.yearLevel})`;
-          select.appendChild(option);
-        });
-      });
+</main>
+
+<script>
+  // Sidebar toggle
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.getElementById('sidebar');
+  menuToggle.addEventListener('click', () => sidebar.classList.toggle('show'));
+  document.addEventListener('click', (e) => {
+    if(window.innerWidth <=768 && sidebar.classList.contains('show')){
+      if(!sidebar.contains(e.target) && e.target !== menuToggle) sidebar.classList.remove('show');
     }
+  });
 
-    function renderClassSubjects() {
-      classSubjectTableBody.innerHTML = '';
-      classSubjects.forEach((item, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${item.class.name} - Section ${item.class.section} (Year ${item.class.yearLevel})</td>
-                        <td>${item.subject}</td>
-                        <td class="actions"><button class="delete">Delete</button></td>`;
-        tr.querySelector('.delete').onclick = () => { classSubjects.splice(index,1); renderClassSubjects(); };
-        classSubjectTableBody.appendChild(tr);
+  // In-memory data
+  const classes=[], classSubjects=[], peopleAssignments=[];
+  const createClassForm=document.getElementById('create-class-form');
+  const assignSubjectForm=document.getElementById('assign-subject-form');
+  const assignPeopleForm=document.getElementById('assign-people-form');
+  const assignClassSelect=document.getElementById('assign-class');
+  const assignPersonClassSelect=document.getElementById('assign-person-class');
+  const classSubjectTableBody=document.getElementById('class-subject-table');
+  const peopleClassTableBody=document.getElementById('people-class-table');
+
+  function updateClassSelectOptions(){
+    [assignClassSelect, assignPersonClassSelect].forEach(select=>{
+      select.innerHTML='<option value="" disabled selected>Select Class</option>';
+      classes.forEach((cls,idx)=>{
+        const option=document.createElement('option');
+        option.value=idx;
+        option.textContent=`${cls.name} - Section ${cls.section} (Year ${cls.yearLevel})`;
+        select.appendChild(option);
       });
-    }
-
-    function renderPeopleAssignments() {
-      peopleClassTableBody.innerHTML = '';
-      peopleAssignments.forEach((item, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${item.class.name} - Section ${item.class.section} (Year ${item.class.yearLevel})</td>
-                        <td>${item.type}</td>
-                        <td>${item.name}</td>
-                        <td class="actions"><button class="delete">Delete</button></td>`;
-        tr.querySelector('.delete').onclick = () => { peopleAssignments.splice(index,1); renderPeopleAssignments(); };
-        peopleClassTableBody.appendChild(tr);
-      });
-    }
-
-    createClassForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const name = document.getElementById('class-name').value.trim();
-      const section = document.getElementById('section').value.trim();
-      const yearLevel = document.getElementById('year-level').value;
-      if (classes.some(c=>c.name===name && c.section===section && c.yearLevel===yearLevel)) { alert('Class exists'); return; }
-      classes.push({name, section, yearLevel});
-      updateClassSelectOptions();
-      createClassForm.reset();
-      alert('Class created!');
     });
+  }
 
-    assignSubjectForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const cls = classes[assignClassSelect.value];
-      const subject = document.getElementById('assign-subject').value;
-      if (!cls) return alert('Select class');
-      if (classSubjects.some(cs=>cs.class===cls && cs.subject===subject)) return alert('Already assigned');
-      classSubjects.push({class:cls, subject});
-      renderClassSubjects();
-      assignSubjectForm.reset();
-      alert('Subject assigned!');
+  function renderClassSubjects(){
+    classSubjectTableBody.innerHTML='';
+    classSubjects.forEach((item,index)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="px-4 py-2">${item.class.name} - Section ${item.class.section} (Year ${item.class.yearLevel})</td>
+                    <td class="px-4 py-2">${item.subject}</td>
+                    <td class="px-4 py-2"><button class="bg-red-500 text-white px-2 py-1 rounded delete">Delete</button></td>`;
+      tr.querySelector('.delete').onclick=()=>{ classSubjects.splice(index,1); renderClassSubjects(); };
+      classSubjectTableBody.appendChild(tr);
     });
+  }
 
-    assignPeopleForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const cls = classes[assignPersonClassSelect.value];
-      const type = document.getElementById('person-type').value;
-      const name = document.getElementById('person-name').value.trim();
-      if (!cls) return alert('Select class');
-      if (peopleAssignments.some(pa=>pa.class===cls && pa.type===type && pa.name.toLowerCase()===name.toLowerCase())) return alert('Already assigned');
-      peopleAssignments.push({class:cls, type, name});
-      renderPeopleAssignments();
-      assignPeopleForm.reset();
-      alert(`${type} assigned!`);
+  function renderPeopleAssignments(){
+    peopleClassTableBody.innerHTML='';
+    peopleAssignments.forEach((item,index)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="px-4 py-2">${item.class.name} - Section ${item.class.section} (Year ${item.class.yearLevel})</td>
+                    <td class="px-4 py-2">${item.type}</td>
+                    <td class="px-4 py-2">${item.name}</td>
+                    <td class="px-4 py-2"><button class="bg-red-500 text-white px-2 py-1 rounded delete">Delete</button></td>`;
+      tr.querySelector('.delete').onclick=()=>{ peopleAssignments.splice(index,1); renderPeopleAssignments(); };
+      peopleClassTableBody.appendChild(tr);
     });
-  </script>
+  }
+
+  createClassForm.addEventListener('submit',e=>{
+    e.preventDefault();
+    const name=document.getElementById('class-name').value.trim();
+    const section=document.getElementById('section').value.trim();
+    const yearLevel=document.getElementById('year-level').value;
+    if(classes.some(c=>c.name===name && c.section===section && c.yearLevel===yearLevel)) return alert('Class exists');
+    classes.push({name,section,yearLevel});
+    updateClassSelectOptions();
+    createClassForm.reset();
+    alert('Class created!');
+  });
+
+  assignSubjectForm.addEventListener('submit',e=>{
+    e.preventDefault();
+    const cls=classes[assignClassSelect.value];
+    const subject=document.getElementById('assign-subject').value;
+    if(!cls) return alert('Select class');
+    if(classSubjects.some(cs=>cs.class===cls && cs.subject===subject)) return alert('Already assigned');
+    classSubjects.push({class:cls,subject});
+    renderClassSubjects();
+    assignSubjectForm.reset();
+    alert('Subject assigned!');
+  });
+
+  assignPeopleForm.addEventListener('submit',e=>{
+    e.preventDefault();
+    const cls=classes[assignPersonClassSelect.value];
+    const type=document.getElementById('person-type').value;
+    const name=document.getElementById('person-name').value.trim();
+    if(!cls) return alert('Select class');
+    if(peopleAssignments.some(pa=>pa.class===cls && pa.type===type && pa.name.toLowerCase()===name.toLowerCase())) return alert('Already assigned');
+    peopleAssignments.push({class:cls,type,name});
+    renderPeopleAssignments();
+    assignPeopleForm.reset();
+    alert(`${type} assigned!`);
+  });
+</script>
 
 </body>
 </html>
