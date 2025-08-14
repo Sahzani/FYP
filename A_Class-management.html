@@ -1,283 +1,307 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>iAttend Admin - Class & Subject Management</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<style>
-  body { font-family: 'Nunito', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iAttend Admin - Class & Subject Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body { font-family: 'Nunito', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+    
+    /* Header */
+    header { 
+      position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; 
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1); display: flex; align-items: center; padding-left: 20px;
+      font-weight: 700; font-size: 26px; color: #212529; z-index: 1000; 
+    }
 
-  header {
-    position: fixed; top: 0; left: 0; right: 0; height: 60px;
-    background: #fff; box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
-    display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 1000;
-  }
-  #menu-toggle { display: none; font-size: 28px; cursor: pointer; }
-  .header-right { display: flex; align-items: center; gap: 15px; }
-  .header-search { position: relative; }
-  .header-search input { padding: 6px 10px 6px 30px; border-radius: 9999px; border: 1px solid #ddd; }
-  .header-search i { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: #888; }
+    #menu-toggle { display: none; font-size: 28px; margin-right: 15px; cursor: pointer; }
 
-  .sidebar {
-    position: fixed; top: 60px; left: 0; width: 260px; height: calc(100% - 60px);
-    background: #FFEED3; padding: 20px; box-shadow: 0 0 20px rgba(1,41,112,0.1);
-    transition: left 0.3s ease; z-index: 999;
-  }
-  .sidebar-section { margin-bottom: 30px; }
-  .sidebar-section-title { font-size: 11px; text-transform: uppercase; color: #899BBD; margin-bottom: 10px; }
-  .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-size: 15px; font-weight: 600; color: #012970; text-decoration: none; transition: background 0.3s; }
-  .sidebar-link.active { background: rgba(221, 168, 83, 0.44); color: #4154F1; }
-  .sidebar-link:hover { background: #ffe1ab; }
+    /* Sidebar */
+    .sidebar { position: fixed; top: 60px; left: 0; width: 260px; height: calc(100% - 60px); background: #FFEED3; padding: 20px; box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1); transition: left 0.3s ease; z-index: 999; }
+    .sidebar-section { margin-bottom: 30px; }
+    .sidebar-section-title { font-size: 11px; text-transform: uppercase; color: #899BBD; margin-bottom: 10px; }
+    .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 10px; background: #FFEED3; border-radius: 4px; font-size: 15px; font-weight: 600; color: #012970; text-decoration: none; transition: background 0.3s; }
+    .sidebar-link.active { background: rgba(221, 168, 83, 0.44); color: #4154F1; }
+    .sidebar-link:hover { background: #ffe1ab; }
 
-  .main { margin-left: 260px; padding: 100px 30px 30px; }
+    /* Main content */
+    .main { margin-left: 260px; padding: 100px 30px 30px; }
 
-  /* Tables and actions */
-  table th, table td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #ddd; font-size: 14px; }
-  table th { background: #f0f0f0; font-weight: 700; }
-  .actions button { margin-right: 0.5rem; padding: 0.35rem 0.6rem; font-size: 13px; border-radius: 4px; cursor: pointer; }
-  .actions button.edit { background: #ffc107; color: #212529; }
-  .actions button.delete { background: #dc3545; color: white; }
-  .actions button.edit:hover { background: #e6b800; }
-  .actions button.delete:hover { background: #b52a2a; }
+    /* Breadcrumb */
+    .page-header { margin-bottom: 2rem; }
+    .page-title { font-size: 1.875rem; font-weight: 700; color: #4154F1; }
+    .breadcrumb { font-size: 0.875rem; color: #555; margin-top: 0.25rem; }
+    .breadcrumb a { color: #4154F1; text-decoration: underline; }
 
-  /* Responsive */
-  @media (max-width: 768px) {
-    #menu-toggle { display: block; }
-    .sidebar { left: -260px; }
-    .sidebar.show { left: 0; }
-    .main { margin-left: 0; padding: 80px 20px 20px; }
-  }
-</style>
+    table th, table td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #ddd; font-size: 14px; }
+    table th { background: #f0f0f0; font-weight: 700; }
+    .actions button { margin-right: 0.5rem; padding: 0.35rem 0.6rem; font-size: 13px; border-radius: 4px; cursor: pointer; }
+    .actions button.edit { background: #ffc107; color: #212529; }
+    .actions button.delete { background: #dc3545; color: white; }
+    .actions button.edit:hover { background: #e6b800; }
+    .actions button.delete:hover { background: #b52a2a; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #menu-toggle { display: block; }
+      .sidebar { left: -260px; width: 260px; }
+      .sidebar.show { left: 0; }
+      .main { margin-left: 0; padding: 80px 20px 20px; }
+    }
+  </style>
 </head>
 <body>
 
-<header>
-  <span id="menu-toggle">&#9776;</span>
-  <div class="text-2xl font-bold text-gray-800">iAttend Admin</div>
-  <div class="header-right">
-    <div class="header-search">
-      <input type="text" placeholder="Search">
-      <i class="fas fa-search"></i>
+  <!-- Header -->
+  <header>
+    <span id="menu-toggle">&#9776;</span>
+    iAttend Admin
+  </header>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link " href="#">Dashboard</a>
+      <a class="sidebar-link" href="#">Attendance</a>
+      <a class="sidebar-link" href="#">Report</a>
     </div>
-    <a href="#" class="flex items-center gap-2">
-      <span class="font-semibold text-gray-800">Admin</span>
-      <div class="h-10 w-10 rounded-full overflow-hidden">
-        <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=A" alt="Admin" class="w-full h-full object-cover">
-      </div>
-    </a>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Manage</div>
+      <a class="sidebar-link" href="#">Teacher</a>
+      <a class="sidebar-link" href="#">Student</a>
+      <a class="sidebar-link" href="#">Class Management</a>
+      <a class="sidebar-link" href="#">Add User</a>
+    </div>
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="#">Logout</a>
+    </div>
   </div>
-</header>
 
-<div class="sidebar">
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Analyse</div>
-    <a class="sidebar-link active" href="#">Dashboard</a>
-    <a class="sidebar-link" href="#">Attendance</a>
-    <a class="sidebar-link" href="#">Report</a>
+  <!-- Main Content -->
+  <div class="main">
+
+    <!-- Create Class Section -->
+    <div class="page-header">
+      <h1 class="page-title">Create Class</h1>
+      <h2 class="breadcrumb">
+        <span class="section">Class Management</span> / 
+        <span class="current">Create Class</span>
+      </h2>
+    </div>
+    <section class="bg-white p-6 rounded-2xl shadow mb-6">
+      <form id="create-class-form" class="space-y-4">
+        <div class="flex gap-4 flex-wrap">
+          <div class="flex-1">
+            <label for="class-name" class="block font-medium mb-1">Class Name</label>
+            <input type="text" id="class-name" placeholder="e.g. DCNG 03" class="w-full border rounded px-3 py-2" required>
+          </div>
+          <div class="flex-1">
+            <label for="section" class="block font-medium mb-1">Section</label>
+            <input type="text" id="section" placeholder="e.g. A" class="w-full border rounded px-3 py-2" required>
+          </div>
+          <div class="flex-1">
+            <label for="year-level" class="block font-medium mb-1">Year Level</label>
+            <select id="year-level" class="w-full border rounded px-3 py-2" required>
+              <option value="" disabled selected>Select Year Level</option>
+              <option value="1">Year 1</option>
+              <option value="2">Year 2</option>
+              <option value="3">Year 3</option>
+              <option value="4">Year 4</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Create Class</button>
+      </form>
+    </section>
+
+    <!-- Assign Subjects Section -->
+    <div class="page-header">
+      <h1 class="page-title">Assign Subjects to Class</h1>
+      <h2 class="breadcrumb">
+        <span class="section">Class Management</span> / 
+        <span class="current">Assign Subjects</span>
+      </h2>
+    </div>
+    <section class="bg-white p-6 rounded-2xl shadow mb-6">
+      <form id="assign-subject-form" class="space-y-4">
+        <div class="flex gap-4 flex-wrap">
+          <div class="flex-1">
+            <label for="assign-class" class="block font-medium mb-1">Select Class</label>
+            <select id="assign-class" class="w-full border rounded px-3 py-2" required>
+              <option value="" disabled selected>Select Class</option>
+            </select>
+          </div>
+          <div class="flex-1">
+            <label for="assign-subject" class="block font-medium mb-1">Select Subject</label>
+            <select id="assign-subject" class="w-full border rounded px-3 py-2" required>
+              <option value="" disabled selected>Select Subject</option>
+              <option value="Math 101">Math 101</option>
+              <option value="English">English</option>
+              <option value="Science">Science</option>
+              <option value="History">History</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Assign Subject</button>
+      </form>
+
+      <table class="w-full mt-4 rounded overflow-hidden">
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>Subject</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="class-subject-table"></tbody>
+      </table>
+    </section>
+
+    <!-- Assign Teachers/Students Section -->
+    <div class="page-header">
+      <h1 class="page-title">Assign Teachers/Students</h1>
+      <h2 class="breadcrumb">
+        <span class="section">Class Management</span> / 
+        <span class="current">Assign People</span>
+      </h2>
+    </div>
+    <section class="bg-white p-6 rounded-2xl shadow mb-6">
+      <form id="assign-people-form" class="space-y-4">
+        <div class="flex gap-4 flex-wrap">
+          <div class="flex-1">
+            <label for="assign-person-class" class="block font-medium mb-1">Select Class</label>
+            <select id="assign-person-class" class="w-full border rounded px-3 py-2" required>
+              <option value="" disabled selected>Select Class</option>
+            </select>
+          </div>
+          <div class="flex-1">
+            <label for="person-type" class="block font-medium mb-1">Assign Type</label>
+            <select id="person-type" class="w-full border rounded px-3 py-2" required>
+              <option value="" disabled selected>Select Type</option>
+              <option value="Teacher">Teacher</option>
+              <option value="Student">Student</option>
+            </select>
+          </div>
+          <div class="flex-1">
+            <label for="person-name" class="block font-medium mb-1">Name</label>
+            <input type="text" id="person-name" placeholder="Enter name" class="w-full border rounded px-3 py-2" required>
+          </div>
+        </div>
+        <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Assign</button>
+      </form>
+
+      <table class="w-full mt-4 rounded overflow-hidden">
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="people-class-table"></tbody>
+      </table>
+    </section>
+
   </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Manage</div>
-    <a class="sidebar-link" href="#">Teacher</a>
-    <a class="sidebar-link" href="#">Student</a>
-    <a class="sidebar-link" href="#">Subject</a>
-    <a class="sidebar-link" href="#">Add User</a>
-  </div>
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="#">Logout</a>
-  </div>
-</div>
 
-<div class="main">
-
-  <h1 class="text-3xl font-bold text-[#4154F1] mb-6">Class & Subject Management</h1>
-
-  <!-- Create Class -->
-  <section class="bg-white p-6 rounded-2xl shadow mb-6">
-    <h2 class="text-xl font-semibold mb-4">Create Class</h2>
-    <form id="create-class-form" class="space-y-4">
-      <div class="flex gap-4 flex-wrap">
-        <div class="flex-1 min-w-[200px]">
-          <label for="class-name" class="block font-medium mb-1">Class Name</label>
-          <input type="text" id="class-name" placeholder="e.g. DCNG 03" class="w-full border rounded px-3 py-2" required>
-        </div>
-        <div class="flex-1 min-w-[200px]">
-          <label for="section" class="block font-medium mb-1">Section</label>
-          <input type="text" id="section" placeholder="e.g. A" class="w-full border rounded px-3 py-2" required>
-        </div>
-        <div class="flex-1 min-w-[200px]">
-          <label for="year-level" class="block font-medium mb-1">Year Level</label>
-          <select id="year-level" class="w-full border rounded px-3 py-2" required>
-            <option value="" disabled selected>Select Year Level</option>
-            <option value="1">Year 1</option>
-            <option value="2">Year 2</option>
-            <option value="3">Year 3</option>
-            <option value="4">Year 4</option>
-          </select>
-        </div>
-      </div>
-      <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Create Class</button>
-    </form>
-  </section>
-
-  <!-- Assign Subjects -->
-  <section class="bg-white p-6 rounded-2xl shadow mb-6">
-    <h2 class="text-xl font-semibold mb-4">Assign Subjects to Class</h2>
-    <form id="assign-subject-form" class="space-y-4">
-      <div class="flex gap-4 flex-wrap">
-        <div class="flex-1 min-w-[200px]">
-          <label for="assign-class" class="block font-medium mb-1">Select Class</label>
-          <select id="assign-class" class="w-full border rounded px-3 py-2" required>
-            <option value="" disabled selected>Select Class</option>
-          </select>
-        </div>
-        <div class="flex-1 min-w-[200px]">
-          <label for="assign-subject" class="block font-medium mb-1">Select Subject</label>
-          <select id="assign-subject" class="w-full border rounded px-3 py-2" required>
-            <option value="" disabled selected>Select Subject</option>
-            <option value="Math 101">Math 101</option>
-            <option value="English">English</option>
-            <option value="Science">Science</option>
-            <option value="History">History</option>
-          </select>
-        </div>
-      </div>
-      <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Assign Subject</button>
-    </form>
-    <table class="w-full mt-4 rounded overflow-hidden">
-      <thead>
-        <tr><th>Class</th><th>Subject</th><th>Actions</th></tr>
-      </thead>
-      <tbody id="class-subject-table"></tbody>
-    </table>
-  </section>
-
-  <!-- Assign Teachers/Students -->
-  <section class="bg-white p-6 rounded-2xl shadow mb-6">
-    <h2 class="text-xl font-semibold mb-4">Assign Teachers/Students to Classes</h2>
-    <form id="assign-people-form" class="space-y-4">
-      <div class="flex gap-4 flex-wrap">
-        <div class="flex-1 min-w-[200px]">
-          <label for="assign-person-class" class="block font-medium mb-1">Select Class</label>
-          <select id="assign-person-class" class="w-full border rounded px-3 py-2" required>
-            <option value="" disabled selected>Select Class</option>
-          </select>
-        </div>
-        <div class="flex-1 min-w-[200px]">
-          <label for="person-type" class="block font-medium mb-1">Assign Type</label>
-          <select id="person-type" class="w-full border rounded px-3 py-2" required>
-            <option value="" disabled selected>Select Type</option>
-            <option value="Teacher">Teacher</option>
-            <option value="Student">Student</option>
-          </select>
-        </div>
-        <div class="flex-1 min-w-[200px]">
-          <label for="person-name" class="block font-medium mb-1">Name</label>
-          <input type="text" id="person-name" placeholder="Enter name" class="w-full border rounded px-3 py-2" required>
-        </div>
-      </div>
-      <button type="submit" class="bg-[#4154F1] text-white px-4 py-2 rounded hover:bg-[#2e3bb3]">Assign</button>
-    </form>
-    <table class="w-full mt-4 rounded overflow-hidden">
-      <thead>
-        <tr><th>Class</th><th>Type</th><th>Name</th><th>Actions</th></tr>
-      </thead>
-      <tbody id="people-class-table"></tbody>
-    </table>
-  </section>
-
-</div>
-
-<script>
-const menuToggle=document.getElementById('menu-toggle');
-const sidebar=document.querySelector('.sidebar');
-menuToggle.addEventListener('click',()=>{ sidebar.classList.toggle('show'); });
-document.addEventListener('click',e=>{
-  if(window.innerWidth<=768 && sidebar.classList.contains('show')){
-    if(!sidebar.contains(e.target) && e.target!==menuToggle){ sidebar.classList.remove('show'); }
-  }
-});
-
-// Data and forms
-const classes=[], classSubjects=[], peopleAssignments=[];
-const createClassForm=document.getElementById('create-class-form');
-const assignSubjectForm=document.getElementById('assign-subject-form');
-const assignPeopleForm=document.getElementById('assign-people-form');
-const assignClassSelect=document.getElementById('assign-class');
-const assignPersonClassSelect=document.getElementById('assign-person-class');
-const classSubjectTableBody=document.getElementById('class-subject-table');
-const peopleClassTableBody=document.getElementById('people-class-table');
-
-function updateClassSelectOptions(){
-  [assignClassSelect, assignPersonClassSelect].forEach(select=>{
-    select.innerHTML='<option value="" disabled selected>Select Class</option>';
-    classes.forEach((cls,idx)=>{
-      const option=document.createElement('option');
-      option.value=idx;
-      option.textContent=`${cls.name} - Section ${cls.section} (Year ${cls.yearLevel})`;
-      select.appendChild(option);
+  <script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    menuToggle.addEventListener('click', () => sidebar.classList.toggle('show'));
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768 && sidebar.classList.contains('show')) {
+        if (!sidebar.contains(e.target) && e.target !== menuToggle) sidebar.classList.remove('show');
+      }
     });
-  });
-}
 
-function renderClassSubjects(){
-  classSubjectTableBody.innerHTML='';
-  classSubjects.forEach((item,index)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${item.class.name} - Section ${item.class.section} (Year ${item.class.yearLevel})</td><td>${item.subject}</td><td class="actions"><button class="delete">Delete</button></td>`;
-    tr.querySelector('.delete').onclick=()=>{ classSubjects.splice(index,1); renderClassSubjects(); };
-    classSubjectTableBody.appendChild(tr);
-  });
-}
+    // In-memory data
+    const classes = [], classSubjects = [], peopleAssignments = [];
+    const createClassForm = document.getElementById('create-class-form');
+    const assignSubjectForm = document.getElementById('assign-subject-form');
+    const assignPeopleForm = document.getElementById('assign-people-form');
+    const assignClassSelect = document.getElementById('assign-class');
+    const assignPersonClassSelect = document.getElementById('assign-person-class');
+    const classSubjectTableBody = document.getElementById('class-subject-table');
+    const peopleClassTableBody = document.getElementById('people-class-table');
 
-function renderPeopleAssignments(){
-  peopleClassTableBody.innerHTML='';
-  peopleAssignments.forEach((item,index)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${item.class.name} - Section ${item.class.section} (Year ${item.class.yearLevel})</td><td>${item.type}</td><td>${item.name}</td><td class="actions"><button class="delete">Delete</button></td>`;
-    tr.querySelector('.delete').onclick=()=>{ peopleAssignments.splice(index,1); renderPeopleAssignments(); };
-    peopleClassTableBody.appendChild(tr);
-  });
-}
+    function updateClassSelectOptions() {
+      [assignClassSelect, assignPersonClassSelect].forEach(select => {
+        select.innerHTML = '<option value="" disabled selected>Select Class</option>';
+        classes.forEach((cls, idx) => {
+          const option = document.createElement('option');
+          option.value = idx;
+          option.textContent = `${cls.name} - Section ${cls.section} (Year ${cls.yearLevel})`;
+          select.appendChild(option);
+        });
+      });
+    }
 
-createClassForm.addEventListener('submit',e=>{
-  e.preventDefault();
-  const name=document.getElementById('class-name').value.trim();
-  const section=document.getElementById('section').value.trim();
-  const yearLevel=document.getElementById('year-level').value;
-  if(classes.some(c=>c.name===name&&c.section===section&&c.yearLevel===yearLevel)){ alert('Class exists'); return; }
-  classes.push({name,section,yearLevel});
-  updateClassSelectOptions();
-  createClassForm.reset();
-  alert('Class created!');
-});
+    function renderClassSubjects() {
+      classSubjectTableBody.innerHTML = '';
+      classSubjects.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${item.class.name} - Section ${item.class.section} (Year ${item.class.yearLevel})</td>
+                        <td>${item.subject}</td>
+                        <td class="actions"><button class="delete">Delete</button></td>`;
+        tr.querySelector('.delete').onclick = () => { classSubjects.splice(index,1); renderClassSubjects(); };
+        classSubjectTableBody.appendChild(tr);
+      });
+    }
 
-assignSubjectForm.addEventListener('submit',e=>{
-  e.preventDefault();
-  const cls=classes[assignClassSelect.value];
-  const subject=document.getElementById('assign-subject').value;
-  if(!cls) return alert('Select class');
-  if(classSubjects.some(cs=>cs.class===cls&&cs.subject===subject)) return alert('Already assigned');
-  classSubjects.push({class:cls,subject});
-  renderClassSubjects();
-  assignSubjectForm.reset();
-  alert('Subject assigned!');
-});
+    function renderPeopleAssignments() {
+      peopleClassTableBody.innerHTML = '';
+      peopleAssignments.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${item.class.name} - Section ${item.class.section} (Year ${item.class.yearLevel})</td>
+                        <td>${item.type}</td>
+                        <td>${item.name}</td>
+                        <td class="actions"><button class="delete">Delete</button></td>`;
+        tr.querySelector('.delete').onclick = () => { peopleAssignments.splice(index,1); renderPeopleAssignments(); };
+        peopleClassTableBody.appendChild(tr);
+      });
+    }
 
-assignPeopleForm.addEventListener('submit',e=>{
-  e.preventDefault();
-  const cls=classes[assignPersonClassSelect.value];
-  const type=document.getElementById('person-type').value;
-  const name=document.getElementById('person-name').value.trim();
-  if(!cls) return alert('Select class');
-  if(peopleAssignments.some(pa=>pa.class===cls&&pa.type===type&&pa.name.toLowerCase()===name.toLowerCase())) return alert('Already assigned');
-  peopleAssignments.push({class:cls,type,name});
-  renderPeopleAssignments();
-  assignPeopleForm.reset();
-  alert(`${type} assigned!`);
-});
-</script>
+    createClassForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('class-name').value.trim();
+      const section = document.getElementById('section').value.trim();
+      const yearLevel = document.getElementById('year-level').value;
+      if (classes.some(c=>c.name===name && c.section===section && c.yearLevel===yearLevel)) { alert('Class exists'); return; }
+      classes.push({name, section, yearLevel});
+      updateClassSelectOptions();
+      createClassForm.reset();
+      alert('Class created!');
+    });
+
+    assignSubjectForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const cls = classes[assignClassSelect.value];
+      const subject = document.getElementById('assign-subject').value;
+      if (!cls) return alert('Select class');
+      if (classSubjects.some(cs=>cs.class===cls && cs.subject===subject)) return alert('Already assigned');
+      classSubjects.push({class:cls, subject});
+      renderClassSubjects();
+      assignSubjectForm.reset();
+      alert('Subject assigned!');
+    });
+
+    assignPeopleForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const cls = classes[assignPersonClassSelect.value];
+      const type = document.getElementById('person-type').value;
+      const name = document.getElementById('person-name').value.trim();
+      if (!cls) return alert('Select class');
+      if (peopleAssignments.some(pa=>pa.class===cls && pa.type===type && pa.name.toLowerCase()===name.toLowerCase())) return alert('Already assigned');
+      peopleAssignments.push({class:cls, type, name});
+      renderPeopleAssignments();
+      assignPeopleForm.reset();
+      alert(`${type} assigned!`);
+    });
+  </script>
 
 </body>
 </html>
