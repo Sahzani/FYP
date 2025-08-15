@@ -5,17 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Absence Records</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body{height:100%;font-family:'Roboto',sans-serif;background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
   header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
   #menu-toggle{display:none;font-size:28px;margin-right:15px;cursor:pointer;}
-  .sidebar{position: fixed; top:60px; left:0; width:260px; height:calc(100%-60px); background:#FFEED3; padding:20px; box-shadow:0px 0px 20px rgba(1,41,112,0.1); font-family:'Open Sans',sans-serif; transition:left 0.3s ease; z-index:999;}
-  .sidebar-section{margin-bottom:30px;}
-  .sidebar-section-title{font-size:11px;text-transform:uppercase;color:#899BBD;margin-bottom:10px;}
-  .sidebar-link{display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:10px;background:#FFEED3;border-radius:4px;font-size:15px;font-weight:600;color:#012970;text-decoration:none;transition:background 0.3s;cursor:pointer;}
-  .sidebar-link.active{background: rgba(221,168,83,0.44); color:#4154F1;}
-  .sidebar-link:hover{background:#ffe1ab;}
+
+  /* --- Sidebar --- */
+  .sidebar{
+    position: fixed;
+    top:60px;
+    left:0;
+    width:240px;
+    height:calc(100% - 60px);
+    background: linear-gradient(180deg,#FFE5B4 0%,#FFD89C 100%);
+    padding:15px 0;
+    box-shadow:2px 0 15px rgba(1,41,112,0.08);
+    font-family:'Poppins',sans-serif;
+    transition:transform 0.3s ease;
+    z-index:999;
+    border-top-right-radius:12px;
+  }
+  .sidebar-section{margin-bottom:25px;padding:0 15px;}
+  .sidebar-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:rgba(0,0,0,0.5);margin-bottom:10px;padding-left:10px;}
+  .sidebar-link{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 15px;
+    margin-bottom:8px;
+    background:transparent;
+    border-radius:8px;
+    font-size:15px;
+    font-weight:500;
+    color:#5a4a29;
+    text-decoration:none;
+    transition: all 0.25s ease;
+    cursor:pointer;
+  }
+  .sidebar-link i{width:18px;text-align:center;}
+  .sidebar-link:hover{background: rgba(255,255,255,0.5);transform:translateX(4px);}
+  .sidebar-link.active{background: rgba(255,255,255,0.7);color:#b5741c;font-weight:600;box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2);}
+
   .main{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;}
   .page-title{font-family:'Poppins',sans-serif;font-size:28px;font-weight:500;color:#444444;margin-left:50px;margin-top:10px;margin-bottom:-1px;}
   .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-left:50px;margin-bottom:30px;}
@@ -51,7 +83,7 @@
   .close{font-size:26px;font-weight:bold;cursor:pointer;}
   .toast{position:fixed;bottom:20px;right:20px;background:#1e90ff;color:white;padding:12px 20px;border-radius:8px;font-family:'Poppins',sans-serif;font-size:14px;box-shadow:0 4px 12px rgba(0,102,255,0.3);opacity:0;transform:translateY(20px);transition:all 0.5s;z-index:9999;}
   .toast.show{opacity:1;transform:translateY(0);}
-  @media(max-width:768px){#menu-toggle{display:block;} .sidebar{left:-260px;width:260px;} .sidebar.show{left:0;} .main{margin-left:0;padding:80px 20px 20px;}}
+  @media(max-width:768px){#menu-toggle{display:block;} .sidebar{transform:translateX(-100%);} .sidebar.show{transform:translateX(0);} .main{margin-left:0;padding:80px 20px 20px;}}
 </style>
 </head>
 <body>
@@ -63,16 +95,16 @@
 
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="#">Dashboard</a>
+    <a class="sidebar-link" href="#"><i class="fas fa-home"></i>Dashboard</a>
     <div class="sidebar-section-title">Analyse</div>
-    <a class="sidebar-link" href="#">Attendance</a>
+    <a class="sidebar-link" href="#"><i class="fas fa-chart-line"></i>Attendance</a>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-title">Request</div>
-    <a class="sidebar-link active" href="#">Absent Application</a>
+    <a class="sidebar-link active" href="#"><i class="fas fa-file-alt"></i>Absent Application</a>
   </div>
   <div class="sidebar-section">
-    <a class="sidebar-link" href="#">Logout</a>
+    <a class="sidebar-link" href="#"><i class="fas fa-sign-out-alt"></i>Logout</a>
   </div>
 </div>
 
@@ -170,7 +202,7 @@ function renderRecords(){
   });
 }
 
-// Auto-update when localStorage changes (e.g., admin updates status)
+// Auto-update when localStorage changes
 window.addEventListener('storage', renderRecords);
 
 function openModal(){
