@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facial Recognition Training - Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-lg">
+    <h1 class="text-2xl font-bold mb-6">Facial Recognition Training</h1>
+
+    <!-- Upload Section -->
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold mb-4">Upload Student Images</h2>
+      <div class="flex flex-col md:flex-row gap-4">
+        <input type="file" id="fileInput" multiple class="border p-2 rounded w-full md:w-2/3" />
+        <button id="uploadBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Upload</button>
+      </div>
+      <p class="text-sm text-gray-500 mt-2">You can upload one or multiple images.</p>
+    </section>
+
+    <!-- Tag Student Info -->
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold mb-4">Tag Student Info</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <input type="text" id="studentName" placeholder="Student Name" class="border p-2 rounded" />
+        <input type="text" id="studentID" placeholder="Student ID" class="border p-2 rounded" />
+        <input type="text" id="studentClass" placeholder="Class" class="border p-2 rounded" />
+      </div>
+      <button id="tagBtn" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Save Tag</button>
+    </section>
+
+    <!-- Trained Data Status -->
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold mb-4">Trained Data Status</h2>
+      <table class="w-full border text-left">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="p-2 border">Student Name</th>
+            <th class="p-2 border">ID</th>
+            <th class="p-2 border">Class</th>
+            <th class="p-2 border">Status</th>
+          </tr>
+        </thead>
+        <tbody id="statusTable">
+          <!-- Mock Data -->
+          <tr>
+            <td class="p-2 border">John Doe</td>
+            <td class="p-2 border">S123</td>
+            <td class="p-2 border">Class A</td>
+            <td class="p-2 border text-green-600">Success</td>
+          </tr>
+          <tr>
+            <td class="p-2 border">Jane Smith</td>
+            <td class="p-2 border">S456</td>
+            <td class="p-2 border">Class B</td>
+            <td class="p-2 border text-red-600">Fail</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Model Controls -->
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold mb-4">Model Controls</h2>
+      <div class="flex gap-4 mb-4">
+        <button id="retrainBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Re-train Model</button>
+      </div>
+      <div class="bg-gray-50 p-4 rounded border">
+        <p><strong>Last Trained:</strong> 2025-08-15 14:32</p>
+        <p><strong>Accuracy:</strong> 92.4%</p>
+        <p><strong>Status:</strong> ✅ Active</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Mock JS Actions
+    document.getElementById('uploadBtn').addEventListener('click', () => {
+      alert('Images uploaded successfully (mock).');
+    });
+
+    document.getElementById('tagBtn').addEventListener('click', () => {
+      const name = document.getElementById('studentName').value;
+      const id = document.getElementById('studentID').value;
+      const cls = document.getElementById('studentClass').value;
+      if (!name || !id || !cls) {
+        alert('Please fill all student info fields.');
+        return;
+      }
+      alert(`Student tagged: ${name}, ID: ${id}, Class: ${cls} (mock).`);
+    });
+
+    document.getElementById('retrainBtn').addEventListener('click', () => {
+      alert('Model retraining started (mock).');
+    });
+  </script>
+</body>
+</html>
