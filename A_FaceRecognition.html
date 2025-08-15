@@ -3,98 +3,417 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Facial Recognition Training - Admin</title>
+  <title>iAttend • Facial Recognition Training</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Light beige gradient background like the screenshot */
+    body { background: linear-gradient(180deg, #f7ecd7 0%, #f8f1e5 35%, #fbfaf7 100%); }
+    /* Nice soft shadow */
+    .soft-shadow { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
-  <div class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-lg">
-    <h1 class="text-2xl font-bold mb-6">Facial Recognition Training</h1>
-
-    <!-- Upload Section -->
-    <section class="mb-8">
-      <h2 class="text-xl font-semibold mb-4">Upload Student Images</h2>
-      <div class="flex flex-col md:flex-row gap-4">
-        <input type="file" id="fileInput" multiple class="border p-2 rounded w-full md:w-2/3" />
-        <button id="uploadBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Upload</button>
+<body class="min-h-screen">
+  <div class="min-h-screen grid grid-cols-[250px_1fr] grid-rows-[64px_1fr]">
+    <!-- Sidebar -->
+    <aside class="row-span-2 bg-[#f2e4cc]/70 border-r">
+      <div class="px-5 py-4">
+        <div class="text-xl font-semibold">iAttend</div>
       </div>
-      <p class="text-sm text-gray-500 mt-2">You can upload one or multiple images.</p>
-    </section>
+      <nav class="mt-2 text-sm">
+        <a class="flex items-center gap-2 px-5 py-3 bg-[#eadbbf] font-medium" href="#">Dashboard</a>
+        <div class="px-5 pb-1 pt-3 text-gray-500 text-[11px] tracking-wide">ANALYZE</div>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">User</a>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Class</a>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Report</a>
+        <div class="px-5 pb-1 pt-4 text-gray-500 text-[11px] tracking-wide">MANAGE</div>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Teacher</a>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Student</a>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Subject</a>
+        <div class="px-5 pb-1 pt-4 text-gray-500 text-[11px] tracking-wide">OTHER</div>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Email Calendar</a>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Logout</a>
+      </nav>
+    </aside>
 
-    <!-- Tag Student Info -->
-    <section class="mb-8">
-      <h2 class="text-xl font-semibold mb-4">Tag Student Info</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <input type="text" id="studentName" placeholder="Student Name" class="border p-2 rounded" />
-        <input type="text" id="studentID" placeholder="Student ID" class="border p-2 rounded" />
-        <input type="text" id="studentClass" placeholder="Class" class="border p-2 rounded" />
+    <!-- Header (white, no purple) -->
+    <header class="col-start-2 bg-white soft-shadow flex items-center justify-between px-6">
+      <div class="flex items-center gap-4 flex-1">
+        <div class="text-lg font-semibold">Facial Recognition Training</div>
+        <div class="hidden md:flex items-center gap-2 flex-1 max-w-xl">
+          <input class="w-full border rounded-lg px-3 py-2" placeholder="Search" />
+        </div>
       </div>
-      <button id="tagBtn" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Save Tag</button>
-    </section>
+      <div class="flex items-center gap-4">
+        <span class="text-sm">Admin</span>
+        <img src="https://i.pravatar.cc/40" class="w-9 h-9 rounded-full" alt="avatar" />
+      </div>
+    </header>
 
-    <!-- Trained Data Status -->
-    <section class="mb-8">
-      <h2 class="text-xl font-semibold mb-4">Trained Data Status</h2>
-      <table class="w-full border text-left">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2 border">Student Name</th>
-            <th class="p-2 border">ID</th>
-            <th class="p-2 border">Class</th>
-            <th class="p-2 border">Status</th>
-          </tr>
-        </thead>
-        <tbody id="statusTable">
-          <!-- Mock Data -->
-          <tr>
-            <td class="p-2 border">John Doe</td>
-            <td class="p-2 border">S123</td>
-            <td class="p-2 border">Class A</td>
-            <td class="p-2 border text-green-600">Success</td>
-          </tr>
-          <tr>
-            <td class="p-2 border">Jane Smith</td>
-            <td class="p-2 border">S456</td>
-            <td class="p-2 border">Class B</td>
-            <td class="p-2 border text-red-600">Fail</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+    <!-- Main content -->
+    <main class="col-start-2 p-6 space-y-6">
+      <!-- Breadcrumb / Title row -->
+      <div>
+        <div class="text-xs text-gray-500">Home / Admin / Facial Recognition</div>
+      </div>
 
-    <!-- Model Controls -->
-    <section class="mb-8">
-      <h2 class="text-xl font-semibold mb-4">Model Controls</h2>
-      <div class="flex gap-4 mb-4">
-        <button id="retrainBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Re-train Model</button>
+      <!-- Stat Cards Row -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl soft-shadow p-4">
+          <div class="text-sm text-gray-500">Total Samples</div>
+          <div class="text-2xl font-semibold" id="statTotal">0</div>
+        </div>
+        <div class="bg-white rounded-xl soft-shadow p-4">
+          <div class="text-sm text-gray-500">Success</div>
+          <div class="text-2xl font-semibold" id="statSuccess">0</div>
+        </div>
+        <div class="bg-white rounded-xl soft-shadow p-4">
+          <div class="text-sm text-gray-500">Fail</div>
+          <div class="text-2xl font-semibold" id="statFail">0</div>
+        </div>
+        <div class="bg-white rounded-xl soft-shadow p-4">
+          <div class="text-sm text-gray-500">Pending</div>
+          <div class="text-2xl font-semibold" id="statPending">0</div>
+        </div>
       </div>
-      <div class="bg-gray-50 p-4 rounded border">
-        <p><strong>Last Trained:</strong> 2025-08-15 14:32</p>
-        <p><strong>Accuracy:</strong> 92.4%</p>
-        <p><strong>Status:</strong> ✅ Active</p>
+
+      <div class="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+        <!-- Left column: Upload + Table -->
+        <div class="space-y-6">
+          <!-- Upload Card -->
+          <section class="bg-white rounded-xl soft-shadow p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold">Upload Student Images</h2>
+              <div class="text-xs text-gray-500">Path: <span class="font-mono">/admin/facerecognition</span></div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-3 mb-4">
+              <input id="studentName" class="border rounded-lg px-3 py-2" placeholder="Student Name" />
+              <input id="studentID" class="border rounded-lg px-3 py-2" placeholder="Student ID" />
+              <input id="studentClass" class="border rounded-lg px-3 py-2" placeholder="Class" />
+            </div>
+
+            <div id="dropZone" class="border-2 border-dashed rounded-xl p-6 text-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer">
+              <p class="font-medium">Drag & drop images here</p>
+              <p class="text-xs text-gray-500">or click to choose files</p>
+              <input id="fileInput" type="file" accept="image/*" multiple class="hidden" />
+            </div>
+            <div id="previews" class="mt-4 flex flex-wrap gap-3"></div>
+
+            <div class="mt-4 flex items-center gap-3">
+              <button id="uploadBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Save Records</button>
+              <button id="clearPreviewBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg">Clear Selection</button>
+              <span class="text-xs text-gray-500">Selected images will be tagged with the Name/ID/Class.</span>
+            </div>
+          </section>
+
+          <!-- Table Card -->
+          <section class="bg-white rounded-xl soft-shadow p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold">Trained Data Status</h2>
+              <div class="flex items-center gap-2 text-sm">
+                <input id="searchInput" placeholder="Search name/ID/class" class="border rounded-lg px-3 py-2 w-56" />
+                <select id="filterStatus" class="border rounded-lg px-3 py-2">
+                  <option value="ALL">All</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Success">Success</option>
+                  <option value="Fail">Fail</option>
+                </select>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full border text-left text-sm">
+                <thead>
+                  <tr class="bg-gray-100">
+                    <th class="p-2 border">Image</th>
+                    <th class="p-2 border">Student Name</th>
+                    <th class="p-2 border">ID</th>
+                    <th class="p-2 border">Class</th>
+                    <th class="p-2 border">Status</th>
+                    <th class="p-2 border">Added</th>
+                    <th class="p-2 border">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="statusTable"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right column: Model panel / Quick Actions -->
+        <aside class="space-y-6">
+          <section class="bg-white rounded-xl soft-shadow p-6">
+            <h3 class="font-semibold mb-2">Model Status</h3>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div class="bg-gray-50 border rounded-lg p-3">
+                <div class="text-gray-500">Last Trained</div>
+                <div id="lastTrained" class="font-medium">—</div>
+              </div>
+              <div class="bg-gray-50 border rounded-lg p-3">
+                <div class="text-gray-500">Accuracy</div>
+                <div id="accuracy" class="font-medium">—</div>
+              </div>
+              <div class="bg-gray-50 border rounded-lg p-3 col-span-2">
+                <div class="text-gray-500">Status</div>
+                <div id="modelStatus" class="font-medium">Idle</div>
+              </div>
+            </div>
+
+            <div id="progressWrap" class="hidden mt-4">
+              <div class="w-full bg-gray-100 rounded-lg overflow-hidden">
+                <div id="progressBar" class="h-3 w-0 bg-yellow-500"></div>
+              </div>
+              <p id="progressText" class="text-xs text-gray-600 mt-1">Preparing…</p>
+            </div>
+          </section>
+
+          <section class="bg-white rounded-xl soft-shadow p-6">
+            <h3 class="font-semibold mb-3">Quick Actions</h3>
+            <div class="space-y-3">
+              <button id="retrainBtn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg">Re-train Model</button>
+              <button id="resetModelBtn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg">Reset Stats</button>
+              <button class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg" onclick="document.getElementById('fileInput').click()">Upload Faces</button>
+            </div>
+          </section>
+        </aside>
       </div>
-    </section>
+    </main>
   </div>
 
   <script>
-    // Mock JS Actions
-    document.getElementById('uploadBtn').addEventListener('click', () => {
-      alert('Images uploaded successfully (mock).');
+    // ---- Simple persistent store (localStorage) ----
+    const LS_KEY = 'fr_records_v1';
+    const MODEL_KEY = 'fr_model_v1';
+
+    const state = {
+      previews: [], // { name, idNo, className, dataUrl }
+      records: loadRecords(),
+      model: loadModel(),
+      filterStatus: 'ALL',
+      query: ''
+    };
+
+    function loadRecords() {
+      try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; }
+    }
+    function saveRecords() { localStorage.setItem(LS_KEY, JSON.stringify(state.records)); }
+
+    function loadModel() {
+      try { return JSON.parse(localStorage.getItem(MODEL_KEY)) || { lastTrained: null, accuracy: null, status: 'Idle' }; } catch { return { lastTrained: null, accuracy: null, status: 'Idle' }; }
+    }
+    function saveModel() { localStorage.setItem(MODEL_KEY, JSON.stringify(state.model)); }
+
+    // ---- Elements ----
+    const el = (id) => document.getElementById(id);
+    const dropZone = el('dropZone');
+    const fileInput = el('fileInput');
+    const previews = el('previews');
+
+    // ---- Helpers ----
+    function nowStr() {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function addPreview(obj) {
+      state.previews.push(obj);
+      renderPreviews();
+    }
+
+    function renderPreviews() {
+      previews.innerHTML = '';
+      state.previews.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'w-24 h-24 rounded-lg overflow-hidden border relative';
+        div.innerHTML = `
+          <img src="${p.dataUrl}" alt="preview" class="w-full h-full object-cover" />
+          <button data-i="${i}" class="remove absolute -top-2 -right-2 bg-white border rounded-full w-6 h-6 text-xs">×</button>
+        `;
+        previews.appendChild(div);
+      });
+    }
+
+    function renderTable() {
+      const tbody = el('statusTable');
+      tbody.innerHTML = '';
+
+      const q = state.query.toLowerCase();
+      const filtered = state.records.filter(r => {
+        const matchesQ = [r.name, r.idNo, r.className].some(v => (v||'').toLowerCase().includes(q));
+        const matchesS = state.filterStatus === 'ALL' || r.status === state.filterStatus;
+        return matchesQ && matchesS;
+      });
+
+      for (const r of filtered) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-2 border">
+            <img src="${r.image}" class="w-14 h-14 rounded object-cover" />
+          </td>
+          <td class="p-2 border">${r.name||'<span class="text-gray-400">—</span>'}</td>
+          <td class="p-2 border">${r.idNo||'<span class="text-gray-400">—</span>'}</td>
+          <td class="p-2 border">${r.className||'<span class="text-gray-400">—</span>'}</td>
+          <td class="p-2 border">
+            <span class="px-2 py-0.5 rounded text-xs ${r.status==='Success'?'bg-emerald-100 text-emerald-700':r.status==='Fail'?'bg-rose-100 text-rose-700':'bg-amber-100 text-amber-700'}">${r.status}</span>
+          </td>
+          <td class="p-2 border">${r.createdAt}</td>
+          <td class="p-2 border">
+            <div class="flex gap-2">
+              <button data-id="${r.id}" data-act="success" class="px-2 py-1 rounded bg-emerald-500 text-white text-xs">Mark Success</button>
+              <button data-id="${r.id}" data-act="fail" class="px-2 py-1 rounded bg-rose-500 text-white text-xs">Mark Fail</button>
+              <button data-id="${r.id}" data-act="delete" class="px-2 py-1 rounded bg-gray-200 text-gray-800 text-xs">Delete</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      // actions
+      tbody.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const act = btn.getAttribute('data-act');
+          const i = state.records.findIndex(x => x.id === id);
+          if (i === -1) return;
+          if (act === 'delete') state.records.splice(i,1);
+          if (act === 'success') state.records[i].status = 'Success';
+          if (act === 'fail') state.records[i].status = 'Fail';
+          saveRecords();
+          renderTable();
+          renderStats();
+        });
+      });
+    }
+
+    function renderStats() {
+      const total = state.records.length;
+      const success = state.records.filter(r=>r.status==='Success').length;
+      const fail = state.records.filter(r=>r.status==='Fail').length;
+      const pending = state.records.filter(r=>r.status==='Pending').length;
+      el('statTotal').textContent = total;
+      el('statSuccess').textContent = success;
+      el('statFail').textContent = fail;
+      el('statPending').textContent = pending;
+
+      if (state.model.accuracy != null) {
+        el('accuracy').textContent = `${state.model.accuracy.toFixed(1)}%`;
+      } else if (total > 0) {
+        el('accuracy').textContent = `${(success/(success+fail||1)*100).toFixed(1)}%*`;
+      } else {
+        el('accuracy').textContent = '—';
+      }
+
+      el('lastTrained').textContent = state.model.lastTrained || '—';
+      el('modelStatus').textContent = state.model.status || 'Idle';
+    }
+
+    // ---- File handling ----
+    function triggerFilePick() { fileInput.click(); }
+    dropZone.addEventListener('click', triggerFilePick);
+
+    ;['dragenter','dragover'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('bg-gray-100'); }));
+    ;['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('bg-gray-100'); }));
+    dropZone.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files));
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    function handleFiles(fileList) {
+      const name = el('studentName').value.trim();
+      const idNo = el('studentID').value.trim();
+      const className = el('studentClass').value.trim();
+
+      Array.from(fileList).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = () => addPreview({ name, idNo, className, dataUrl: reader.result });
+        reader.readAsDataURL(file);
+      });
+    }
+
+    el('clearPreviewBtn').addEventListener('click', () => {
+      state.previews = [];
+      renderPreviews();
     });
 
-    document.getElementById('tagBtn').addEventListener('click', () => {
-      const name = document.getElementById('studentName').value;
-      const id = document.getElementById('studentID').value;
-      const cls = document.getElementById('studentClass').value;
-      if (!name || !id || !cls) {
-        alert('Please fill all student info fields.');
+    previews.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove')) {
+        const i = +e.target.getAttribute('data-i');
+        state.previews.splice(i,1);
+        renderPreviews();
+      }
+    });
+
+    // Save previews as records
+    el('uploadBtn').addEventListener('click', () => {
+      if (state.previews.length === 0) {
+        alert('No images selected.');
         return;
       }
-      alert(`Student tagged: ${name}, ID: ${id}, Class: ${cls} (mock).`);
+      const when = nowStr();
+      for (const p of state.previews) {
+        state.records.push({
+          id: crypto.randomUUID(),
+          name: p.name || '',
+          idNo: p.idNo || '',
+          className: p.className || '',
+          status: 'Pending',
+          image: p.dataUrl,
+          createdAt: when
+        });
+      }
+      state.previews = [];
+      saveRecords();
+      renderPreviews();
+      renderTable();
+      renderStats();
     });
 
-    document.getElementById('retrainBtn').addEventListener('click', () => {
-      alert('Model retraining started (mock).');
+    // Search & filter
+    el('searchInput').addEventListener('input', (e)=>{ state.query = e.target.value; renderTable(); });
+    el('filterStatus').addEventListener('change', (e)=>{ state.filterStatus = e.target.value; renderTable(); });
+
+    // Retrain simulation
+    el('retrainBtn').addEventListener('click', async () => {
+      const progressWrap = el('progressWrap');
+      const progressBar = el('progressBar');
+      const progressText = el('progressText');
+      state.model.status = 'Training…';
+      saveModel();
+      renderStats();
+
+      progressWrap.classList.remove('hidden');
+      progressBar.style.width = '0%';
+      progressText.textContent = 'Starting…';
+
+      const steps = ['Loading dataset','Augmenting images','Extracting embeddings','Fitting classifier','Validating'];
+      for (let i=0;i<steps.length;i++) {
+        progressText.textContent = steps[i];
+        await new Promise(r=>setTimeout(r, 600));
+        progressBar.style.width = `${Math.round(((i+1)/steps.length)*100)}%`;
+      }
+
+      const success = state.records.filter(r=>r.status==='Success').length;
+      const fail = state.records.filter(r=>r.status==='Fail').length;
+      const denom = success + fail;
+      const acc = denom > 0 ? (success/denom*100) : Math.max(75, 85 + Math.random()*10);
+
+      state.model = { lastTrained: nowStr(), accuracy: acc, status: 'Active' };
+      saveModel();
+      renderStats();
+
+      progressText.textContent = 'Done';
+      await new Promise(r=>setTimeout(r, 400));
+      progressWrap.classList.add('hidden');
     });
+
+    el('resetModelBtn').addEventListener('click', () => {
+      if (!confirm('Reset model stats?')) return;
+      state.model = { lastTrained: null, accuracy: null, status: 'Idle' };
+      saveModel();
+      renderStats();
+    });
+
+    // Initial render
+    renderTable();
+    renderStats();
   </script>
 </body>
 </html>
