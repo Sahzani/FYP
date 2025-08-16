@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Profile</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body {
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+  <!-- Profile Card -->
+  <div class="max-w-lg w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+    <!-- Banner -->
+    <div class="h-32 bg-gradient-to-r from-orange-200 to-yellow-100 relative">
+      <div class="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
+        <div class="h-24 w-24 rounded-full border-4 border-white overflow-hidden shadow-lg">
+          <img src="https://placehold.co/96x96/b8c6ff/ffffff?text=T" alt="Profile Picture" class="h-full w-full object-cover">
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Section -->
+    <div class="pt-16 pb-6 px-6 text-center">
+      <h2 id="teacher-fullname" class="text-2xl font-bold text-gray-800">John Doe</h2>
+      <p id="teacher-subject" class="text-sm text-gray-500">Mathematics Teacher</p>
+      <div class="mt-4 flex flex-col items-center space-y-2 text-gray-600">
+        <p class="flex items-center gap-2"><i class="fas fa-envelope text-blue-500"></i> <span id="teacher-email">john.doe@example.com</span></p>
+        <p class="flex items-center gap-2"><i class="fas fa-book text-green-500"></i> <span id="teacher-subject2">Mathematics</span></p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="mt-6 flex justify-center gap-4">
+        <a href="edit_profile.html" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition">Edit Profile</a>
+        <a href="T_Dashboard.html" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow hover:bg-gray-300 transition">Back to Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Font Awesome for icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+
+  <script>
+    // Simulating fetching data from database/session
+    document.addEventListener('DOMContentLoaded', () => {
+      const teacherData = {
+        fullname: "John Doe",
+        email: "john.doe@example.com",
+        subject: "Mathematics",
+        profilePicture: "https://placehold.co/96x96/b8c6ff/ffffff?text=T"
+      };
+
+      // Populate profile data
+      document.getElementById('teacher-fullname').textContent = teacherData.fullname;
+      document.getElementById('teacher-email').textContent = teacherData.email;
+      document.getElementById('teacher-subject').textContent = teacherData.subject + " Teacher";
+      document.getElementById('teacher-subject2').textContent = teacherData.subject;
+
+      // Update profile picture
+      document.querySelector('img').src = teacherData.profilePicture;
+    });
+  </script>
+</body>
+</html>
