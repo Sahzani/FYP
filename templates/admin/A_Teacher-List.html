@@ -3,19 +3,22 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Teacher List</title>
+<title>Student List</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body{height:100%;font-family:'Roboto',sans-serif;background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
   header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
   #menu-toggle{display:none;font-size:28px;margin-right:15px;cursor:pointer;}
-  .sidebar{position: fixed; top:60px; left:0; width:260px; height:calc(100% - 60px); background:#FFEED3; padding:20px; box-shadow:0px 0px 20px rgba(1,41,112,0.1); font-family:'Open Sans',sans-serif; transition:left 0.3s ease; z-index:999;}
-  .sidebar-section{margin-bottom:30px;}
-  .sidebar-section-title{font-size:11px;text-transform:uppercase;color:#899BBD;margin-bottom:10px;}
-  .sidebar-link{display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:10px;background:#FFEED3;border-radius:4px;font-size:15px;font-weight:600;color:#012970;text-decoration:none;transition:background 0.3s;cursor:pointer;}
+  .sidebar{position: fixed; top:60px; left:0; width:260px; height:calc(100% - 60px); background:#FFEED3; padding:20px; box-shadow:0px 0px 20px rgba(1,41,112,0.1); font-family:'Open Sans',sans-serif; transition:left 0.3s ease; z-index:999; overflow-y:auto;}
+  .sidebar-section{margin-bottom:20px;}
+  .sidebar-section-title{font-size:11px;text-transform:uppercase;color:#899BBD;margin:15px 0 10px;}
+  .sidebar-link{display:flex;align-items:center;justify-content:space-between;padding:10px;margin-bottom:5px;background:#FFEED3;border-radius:4px;font-size:15px;font-weight:600;color:#012970;text-decoration:none;transition:background 0.3s;cursor:pointer;}
   .sidebar-link.active{background: rgba(221,168,83,0.44); color:#4154F1;}
   .sidebar-link:hover{background:#ffe1ab;}
+  .dropdown-container{display:none;flex-direction:column;margin-left:10px;}
+  .dropdown-container a{font-size:14px;padding:8px 10px;margin-bottom:4px;background:#fff3e0;border-radius:4px;text-decoration:none;color:#012970;}
+  .dropdown-container a:hover{background:#ffe1ab;}
   .main{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;}
   .page-title{font-family:'Poppins',sans-serif;font-size:28px;font-weight:500;color:#444444;margin-left:50px;margin-top:10px;margin-bottom:-1px;}
   .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-left:50px;margin-bottom:30px;}
@@ -27,7 +30,7 @@
   th{background-color:#f8f7ff;text-align:left;padding:12px;font-weight:500;}
   td{padding:12px;border-top:1px solid #ddd;}
 
-  /* Button style like previous submit button */
+  /* Button style */
   .add-btn {
     background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%);
     color: white;
@@ -64,34 +67,51 @@
 <div class="sidebar">
   <div class="sidebar-section">
     <a class="sidebar-link" href="#">Dashboard</a>
-    <div class="sidebar-section-title">Manage</div>
-    <a class="sidebar-link active" href="#">Teacher List</a>
+    <a class="sidebar-link" href="#">Attendance Log</a>
   </div>
+
   <div class="sidebar-section">
-    <a class="sidebar-link" href="A_Teacher-Add.html">Add Teacher</a>
+    <div class="sidebar-section-title">Manage</div>
+    
+    <!-- Teacher dropdown -->
+    <div class="sidebar-link dropdown-btn">Teacher <span>▼</span></div>
+    <div class="dropdown-container">
+      <a href="T_List.html">Teacher List</a>
+      <a href="T_Add.html">Add Teacher</a>
+    </div>
+
+    <!-- Student dropdown -->
+    <div class="sidebar-link dropdown-btn">Student <span>▼</span></div>
+    <div class="dropdown-container">
+      <a href="S_List.html" class="active">Student List</a>
+      <a href="S_Add.html">Add Student</a>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
     <a class="sidebar-link" href="#">Logout</a>
   </div>
 </div>
 
 <div class="main">
-  <h1 class="page-title">Teacher List</h1>
+  <h1 class="page-title">Student List</h1>
   <h2 class="breadcrumb">
     <span class="section">Manage</span> / 
-    <span class="current">Teacher List</span>
+    <span class="current">Student List</span>
   </h2>
 
   <div class="card">
-    <button class="add-btn" onclick="window.location.href='A_Teacher-Add.html'">Add Teacher</button>
+    <button class="add-btn" onclick="window.location.href='S_Add.html'">Add Student</button>
     <table>
       <thead>
         <tr>
           <th>#</th>
           <th>Name</th>
           <th>Email</th>
-          <th>Subject</th>
+          <th>Class</th>
         </tr>
       </thead>
-      <tbody id="teachersBody"></tbody>
+      <tbody id="studentsBody"></tbody>
     </table>
   </div>
 </div>
@@ -102,24 +122,28 @@ const sidebar = document.querySelector('.sidebar');
 menuToggle.addEventListener('click',()=>{sidebar.classList.toggle('show');});
 document.addEventListener('click',(e)=>{if(window.innerWidth<=768 && sidebar.classList.contains('show')){if(!sidebar.contains(e.target) && e.target!==menuToggle) sidebar.classList.remove('show');}});
 
-let teachers = JSON.parse(localStorage.getItem('teachers')) || [];
-const teachersBody = document.getElementById('teachersBody');
+// Dropdown functionality
+const dropdownBtns = document.querySelectorAll('.dropdown-btn');
+dropdownBtns.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    btn.classList.toggle("active");
+    const dropdown = btn.nextElementSibling;
+    dropdown.style.display = dropdown.style.display==="flex" ? "none" : "flex";
+  });
+});
 
-function renderTeachers(){
-  teachersBody.innerHTML='';
-  teachers.forEach((t,i)=>{
+// Dummy student rendering
+let students = JSON.parse(localStorage.getItem('students')) || [];
+const studentsBody = document.getElementById('studentsBody');
+function renderStudents(){
+  studentsBody.innerHTML='';
+  students.forEach((s,i)=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${i+1}</td>
-      <td>${t.name}</td>
-      <td>${t.email}</td>
-      <td>${t.subject}</td>
-    `;
-    teachersBody.appendChild(tr);
+    tr.innerHTML=`<td>${i+1}</td><td>${s.name}</td><td>${s.email}</td><td>${s.class}</td>`;
+    studentsBody.appendChild(tr);
   });
 }
-
-renderTeachers();
+renderStudents();
 </script>
 
 </body>
