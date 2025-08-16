@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Teacher List</title>
+<title>Student List</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -45,19 +45,19 @@
   <div class="sidebar-section">
     <a class="sidebar-link" href="#">Dashboard</a>
     <div class="sidebar-section-title">Manage</div>
-    <a class="sidebar-link active" href="#">Teacher List</a>
+    <a class="sidebar-link active" href="#">Student List</a>
   </div>
   <div class="sidebar-section">
-    <a class="sidebar-link" href="A_Teacher-Add.html">Add Teacher</a>
+    <a class="sidebar-link" href="A_Student-Add.html">Add Student</a>
     <a class="sidebar-link" href="#">Logout</a>
   </div>
 </div>
 
 <div class="main">
-  <h1 class="page-title">Teacher List</h1>
+  <h1 class="page-title">Student List</h1>
   <h2 class="breadcrumb">
     <span class="section">Manage</span> / 
-    <span class="current">Teacher List</span>
+    <span class="current">Student List</span>
   </h2>
 
   <div class="card">
@@ -67,10 +67,10 @@
           <th>#</th>
           <th>Name</th>
           <th>Email</th>
-          <th>Subject</th>
+          <th>Class</th>
         </tr>
       </thead>
-      <tbody id="teachersBody"></tbody>
+      <tbody id="studentsBody"></tbody>
     </table>
   </div>
 </div>
@@ -93,35 +93,35 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const teachersBody = document.getElementById('teachersBody');
+const studentsBody = document.getElementById('studentsBody');
 
-async function fetchTeachers() {
+async function fetchStudents() {
   try {
-    const q = query(collection(db, "users"), where("role", "==", "teacher"));
+    const q = query(collection(db, "users"), where("role", "==", "student"));
     const querySnapshot = await getDocs(q);
 
-    teachersBody.innerHTML = '';
+    studentsBody.innerHTML = '';
     let index = 1;
 
     querySnapshot.forEach((doc) => {
-      const t = doc.data();
+      const s = doc.data();
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${index}</td>
-        <td>${t.name}</td>
-        <td>${t.email}</td>
-        <td>${t.subject}</td>
+        <td>${s.name}</td>
+        <td>${s.email}</td>
+        <td>${s.class || '-'}</td>
       `;
-      teachersBody.appendChild(tr);
+      studentsBody.appendChild(tr);
       index++;
     });
   } catch (error) {
-    console.error("Error fetching teachers: ", error);
-    teachersBody.innerHTML = `<tr><td colspan="4">Error loading teachers.</td></tr>`;
+    console.error("Error fetching students: ", error);
+    studentsBody.innerHTML = `<tr><td colspan="4">Error loading students.</td></tr>`;
   }
 }
 
-fetchTeachers();
+fetchStudents();
 
 // Sidebar toggle
 const menuToggle = document.getElementById('menu-toggle');
