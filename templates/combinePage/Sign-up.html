@@ -49,7 +49,7 @@
 
     <p class="register-text">
       Already have an account?
-      <a href="login.html" class="register-link">Log in</a>
+    <a href="/" class="register-link">Log in</a>
     </p>
   </div>
 </div>
@@ -91,7 +91,7 @@
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
       alert("Sign-up successful!");
-      window.location.href = "Login.html";
+  window.location.href = "/"; 
     } catch (error) {
       alert(error.message);
     }
