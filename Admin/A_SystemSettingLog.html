@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iAttend • System Settings & Logs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: linear-gradient(180deg, #f7ecd7 0%, #f8f1e5 35%, #fbfaf7 100%); }
+    .soft-shadow { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+    .tab-active { background-color: white; border-color: #e5e7eb; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="min-h-screen grid grid-cols-[250px_1fr] grid-rows-[64px_1fr]">
+    <!-- Sidebar -->
+    <aside class="row-span-2 bg-[#f2e4cc]/70 border-r">
+      <div class="px-5 py-4">
+        <div class="text-xl font-semibold">iAttend</div>
+      </div>
+      <nav class="mt-2 text-sm">
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Dashboard</a>
+        <div class="px-5 pb-1 pt-3 text-gray-500 text-[11px] tracking-wide">ANALYZE</div>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">User</a>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Class</a>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Report</a>
+        <div class="px-5 pb-1 pt-4 text-gray-500 text-[11px] tracking-wide">MANAGE</div>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Teacher</a>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Student</a>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Subject</a>
+        <div class="px-5 pb-1 pt-4 text-gray-500 text-[11px] tracking-wide">OTHER</div>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Email Calendar</a>
+        <a class="flex items-center gap-2 px-5 py-3 hover:bg-[#efe3ca]" href="#">Logout</a>
+      </nav>
+    </aside>
+
+    <!-- Header (white) -->
+    <header class="col-start-2 bg-white soft-shadow flex items-center justify-between px-6">
+      <div class="flex items-center gap-4 flex-1">
+        <div class="text-lg font-semibold">System Settings & Logs</div>
+        <div class="hidden md:flex items-center gap-2 flex-1 max-w-xl">
+          <input class="w-full border rounded-lg px-3 py-2" placeholder="Search settings or logs" />
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-sm">Admin</span>
+        <img src="https://i.pravatar.cc/40?img=8" class="w-9 h-9 rounded-full" alt="avatar" />
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="col-start-2 p-6 space-y-6">
+      <div class="text-xs text-gray-500">Home / Admin / Settings</div>
+
+      <!-- Path & Quick Info -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl soft-shadow p-4">
+          <div class="text-sm text-gray-500">Path</div>
+          <div class="font-mono text-sm">/admin/settings</div>
+        </div>
+        <div class="bg-white rounded-xl soft-shadow p-4">
+          <div class="text-sm text-gray-500">Current Academic Year</div>
+          <div id="infoYear" class="font-medium">—</div>
+        </div>
+        <div class="bg-white rounded-xl soft-shadow p-4">
+          <div class="text-sm text-gray-500">2FA</div>
+          <div id="info2FA" class="font-medium">—</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <section class="bg-white rounded-xl soft-shadow">
+        <div class="border-b px-4 pt-4">
+          <div class="flex flex-wrap gap-2">
+            <button data-tab="general" class="tab-btn px-4 py-2 border rounded-t-lg tab-active">General Settings</button>
+            <button data-tab="roles" class="tab-btn px-4 py-2 border rounded-t-lg">User Roles & Permissions</button>
+            <button data-tab="security" class="tab-btn px-4 py-2 border rounded-t-lg">Security Settings</button>
+            <button data-tab="activity" class="tab-btn px-4 py-2 border rounded-t-lg">Activity Logs</button>
+            <button data-tab="errors" class="tab-btn px-4 py-2 border rounded-t-lg">Error Logs</button>
+          </div>
+        </div>
+
+        <!-- Panels -->
+        <div class="p-6">
+          <!-- General Settings -->
+          <div id="panel-general" class="tab-panel grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">System Name</label>
+                <input id="sysName" class="w-full border rounded-lg px-3 py-2" placeholder="iAttend" />
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Academic Year</label>
+                <input id="academicYear" class="w-full border rounded-lg px-3 py-2" placeholder="2025/2026" />
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Organization</label>
+                <input id="orgName" class="w-full border rounded-lg px-3 py-2" placeholder="Your School" />
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Timezone</label>
+                <select id="timezone" class="w-full border rounded-lg px-3 py-2">
+                  <option value="Asia/Brunei">Asia/Brunei (GMT+8)</option>
+                  <option value="Asia/Singapore">Asia/Singapore (GMT+8)</option>
+                  <option value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur (GMT+8)</option>
+                  <option value="UTC">UTC</option>
+                </select>
+              </div>
+              <div class="flex gap-3">
+                <button id="saveGeneral" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Save General</button>
+                <button id="resetGeneral" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg">Reset</button>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">System Logo</label>
+                <div class="flex items-center gap-4">
+                  <div class="w-20 h-20 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                    <img id="logoPreview" class="max-w-full max-h-full" alt="logo preview" />
+                  </div>
+                  <div>
+                    <input id="logoInput" type="file" accept="image/*" class="hidden" />
+                    <button id="pickLogo" class="bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg border">Choose Logo</button>
+                    <button id="clearLogo" class="ml-2 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg border">Clear</button>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">System Description</label>
+                <textarea id="sysDesc" rows="4" class="w-full border rounded-lg px-3 py-2" placeholder="Attendance and facial recognition management..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Roles & Permissions -->
+          <div id="panel-roles" class="tab-panel hidden">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Roles</h3>
+              <div class="space-x-2">
+                <button id="addRoleBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg">Add Role</button>
+                <button id="resetRolesBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded-lg">Reset</button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full border text-sm">
+                <thead>
+                  <tr class="bg-gray-100">
+                    <th class="p-2 border">Role</th>
+                    <th class="p-2 border">Dashboard</th>
+                    <th class="p-2 border">Students</th>
+                    <th class="p-2 border">Teachers</th>
+                    <th class="p-2 border">Classes</th>
+                    <th class="p-2 border">Reports</th>
+                    <th class="p-2 border">FaceRec Admin</th>
+                    <th class="p-2 border">Settings</th>
+                    <th class="p-2 border">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="rolesTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Security -->
+          <div id="panel-security" class="tab-panel hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Password Min Length</label>
+                <input id="pwMin" type="number" min="6" class="w-full border rounded-lg px-3 py-2" value="8" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="flex items-center gap-2 text-sm"><input id="pwUpper" type="checkbox" class="accent-black" /> Uppercase</label>
+                <label class="flex items-center gap-2 text-sm"><input id="pwLower" type="checkbox" class="accent-black" /> Lowercase</label>
+                <label class="flex items-center gap-2 text-sm"><input id="pwNumber" type="checkbox" class="accent-black" /> Number</label>
+                <label class="flex items-center gap-2 text-sm"><input id="pwSymbol" type="checkbox" class="accent-black" /> Symbol</label>
+              </div>
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 text-sm"><input id="enable2FA" type="checkbox" class="accent-black" /> Enable 2FA</label>
+              </div>
+              <div class="flex gap-3">
+                <button id="saveSecurity" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Save Security</button>
+                <button id="resetSecurity" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg">Reset</button>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="bg-gray-50 border rounded-lg p-4">
+                <div class="font-medium mb-2">Password Policy Preview</div>
+                <ul id="policyList" class="list-disc list-inside text-sm text-gray-700"></ul>
+              </div>
+              <div class="bg-gray-50 border rounded-lg p-4">
+                <div class="font-medium mb-2">2FA Status</div>
+                <div id="twoFAStatus" class="text-sm">Disabled</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Logs -->
+          <div id="panel-activity" class="tab-panel hidden">
+            <div class="flex flex-wrap items-center gap-2 justify-between mb-3">
+              <div class="font-semibold">Activity Logs</div>
+              <div class="flex gap-2 text-sm">
+                <input id="activitySearch" class="border rounded-lg px-3 py-2" placeholder="Search user/action" />
+                <input id="activityDateFrom" type="date" class="border rounded-lg px-3 py-2" />
+                <input id="activityDateTo" type="date" class="border rounded-lg px-3 py-2" />
+                <button id="activityExport" class="bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg border">Export CSV</button>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full border text-sm">
+                <thead>
+                  <tr class="bg-gray-100">
+                    <th class="p-2 border">Timestamp</th>
+                    <th class="p-2 border">User</th>
+                    <th class="p-2 border">Action</th>
+                    <th class="p-2 border">Details</th>
+                  </tr>
+                </thead>
+                <tbody id="activityTable"></tbody>
+              </table>
+            </div>
+            <div class="flex items-center justify-between mt-3 text-sm">
+              <div id="activityInfo" class="text-gray-600">—</div>
+              <div class="flex gap-2">
+                <button id="activityPrev" class="px-3 py-1 border rounded-lg">Prev</button>
+                <button id="activityNext" class="px-3 py-1 border rounded-lg">Next</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Logs -->
+          <div id="panel-errors" class="tab-panel hidden">
+            <div class="flex flex-wrap items-center gap-2 justify-between mb-3">
+              <div class="font-semibold">Error Logs</div>
+              <div class="flex gap-2 text-sm">
+                <input id="errorSearch" class="border rounded-lg px-3 py-2" placeholder="Search message/type" />
+                <select id="errorType" class="border rounded-lg px-3 py-2">
+                  <option value="ALL">All Types</option>
+                  <option value="SYSTEM">System</option>
+                  <option value="RECOGNITION">Recognition</option>
+                  <option value="NETWORK">Network</option>
+                </select>
+                <button id="errorExport" class="bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg border">Export CSV</button>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full border text-sm">
+                <thead>
+                  <tr class="bg-gray-100">
+                    <th class="p-2 border">Timestamp</th>
+                    <th class="p-2 border">Type</th>
+                    <th class="p-2 border">Message</th>
+                    <th class="p-2 border">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="errorTable"></tbody>
+              </table>
+            </div>
+            <div class="flex items-center justify-between mt-3 text-sm">
+              <div id="errorInfo" class="text-gray-600">—</div>
+              <div class="flex gap-2">
+                <button id="errorPrev" class="px-3 py-1 border rounded-lg">Prev</button>
+                <button id="errorNext" class="px-3 py-1 border rounded-lg">Next</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Storage keys
+    const KEY_GENERAL = 'settings_general_v1';
+    const KEY_SECURITY = 'settings_security_v1';
+    const KEY_ROLES = 'settings_roles_v1';
+    const KEY_ACTIVITY = 'logs_activity_v1';
+    const KEY_ERRORS = 'logs_errors_v1';
+
+    // Helpers
+    const $ = (id) => document.getElementById(id);
+    const fmtDate = (d)=> new Date(d).toLocaleString();
+
+    // Tabs
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const panels = {
+      general: $('panel-general'),
+      roles: $('panel-roles'),
+      security: $('panel-security'),
+      activity: $('panel-activity'),
+      errors: $('panel-errors')
+    };
+    tabButtons.forEach(btn=>btn.addEventListener('click',()=>{
+      tabButtons.forEach(b=>b.classList.remove('tab-active'));
+      btn.classList.add('tab-active');
+      Object.values(panels).forEach(p=>p.classList.add('hidden'));
+      panels[btn.dataset.tab].classList.remove('hidden');
+    }));
+
+    // -------- General Settings --------
+    function loadGeneral(){
+      try { return JSON.parse(localStorage.getItem(KEY_GENERAL)) || {}; } catch { return {}; }
+    }
+    function saveGeneral(data){ localStorage.setItem(KEY_GENERAL, JSON.stringify(data)); }
+
+    const general = loadGeneral();
+    $('sysName').value = general.sysName || 'iAttend';
+    $('academicYear').value = general.academicYear || '2025/2026';
+    $('orgName').value = general.orgName || '';
+    $('timezone').value = general.timezone || 'Asia/Brunei';
+    $('sysDesc').value = general.sysDesc || '';
+    if (general.logo) { $('logoPreview').src = general.logo; }
+
+    $('pickLogo').addEventListener('click', ()=> $('logoInput').click());
+    $('clearLogo').addEventListener('click', ()=> { $('logoPreview').src=''; general.logo=null; saveGeneral(general); });
+    $('logoInput').addEventListener('change', (e)=>{
+      const f = e.target.files[0]; if(!f) return; const r = new FileReader();
+      r.onload = ()=>{ $('logoPreview').src = r.result; general.logo = r.result; saveGeneral(general); };
+      r.readAsDataURL(f);
+    });
+
+    $('saveGeneral').addEventListener('click', ()=>{
+      general.sysName = $('sysName').value.trim();
+      general.academicYear = $('academicYear').value.trim();
+      general.orgName = $('orgName').value.trim();
+      general.timezone = $('timezone').value;
+      general.sysDesc = $('sysDesc').value.trim();
+      saveGeneral(general);
+      refreshInfoBar();
+      alert('General settings saved.');
+    });
+    $('resetGeneral').addEventListener('click', ()=>{
+      localStorage.removeItem(KEY_GENERAL); window.location.reload();
+    });
+
+    // -------- Roles & Permissions --------
+    const defaultRoles = [
+      { id: crypto.randomUUID(), name:'Admin', perms:{ dashboard:true, students:true, teachers:true, classes:true, reports:true, facerec:true, settings:true } },
+      { id: crypto.randomUUID(), name:'Teacher', perms:{ dashboard:true, students:false, teachers:true, classes:true, reports:true, facerec:false, settings:false } },
+      { id: crypto.randomUUID(), name:'Clerk', perms:{ dashboard:true, students:true, teachers:false, classes:false, reports:false, facerec:false, settings:false } }
+    ];
+    function loadRoles(){ try { return JSON.parse(localStorage.getItem(KEY_ROLES)) || defaultRoles; } catch { return defaultRoles; } }
+    function saveRoles(v){ localStorage.setItem(KEY_ROLES, JSON.stringify(v)); }
+
+    let roles = loadRoles();
+
+    function renderRoles(){
+      const t = $('rolesTable'); t.innerHTML='';
+      roles.forEach((r, idx)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class='p-2 border'>${r.name}</td>
+          <td class='p-2 border text-center'><input type='checkbox' data-i='${idx}' data-k='dashboard' ${r.perms.dashboard?'checked':''}/></td>
+          <td class='p-2 border text-center'><input type='checkbox' data-i='${idx}' data-k='students' ${r.perms.students?'checked':''}/></td>
+          <td class='p-2 border text-center'><input type='checkbox' data-i='${idx}' data-k='teachers' ${r.perms.teachers?'checked':''}/></td>
+          <td class='p-2 border text-center'><input type='checkbox' data-i='${idx}' data-k='classes' ${r.perms.classes?'checked':''}/></td>
+          <td class='p-2 border text-center'><input type='checkbox' data-i='${idx}' data-k='reports' ${r.perms.reports?'checked':''}/></td>
+          <td class='p-2 border text-center'><input type='checkbox' data-i='${idx}' data-k='facerec' ${r.perms.facerec?'checked':''}/></td>
+          <td class='p-2 border text-center'><input type='checkbox' data-i='${idx}' data-k='settings' ${r.perms.settings?'checked':''}/></td>
+          <td class='p-2 border'>
+            <button data-i='${idx}' data-act='rename' class='px-2 py-1 border rounded-lg text-xs'>Rename</button>
+            <button data-i='${idx}' data-act='delete' class='ml-1 px-2 py-1 border rounded-lg text-xs'>Delete</button>
+          </td>`;
+        t.appendChild(tr);
+      });
+
+      t.querySelectorAll("input[type='checkbox']").forEach(cb=>{
+        cb.addEventListener('change', ()=>{
+          const i = +cb.dataset.i; const k = cb.dataset.k; roles[i].perms[k] = cb.checked; saveRoles(roles);
+        });
+      });
+      t.querySelectorAll('button').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const i = +b.dataset.i; const act = b.dataset.act;
+          if (act==='rename') { const nv = prompt('New role name', roles[i].name); if(nv){ roles[i].name = nv; saveRoles(roles); renderRoles(); } }
+          if (act==='delete') { if(confirm('Delete role?')) { roles.splice(i,1); saveRoles(roles); renderRoles(); } }
+        });
+      });
+    }
+
+    $('addRoleBtn').addEventListener('click', ()=>{
+      const name = prompt('Role name'); if(!name) return;
+      roles.push({ id: crypto.randomUUID(), name, perms:{ dashboard:true, students:false, teachers:false, classes:false, reports:false, facerec:false, settings:false } });
+      saveRoles(roles); renderRoles();
+    });
+    $('resetRolesBtn').addEventListener('click', ()=>{ if(confirm('Reset roles to defaults?')){ roles = JSON.parse(JSON.stringify(defaultRoles)); saveRoles(roles); renderRoles(); } });
+
+    // -------- Security --------
+    function loadSecurity(){ try { return JSON.parse(localStorage.getItem(KEY_SECURITY)) || {min:8,u:true,l:true,n:true,s:false,twoFA:false}; } catch { return {min:8,u:true,l:true,n:true,s:false,twoFA:false}; }}
+    function saveSecurity(v){ localStorage.setItem(KEY_SECURITY, JSON.stringify(v)); }
+
+    let security = loadSecurity();
+    $('pwMin').value = security.min;
+    $('pwUpper').checked = !!security.u;
+    $('pwLower').checked = !!security.l;
+    $('pwNumber').checked = !!security.n;
+    $('pwSymbol').checked = !!security.s;
+    $('enable2FA').checked = !!security.twoFA;
+
+    function renderPolicy(){
+      const list = $('policyList'); list.innerHTML='';
+      const items = [
+        `Minimum length: ${$('pwMin').value}`,
+        $('pwUpper').checked ? 'Requires uppercase' : 'Uppercase not required',
+        $('pwLower').checked ? 'Requires lowercase' : 'Lowercase not required',
+        $('pwNumber').checked ? 'Requires number' : 'Number not required',
+        $('pwSymbol').checked ? 'Requires symbol' : 'Symbol not required'
+      ];
+      items.forEach(tx=>{ const li = document.createElement('li'); li.textContent = tx; list.appendChild(li); });
+      $('twoFAStatus').textContent = $('enable2FA').checked ? 'Enabled' : 'Disabled';
+    }
+    renderPolicy();
+
+    $('saveSecurity').addEventListener('click', ()=>{
+      security = {
+        min: +$('pwMin').value,
+        u: $('pwUpper').checked,
+        l: $('pwLower').checked,
+        n: $('pwNumber').checked,
+        s: $('pwSymbol').checked,
+        twoFA: $('enable2FA').checked
+      };
+      saveSecurity(security);
+      refreshInfoBar();
+      alert('Security settings saved.');
+    });
+    $('resetSecurity').addEventListener('click', ()=>{ localStorage.removeItem(KEY_SECURITY); window.location.reload(); });
+    ['pwMin','pwUpper','pwLower','pwNumber','pwSymbol','enable2FA'].forEach(id=>$(id).addEventListener('change', renderPolicy));
+
+    // -------- Logs (sample, with pagination/filter) --------
+    function seedActivity(){
+      const now = Date.now();
+      return Array.from({length: 57}).map((_,i)=>({
+        ts: now - i*3600_000,
+        user: ['alice','bob','carol','dave'][i%4],
+        action: ['LOGIN','LOGOUT','UPDATE_SETTINGS','UPLOAD_FACE'][i%4],
+        details: i%4===2 ? 'Changed academic year to 2025/2026' : '—'
+      }));
+    }
+    function seedErrors(){
+      const now = Date.now();
+      return Array.from({length: 34}).map((_,i)=>({
+        ts: now - i*5400_000,
+        type: ['SYSTEM','RECOGNITION','NETWORK'][i%3],
+        message: i%3===1 ? 'Face not detected in image' : (i%3===2 ? 'Timeout contacting server' : 'Null reference in scheduler'),
+        status: i%2===0 ? 'Open' : 'Resolved'
+      }));
+    }
+
+    function loadOrSeed(key, seedFn){
+      try { const v = JSON.parse(localStorage.getItem(key)); if(v && v.length) return v; } catch {}
+      const s = seedFn(); localStorage.setItem(key, JSON.stringify(s)); return s;
+    }
+
+    let activityLogs = loadOrSeed(KEY_ACTIVITY, seedActivity);
+    let errorLogs = loadOrSeed(KEY_ERRORS, seedErrors);
+
+    // Activity render with pagination
+    let actPage = 1; const actPerPage = 10; let actQuery = ''; let actFrom=null, actTo=null;
+    function filterActivity(){
+      return activityLogs.filter(r=>{
+        const q = actQuery.toLowerCase();
+        const txt = `${r.user} ${r.action} ${r.details}`.toLowerCase();
+        const inQ = !q || txt.includes(q);
+        const inFrom = !actFrom || r.ts >= new Date(actFrom).getTime();
+        const inTo = !actTo || r.ts <= new Date(actTo).getTime()+86_400_000-1;
+        return inQ && inFrom && inTo;
+      });
+    }
+    function renderActivity(){
+      const rows = filterActivity();
+      const total = rows.length; const pages = Math.max(1, Math.ceil(total/actPerPage));
+      actPage = Math.min(Math.max(1, actPage), pages);
+      const start = (actPage-1)*actPerPage; const pageRows = rows.slice(start, start+actPerPage);
+      const t = $('activityTable'); t.innerHTML='';
+      pageRows.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class='p-2 border'>${fmtDate(r.ts)}</td><td class='p-2 border'>${r.user}</td><td class='p-2 border'>${r.action}</td><td class='p-2 border'>${r.details||'—'}</td>`;
+        t.appendChild(tr);
+      });
+      $('activityInfo').textContent = `Page ${actPage}/${pages} • ${total} records`;
+    }
+    $('activitySearch').addEventListener('input', (e)=>{ actQuery = e.target.value; actPage=1; renderActivity(); });
+    $('activityDateFrom').addEventListener('change', (e)=>{ actFrom = e.target.value||null; actPage=1; renderActivity(); });
+    $('activityDateTo').addEventListener('change',   (e)=>{ actTo   = e.target.value||null; actPage=1; renderActivity(); });
+    $('activityPrev').addEventListener('click', ()=>{ actPage--; renderActivity(); });
+    $('activityNext').addEventListener('click', ()=>{ actPage++; renderActivity(); });
+    $('activityExport').addEventListener('click', ()=> exportCSV('activity_logs.csv', ['Timestamp','User','Action','Details'], activityLogs.map(r=>[new Date(r.ts).toISOString(), r.user, r.action, r.details||''])));
+
+    // Error render with pagination
+    let errPage = 1; const errPerPage = 10; let errQuery=''; let errType='ALL';
+    function filterErrors(){
+      return errorLogs.filter(r=>{
+        const q = errQuery.toLowerCase();
+        const inQ = !q || `${r.type} ${r.message} ${r.status}`.toLowerCase().includes(q);
+        const inType = errType==='ALL' || r.type===errType;
+        return inQ && inType;
+      });
+    }
+    function renderErrors(){
+      const rows = filterErrors();
+      const total = rows.length; const pages = Math.max(1, Math.ceil(total/errPerPage));
+      errPage = Math.min(Math.max(1, errPage), pages);
+      const start = (errPage-1)*errPerPage; const pageRows = rows.slice(start, start+errPerPage);
+      const t = $('errorTable'); t.innerHTML='';
+      pageRows.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class='p-2 border'>${fmtDate(r.ts)}</td><td class='p-2 border'>${r.type}</td><td class='p-2 border'>${r.message}</td><td class='p-2 border'>${r.status}</td>`;
+        t.appendChild(tr);
+      });
+      $('errorInfo').textContent = `Page ${errPage}/${pages} • ${total} records`;
+    }
+    $('errorSearch').addEventListener('input', (e)=>{ errQuery = e.target.value; errPage=1; renderErrors(); });
+    $('errorType').addEventListener('change', (e)=>{ errType = e.target.value; errPage=1; renderErrors(); });
+    $('errorPrev').addEventListener('click', ()=>{ errPage--; renderErrors(); });
+    $('errorNext').addEventListener('click', ()=>{ errPage++; renderErrors(); });
+    $('errorExport').addEventListener('click', ()=> exportCSV('error_logs.csv', ['Timestamp','Type','Message','Status'], errorLogs.map(r=>[new Date(r.ts).toISOString(), r.type, r.message, r.status])));
+
+    // CSV export helper
+    function exportCSV(filename, headers, rows){
+      const csv = [headers.join(','), ...rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(','))].join('\n');
+      const blob = new Blob([csv], {type:'text/csv'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+    }
+
+    // Info bar refresh
+    function refreshInfoBar(){
+      const g = loadGeneral();
+      const s = loadSecurity();
+      $('infoYear').textContent = g.academicYear || '—';
+      $('info2FA').textContent = s.twoFA ? 'Enabled' : 'Disabled';
+    }
+
+    // Initial renders
+    renderRoles();
+    renderPolicy();
+    renderActivity();
+    renderErrors();
+    refreshInfoBar();
+  </script>
+</body>
+</html>
