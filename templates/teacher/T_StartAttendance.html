@@ -4,23 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <title>Start Attendance</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       height: 100%;
       font-family: 'Roboto', sans-serif;
       background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
     }
+
+    /* Header */
     header {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       height: 60px;
       background: #fff;
       box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
@@ -33,40 +31,47 @@
       color: #212529;
       z-index: 10;
     }
-    .sidebar {
-      position: fixed;
-      top: 60px;
-      left: 0;
-      width: 260px;
-      height: calc(100% - 60px);
-      background: #FFEED3;
-      padding: 20px;
-      box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1);
-      font-family: 'Open Sans', sans-serif;
-    }
+
+    /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 60px; /* under the new combined header */
+            left: 0;
+            width: 260px;
+            height: calc(100% - 60px);
+            background: #FFEED3;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+            font-family: 'Open Sans', sans-serif;
+            overflow-y: auto;
+        }
     .sidebar-section {
-      margin-bottom: 30px;
-    }
-    .sidebar-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #899BBD;
-      margin-bottom: 10px;
-    }
+            margin-bottom: 30px;
+        }
+
+        .sidebar-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #899BBD;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
     .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: #FFEED3;
-      border-radius: 4px;
-      font-size: 15px;
-      font-weight: 600;
-      color: #012970;
-      text-decoration: none;
-      transition: background 0.3s;
-    }
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            background: #FFEED3;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #012970;
+            text-decoration: none;
+            transition: background 0.3s, color 0.3s; /* Added color transition */
+            cursor: pointer;
+        }
     .sidebar-link.active {
       background: rgba(221, 168, 83, 0.44);
       color: #4154F1;
@@ -74,6 +79,8 @@
     .sidebar-link:hover {
       background: #ffe1ab;
     }
+
+    /* Main */
     .main {
       margin-left: 260px;
       padding: 100px 30px 30px;
@@ -103,6 +110,8 @@
     .breadcrumb-nav .current {
       color: #444444;
     }
+
+    /* Camera */
     .camera-container {
       background: #fff;
       border-radius: 8px;
@@ -136,23 +145,32 @@
 
   <header>iAttend</header>
 
+  <!-- Sidebar identical to T_attendance.html -->
   <div class="sidebar">
     <div class="sidebar-section">
-      <div class="sidebar-section-title">Analyse</div>
-      <a class="sidebar-link" href="#">Dashboard</a>
-      <a class="sidebar-link active" href="#">Start Attendance</a>
-      <a class="sidebar-link" href="#">Attendance</a>
-      <a class="sidebar-link" href="#">Report</a>
+      <div class="sidebar-section-title">MENU</div>
+      <a class="sidebar-link" href="T_dashboard.html">
+        <i class="fas fa-tachometer-alt"></i> Dashboard
+      </a>
+      <a class="sidebar-link" href="T_class_list.html">
+        <i class="fas fa-school"></i> View Class List
+      </a>
+      <a class="sidebar-link active" href="T_StartAttendance.html">
+        <i class="fas fa-clipboard-check"></i> Start Attendance
+      </a>
+      <a class="sidebar-link" href="T_AbsentReport.html">
+        <i class="fas fa-user-times"></i> View Absent Report
+      </a>
     </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Manage</div>
-      <a class="sidebar-link" href="#">Teacher</a>
-    </div>
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="#">Logout</a>
+    <div class="sidebar-section mt-auto">
+      <div class="sidebar-section-title">Logout</div>
+      <a class="sidebar-link" href="T_login.html" id="nav-logout">
+                <i class="fas fa-sign-out-alt text-red-600"></i> Logout
+            </a>
     </div>
   </div>
 
+  <!-- Main -->
   <div class="main">
     <div class="breadcrumb-container">
       <div class="breadcrumb-title">Start Attendance</div>
@@ -174,19 +192,12 @@
     const video = document.getElementById('video');
     const captureBtn = document.getElementById('captureBtn');
 
-    // Start camera
     navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        video.srcObject = stream;
-      })
-      .catch(err => {
-        alert("Camera access denied or not available.");
-        console.error(err);
-      });
+      .then(stream => { video.srcObject = stream; })
+      .catch(err => { alert("Camera access denied."); });
 
-    // Capture button (placeholder)
     captureBtn.addEventListener('click', () => {
-      alert("Attendance started! (Integrate with backend here)");
+      alert("Attendance started! (Hook with backend)");
     });
   </script>
 
