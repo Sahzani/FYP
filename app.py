@@ -1,6 +1,24 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+import pyrebase
 
 app = Flask(__name__)
+app.secret_key = "supersecretkey"  # change to something stronger
+
+# ------------------ Firebase Config ------------------
+firebaseConfig = {
+    "apiKey": "your_api_key",
+    "authDomain": "your_project_id.firebaseapp.com",
+    "databaseURL": "https://your_project_id.firebaseio.com",
+    "projectId": "your_project_id",
+    "storageBucket": "your_project_id.appspot.com",
+    "messagingSenderId": "your_sender_id",
+    "appId": "your_app_id"
+}
+
+firebase = pyrebase.initialize_app(firebaseConfig)
+auth = firebase.auth()
+db = firebase.database()
+
 
 # ------------------ Combine Pages ------------------
 @app.route('/')
@@ -22,6 +40,74 @@ def background():
 @app.route('/combine-admin')
 def combine_admin():
     return render_template('combinePage/admin.html')
+
+
+# ------------------ Auth Routes ------------------
+@app.route('/signup', methods=['POST'])
+def signup_post():
+    """Handles signup with Firebase and assigns a role"""
+    email = request.form['email']
+    password = request.form['password']
+    role = request.form.get('role')  # e.g., Admin, Teacher, Student
+
+    try:
+        user = auth.create_user_with_email_and_password(email, password)
+        uid = user['localId']
+
+        # Save role to database
+        db.child("users").child(uid).set({
+            "email": email,
+            "role": role
+        })
+
+        flash("Sign up successful! Please login.", "success")
+        return redirect(url_for("login"))
+
+    except Exception as e:
+        flash("Signup failed: " + str(e), "danger")
+        return redirect(url_for("signup"))
+
+
+@app.route('/login', methods=['POST'])
+def login_post():
+    """Handles login and redirects based on role"""
+    email = request.form['email']
+    password = request.form['password']
+
+    try:
+        user = auth.sign_in_with_email_and_password(email, password)
+        uid = user['localId']
+        session['user'] = uid
+
+        # Get role from Firebase and normalize it
+        role = db.child("users").child(uid).child("role").get().val()
+        if role:
+            role_clean = role.strip().lower()
+        else:
+            role_clean = ""
+
+        print(f"DEBUG: UID={uid}, role='{role}', normalized='{role_clean}'")  # debug print
+
+        if role_clean == "admin":
+            return redirect(url_for("admin_home"))
+        elif role_clean == "teacher":
+            return redirect(url_for("teacher_dashboard"))
+        elif role_clean == "student":
+            return redirect(url_for("student_dashboard"))
+        else:
+            flash("Role not assigned or invalid. Contact admin.", "danger")
+            return redirect(url_for("login"))
+
+    except Exception as e:
+        flash("Login failed: " + str(e), "danger")
+        return redirect(url_for("login"))
+
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    flash("You have been logged out.", "info")
+    return redirect(url_for("login"))
 
 
 # ------------------ Admin Pages ------------------
