@@ -7,51 +7,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <style>
+  /* ---------- Your CSS (unchanged) ---------- */
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body{height:100%;font-family:'Roboto',sans-serif;background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
   header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
   #menu-toggle{display:block;font-size:28px;margin-right:15px;cursor:pointer;}
-
-  /* --- Sidebar --- */
-  .sidebar{
-    position: fixed;
-    top:60px;
-    left:0;
-    width:240px;
-    height:calc(100% - 60px);
-    background: linear-gradient(180deg,#FFEED3 0%,#FFEED3 100%);
-    padding:15px 0;
-    box-shadow:2px 0 15px rgba(1,41,112,0.08);
-    font-family:'Poppins',sans-serif;
-    transition:width 0.3s ease, transform 0.3s ease;
-    z-index:999;
-    border-top-right-radius:12px;
-    overflow:hidden;
-  }
+  .sidebar{position: fixed;top:60px;left:0;width:240px;height:calc(100% - 60px);background: linear-gradient(180deg,#FFEED3 0%,#FFEED3 100%);padding:15px 0;box-shadow:2px 0 15px rgba(1,41,112,0.08);font-family:'Poppins',sans-serif;transition:width 0.3s ease, transform 0.3s ease;z-index:999;border-top-right-radius:12px;overflow:hidden;}
   .sidebar.collapsed { width:70px; }
   .sidebar-section{margin-bottom:25px;padding:0 15px;}
-  .sidebar-section-title{
-    font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#5D5FEF; /* Updated to admin blue */
-    margin-bottom:10px;padding-left:10px;transition:opacity 0.3s;
-  }
+  .sidebar-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#5D5FEF;margin-bottom:10px;padding-left:10px;transition:opacity 0.3s;}
   .sidebar.collapsed .sidebar-section-title{opacity:0;}
-  .sidebar-link{
-    display:flex;align-items:center;gap:10px;padding:12px 15px;margin-bottom:8px;border-radius:8px;font-size:15px;font-weight:500;color:#1A237E; /* Updated to admin navy */
-    text-decoration:none;transition:all 0.25s ease;white-space:nowrap;
-  }
+  .sidebar-link{display:flex;align-items:center;gap:10px;padding:12px 15px;margin-bottom:8px;border-radius:8px;font-size:15px;font-weight:500;color:#1A237E;text-decoration:none;transition:all 0.25s ease;white-space:nowrap;}
   .sidebar.collapsed .sidebar-link span{display:none;}
   .sidebar-link i{width:18px;text-align:center;}
   .sidebar-link:hover{background: rgba(255,255,255,0.5);transform:translateX(4px);}
   .sidebar-link.active{background: rgba(255,255,255,0.7);color:#4154F1;font-weight:600;box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2);}
-
-  .main{
-    margin-left:260px;
-    padding:100px 30px 30px;
-    font-family:'Nunito',sans-serif;
-    transition:margin-left 0.3s ease;
-  }
+  .main{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s ease;}
   .sidebar.collapsed ~ .main{margin-left:80px;}
-
   .page-title{font-family:'Poppins',sans-serif;font-size:28px;font-weight:500;color:#444444;margin-left:50px;margin-top:10px;margin-bottom:-1px;}
   .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-left:50px;margin-bottom:30px;}
   .breadcrumb .section{color:#989797;}
@@ -169,6 +141,7 @@
 <div id="toast" class="toast">Application sent successfully!</div>
 
 <script>
+/* ---------- Your existing JS ---------- */
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 const recordsBody = document.getElementById('recordsBody');
@@ -237,6 +210,38 @@ saveBtn.onclick = () => {
 
 openApplicationModal.onclick = openModal;
 renderRecords();
+</script>
+
+<!-- ---------- Firebase Script (merged) ---------- -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+  authDomain: "aimanzamani.firebaseapp.com",
+  projectId: "aimanzamani",
+  storageBucket: "aimanzamani.appspot.com",
+  messagingSenderId: "63348630728",
+  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Example: save a test record to Firestore
+// (you can integrate this into saveBtn.onclick later)
+async function testSave() {
+  try {
+    await addDoc(collection(db, "testRecords"), { sample: "Hello Firestore" });
+    console.log("Test record saved!");
+  } catch (e) {
+    console.error("Error adding document: ", e);
+  }
+}
 </script>
 
 </body>
