@@ -42,7 +42,7 @@
         .page-header .logo {
             font-weight: 700;
             font-size: 26px;
-            color: #212529;
+            color: #212529; /* Dark color for the logo */
         }
 
         /* Sidebar */
@@ -82,7 +82,7 @@
             border-radius: 4px;
             font-size: 15px;
             font-weight: 600;
-            color: #012970;
+            color: #012970; /* Dark blue for normal links */
             text-decoration: none;
             transition: background 0.3s;
             cursor: pointer;
@@ -94,7 +94,7 @@
 
         .sidebar-link.active {
             background: none;
-            color: #4154F1;
+            color: #3485E4; /* Lighter blue for active link to match the image */
         }
 
         /* Main Content Layout */
@@ -191,154 +191,147 @@
     <!-- Main Content Area -->
     <div class="main-content">
         <!-- Welcome text moved outside the card -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-1">Welcome, Peter Pan!</h2>
-        <p class="text-sm text-gray-500 mb-6">Dashboard / Home</p>
+        <h2 class="text-2xl font-bold text-gray-900 mb-1">Welcome, Peter Pan!</h2>
+        <p class="text-sm text-gray-600 mb-6">Dashboard / Home</p>
 
-        <!-- Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            <!-- Welcome and Stats Section -->
-            <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                <!-- Welcome Card (now just the user profile info) -->
-                <div class="bg-white p-6 rounded-2xl shadow-xl md:col-span-3">
-                    <div class="flex items-center space-x-4">
-                        <div class="h-16 w-16 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                            <img src="https://placehold.co/64x64/b8c6ff/ffffff?text=P" alt="Peter Pan" class="h-full w-full object-cover">
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-gray-800 text-lg">Peter bin pan</h3>
-                            <p class="text-gray-500 text-sm">ID: 123456</p>
-                            <p class="text-gray-500 text-sm">Email: 123456</p>
-                            <p class="text-gray-500 text-sm">Class: 123456</p>
-                            <p class="text-gray-500 text-sm">Intake: 123456</p>
-                            <p class="text-gray-500 text-sm">Semester 4</p>
-                        </div>
+            <!-- Profile Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-xl">
+                <div class="flex items-center space-x-4">
+                    <div class="h-16 w-16 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                        <img src="https://placehold.co/64x64/b8c6ff/ffffff?text=P" alt="Peter Pan" class="h-full w-full object-cover">
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-lg">Peter bin pan</h3>
+                        <p class="text-gray-700 text-sm">ID: 123456</p>
+                        <p class="text-gray-700 text-sm">Email: 123456</p>
+                        <p class="text-gray-700 text-sm">Class: 123456</p>
+                        <p class="text-gray-700 text-sm">Intake: 123456</p>
+                        <p class="text-gray-700 text-sm">Semester 4</p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Stats Cards -->
+            <!-- Stats Cards - Now placed next to the profile card and stacked -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center text-center">
                     <div class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full mb-3">
                         <i class="fas fa-hourglass-half"></i>
                     </div>
-                    <p class="text-sm text-gray-500 mb-1">Days Late</p>
-                    <span class="text-4xl font-bold text-gray-800">4</span>
+                    <p class="text-sm text-gray-700 mb-1">Days Late</p>
+                    <span class="text-4xl font-bold text-gray-900">4</span>
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center text-center">
                     <div class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full mb-3">
                         <i class="fas fa-user-check"></i>
                     </div>
-                    <p class="text-sm text-gray-500 mb-1">Days Present</p>
-                    <span class="text-4xl font-bold text-gray-800">63</span>
+                    <p class="text-sm text-gray-700 mb-1">Days Present</p>
+                    <span class="text-4xl font-bold text-gray-900">63</span>
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center text-center">
                     <div class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full mb-3">
                         <i class="fas fa-user-times"></i>
                     </div>
-                    <p class="text-sm text-gray-500 mb-1">Days Absent</p>
-                    <span class="text-4xl font-bold text-gray-800">3</span>
+                    <p class="text-sm text-gray-700 mb-1">Days Absent</p>
+                    <span class="text-4xl font-bold text-gray-900">3</span>
                 </div>
-
             </div>
+        </div>
 
-            <!-- Calendar and Attendance Rate Section -->
-            <div class="lg:col-span-1 grid grid-cols-1 gap-6">
-
-                <!-- Calendar Card -->
-                <div class="bg-white p-6 rounded-2xl shadow-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold text-gray-800">Calendar</h3>
-                        <span id="calendar-month-year" class="text-sm text-gray-500"></span>
-                    </div>
-                    <div class="grid grid-cols-7 text-center text-sm font-semibold text-gray-500 mb-2">
-                        <span>Mon</span>
-                        <span>Tue</span>
-                        <span>Wed</span>
-                        <span>Thu</span>
-                        <span>Fri</span>
-                        <span>Sat</span>
-                        <span>Sun</span>
-                    </div>
-                    <div id="calendar-days" class="grid grid-cols-7 gap-1 text-center text-sm">
-                        <!-- Calendar days will be generated here by JS -->
-                    </div>
+        <!-- Calendar and Attendance Rate Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <!-- Calendar Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-900">Calendar</h3>
+                    <span id="calendar-month-year" class="text-sm text-gray-600"></span>
                 </div>
-
-                <!-- Attendance Rate Card -->
-                <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center text-center">
-                    <p class="text-sm text-gray-500 mb-3">Attendance Rate</p>
-                    <div class="relative w-32 h-32 flex items-center justify-center">
-                        <div class="absolute inset-0 bg-green-500 rounded-full" style="clip-path: inset(0 0 20% 0); transform: rotate(180deg);"></div>
-                        <div class="progress-circle bg-green-50 rounded-full w-28 h-28 flex items-center justify-center">
-                            <span class="text-4xl font-bold text-gray-800">96%</span>
-                        </div>
-                    </div>
+                <div class="grid grid-cols-7 text-center text-sm font-semibold text-gray-600 mb-2">
+                    <span>Mon</span>
+                    <span>Tue</span>
+                    <span>Wed</span>
+                    <span>Thu</span>
+                    <span>Fri</span>
+                    <span>Sat</span>
+                    <span>Sun</span>
+                </div>
+                <div id="calendar-days" class="grid grid-cols-7 gap-1 text-center text-sm">
+                    <!-- Calendar days will be generated here by JS -->
                 </div>
             </div>
 
-            <!-- Bottom Two Cards Section -->
-            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <!-- Today's Attendance Card -->
-                <div class="bg-[#FFFEE5] p-6 rounded-2xl shadow-xl flex items-center space-x-4">
-                    <div class="h-12 w-12 flex items-center justify-center bg-green-500 text-white rounded-full">
-                        <i class="fas fa-check-circle text-2xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-800">Today's Attendance</h3>
-                        <p class="text-sm text-gray-500">Present</p>
-                        <p class="text-xs text-gray-400">Face scanned successfully</p>
+            <!-- Attendance Rate Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center text-center">
+                <p class="text-sm text-gray-600 mb-3">Attendance Rate</p>
+                <div class="relative w-32 h-32 flex items-center justify-center">
+                    <div class="absolute inset-0 bg-green-500 rounded-full" style="clip-path: inset(0 0 20% 0); transform: rotate(180deg);"></div>
+                    <div class="progress-circle bg-green-50 rounded-full w-28 h-28 flex items-center justify-center">
+                        <span class="text-4xl font-bold text-gray-900">96%</span>
                     </div>
                 </div>
-
-                <!-- Notification Card -->
-                <div class="bg-[#F6F8FE] p-6 rounded-2xl shadow-xl flex items-start space-x-4">
-                    <div class="h-12 w-12 flex items-center justify-center bg-blue-500 text-white rounded-full">
-                        <i class="fas fa-bell text-2xl"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="text-lg font-bold text-gray-800 mb-1">Notification</h3>
-                        <p class="text-sm text-gray-500">Peter Pan is late three times this month!</p>
-                    </div>
-                    <span class="text-xs text-gray-400">03 August 2025, 9:00am</span>
-                </div>
-
             </div>
+        </div>
 
-            <!-- Recent Attendance Table -->
-            <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-xl">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Attendance</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead>
-                            <tr class="bg-gray-50">
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">05-08-2025</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">8:00am - 11:00am</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Programming</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">Present</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">05-08-2025</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2:00pm - 4:00pm</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Computer System</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">Present</td>
-                            </tr>
-                        </tbody>
-                    </table>
+        <!-- Today's Attendance and Notification Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <!-- Today's Attendance Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-xl flex items-center space-x-4">
+                <div class="h-12 w-12 flex items-center justify-center bg-green-500 text-white rounded-full">
+                    <i class="fas fa-check-circle text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Today's Attendance</h3>
+                    <p class="text-sm text-gray-700">Present</p>
+                    <p class="text-xs text-gray-500">Face scanned successfully</p>
                 </div>
             </div>
 
+            <!-- Notification Card -->
+            <div class="bg-[#F6F8FE] p-6 rounded-2xl shadow-xl flex items-start space-x-4">
+                <div class="h-12 w-12 flex items-center justify-center bg-blue-500 text-white rounded-full">
+                    <i class="fas fa-bell text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Notification</h3>
+                    <p class="text-sm text-gray-700">Peter Pan is late three times this month!</p>
+                </div>
+                <span class="text-xs text-gray-500">03 August 2025, 9:00am</span>
+            </div>
+        </div>
+
+        <!-- Recent Attendance Table -->
+        <div class="bg-white p-6 rounded-2xl shadow-xl mt-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Recent Attendance</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Time</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Module</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">05-08-2025</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">8:00am - 11:00am</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Programming</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">Present</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">05-08-2025</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">2:00pm - 4:00pm</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Computer System</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">Present</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
