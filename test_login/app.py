@@ -1,16 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import firebase_admin
 from firebase_admin import credentials, auth
+from datetime import timedelta
 
-app = Flask(__name__, template_folder="../templates")
+app = Flask(__name__, template_folder="templates")  # adjust path if needed
 app.secret_key = "supersecretkey"  # change this to something strong in production
 
+# Make sessions last longer if "Remember me" is checked
+app.permanent_session_lifetime = timedelta(days=30)
+
 # ------------------ Initialize Firebase Admin ------------------
-cred = credentials.Certificate("../serviceAccountKey.json")  # path to your downloaded key
+cred = credentials.Certificate("serviceAccountKey.json")  # path to your Firebase service account key
 firebase_admin.initialize_app(cred)
 
 # ------------------ Routes ------------------
-
 @app.route("/")
 def home():
     return render_template("combinePage/Login.html")  # your login page
@@ -19,37 +22,42 @@ def home():
 def login():
     email = request.form.get("email")
     password = request.form.get("password")
+    remember = request.form.get("remember")  # will be 'on' if checked
+
+    if not email or not password:
+        flash("Please enter both email and password.")
+        return redirect(url_for("home"))
 
     try:
-        # Get user by email from Firebase
+        # Firebase Admin SDK cannot verify password directly
+        # Here we just check if the user exists
         user = auth.get_user_by_email(email)
         uid = user.uid
 
-        # NOTE: Firebase Admin SDK cannot verify passwords directly.
-        # For actual password check, use Pyrebase or Firebase client SDK in frontend.
-        # Here we just check if the user exists.
-
-        # Get custom claims for role
+        # Get custom claims (role)
         claims = user.custom_claims
         role = claims.get("role") if claims else None
 
-        if role == "student":
-            session["user"] = email
-            return redirect(url_for("student_dashboard"))
-        elif role == "teacher":
-            session["user"] = email
-            return redirect(url_for("teacher_dashboard"))
-        elif role == "admin":
-            session["user"] = email
-            return redirect(url_for("admin_dashboard"))
-        else:
+        if role not in ["student", "teacher", "admin"]:
             flash("Role not assigned. Contact admin.")
             return redirect(url_for("home"))
+
+        # Set session
+        session["user"] = email
+        session.permanent = True if remember == "on" else False
+
+        if role == "student":
+            return redirect(url_for("student_dashboard"))
+        elif role == "teacher":
+            return redirect(url_for("teacher_dashboard"))
+        else:  # admin
+            return redirect(url_for("admin_dashboard"))
 
     except auth.UserNotFoundError:
         flash("Invalid email or password")
         return redirect(url_for("home"))
 
+# ------------------ Dashboards ------------------
 @app.route("/student_dashboard")
 def student_dashboard():
     if "user" in session:
@@ -68,12 +76,13 @@ def admin_dashboard():
         return "Welcome to the Admin Dashboard!"
     return redirect(url_for("home"))
 
+# ------------------ Logout ------------------
 @app.route("/logout")
 def logout():
     session.pop("user", None)
     return redirect(url_for("home"))
 
-# Optional placeholder signup route if your Login.html still has the link
+# ------------------ Signup placeholder ------------------
 @app.route("/signup")
 def signup():
     return "Signup page coming soon!"
