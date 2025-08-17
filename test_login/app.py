@@ -2,15 +2,21 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import firebase_admin
 from firebase_admin import credentials, auth
 from datetime import timedelta
+import os
 
-app = Flask(__name__, template_folder="templates")  # adjust path if needed
+# Get the folder of this app.py
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Flask app with correct templates folder
+app = Flask(__name__, template_folder=os.path.join(BASE_DIR, "../templates"))
 app.secret_key = "supersecretkey"  # change this to something strong in production
 
 # Make sessions last longer if "Remember me" is checked
 app.permanent_session_lifetime = timedelta(days=30)
 
 # ------------------ Initialize Firebase Admin ------------------
-cred = credentials.Certificate("serviceAccountKey.json")  # path to your Firebase service account key
+cred_path = os.path.join(BASE_DIR, "serviceAccountKey.json")  # file is in the same folder as app.py
+cred = credentials.Certificate(cred_path)
 firebase_admin.initialize_app(cred)
 
 # ------------------ Routes ------------------
@@ -32,7 +38,6 @@ def login():
         # Firebase Admin SDK cannot verify password directly
         # Here we just check if the user exists
         user = auth.get_user_by_email(email)
-        uid = user.uid
 
         # Get custom claims (role)
         claims = user.custom_claims
