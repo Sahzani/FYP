@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+        }
+
+        /* The main page header, containing the logo, search, and profile. */
+        .page-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #fff;
+            box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 10;
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        .page-header .logo {
+            font-weight: 700;
+            font-size: 26px;
+            color: #212529;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 60px; /* under the new combined header */
+            left: 0;
+            width: 260px;
+            height: calc(100% - 60px);
+            background: #FFEED3;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+            font-family: 'Open Sans', sans-serif;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #899BBD;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            background: #FFEED3;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #012970;
+            text-decoration: none;
+            transition: background 0.3s, color 0.3s; /* Added color transition */
+            cursor: pointer;
+        }
+
+        .sidebar-link.active {
+      background: rgba(221, 168, 83, 0.44);
+      color: #4154F1;
+    }
+    .sidebar-link:hover {
+      background: #ffe1ab;
+    }
+
+        /* Main Content Layout */
+        .main-content {
+            margin-left: 260px;
+            padding: 80px 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Combined Header for the entire page -->
+    <header class="page-header">
+        <div class="logo">iAttend</div>
+        <div class="flex items-center space-x-4">
+            <!-- User Profile -->
+            <a href="T_profile.html" class="flex items-center space-x-3 cursor-pointer">
+                <span class="text-sm font-semibold text-gray-800">Teacher Name</span>
+                <div class="h-10 w-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                    <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher" class="h-full w-full object-cover">
+                </div>
+            </a>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-section">
+            <div class="text-xs font-semibold text-gray-400 uppercase mb-2">MENU</div>
+            <div class="text-xs font-semibold text-gray-400 uppercase mb-2"></div>
+            <a class="sidebar-link active" href="#" id="nav-dashboard">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a class="sidebar-link" href="T_class_list.html" id="nav-class-list">
+                <i class="fas fa-school"></i> View Class List
+            </a>
+            <a class="sidebar-link" href="T_StartAttendance.html" id="nav-class-list">
+                <i class="fas fa-clipboard-check"></i> Start Attendance
+            </a>
+            <a class="sidebar-link" href="T_attendance_report.html" id="nav-absent-report">
+                <i class="fas fa-user-times"></i> Attendance Report
+            </a>
+        </div>
+        <div class="sidebar-section mt-auto">
+            <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Logout</div>
+            <a class="sidebar-link" href="T_login.html" id="nav-logout">
+                <i class="fas fa-sign-out-alt text-red-600"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <h2 class="text-2xl font-bold text-gray-800 mb-1">Welcome, Teacher!</h2>
+        <p class="text-sm text-gray-500 mb-6">Dashboard / Attendance Report</p>
+
+        <!-- Attendance Report Table -->
+        <div class="bg-white p-6 rounded-2xl shadow">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Attendance Report</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Students</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Present</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Absent</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance %</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Example Class Rows - Replace with dynamic data -->
+                        <tr class="cursor-pointer hover:bg-gray-100" onclick="window.location.href='class_attendance.html?classId=1'">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mathematics 101</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">30</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">28</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">93.33%</td>
+                        </tr>
+                        <tr class="cursor-pointer hover:bg-gray-100" onclick="window.location.href='class_attendance.html?classId=2'">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Science 201</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">25</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">22</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">88.00%</td>
+                        </tr>
+                        <tr class="cursor-pointer hover:bg-gray-100" onclick="window.location.href='class_attendance.html?classId=3'">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">History 301</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">28</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">26</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">92.86%</td>
+                        </tr>
+                        <!-- Add more class rows as needed -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Sidebar active link functionality
+            const navItems = document.querySelectorAll('.sidebar-link');
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    // Remove active class from all items
+                    navItems.forEach(i => i.classList.remove('active'));
+                    // Add active class to the clicked item
+                    e.currentTarget.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
