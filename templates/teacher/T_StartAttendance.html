@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>iAttend - Start Attendance</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <title>Start Attendance</title>
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       height: 100%;
       font-family: 'Roboto', sans-serif;
@@ -16,7 +17,7 @@
     }
 
     /* Header */
-    header {
+    .page-header {
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 60px;
@@ -24,97 +25,73 @@
       box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
       display: flex;
       align-items: center;
-      padding-left: 20px;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 10;
       font-family: 'Nunito', sans-serif;
+    }
+    .page-header .logo {
       font-weight: 700;
       font-size: 26px;
       color: #212529;
-      z-index: 10;
     }
 
     /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 60px; /* under the new combined header */
-            left: 0;
-            width: 260px;
-            height: calc(100% - 60px);
-            background: #FFEED3;
-            padding: 20px;
-            box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
-            font-family: 'Open Sans', sans-serif;
-            overflow-y: auto;
-        }
-    .sidebar-section {
-            margin-bottom: 30px;
-        }
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 260px;
+      height: calc(100% - 60px);
+      background: #FFEED3;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+      font-family: 'Open Sans', sans-serif;
+      overflow-y: auto;
+    }
 
-        .sidebar-section-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #899BBD;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
+    .sidebar-section { margin-bottom: 30px; }
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #899BBD;
+      margin-bottom: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
     .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            background: #FFEED3;
-            border-radius: 4px;
-            font-size: 15px;
-            font-weight: 600;
-            color: #012970;
-            text-decoration: none;
-            transition: background 0.3s, color 0.3s; /* Added color transition */
-            cursor: pointer;
-        }
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #FFEED3;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #012970;
+      text-decoration: none;
+      transition: background 0.3s, color 0.3s;
+      cursor: pointer;
+    }
+
     .sidebar-link.active {
       background: rgba(221, 168, 83, 0.44);
       color: #4154F1;
     }
-    .sidebar-link:hover {
-      background: #ffe1ab;
-    }
+    .sidebar-link:hover { background: #ffe1ab; }
 
     /* Main */
-    .main {
+    .main-content {
       margin-left: 260px;
-      padding: 100px 30px 30px;
-    }
-    .breadcrumb-container {
-      max-width: 1200px;
-      font-family: 'Nunito', sans-serif;
-      margin-bottom: 30px;
-    }
-    .breadcrumb-title {
-      font-size: 24px;
-      font-weight: 600;
-      color: #27548A;
-      margin-bottom: 5px;
-    }
-    .breadcrumb-nav {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .breadcrumb-nav .home,
-    .breadcrumb-nav .divider {
-      color: #989797;
-    }
-    .breadcrumb-nav .current {
-      color: #444444;
+      padding: 80px 20px;
     }
 
-    /* Camera */
+    /* Camera container */
     .camera-container {
       background: #fff;
-      border-radius: 8px;
+      border-radius: 12px;
       box-shadow: 0px 0px 30px rgba(1, 41, 112, 0.1);
       padding: 20px;
       max-width: 700px;
@@ -136,53 +113,56 @@
       border-radius: 6px;
       cursor: pointer;
     }
-    button:hover {
-      background: #293ad1;
-    }
+    button:hover { background: #293ad1; }
   </style>
 </head>
 <body>
 
-  <header>iAttend</header>
+  <!-- Header -->
+  <header class="page-header">
+    <div class="logo">iAttend</div>
+    <div class="flex items-center space-x-4">
+      <a href="T_profile.html" class="flex items-center space-x-3 cursor-pointer">
+        <span class="text-sm font-semibold text-gray-800">Teacher Name</span>
+        <div class="h-10 w-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+          <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher" class="h-full w-full object-cover">
+        </div>
+      </a>
+    </div>
+  </header>
 
-  <!-- Sidebar identical to T_attendance.html -->
+  <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-section-title">MENU</div>
-      <a class="sidebar-link" href="T_dashboard.html">
+      <a class="sidebar-link" href="T_dashboard.html" id="nav-dashboard">
         <i class="fas fa-tachometer-alt"></i> Dashboard
       </a>
-      <a class="sidebar-link" href="T_class_list.html">
+      <a class="sidebar-link" href="T_class_list.html" id="nav-class-list">
         <i class="fas fa-school"></i> View Class List
       </a>
-      <a class="sidebar-link active" href="T_StartAttendance.html">
+      <a class="sidebar-link active" href="T_StartAttendance.html" id="nav-start-attendance">
         <i class="fas fa-clipboard-check"></i> Start Attendance
       </a>
-      <a class="sidebar-link" href="T_AbsentReport.html">
-        <i class="fas fa-user-times"></i> View Absent Report
+      <a class="sidebar-link" href="T_attendance_report.html" id="nav-attendance-report">
+        <i class="fas fa-user-times"></i> Attendance Report
       </a>
     </div>
     <div class="sidebar-section mt-auto">
       <div class="sidebar-section-title">Logout</div>
       <a class="sidebar-link" href="T_login.html" id="nav-logout">
-                <i class="fas fa-sign-out-alt text-red-600"></i> Logout
-            </a>
+        <i class="fas fa-sign-out-alt text-red-600"></i> Logout
+      </a>
     </div>
   </div>
 
   <!-- Main -->
-  <div class="main">
-    <div class="breadcrumb-container">
-      <div class="breadcrumb-title">Start Attendance</div>
-      <div class="breadcrumb-nav">
-        <span class="home">Home</span>
-        <span class="divider">/</span>
-        <span class="current">Start Attendance</span>
-      </div>
-    </div>
+  <div class="main-content">
+    <h2 class="text-2xl font-bold text-gray-800 mb-1">Start Attendance</h2>
+    <p class="text-sm text-gray-500 mb-6">Dashboard / Start Attendance</p>
 
     <div class="camera-container">
-      <h3>Live Camera Feed</h3>
+      <h3 class="text-xl font-bold text-gray-800 mb-4">Live Camera Feed</h3>
       <video id="video" autoplay></video>
       <button id="captureBtn">Start Attendance</button>
     </div>
