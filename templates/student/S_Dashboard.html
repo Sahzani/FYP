@@ -10,392 +10,209 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Reset */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; font-family: 'Roboto', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
 
-        html, body {
-            height: 100%;
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-        }
-
-        /* The main page header, containing the logo, search, and profile. */
         .page-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: #fff;
-            box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 10;
-            font-family: 'Nunito', sans-serif;
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #fff; box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; z-index: 10; font-family: 'Nunito', sans-serif;
         }
-        
-        .page-header .logo {
-            font-weight: 700;
-            font-size: 26px;
-            color: #212529;
-        }
+        .page-header .logo { font-weight: 700; font-size: 26px; color: #212529; }
 
-        /* Sidebar */
         .sidebar {
-            position: fixed;
-            top: 60px; /* under the new combined header */
-            left: 0;
-            width: 260px;
-            height: calc(100% - 60px);
-            background: #FFEED3;
-            padding: 20px;
-            box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
-            font-family: 'Open Sans', sans-serif;
-            overflow-y: auto;
+            position: fixed; top: 60px; left: 0; width: 260px; height: calc(100% - 60px);
+            background: #FFEED3; padding: 20px; box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+            font-family: 'Open Sans', sans-serif; overflow-y: auto;
         }
-
-        .sidebar-section {
-            margin-bottom: 30px;
-        }
-
-        .sidebar-section-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #899BBD;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-
+        .sidebar-section { margin-bottom: 30px; }
+        .sidebar-section-title { font-size: 11px; text-transform: uppercase; color: #899BBD; margin-bottom: 10px; letter-spacing: 0.5px; font-weight: 600; }
         .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            background: #FFEED3;
-            border-radius: 4px;
-            font-size: 15px;
-            font-weight: 600;
-            color: #012970;
-            text-decoration: none;
-            transition: background 0.3s;
-            cursor: pointer;
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 10px;
+            background: #FFEED3; border-radius: 4px; font-size: 15px; font-weight: 600; color: #012970;
+            text-decoration: none; transition: background 0.3s; cursor: pointer;
         }
+        .sidebar-link:hover { background: #ffe1ab; }
+        .sidebar-link.active { background: none; color: #4154F1; }
 
-        .sidebar-link:hover {
-            background: #ffe1ab;
-        }
+        .main-content { margin-left: 260px; padding: 80px 20px; }
 
-        .sidebar-link.active {
-            background: none;
-            color: #4154F1;
-        }
-
-        /* Main Content Layout */
-        .main-content {
-            margin-left: 260px;
-            padding: 80px 20px;
-        }
-        
-        /* Custom CSS for the circular progress bar */
-        .progress-circle {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #e2e8f0;
-            overflow: hidden;
-        }
-        .progress-circle .inner-circle {
-            width: 80px;
-            height: 80px;
-            background-color: white;
-            border-radius: 50%;
-            position: relative;
-            z-index: 2;
-        }
-        .progress-circle .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            clip-path: inset(0 0 20% 0);
-            background-color: #22c55e;
-            transform: rotate(180deg);
-            z-index: 1;
-        }
+        .progress-circle { position: relative; width: 100px; height: 100px; border-radius: 50%; display: flex; justify-content: center; align-items: center; background-color: #e2e8f0; overflow: hidden; }
+        .progress-circle .inner-circle { width: 80px; height: 80px; background-color: white; border-radius: 50%; position: relative; z-index: 2; }
+        .progress-circle .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; clip-path: inset(0 0 20% 0); background-color: #22c55e; transform: rotate(180deg); z-index: 1; }
     </style>
 </head>
 <body>
 
-    <!-- Combined Header for the entire page -->
-    <header class="page-header">
-        <div class="logo">iAttend</div>
-        <div class="flex items-center space-x-4">
-            <!-- Search Bar -->
-            <div class="relative w-full max-w-sm">
-                <input type="text" placeholder="Search" class="w-full pl-10 pr-4 py-2 text-sm text-gray-700 placeholder-gray-500 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+<header class="page-header">
+    <div class="logo">iAttend</div>
+    <div class="flex items-center space-x-4">
+        <div class="relative w-full max-w-sm">
+            <input type="text" placeholder="Search" class="w-full pl-10 pr-4 py-2 text-sm text-gray-700 placeholder-gray-500 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        </div>
+        <a href="{{ url_for('student_profile') }}" class="flex items-center space-x-3 cursor-pointer">
+            <span class="text-sm font-semibold text-gray-800">{{ student.name }}</span>
+            <div class="h-10 w-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                <img src="{{ student.profile_pic }}" alt="{{ student.name }}" class="h-full w-full object-cover">
             </div>
-            <!-- User Profile -->
-            <a href="S_profile.html" class="flex items-center space-x-3 cursor-pointer">
-                <span class="text-sm font-semibold text-gray-800">Peterpan</span>
-                <div class="h-10 w-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                    <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=P" alt="Peterpan" class="h-full w-full object-cover">
-                </div>
-            </a>
-        </div>
-    </header>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-section">
-            <a class="sidebar-link active" href="#" id="nav-dashboard">
-                <i class="fas fa-th-large"></i>
-                Dashboard
-            </a>
-        </div>
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">Analyse</div>
-            <a class="sidebar-link" href="S_History.html" id="nav-attendance">
-                <i class="fas fa-list-alt"></i>
-                Attendance
-            </a>
-        </div>
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">Request</div>
-            <a class="sidebar-link" href="S_AbsentApp.html" id="nav-absent">
-                <i class="fas fa-paper-plane"></i>
-                Absent Application
-            </a>
-        </div>
-        <div class="sidebar-section mt-auto">
-            <div class="sidebar-section-title">Logout</div>
-            <a class="sidebar-link" href="Login_Page.html" id="nav-logout">
-                <i class="fas fa-sign-out-alt text-red-500"></i>
-                Logout
-            </a>
-        </div>
+        </a>
     </div>
+</header>
 
-    <!-- Main Content Area -->
-    <div class="main-content">
-        <!-- Welcome text moved outside the card -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-1">Welcome, Peter Pan!</h2>
-        <p class="text-sm text-gray-500 mb-6">Dashboard / Home</p>
+<div class="sidebar">
+    <div class="sidebar-section">
+        <a class="sidebar-link {% if active_page == 'dashboard' %}active{% endif %}" href="{{ url_for('student_dashboard') }}">
+            <i class="fas fa-th-large"></i> Dashboard
+        </a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Analyse</div>
+        <a class="sidebar-link {% if active_page == 'attendance' %}active{% endif %}" href="{{ url_for('student_history') }}">
+            <i class="fas fa-list-alt"></i> Attendance
+        </a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Request</div>
+        <a class="sidebar-link {% if active_page == 'absent' %}active{% endif %}" href="{{ url_for('student_absentapp') }}">
+            <i class="fas fa-paper-plane"></i> Absent Application
+        </a>
+    </div>
+    <div class="sidebar-section mt-auto">
+        <div class="sidebar-section-title">Logout</div>
+        <a class="sidebar-link" href="{{ url_for('logout') }}">
+            <i class="fas fa-sign-out-alt text-red-500"></i> Logout
+        </a>
+    </div>
+</div>
 
-        <!-- Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="main-content">
+    <h2 class="text-2xl font-bold text-gray-800 mb-1">Welcome, {{ student.name }}!</h2>
+    <p class="text-sm text-gray-500 mb-6">Dashboard / Home</p>
 
-            <!-- Welcome and Stats Section -->
-            <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                <!-- Welcome Card (now just the user profile info) -->
-                <div class="bg-white p-6 rounded-2xl shadow-xl md:col-span-3">
-                    <div class="flex items-center space-x-4">
-                        <div class="h-16 w-16 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                            <img src="https://placehold.co/64x64/b8c6ff/ffffff?text=P" alt="Peter Pan" class="h-full w-full object-cover">
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-gray-800 text-lg">Peter bin pan</h3>
-                            <p class="text-gray-500 text-sm">ID: 123456</p>
-                            <p class="text-gray-500 text-sm">Email: 123456</p>
-                            <p class="text-gray-500 text-sm">Class: 123456</p>
-                            <p class="text-gray-500 text-sm">Intake: 123456</p>
-                            <p class="text-gray-500 text-sm">Semester 4</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stats Cards -->
-                <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center text-center">
-                    <div class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full mb-3">
-                        <i class="fas fa-hourglass-half"></i>
-                    </div>
-                    <p class="text-sm text-gray-500 mb-1">Days Late</p>
-                    <span class="text-4xl font-bold text-gray-800">4</span>
-                </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center text-center">
-                    <div class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full mb-3">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <p class="text-sm text-gray-500 mb-1">Days Present</p>
-                    <span class="text-4xl font-bold text-gray-800">63</span>
-                </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center text-center">
-                    <div class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full mb-3">
-                        <i class="fas fa-user-times"></i>
-                    </div>
-                    <p class="text-sm text-gray-500 mb-1">Days Absent</p>
-                    <span class="text-4xl font-bold text-gray-800">3</span>
-                </div>
-
-            </div>
-
-            <!-- Calendar and Attendance Rate Section -->
-            <div class="lg:col-span-1 grid grid-cols-1 gap-6">
-
-                <!-- Calendar Card -->
-                <div class="bg-white p-6 rounded-2xl shadow-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold text-gray-800">Calendar</h3>
-                        <span id="calendar-month-year" class="text-sm text-gray-500"></span>
-                    </div>
-                    <div class="grid grid-cols-7 text-center text-sm font-semibold text-gray-500 mb-2">
-                        <span>Mon</span>
-                        <span>Tue</span>
-                        <span>Wed</span>
-                        <span>Thu</span>
-                        <span>Fri</span>
-                        <span>Sat</span>
-                        <span>Sun</span>
-                    </div>
-                    <div id="calendar-days" class="grid grid-cols-7 gap-1 text-center text-sm">
-                        <!-- Calendar days will be generated here by JS -->
-                    </div>
-                </div>
-
-                <!-- Attendance Rate Card -->
-                <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center text-center">
-                    <p class="text-sm text-gray-500 mb-3">Attendance Rate</p>
-                    <div class="relative w-32 h-32 flex items-center justify-center">
-                        <div class="absolute inset-0 bg-green-500 rounded-full" style="clip-path: inset(0 0 20% 0); transform: rotate(180deg);"></div>
-                        <div class="progress-circle bg-green-50 rounded-full w-28 h-28 flex items-center justify-center">
-                            <span class="text-4xl font-bold text-gray-800">96%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bottom Two Cards Section -->
-            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <!-- Today's Attendance Card -->
-                <div class="bg-[#FFFEE5] p-6 rounded-2xl shadow-xl flex items-center space-x-4">
-                    <div class="h-12 w-12 flex items-center justify-center bg-green-500 text-white rounded-full">
-                        <i class="fas fa-check-circle text-2xl"></i>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-xl md:col-span-3">
+                <div class="flex items-center space-x-4">
+                    <div class="h-16 w-16 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                        <img src="{{ student.profile_pic }}" alt="{{ student.name }}" class="h-full w-full object-cover">
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-gray-800">Today's Attendance</h3>
-                        <p class="text-sm text-gray-500">Present</p>
-                        <p class="text-xs text-gray-400">Face scanned successfully</p>
+                        <h3 class="font-bold text-gray-800 text-lg">{{ student.full_name }}</h3>
+                        <p class="text-gray-500 text-sm">ID: {{ student.id }}</p>
+                        <p class="text-gray-500 text-sm">Email: {{ student.email }}</p>
+                        <p class="text-gray-500 text-sm">Class: {{ student.class }}</p>
+                        <p class="text-gray-500 text-sm">Intake: {{ student.intake }}</p>
+                        <p class="text-gray-500 text-sm">Semester {{ student.semester }}</p>
                     </div>
-                </div>
-
-                <!-- Notification Card -->
-                <div class="bg-[#F6F8FE] p-6 rounded-2xl shadow-xl flex items-start space-x-4">
-                    <div class="h-12 w-12 flex items-center justify-center bg-blue-500 text-white rounded-full">
-                        <i class="fas fa-bell text-2xl"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="text-lg font-bold text-gray-800 mb-1">Notification</h3>
-                        <p class="text-sm text-gray-500">Peter Pan is late three times this month!</p>
-                    </div>
-                    <span class="text-xs text-gray-400">03 August 2025, 9:00am</span>
-                </div>
-
-            </div>
-
-            <!-- Recent Attendance Table -->
-            <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-xl">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Attendance</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead>
-                            <tr class="bg-gray-50">
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">05-08-2025</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">8:00am - 11:00am</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Programming</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">Present</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">05-08-2025</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2:00pm - 4:00pm</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Computer System</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">Present</td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
             </div>
 
+            <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center text-center">
+                <div class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full mb-3">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <p class="text-sm text-gray-500 mb-1">Days Late</p>
+                <span class="text-4xl font-bold text-gray-800">{{ stats.days_late }}</span>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center text-center">
+                <div class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full mb-3">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <p class="text-sm text-gray-500 mb-1">Days Present</p>
+                <span class="text-4xl font-bold text-gray-800">{{ stats.days_present }}</span>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center text-center">
+                <div class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full mb-3">
+                    <i class="fas fa-user-times"></i>
+                </div>
+                <p class="text-sm text-gray-500 mb-1">Days Absent</p>
+                <span class="text-4xl font-bold text-gray-800">{{ stats.days_absent }}</span>
+            </div>
+        </div>
+
+        <div class="lg:col-span-1 grid grid-cols-1 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Calendar</h3>
+                    <span id="calendar-month-year" class="text-sm text-gray-500"></span>
+                </div>
+                <div class="grid grid-cols-7 text-center text-sm font-semibold text-gray-500 mb-2">
+                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                </div>
+                <div id="calendar-days" class="grid grid-cols-7 gap-1 text-center text-sm"></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center justify-center text-center">
+                <p class="text-sm text-gray-500 mb-3">Attendance Rate</p>
+                <div class="progress-circle bg-green-50 rounded-full w-28 h-28 flex items-center justify-center">
+                    <span class="text-4xl font-bold text-gray-800">{{ stats.attendance_rate }}%</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Sidebar active link functionality
-            const navItems = document.querySelectorAll('.sidebar-link');
-            navItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    // Remove active class from all items
-                    navItems.forEach(i => i.classList.remove('active'));
-                    // Add active class to the clicked item
-                    e.currentTarget.classList.add('active');
-                });
-            });
+    <!-- Recent Attendance Table -->
+    <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-xl mt-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Attendance</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for record in recent_attendance %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.date }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.time }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.module }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm {% if record.status == 'Present' %}text-green-600{% else %}text-red-600{% endif %} font-semibold">{{ record.status }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
-            // Calendar generation logic
-            const calendarDaysEl = document.getElementById('calendar-days');
-            const calendarMonthYearEl = document.getElementById('calendar-month-year');
-            const today = new Date();
-            let currentMonth = today.getMonth();
-            let currentYear = today.getFullYear();
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const calendarDaysEl = document.getElementById('calendar-days');
+        const calendarMonthYearEl = document.getElementById('calendar-month-year');
+        const today = new Date();
+        let currentMonth = today.getMonth();
+        let currentYear = today.getFullYear();
 
-            const renderCalendar = (month, year) => {
-                const firstDay = new Date(year, month, 1);
-                const lastDay = new Date(year, month + 1, 0);
-                const firstDayOfWeek = (firstDay.getDay() + 6) % 7; // Adjust to start on Monday
-                const daysInMonth = lastDay.getDate();
+        const renderCalendar = (month, year) => {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const firstDayOfWeek = (firstDay.getDay() + 6) % 7;
+            const daysInMonth = lastDay.getDate();
 
-                calendarMonthYearEl.textContent = `${lastDay.toLocaleString('default', { month: 'long' })} ${year}`;
-                calendarDaysEl.innerHTML = '';
+            calendarMonthYearEl.textContent = `${lastDay.toLocaleString('default', { month: 'long' })} ${year}`;
+            calendarDaysEl.innerHTML = '';
 
-                // Add empty cells for days before the 1st of the month
-                for (let i = 0; i < firstDayOfWeek; i++) {
-                    const emptyDay = document.createElement('span');
-                    calendarDaysEl.appendChild(emptyDay);
-                }
+            for (let i = 0; i < firstDayOfWeek; i++) calendarDaysEl.appendChild(document.createElement('span'));
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayEl = document.createElement('span');
+                dayEl.textContent = i;
+                dayEl.classList.add('p-2', 'rounded-full', 'w-8', 'h-8', 'flex', 'items-center', 'justify-center', 'cursor-pointer', 'transition-colors', 'duration-200');
+                if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dayEl.classList.add('bg-blue-500', 'text-white', 'font-bold');
+                else dayEl.classList.add('text-gray-700', 'hover:bg-gray-100');
+                calendarDaysEl.appendChild(dayEl);
+            }
+        };
+        renderCalendar(currentMonth, currentYear);
+    });
+</script>
 
-                // Add actual days
-                for (let i = 1; i <= daysInMonth; i++) {
-                    const dayEl = document.createElement('span');
-                    dayEl.textContent = i;
-                    dayEl.classList.add('p-2', 'rounded-full', 'w-8', 'h-8', 'flex', 'items-center', 'justify-center', 'cursor-pointer', 'transition-colors', 'duration-200');
-
-                    // Highlight today's date
-                    if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-                        dayEl.classList.add('bg-blue-500', 'text-white', 'font-bold');
-                    } else {
-                        dayEl.classList.add('text-gray-700', 'hover:bg-gray-100');
-                    }
-
-                    calendarDaysEl.appendChild(dayEl);
-                }
-            };
-
-            renderCalendar(currentMonth, currentYear);
-        });
-    </script>
 </body>
 </html>
