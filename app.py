@@ -1,174 +1,117 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-import pyrebase
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+import firebase_admin
+from firebase_admin import credentials, auth, firestore
+from datetime import timedelta
+import os
 
-app = Flask(__name__)
-app.secret_key = "supersecretkey"  # change to something stronger
+# ------------------ Flask Setup ------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(__name__, template_folder=os.path.join(BASE_DIR, "../templates"))
+app.secret_key = "supersecretkey"  # change this in production
+app.permanent_session_lifetime = timedelta(days=30)
 
-# ------------------ Firebase Config ------------------
-firebaseConfig = {
-    "apiKey": "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-    "authDomain": "aimanzamani.firebaseapp.com",
-    "databaseURL": "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app/",
-    "projectId": "aimanzamani",
-    "storageBucket": "aimanzamani.appspot.com",
-    "messagingSenderId": "63348630728",
-    "appId": "1:63348630728:web:5d1537bd1c6e14535171fd"
-}
+# ------------------ Firebase Setup ------------------
+cred_path = os.path.join(BASE_DIR, "serviceAccountKey.json")
+cred = credentials.Certificate(cred_path)
+firebase_admin.initialize_app(cred)
 
-firebase = pyrebase.initialize_app(firebaseConfig)
-auth = firebase.auth()
-db = firebase.database()
+db = firestore.client()
 
-# ------------------ Auth Pages ------------------
-@app.route('/')
+# ------------------ Routes ------------------
+@app.route("/")
+def home():
+    return render_template("combinePage/Login.html")  # your login page
+
+@app.route("/login", methods=["POST"])
 def login():
-    return render_template('combinePage/Login.html')
+    email = request.form.get("email")
+    password = request.form.get("password")
+    remember = request.form.get("remember")
 
-@app.route('/signup')
-def signup():
-    return render_template('combinePage/Sign-up.html')
-
-@app.route('/forget-password')
-def forget_password():
-    return render_template('combinePage/Forget Password.html')
-
-# ------------------ Signup POST ------------------
-@app.route('/signup', methods=['POST'])
-def signup_post():
-    email = request.form['email']
-    password = request.form['password']
-    role = request.form.get('role')  # Admin, Teacher, Student
+    if not email or not password:
+        flash("Please enter both email and password.")
+        return redirect(url_for("home"))
 
     try:
-        user = auth.create_user_with_email_and_password(email, password)
-        uid = user['localId']
+        # Step 1: Verify user exists in Firebase Auth
+        user = auth.get_user_by_email(email)
+        uid = user.uid
 
-        # Save role to Firebase database
-        db.child("users").child(uid).set({
-            "email": email,
-            "role": role
-        })
+        # Step 2: Look through collections
+        collections = {
+            "student": "students",
+            "teacher": "teachers",
+            "admin": "admins"
+        }
 
-        flash("Sign up successful! Please login.", "success")
-        return redirect(url_for("login"))
+        role = None
+        user_doc = None
 
-    except Exception as e:
-        flash("Signup failed: " + str(e), "danger")
-        return redirect(url_for("signup"))
+        # Try each collection until match
+        for role_name, collection_name in collections.items():
+            docs = db.collection(collection_name).where("uid", "==", uid).stream()
+            for doc in docs:
+                user_doc = doc.to_dict()
+                role = role_name
+                break
+            if role:  # found user
+                break
 
-# ------------------ Login POST ------------------
-@app.route('/login', methods=['POST'])
-def login_post():
-    email = request.form['email']
-    password = request.form['password']
+        if not user_doc:
+            flash("User not found in Firestore.")
+            return redirect(url_for("home"))
 
-    try:
-        # Sign in with Firebase Authentication
-        user = auth.sign_in_with_email_and_password(email, password)
-        uid = user['localId']
-        session['user'] = uid
+        # Step 3: Set session
+        session["user"] = email
+        session["role"] = role
+        session.permanent = True if remember == "on" else False
 
-        # Directly get the role from UID
-        role = db.child("users").child(uid).child("role").get().val()
-        role_clean = role.strip().lower() if role else ""
-
-        # Redirect based on role
-        if role_clean == "admin":
-            return redirect(url_for("admin_home"))
-        elif role_clean == "teacher":
-            return redirect(url_for("teacher_dashboard"))
-        elif role_clean == "student":
+        # Step 4: Redirect by role
+        if role == "student":
             return redirect(url_for("student_dashboard"))
+        elif role == "teacher":
+            return redirect(url_for("teacher_dashboard"))
+        elif role == "admin":
+            return redirect(url_for("admin_dashboard"))
         else:
-            flash("Role not assigned or invalid. Contact admin.", "danger")
-            return redirect(url_for("login"))
+            flash("Role not assigned. Contact admin.")
+            return redirect(url_for("home"))
 
-    except Exception as e:
-        flash("Login failed: " + str(e), "danger")
-        return redirect(url_for("login"))
+    except auth.UserNotFoundError:
+        flash("Invalid email or password")
+        return redirect(url_for("home"))
+
+# ------------------ Dashboards ------------------
+@app.route("/student_dashboard")
+def student_dashboard():
+    if "user" in session and session.get("role") == "student":
+        return render_template("student/S_Dashboard.html")
+    return redirect(url_for("home"))
+
+@app.route("/teacher_dashboard")
+def teacher_dashboard():
+    if "user" in session and session.get("role") == "teacher":
+        return render_template("teacher/T_dashboard.html")
+    return redirect(url_for("home"))
+
+@app.route("/admin_dashboard")
+def admin_dashboard():
+    if "user" in session and session.get("role") == "admin":
+        return render_template("admin/A_Homepage.html")
+    return redirect(url_for("home"))
 
 # ------------------ Logout ------------------
-@app.route('/logout')
+@app.route("/logout")
 def logout():
-    session.pop('user', None)
-    flash("You have been logged out.", "info")
-    return redirect(url_for("login"))
+    session.pop("user", None)
+    session.pop("role", None)
+    return redirect(url_for("home"))
 
-# ------------------ Admin Pages ------------------
-@app.route('/admin/home')
-def admin_home():
-    return render_template('admin/A_Homepage.html')
+# ------------------ Signup placeholder ------------------
+@app.route("/signup")
+def signup():
+    return "Signup page coming soon!"
 
-@app.route('/admin/user-list')
-def admin_user_list():
-    return render_template('admin/A_All_User_List.html')
-
-@app.route('/admin/add-delete-user')
-def admin_add_delete():
-    return render_template('admin/A_Add_Delete_User.html')
-
-@app.route('/admin/approve-student')
-def admin_approve_student():
-    return render_template('admin/A_ApproveStuApplication.html')
-
-@app.route('/admin/attend-record')
-def admin_attend_record():
-    return render_template('admin/A_attend_record_page.html')
-
-@app.route('/admin/class-management')
-def admin_class_management():
-    return render_template('admin/A_Class-management.html')
-
-@app.route('/admin/face-recognition')
-def admin_face_recognition():
-    return render_template('admin/A_FaceRecognition.html')
-
-@app.route('/admin/system-log')
-def admin_system_log():
-    return render_template('admin/A_SystemSettingLog.html')
-
-@app.route('/admin/teacher-add')
-def admin_teacher_add():
-    return render_template('admin/A_Teacher-Add.html')
-
-@app.route('/admin/teacher-list')
-def admin_teacher_list():
-    return render_template('admin/A_Teacher-List.html')
-
-# ------------------ Student Pages ------------------
-@app.route('/student/dashboard')
-def student_dashboard():
-    return render_template('student/S_Dashboard.html')
-
-@app.route('/student/absentapp')
-def student_absentapp():
-    return render_template('student/S_AbsentApp.html')
-
-@app.route('/student/history')
-def student_history():
-    return render_template('student/S_History.html')
-
-@app.route('/student/profile')
-def student_profile():
-    return render_template('student/S_Profile.html')
-
-# ------------------ Teacher Pages ------------------
-@app.route('/teacher/dashboard')
-def teacher_dashboard():
-    return render_template('teacher/T_dashboard.html')
-
-@app.route('/teacher/class-list')
-def teacher_class_list():
-    return render_template('teacher/T_class_list.html')
-
-@app.route('/teacher/attendance-report')
-def teacher_attendance_report():
-    return render_template('teacher/T_attendance_report.html')
-
-@app.route('/teacher/start-attendance')
-def teacher_start_attendance():
-    return render_template('teacher/T_StartAttendance.html')
-
-
-if __name__ == '__main__':
+# ------------------ Run App ------------------
+if __name__ == "__main__":
     app.run(debug=True)
