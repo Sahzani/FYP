@@ -36,70 +36,42 @@
     <h2>Login</h2>
     <p class="subtitle">Enter your credentials to access your account</p>
 
-    <label for="email">Email</label>
-    <input type="text" id="email" placeholder="Enter your email" />
+    <!-- 🔹 FORM POST TO FLASK -->
+    <form action="{{ url_for('login') }}" method="POST">
+      <label for="email">Email</label>
+      <input type="text" id="email" name="email" placeholder="Enter your email" required />
 
-    <label for="password">Password</label>
-    <input type="password" id="password" placeholder="Enter your password" />
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter your password" required />
 
-    <div class="remember-me">
-      <input type="checkbox" id="remember" />
-      <label for="remember">Remember me</label>
-    </div>
+      <div class="remember-me">
+        <input type="checkbox" id="remember" name="remember" />
+        <label for="remember">Remember me</label>
+      </div>
 
-    <button id="loginBtn" type="button">Log in</button>
+      <button type="submit">Log in</button>
+    </form>
 
     <a href="#" class="forgot-password">Forgot password?</a>
 
     <p class="register-text">
       Don't have an account?
-  <a href="{{ url_for('signup') }}">Sign Up</a>
+      <a href="{{ url_for('signup') }}">Sign Up</a>
     </p>
+
+    <!-- 🔹 Display flash messages -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li style="color: red;">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
   </div>
 </div>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-    authDomain: "aimanzamani.firebaseapp.com",
-    projectId: "aimanzamani",
-    storageBucket: "aimanzamani.appspot.com",
-    messagingSenderId: "63348630728",
-    appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-
-  const loginBtn = document.getElementById("loginBtn");
-  loginBtn.addEventListener("click", async () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const rememberMe = document.getElementById("remember").checked;
-
-    if (!email || !password) {
-      alert("Please fill in all fields.");
-      return;
-    }
-
-    try {
-      // Set persistence based on "Remember me"
-      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
-
-      // Sign in
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      alert(`Welcome back, ${userCredential.user.displayName || "User"}!`);
-
-      // Redirect to your A_Homepage.html
-      window.location.href = "A_Homepage.html";
-    } catch (error) {
-      alert("Login failed: " + error.message);
-    }
-  });
-</script>
 
 </body>
 </html>
