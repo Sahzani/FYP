@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iAttend Admin - Attendance</title>
+  <style>
+    /* Reset & Base */
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 260px;
+      height: calc(100% - 60px);
+      background: #FFEED3;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+      font-family: 'Open Sans', sans-serif;
+      overflow-y: auto;
+      z-index: 10;
+    }
+
+    .sidebar-section {
+      margin-bottom: 30px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #899BBD;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Sidebar Links */
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #FFEED3;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #012970;
+      text-decoration: none;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+
+    .sidebar-link:hover {
+      background: #ffe1ab;
+    }
+
+    .sidebar-link.active {
+      background: rgba(221, 168, 83, 0.44);
+      color: #4154F1;
+    }
+
+    /* Dropdown */
+    .dropdown-toggle {
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .dropdown-toggle::after {
+      content: "▾";
+      font-size: 0.8em;
+      transition: transform 0.3s ease;
+    }
+
+    .dropdown-toggle.active::after {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-content {
+      display: none;
+      flex-direction: column;
+      padding-left: 20px;
+    }
+
+    .dropdown-content .sidebar-link {
+      margin-bottom: 8px;
+      background: transparent;
+      padding-left: 20px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .dropdown-content .sidebar-link:hover {
+      background: #ffe1ab;
+      border-radius: 4px;
+    }
+
+    .dropdown-toggle.active + .dropdown-content {
+      display: flex;
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 20;
+    }
+
+    /* Main content */
+    .main {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    /* Breadcrumb + Attendance title */
+    .bread-crumb {
+      position: relative;
+      margin-bottom: 20px;
+      height: 29px;
+    }
+
+    .attendance-title {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 126px;
+      height: 29px;
+      font-family: 'Nunito', sans-serif;
+      font-style: normal;
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 29px;
+      display: flex;
+      align-items: center;
+      color: #27548A;
+    }
+
+    /* Editable input container */
+    .container {
+      max-width: 920px;
+      background: #FFFFFF;
+      border-radius: 5px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      padding: 26px 16px;
+      gap: 24px;
+      box-sizing: border-box;
+    }
+
+    /* Each box */
+    .box {
+      background: #FFFFFF;
+      border: 1px solid #CED4DA;
+      border-radius: 6px;
+      flex: 1 1 160px;
+      min-width: 140px;
+      height: 58px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-left: 12px;
+      font-family: 'Nunito', sans-serif;
+      box-sizing: border-box;
+    }
+
+    /* Special width for Date box */
+    .box.date {
+      flex: 1 1 220px;
+      min-width: 180px;
+    }
+
+    /* Label text */
+    .box-label {
+      font-weight: 600;
+      font-size: 14px;
+      line-height: 21px;
+      color: #989797;
+      opacity: 0.65;
+      margin-bottom: 4px;
+      user-select: none;
+    }
+
+    /* Editable selects and inputs */
+    .box-input {
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      line-height: 20px;
+      color: #212529;
+      background: transparent;
+      outline: none;
+      width: 100%;
+      height: 32px;
+      padding: 0 8px;
+      box-sizing: border-box;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3csvg width='10' height='5' viewBox='0 0 10 5' xmlns='http://www.w3.org/2000/svg'%3e%3cpath fill='%23012570' d='M0 0l5 5 5-5z'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 10px 5px;
+    }
+
+    /* For date input remove arrow */
+    input[type="date"].box-input {
+      background-image: none;
+      cursor: text;
+      height: 28px;
+      padding-left: 4px;
+    }
+
+    /* Input underline on focus */
+    .box-input:focus {
+      border-bottom: 2px solid #4154F1;
+    }
+
+    /* Generate report button */
+    .generate-report {
+      flex-shrink: 0;
+      width: 90px;
+      height: 40px;
+      background: #4154F1;
+      border-radius: 8px;
+      border: none;
+      color: #FFFFFF;
+      font-family: 'Roboto', sans-serif;
+      font-weight: 400;
+      font-size: 12px;
+      cursor: pointer;
+      align-self: flex-end;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .container {
+        max-width: 100%;
+        margin-left: 0;
+        padding: 20px;
+      }
+      .box, .box.date {
+        flex: 1 1 45%;
+        min-width: unset;
+      }
+      .generate-report {
+        width: 100%;
+        align-self: center;
+        margin-top: 10px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        flex-direction: column;
+        padding: 15px;
+      }
+      .box, .box.date {
+        flex: none;
+        width: 100%;
+        min-width: unset;
+      }
+      .generate-report {
+        width: 100%;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>iAttend Admin</header>
+
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link" href="#">Dashboard</a>
+      <a class="sidebar-link active" href="#">Attendance</a>
+      <a class="sidebar-link" href="#">Absence</a>
+      <a class="sidebar-link" href="#">Report</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Manage</div>
+      <a class="sidebar-link" href="#">Teacher</a>
+      <a class="sidebar-link" href="#">Student</a>
+      <a class="sidebar-link" href="#">Subject</a>
+
+      <!-- Dropdown for User Management -->
+      <div class="sidebar-link">Add User</div>
+
+    </div>
+
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="#">Logout</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="bread-crumb">
+      <div class="attendance-title">Attendance</div>
+    </div>
+
+    <!-- Editable input fields container -->
+    <div class="container">
+      <div class="box">
+        <div class="box-label">Class</div>
+        <select class="box-input">
+          <option value="dcng01">DCNG 01</option>
+          <option value="dcng02">DCNG 02</option>
+          <option value="dcng03" selected>DCNG 03</option>
+          <option value="dcng04">DCNG 04</option>
+        </select>
+      </div>
+      <div class="box">
+        <div class="box-label">Subject</div>
+        <select class="box-input">
+          <option value="math101" selected>Math 101</option>
+          <option value="science101">Science 101</option>
+          <option value="history101">History 101</option>
+        </select>
+      </div>
+      <div class="box date">
+        <div class="box-label">Date</div>
+        <input type="date" class="box-input" value="2023-03-15" />
+      </div>
+      <button class="generate-report">Generate Report</button>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar dropdown toggle
+    const toggle = document.querySelector('.dropdown-toggle');
+    toggle.addEventListener('click', () => {
+      toggle.classList.toggle('active');
+    });
+  </script>
+
+</body>
+</html>

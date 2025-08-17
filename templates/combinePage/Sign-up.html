@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iAttend Sign Up</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: 'Roboto', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+    header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1); display: flex; align-items: center; padding-left: 20px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 26px; color: #212529; z-index: 10; }
+    .container { display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 60px); }
+    .frame3 { display: flex; flex-direction: column; align-items: center; padding: 2.5rem; gap: 1rem; width: 90%; max-width: 700px; background: #fff; border: 1px solid rgba(0,0,0,0.125); border-radius: 4px; box-shadow: 0 0 15px rgba(0,0,0,0.1); text-align: center; }
+    .frame3 .icon { width: 80px; height: 80px; border-radius: 50%; background: #F9F0D9; display: flex; justify-content: center; align-items: center; margin-bottom: 1rem; font-size: 48px; color: #7a5531; }
+    .frame3 h2 { font-weight: 700; font-size: 24px; color: #002d72; margin-bottom: 0.25rem; }
+    .frame3 p.subtitle { font-weight: 400; font-size: 14px; color: #777; margin-bottom: 1.5rem; }
+    .frame3 label { font-size: 0.95rem; color: #212529; align-self: flex-start; margin-bottom: 0.25rem; }
+    .frame3 input[type="text"], .frame3 input[type="email"], .frame3 input[type="password"] { width: 100%; height: 2.5rem; padding: 0.5rem; border: 1px solid #CED4DA; border-radius: 4px; font-size: 1rem; margin-bottom: 1rem; }
+    .frame3 button { width: 100%; height: 40px; background: #4154F1; color: #fff; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-top: 0.25rem; margin-bottom: 1rem; transition: background 0.3s ease; }
+    .frame3 button:hover { background: #2f3fcc; }
+    .frame3 .register-text { font-size: 1rem; color: #212529; text-align: center; width: 100%; }
+    .frame3 .register-link { font-size: 0.95rem; color: #0DCAF0; text-decoration: none; margin-left: 0.25rem; cursor: pointer; }
+    @media (max-width: 480px) { header { font-size: 20px; padding-left: 10px; } .frame3 { padding: 2rem 1.5rem; } }
+  </style>
+</head>
+<body>
+
+<header>iAttend</header>
+
+<div class="container">
+  <div class="frame3">
+    <div class="icon">👤</div>
+
+    <h2>Sign Up</h2>
+    <p class="subtitle">Create your account to get started</p>
+
+    <label for="name">Full Name</label>
+    <input type="text" id="name" placeholder="Enter your full name" required />
+
+    <label for="email">Email</label>
+    <input type="email" id="email" placeholder="Enter your email" required />
+
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="Enter your password" required />
+
+    <label for="confirm-password">Confirm Password</label>
+    <input type="password" id="confirm-password" placeholder="Confirm your password" required />
+
+    <button id="signupBtn" type="button">Sign Up</button>
+
+    <p class="register-text">
+      Already have an account?
+    <a href="/" class="register-link">Log in</a>
+    </p>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+    authDomain: "aimanzamani.firebaseapp.com",
+    projectId: "aimanzamani",
+    storageBucket: "aimanzamani.appspot.com",
+    messagingSenderId: "63348630728",
+    appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  document.getElementById("signupBtn").addEventListener("click", async () => {
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirm-password").value;
+
+    if (!name || !email || !password) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name });
+      alert("Sign-up successful!");
+  window.location.href = "/"; 
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+</script>
+
+</body>
+</html>
