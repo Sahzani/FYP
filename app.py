@@ -6,21 +6,20 @@ app.secret_key = "supersecretkey"  # change to something stronger
 
 # ------------------ Firebase Config ------------------
 firebaseConfig = {
-    "apiKey": "your_api_key",
-    "authDomain": "your_project_id.firebaseapp.com",
-    "databaseURL": "https://your_project_id.firebaseio.com",
-    "projectId": "your_project_id",
-    "storageBucket": "your_project_id.appspot.com",
-    "messagingSenderId": "your_sender_id",
-    "appId": "your_app_id"
+    "apiKey": "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+    "authDomain": "aimanzamani.firebaseapp.com",
+    "databaseURL": "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    "projectId": "aimanzamani",
+    "storageBucket": "aimanzamani.appspot.com",
+    "messagingSenderId": "63348630728",
+    "appId": "1:63348630728:web:5d1537bd1c6e14535171fd"
 }
 
 firebase = pyrebase.initialize_app(firebaseConfig)
 auth = firebase.auth()
 db = firebase.database()
 
-
-# ------------------ Combine Pages ------------------
+# ------------------ Auth Pages ------------------
 @app.route('/')
 def login():
     return render_template('combinePage/Login.html')
@@ -33,28 +32,18 @@ def signup():
 def forget_password():
     return render_template('combinePage/Forget Password.html')
 
-@app.route('/background')
-def background():
-    return render_template('combinePage/background.html')
-
-@app.route('/combine-admin')
-def combine_admin():
-    return render_template('combinePage/admin.html')
-
-
-# ------------------ Auth Routes ------------------
+# ------------------ Signup POST ------------------
 @app.route('/signup', methods=['POST'])
 def signup_post():
-    """Handles signup with Firebase and assigns a role"""
     email = request.form['email']
     password = request.form['password']
-    role = request.form.get('role')  # e.g., Admin, Teacher, Student
+    role = request.form.get('role')  # Admin, Teacher, Student
 
     try:
         user = auth.create_user_with_email_and_password(email, password)
         uid = user['localId']
 
-        # Save role to database
+        # Save role to Firebase database
         db.child("users").child(uid).set({
             "email": email,
             "role": role
@@ -67,27 +56,23 @@ def signup_post():
         flash("Signup failed: " + str(e), "danger")
         return redirect(url_for("signup"))
 
-
+# ------------------ Login POST ------------------
 @app.route('/login', methods=['POST'])
 def login_post():
-    """Handles login and redirects based on role"""
     email = request.form['email']
     password = request.form['password']
 
     try:
+        # Sign in with Firebase Authentication
         user = auth.sign_in_with_email_and_password(email, password)
         uid = user['localId']
         session['user'] = uid
 
-        # Get role from Firebase and normalize it
+        # Directly get the role from UID
         role = db.child("users").child(uid).child("role").get().val()
-        if role:
-            role_clean = role.strip().lower()
-        else:
-            role_clean = ""
+        role_clean = role.strip().lower() if role else ""
 
-        print(f"DEBUG: UID={uid}, role='{role}', normalized='{role_clean}'")  # debug print
-
+        # Redirect based on role
         if role_clean == "admin":
             return redirect(url_for("admin_home"))
         elif role_clean == "teacher":
@@ -102,13 +87,12 @@ def login_post():
         flash("Login failed: " + str(e), "danger")
         return redirect(url_for("login"))
 
-
+# ------------------ Logout ------------------
 @app.route('/logout')
 def logout():
     session.pop('user', None)
     flash("You have been logged out.", "info")
     return redirect(url_for("login"))
-
 
 # ------------------ Admin Pages ------------------
 @app.route('/admin/home')
@@ -151,7 +135,6 @@ def admin_teacher_add():
 def admin_teacher_list():
     return render_template('admin/A_Teacher-List.html')
 
-
 # ------------------ Student Pages ------------------
 @app.route('/student/dashboard')
 def student_dashboard():
@@ -169,15 +152,10 @@ def student_history():
 def student_profile():
     return render_template('student/S_Profile.html')
 
-
 # ------------------ Teacher Pages ------------------
 @app.route('/teacher/dashboard')
 def teacher_dashboard():
     return render_template('teacher/T_dashboard.html')
-
-@app.route('/teacher/login')
-def teacher_login():
-    return render_template('teacher/T_login.html')
 
 @app.route('/teacher/class-list')
 def teacher_class_list():
