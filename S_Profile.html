@@ -1,135 +1,473 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>iAttend Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    /* Reset */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>iAttend Student Profile</title>
+    <!-- Fonts for the new design -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Open+Sans:wght@400;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Base Styling from user's example */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    html, body {
-      height: 100%;
-      font-family: 'Roboto', sans-serif;
-      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-    }
+        html, body {
+            height: 100%;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+        }
 
-    /* Header */
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: #fff;
-      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
-      display: flex;
-      align-items: center;
-      padding-left: 20px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-      font-size: 26px;
-      color: #212529;
-      z-index: 10;
-    }
+        /* Fixed Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #fff;
+            box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 26px;
+            color: #212529;
+            z-index: 10;
+        }
 
-    /* Sidebar */
-    .sidebar {
-      position: fixed;
-      top: 60px; /* under the header */
-      left: 0;
-      width: 260px;
-      height: calc(100% - 60px);
-      background: #FFEED3;
-      padding: 20px;
-      box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
-      font-family: 'Open Sans', sans-serif;
-      overflow-y: auto;
-    }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
 
-    .sidebar-section {
-      margin-bottom: 30px;
-    }
+        .header-search input {
+            width: 300px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Open Sans', sans-serif;
+        }
 
-    .sidebar-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #899BBD;
-      margin-bottom: 10px;
-      letter-spacing: 0.5px;
-      font-weight: 600;
-    }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
 
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      margin-bottom: 10px;
-      background: #FFEED3;
-      border-radius: 4px;
-      font-size: 15px;
-      font-weight: 600;
-      color: #012970;
-      text-decoration: none;
-      transition: background 0.3s;
-      cursor: pointer;
-    }
+        .user-info span {
+            font-size: 16px;
+            font-weight: 600;
+            color: #444;
+        }
 
-    .sidebar-link:hover {
-      background: #ffe1ab;
-    }
+        .user-info img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
 
-    .sidebar-link.active {
-      background: none;
-      color: #4154F1;
-    }
+        /* Fixed Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 60px; /* under the header */
+            left: 0;
+            width: 260px;
+            height: calc(100% - 60px);
+            background: #FFEED3;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
+            font-family: 'Open Sans', sans-serif;
+            overflow-y: auto;
+        }
 
-    /* Responsive */
-    @media (max-width: 768px) {
-      .sidebar {
-        position: relative;
-        width: 100%;
-        height: auto;
-        top: 0;
-        box-shadow: none;
-      }
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
 
-      header {
-        position: relative;
-      }
-    }
-  </style>
+        .sidebar-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #012970; /* Changed color to #012970 */
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            background: #FFEED3;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #012970;
+            text-decoration: none;
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
+            background: #ffe1ab;
+            color: #4154F1;
+        }
+
+        /* Style for the red logout text */
+        .text-red-500 {
+            color: #ef4444; /* A shade of red for the icon */
+        }
+
+        /* Main Content Styling for the Profile Page */
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            margin-left: 260px; /* To make space for the sidebar */
+            margin-top: 60px; /* To make space for the header */
+        }
+
+        .profile-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 600;
+            font-size: 24px;
+            color: #012970;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .profile-content {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        .profile-pic-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            flex-shrink: 0;
+        }
+
+        .profile-pic-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .edit-icon {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background-color: #4154F1;
+            color: #fff;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .profile-details {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fcfcfc;
+            font-size: 15px;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .form-group input:disabled {
+            background-color: #f5f5f5;
+            color: #777;
+            cursor: not-allowed;
+        }
+        
+        .password-form-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 400px; /* Constrains the width of the password fields */
+        }
+
+        .card-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            font-weight: 600;
+            font-family: 'Nunito', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #4154F1;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0d29e9;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .profile-content {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .profile-details {
+                grid-template-columns: 1fr;
+            }
+            .header-search {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                top: 0;
+                box-shadow: none;
+            }
+            header {
+                position: relative;
+                height: auto;
+                flex-direction: column;
+            }
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            .main-content {
+                margin-left: 0;
+                margin-top: 0;
+            }
+        }
+    </style>
 </head>
 <body>
+    <header>
+        <div class="header-content">
+            <a href="#" style="text-decoration: none; color: inherit;">iAttend</a>
+            <div class="header-search">
+                <input type="text" placeholder="Search...">
+            </div>
+            <div class="user-info">
+                <span>Peterpan</span>
+                <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=PP" alt="User Profile Picture">
+            </div>
+        </div>
+    </header>
 
-  <header>iAttend</header>
-
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="#">Dashboard</a>
+    <div class="sidebar">
+        <div class="sidebar-section">
+            <a class="sidebar-link" href="S_Dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Analyse</div>
+            <a class="sidebar-link active" href="S_History.html"><i class="fas fa-list-alt"></i> Attendance</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Requests</div>
+            <a class="sidebar-link" href="S_AbsentApp.html"><i class="fas fa-paper-plane"></i> Absent Application</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Logout</div>
+            <a class="sidebar-link" href="Login_Page.html"><i class="fas fa-sign-out-alt text-red-500"></i> Logout</a>
+        </div>
     </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Analyse</div>
-      <a class="sidebar-link" href="#">Attendance</a>
+    <div class="main-content">
+        <div class="profile-sections">
+            <div class="card user-profile-card">
+                <h2>User Profile</h2>
+                <div class="profile-content">
+                    <div class="profile-pic-container">
+                        <!-- Profile picture displayed here -->
+                        <img id="user-profile-pic" src="https://placehold.co/120x120/E9E9E9/333333?text=User" alt="Profile Picture">
+                        <!-- Hidden file input to handle image selection -->
+                        <input type="file" id="profile-pic-upload" style="display: none;">
+                        <!-- Camera icon to trigger the file input -->
+                        <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
+                    </div>
+                    <div class="profile-details">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" value="Peter" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" value="Pan" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Nickname</label>
+                            <input type="text" value="Pete">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="text" value="+60123456789">
+                        </div>
+                        <div class="form-group">
+                            <label>Role Type</label>
+                            <input type="text" value="Student" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Course</label>
+                            <input type="text" value="Diploma in Arts & Technology" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Student ID</label>
+                            <input type="text" value="123456" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Class</label>
+                            <input type="text" value="DADT02" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Intake</label>
+                            <input type="text" value="Intake 20" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" value="PeterPan@student.au.edu" disabled>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-primary" onclick="validatePassword()">Saved Changes</button>
+                    <button class="btn btn-secondary" onclick="alert('Action cancelled.')">Cancel</button>
+                </div>
+            </div>
+
+            <div class="card password-change-card">
+                <h2>Password Change</h2>
+                <div class="password-form-content">
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" id="current-password">
+                    </div>
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="confirm-password">
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-primary" onclick="validatePassword()">Saved Changes</button>
+                    <button class="btn btn-secondary" onclick="clearPasswordFields()">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Requests</div>
-      <a class="sidebar-link" href="#">Absent Application</a>
-    </div>
+    <script>
+        // Function to handle the password validation and change
+        function validatePassword() {
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            if (newPassword && confirmPassword && newPassword === confirmPassword) {
+                // In a real application, this would send data to a server.
+                alert('Password changed successfully!');
+                clearPasswordFields();
+            } else if (!newPassword || !confirmPassword) {
+                alert('Please fill in all password fields.');
+            } else {
+                alert('New passwords do not match!');
+            }
+        }
 
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Logout</div>
-      <a class="sidebar-link" href="#">Logout</a>
-    </div>
-  </div>
+        // Function to clear the password fields
+        function clearPasswordFields() {
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        }
 
+        // JavaScript to handle the profile picture upload
+        const profilePicUpload = document.getElementById('profile-pic-upload');
+        const userProfilePic = document.getElementById('user-profile-pic');
+        const userProfilePicHeader = document.getElementById('user-profile-pic-header');
+
+        profilePicUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Read the selected file as a data URL
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    // Update the main profile picture
+                    userProfilePic.src = imageUrl;
+                    // Update the header profile picture
+                    userProfilePicHeader.src = imageUrl;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
 </body>
 </html>
