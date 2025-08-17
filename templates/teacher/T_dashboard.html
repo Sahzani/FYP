@@ -1,212 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* Reset */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            height: 100%;
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-        }
-
-        /* The main page header, containing the logo, search, and profile. */
-        .page-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: #fff;
-            box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 10;
-            font-family: 'Nunito', sans-serif;
-        }
-        
-        .page-header .logo {
-            font-weight: 700;
-            font-size: 26px;
-            color: #212529;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 60px; /* under the new combined header */
-            left: 0;
-            width: 260px;
-            height: calc(100% - 60px);
-            background: #FFEED3;
-            padding: 20px;
-            box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
-            font-family: 'Open Sans', sans-serif;
-            overflow-y: auto;
-        }
-
-        .sidebar-section {
-            margin-bottom: 30px;
-        }
-
-        .sidebar-section-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #899BBD;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            background: #FFEED3;
-            border-radius: 4px;
-            font-size: 15px;
-            font-weight: 600;
-            color: #012970;
-            text-decoration: none;
-            transition: background 0.3s, color 0.3s; /* Added color transition */
-            cursor: pointer;
-        }
-
-        .sidebar-link.active {
-      background: rgba(221, 168, 83, 0.44);
-      color: #4154F1;
-    }
-    .sidebar-link:hover {
-      background: #ffe1ab;
-    }
-
-        /* Main Content Layout */
-        .main-content {
-            margin-left: 260px;
-            padding: 80px 20px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iAttend Teacher Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  /* Sidebar transition */
+  #sidebar { transition: left 0.3s ease; }
+  @media (max-width: 768px){
+    #sidebar { left: -16rem; position: fixed; top: 0; height: 100%; z-index: 30; }
+    #sidebar.show { left: 0; }
+  }
+</style>
 </head>
-<body>
+<body class="bg-gradient-to-br from-[#FFE5B4] to-[#F5EEDC]">
 
-    <!-- Combined Header for the entire page -->
-    <header class="page-header">
-        <div class="logo">iAttend</div>
-        <div class="flex items-center space-x-4">
-            <!-- User Profile -->
-            <a href="T_profile.html" class="flex items-center space-x-3 cursor-pointer">
-                <span class="text-sm font-semibold text-gray-800">Teacher Name</span>
-                <div class="h-10 w-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                    <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher" class="h-full w-full object-cover">
-                </div>
-            </a>
-        </div>
-    </header>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-section">
-            <div class="text-xs font-semibold text-gray-400 uppercase mb-2">MENU</div>
-            <div class="text-xs font-semibold text-gray-400 uppercase mb-2"></div>
-            <a class="sidebar-link active" href="#" id="nav-dashboard">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </a>
-            <a class="sidebar-link" href="T_class_list.html" id="nav-class-list">
-                <i class="fas fa-school"></i> View Class List
-            </a>
-            <a class="sidebar-link" href="T_StartAttendance.html" id="nav-class-list">
-                <i class="fas fa-clipboard-check"></i> Start Attendance
-            </a>
-            <a class="sidebar-link" href="T_attendance_report.html" id="nav-absent-report">
-                <i class="fas fa-user-times"></i> Attendance Report
-            </a>
-        </div>
-        <div class="sidebar-section mt-auto">
-            <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Logout</div>
-            <a class="sidebar-link" href="T_login.html" id="nav-logout">
-                <i class="fas fa-sign-out-alt text-red-600"></i> Logout
-            </a>
-        </div>
+<!-- Page Header -->
+<header class="fixed top-0 left-0 right-0 h-16 bg-white shadow flex justify-between items-center px-4 z-40">
+    <div class="flex items-center space-x-4">
+        <!-- Menu Toggle for Mobile -->
+        <button id="menu-toggle" class="text-2xl md:hidden"><i class="fas fa-bars"></i></button>
+        <div class="text-2xl font-bold text-gray-800">iAttend Teacher</div>
     </div>
+    <div class="flex items-center space-x-4">
+        <!-- Profile -->
+        <a href="#" class="flex items-center space-x-2">
+            <span class="font-semibold text-gray-800">Teacher</span>
+            <div class="h-10 w-10 rounded-full overflow-hidden">
+                <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher" class="w-full h-full object-cover">
+            </div>
+        </a>
+    </div>
+</header>
 
-    <!-- Main Content Area -->
-    <div class="main-content">
-        <h2 class="text-2xl font-bold text-gray-800 mb-1">Welcome, Teacher!</h2>
-        <p class="text-sm text-gray-500 mb-6">Dashboard / Attendance Report</p>
+<!-- Sidebar -->
+<div id="sidebar" class="fixed top-16 left-0 w-64 h-[calc(100%-4rem)] bg-[#FFEED3] p-4 shadow overflow-y-auto z-30">
+    <div class="mb-6">
+        <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Menu</div>
+        <a href="T_dashboard.html" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a>
+        <a href="T_class_list.html" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold bg-[#e5d7b8]">
+            <i class="fas fa-school"></i> View Class List
+        </a>
+        <a href="T_StartAttendance.html" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+            <i class="fas fa-clipboard-check"></i> Start Attendance
+        </a>
+        <a href="T_attendance_report.html" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+            <i class="fas fa-file-alt"></i> Attendance Report
+        </a>
+    </div>
+    <div>
+        <a href="T_login.html" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-red-600 font-semibold">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+</div>
 
-        <!-- Attendance Report Table -->
-        <div class="bg-white p-6 rounded-2xl shadow">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Attendance Report</h3>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead>
-                        <tr class="bg-gray-50">
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Students</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Present</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Absent</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance %</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <!-- Example Class Rows - Replace with dynamic data -->
-                        <tr class="cursor-pointer hover:bg-gray-100" onclick="window.location.href='class_attendance.html?classId=1'">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mathematics 101</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">30</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">28</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">93.33%</td>
-                        </tr>
-                        <tr class="cursor-pointer hover:bg-gray-100" onclick="window.location.href='class_attendance.html?classId=2'">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Science 201</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">25</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">22</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">88.00%</td>
-                        </tr>
-                        <tr class="cursor-pointer hover:bg-gray-100" onclick="window.location.href='class_attendance.html?classId=3'">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">History 301</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">28</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">26</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">92.86%</td>
-                        </tr>
-                        <!-- Add more class rows as needed -->
-                    </tbody>
-                </table>
+    <!-- Logout -->
+    <div>
+        <a href="{{ url_for('logout') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-red-600 font-semibold">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+</div>
+
+<!-- Overlay for mobile when sidebar open -->
+<div id="overlay" class="fixed inset-0 bg-black bg-opacity-30 hidden z-20"></div>
+
+<!-- Main Content -->
+<main class="pt-20 px-6 md:ml-64 transition-all duration-300">
+    <!-- Top Grid: Profile + Stats + Calendar -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Profile Card -->
+        <div class="bg-white p-6 rounded-2xl shadow flex items-center space-x-4 lg:col-span-1">
+            <div class="h-16 w-16 rounded-full overflow-hidden">
+                <img src="https://placehold.co/64x64/b8c6ff/ffffff?text=T" alt="Teacher" class="w-full h-full object-cover">
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-800 text-lg">Teacher Name</h3>
+                <p class="text-gray-500 text-sm">ID: T001</p>
+                <p class="text-gray-500 text-sm">Email: teacher@example.com</p>
+                <p class="text-gray-500 text-sm">Role: Teacher</p>
             </div>
         </div>
+
+        <!-- Stats Cards -->
+        <div class="lg:col-span-1 grid grid-cols-1 gap-4">
+            <div class="bg-white p-6 rounded-2xl shadow text-center">
+                <h3 class="font-semibold text-gray-500 mb-2">My Classes</h3>
+                <span class="text-3xl font-bold text-blue-600">5</span>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow text-center">
+                <h3 class="font-semibold text-gray-500 mb-2">Students Present</h3>
+                <span class="text-3xl font-bold text-green-600">120</span>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow text-center">
+                <h3 class="font-semibold text-gray-500 mb-2">Students Absent</h3>
+                <span class="text-3xl font-bold text-red-600">10</span>
+            </div>
+        </div>
+
+        <!-- Calendar Card -->
+        <div class="bg-white p-6 rounded-2xl shadow lg:col-span-1">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-lg font-bold text-gray-800">Calendar</h3>
+                <span id="calendar-month-year" class="text-sm text-gray-500"></span>
+            </div>
+            <div class="grid grid-cols-7 text-center text-sm font-semibold text-gray-500 mb-1">
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+            <div id="calendar-days" class="grid grid-cols-7 gap-1 text-center text-sm"></div>
+        </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Sidebar active link functionality
-            const navItems = document.querySelectorAll('.sidebar-link');
-            navItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    // Remove active class from all items
-                    navItems.forEach(i => i.classList.remove('active'));
-                    // Add active class to the clicked item
-                    e.currentTarget.classList.add('active');
-                });
-            });
-        });
-    </script>
+    <!-- Attendance Bar Chart -->
+    <div class="bg-white p-6 rounded-2xl shadow mb-6 max-w-4xl mx-auto">
+        <canvas id="attendanceBar" width="600" height="350"></canvas>
+    </div>
+</main>
+
+<script>
+  // Mobile Sidebar Toggle
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('show');
+    overlay.classList.toggle('hidden');
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('show');
+    overlay.classList.add('hidden');
+  });
+
+  // Calendar JS
+  const calendarDaysEl = document.getElementById('calendar-days');
+  const calendarMonthYearEl = document.getElementById('calendar-month-year');
+  const today = new Date();
+  let currentMonth = today.getMonth();
+  let currentYear = today.getFullYear();
+
+  function renderCalendar(month, year) {
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month+1, 0);
+      const firstDayOfWeek = (firstDay.getDay()+6)%7;
+      const daysInMonth = lastDay.getDate();
+
+      calendarMonthYearEl.textContent = `${lastDay.toLocaleString('default',{month:'long'})} ${year}`;
+      calendarDaysEl.innerHTML='';
+
+      for(let i=0;i<firstDayOfWeek;i++){calendarDaysEl.appendChild(document.createElement('span'));}
+
+      for(let i=1;i<=daysInMonth;i++){
+          const dayEl=document.createElement('span');
+          dayEl.textContent=i;
+          dayEl.className='p-2 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer transition-colors duration-200';
+          if(i===today.getDate() && month===today.getMonth() && year===today.getFullYear()){
+              dayEl.classList.add('bg-blue-500','text-white','font-bold');
+          } else {
+              dayEl.classList.add('text-gray-700','hover:bg-gray-100');
+          }
+          calendarDaysEl.appendChild(dayEl);
+      }
+  }
+  renderCalendar(currentMonth,currentYear);
+
+  // Chart.js Example
+  const ctx=document.getElementById('attendanceBar').getContext('2d');
+  new Chart(ctx,{
+      type:'bar',
+      data:{
+          labels:['Present','Late','Absent'],
+          datasets:[{
+              label:'Number of Students',
+              data:[120,8,10],
+              backgroundColor:['#4CAF50','#FFC107','#F44336'],
+              borderRadius:6
+          }]
+      },
+      options:{
+          responsive:true,
+          scales:{y:{beginAtZero:true, grid:{color:'#e0e0e0'}}, x:{grid:{display:false}}},
+          plugins:{legend:{display:false}}
+      }
+  });
+</script>
+
 </body>
 </html>
