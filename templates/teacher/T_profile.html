@@ -1,0 +1,98 @@
+<!-- Similar header + sidebar structure as dashboard -->
+<!-- Main Content -->
+<main class="pt-20 px-6 md:ml-64 transition-all duration-300">
+  <div class="bg-white p-6 rounded-2xl shadow mb-6 flex gap-6">
+    <div class="w-32 h-32 relative">
+      <img id="teacher-profile-pic" class="w-full h-full rounded-full object-cover" src="https://placehold.co/120x120/b8c6ff/ffffff?text=T">
+      <input type="file" id="profile-upload" class="hidden">
+      <i class="fas fa-camera absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer" onclick="document.getElementById('profile-upload').click()"></i>
+    </div>
+    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-gray-700">Full Name</label>
+        <input id="teacher-name" type="text" disabled class="w-full border p-2 rounded">
+      </div>
+      <div>
+        <label class="block text-gray-700">Email</label>
+        <input id="teacher-email" type="email" disabled class="w-full border p-2 rounded">
+      </div>
+      <div>
+        <label class="block text-gray-700">Phone</label>
+        <input id="teacher-phone" type="text" class="w-full border p-2 rounded">
+      </div>
+      <div>
+        <label class="block text-gray-700">Role</label>
+        <input type="text" value="Teacher" disabled class="w-full border p-2 rounded">
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Change -->
+  <div class="bg-white p-6 rounded-2xl shadow">
+    <h2 class="text-lg font-bold mb-4">Change Password</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <input id="current-password" type="password" placeholder="Current Password" class="border p-2 rounded">
+      <input id="new-password" type="password" placeholder="New Password" class="border p-2 rounded">
+      <input id="confirm-password" type="password" placeholder="Confirm New Password" class="border p-2 rounded">
+    </div>
+    <div class="mt-4 flex gap-2 justify-end">
+      <button onclick="changePassword()" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+      <button onclick="clearPassword()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { getAuth, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+
+const auth = getAuth();
+const db = getFirestore();
+
+onAuthStateChanged(auth, async user=>{
+  if(user){
+    const docSnap = await getDoc(doc(db,"users",user.uid));
+    if(docSnap.exists()){
+      const data = docSnap.data();
+      document.getElementById("teacher-name").value = data.name;
+      document.getElementById("teacher-email").value = data.email;
+      document.getElementById("header-role").innerText = "Teacher";
+      document.getElementById("header-profile-pic").src = data.profilePic || "https://placehold.co/40x40/b8c6ff/ffffff?text=T";
+      document.getElementById("teacher-profile-pic").src = data.profilePic || "https://placehold.co/120x120/b8c6ff/ffffff?text=T";
+    }
+  } else { window.location.href="login.html"; }
+});
+
+// Profile picture update (local preview)
+const upload = document.getElementById('profile-upload');
+const profilePic = document.getElementById('teacher-profile-pic');
+upload.addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(file){ profilePic.src = URL.createObjectURL(file); }
+});
+
+// Logout
+document.getElementById("logout-btn").addEventListener("click", async ()=>{
+  await signOut(auth);
+  window.location.href="login.html";
+});
+
+// Password change
+window.changePassword = async ()=>{
+  const user = auth.currentUser;
+  const current = document.getElementById("current-password").value;
+  const newPass = document.getElementById("new-password").value;
+  const confirm = document.getElementById("confirm-password").value;
+
+  if(newPass!==confirm){ alert("Passwords do not match!"); return; }
+  const cred = EmailAuthProvider.credential(user.email, current);
+  try{
+    await reauthenticateWithCredential(user,cred);
+    await updatePassword(user,newPass);
+    alert("Password changed!");
+    clearPassword();
+  } catch(e){ alert(e.message); }
+};
+
+window.clearPassword = ()=>{ document.getElementById("current-password").value=""; document.getElementById("new-password").value=""; document.getElementById("confirm-password").value=""; }
+</script>
