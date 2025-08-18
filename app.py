@@ -6,7 +6,7 @@ import os
 
 # ------------------ Flask Setup ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app = Flask(__name__, template_folder=os.path.join(BASE_DIR, "../templates"))
+app = Flask(__name__)  # Flask will look for templates in ./templates by default
 app.secret_key = "supersecretkey"  # change this in production
 app.permanent_session_lifetime = timedelta(days=30)
 
@@ -81,23 +81,49 @@ def login():
         flash("Invalid email or password")
         return redirect(url_for("home"))
 
-# ------------------ Dashboards ------------------
+# ------------------ Student Dashboard ------------------
 @app.route("/student_dashboard")
 def student_dashboard():
     if "user" in session and session.get("role") == "student":
         return render_template("student/S_Dashboard.html")
     return redirect(url_for("home"))
 
+# ------------------ Teacher Dashboard ------------------
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
     if "user" in session and session.get("role") == "teacher":
         return render_template("teacher/T_dashboard.html")
     return redirect(url_for("home"))
 
+# ------------------ Admin Dashboard & Pages ------------------
 @app.route("/admin_dashboard")
 def admin_dashboard():
     if "user" in session and session.get("role") == "admin":
         return render_template("admin/A_Homepage.html")
+    return redirect(url_for("home"))
+
+@app.route("/admin/student_add")
+def admin_student_add():
+    if "user" in session and session.get("role") == "admin":
+        return render_template("admin/A_Student-Add.html")
+    return redirect(url_for("home"))
+
+@app.route("/admin/teacher_add")
+def admin_teacher_add():
+    if "user" in session and session.get("role") == "admin":
+        return render_template("admin/A_Teacher-Add.html")
+    return redirect(url_for("home"))
+
+@app.route("/admin/student_list")
+def admin_student_list():
+    if "user" in session and session.get("role") == "admin":
+        return render_template("admin/A_Student-List.html")
+    return redirect(url_for("home"))
+
+@app.route("/admin/teacher_list")
+def admin_teacher_list():
+    if "user" in session and session.get("role") == "admin":
+        return render_template("admin/A_Teacher-List.html")
     return redirect(url_for("home"))
 
 # ------------------ Logout ------------------
