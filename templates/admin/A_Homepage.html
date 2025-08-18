@@ -47,13 +47,16 @@
     <!-- Analyse Section -->
     <div class="mb-6">
         <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Analyse</div>
-        <a href="{{ url_for('admin_home') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold bg-[#e5d7b8]">
+        <!-- Dashboard -->
+        <a href="{{ url_for('admin_dashboard') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold bg-[#e5d7b8]">
             <i class="fas fa-tachometer-alt"></i> Dashboard
         </a>
-        <a href="{{ url_for('admin_attend_record') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+        <!-- Attendance placeholder (create route in app.py if needed) -->
+        <a href="#" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
             <i class="fas fa-calendar-check"></i> Attendance
         </a>
-        <a href="{{ url_for('admin_system_log') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+        <!-- Reports placeholder (create route in app.py if needed) -->
+        <a href="#" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
             <i class="fas fa-file-alt"></i> Reports
         </a>
     </div>
@@ -61,22 +64,28 @@
     <!-- Manage Section -->
     <div class="mb-6">
         <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Manage</div>
+        <!-- Teachers -->
         <a href="{{ url_for('admin_teacher_list') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
             <i class="fas fa-chalkboard-teacher"></i> Teachers
         </a>
-        <a href="{{ url_for('admin_user_list') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+        <!-- Students -->
+        <a href="{{ url_for('admin_student_list') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
             <i class="fas fa-user-graduate"></i> Students
         </a>
-        <a href="{{ url_for('admin_class_management') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+        <!-- Subjects placeholder (create route in app.py if needed) -->
+        <a href="#" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
             <i class="fas fa-book"></i> Subjects
         </a>
+        <!-- Add User -->
         <a href="{{ url_for('admin_teacher_add') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
             <i class="fas fa-user-plus"></i> Add User
         </a>
-        <a href="{{ url_for('admin_face_recognition') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+        <!-- Face Recognition placeholder (create route in app.py if needed) -->
+        <a href="#" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
             <i class="fas fa-camera"></i> Face Recognition
         </a>
-        <a href="{{ url_for('admin_class_management') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+        <!-- Semester Settings placeholder (create route in app.py if needed) -->
+        <a href="#" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
             <i class="fas fa-calendar-alt"></i> Semester Settings
         </a>
     </div>
@@ -84,7 +93,8 @@
     <!-- Logs Section -->
     <div class="mb-6">
         <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Logs</div>
-        <a href="{{ url_for('admin_system_log') }}" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+        <!-- Admin Actions placeholder (create route in app.py if needed) -->
+        <a href="#" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
             <i class="fas fa-history"></i> Admin Actions
         </a>
     </div>
