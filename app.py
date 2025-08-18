@@ -24,8 +24,8 @@ def home():
 
 @app.route("/login", methods=["POST"])
 def login():
-    email = request.form.get("email")
-    password = request.form.get("password")
+    email = request.form.get("email").strip()
+    password = request.form.get("password").strip()
     remember = request.form.get("remember")
 
     if not email or not password:
@@ -33,46 +33,58 @@ def login():
         return redirect(url_for("home"))
 
     try:
-        # Step 1: Verify user exists in Firebase Auth
-        user = auth.get_user_by_email(email)
+        # ---------- ADMIN LOGIN ----------
+        if email == "admin@admin.edu":
+            doc = db.collection("admin").document("admin").get()
+            if doc.exists:
+                admin_data = doc.to_dict()
+                if admin_data.get("password") == password:
+                    session["user"] = email
+                    session["role"] = "admin"
+                    session.permanent = True if remember == "on" else False
+                    return redirect(url_for("admin_dashboard"))
+                else:
+                    flash("Invalid password for admin.")
+                    return redirect(url_for("home"))
+            else:
+                flash("Admin not found in Firestore.")
+                return redirect(url_for("home"))
+
+        # ---------- STUDENT / TEACHER LOGIN ----------
+        user = auth.get_user_by_email(email)  # check Firebase Auth
         uid = user.uid
 
-        # Step 2: Look through collections
         collections = {
             "student": "students",
-            "teacher": "teachers",
-            "admin": "admins"
+            "teacher": "teachers"
         }
 
         role = None
         user_doc = None
 
-        # Try each collection until match
         for role_name, collection_name in collections.items():
             docs = db.collection(collection_name).where("uid", "==", uid).stream()
             for doc in docs:
                 user_doc = doc.to_dict()
                 role = role_name
                 break
-            if role:  # found user
+            if role:
                 break
 
         if not user_doc:
             flash("User not found in Firestore.")
             return redirect(url_for("home"))
 
-        # Step 3: Set session
+        # Save session
         session["user"] = email
         session["role"] = role
         session.permanent = True if remember == "on" else False
 
-        # Step 4: Redirect by role
+        # Redirect by role
         if role == "student":
             return redirect(url_for("student_dashboard"))
         elif role == "teacher":
             return redirect(url_for("teacher_dashboard"))
-        elif role == "admin":
-            return redirect(url_for("admin_dashboard"))
         else:
             flash("Role not assigned. Contact admin.")
             return redirect(url_for("home"))
