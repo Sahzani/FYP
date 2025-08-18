@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <style>
-  /* ---------- Your CSS (unchanged) ---------- */
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body{height:100%;font-family:'Roboto',sans-serif;background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
   header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
@@ -28,7 +27,6 @@
   .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-left:50px;margin-bottom:30px;}
   .breadcrumb .section{color:#989797;}
   .breadcrumb .current{color:#444444;}
-  .breadcrumb a.section{text-decoration:none;color:#989797;}
   .absence-records1{font-family:'Poppins',sans-serif;font-size:15px;font-weight:500;color:#0d47a1;margin-bottom:15px;}
   .card{background:#fff;border-radius:10px;box-shadow:0px 0px 30px rgba(1,41,112,0.1);padding:20px;max-width:1111px;min-width:460px;margin-left:50px;position:relative;}
   .attendance-table{width:100%;border-collapse:collapse;font-family:'Poppins',sans-serif;font-size:14px;}
@@ -40,7 +38,6 @@
   .status.rejected{background-color:#ff4c4c;}
   .send-application-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;box-shadow:0px 4px 12px rgba(0,102,255,0.3);position:absolute;top:-50px;right:2px;text-decoration:none;display:inline-block;}
   .send-application-btn:hover{transform:translateY(-1px);box-shadow:0px 6px 16px rgba(0,102,255,0.4);}
-  .send-application-btn:active{transform:translateY(0px);box-shadow:0px 3px 8px rgba(0,102,255,0.25);}
   .modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,0.5);justify-content:center;align-items:center;transition:opacity 0.3s;}
   .modal.show{display:flex;opacity:1;}
   .modal-content{background:#fff;margin:auto;padding:0;border-radius:12px;width:90%;max-width:450px;position:relative;overflow:hidden;transform:translateY(-50px);transition:transform 0.3s;}
@@ -48,17 +45,15 @@
   .modal-header{background: linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);padding:15px;color:white;font-family:'Poppins',sans-serif;font-size:20px;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
   .modal-body{padding:20px;}
   .modal label{display:block;margin:10px 0 5px;color:#012970;font-weight:600;}
-  .modal input, .modal select{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px;margin-bottom:12px;background:linear-gradient(180deg,#fff 0%,#f9f9f9 100%);box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);transition:all 0.2s;}
-  .modal input:focus, .modal select:focus{outline:none;border-color:#1e90ff;box-shadow:0 0 6px rgba(30,144,255,0.4);}
+  .modal input, .modal select{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px;margin-bottom:12px;}
   .modal-buttons{text-align:right;margin-top:10px;}
-  .modal button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500;font-size:14px;margin-left:10px;transition:all 0.2s;}
-  .modal .save-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;box-shadow:0 4px 12px rgba(0,102,255,0.3);}
-  .modal .save-btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,102,255,0.4);}
+  .modal button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500;font-size:14px;margin-left:10px;}
+  .modal .save-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;}
   .modal .cancel-btn{background:#ccc;color:#000;}
-  .close{font-size:26px;font-weight:bold;cursor:pointer;}
-  .toast{position:fixed;bottom:20px;right:20px;background:#1e90ff;color:white;padding:12px 20px;border-radius:8px;font-family:'Poppins',sans-serif;font-size:14px;box-shadow:0 4px 12px rgba(0,102,255,0.3);opacity:0;transform:translateY(20px);transition:all 0.5s;z-index:9999;}
+  .toast{position:fixed;bottom:20px;right:20px;background:#1e90ff;color:white;padding:12px 20px;border-radius:8px;font-family:'Poppins',sans-serif;font-size:14px;opacity:0;transform:translateY(20px);transition:all 0.5s;z-index:9999;}
   .toast.show{opacity:1;transform:translateY(0);}
-  @media(max-width:768px){#menu-toggle{display:block;} .sidebar{transform:translateX(-100%);} .sidebar.show{transform:translateX(0);} .main{margin-left:0;padding:80px 20px 20px;}}
+  .delete-btn {background:#ff4c4c;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;}
+  .delete-btn:hover {background:#e63c3c;}
 </style>
 </head>
 <body>
@@ -102,6 +97,7 @@
           <th>Absence reason</th>
           <th>Absence for</th>
           <th>Status</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody id="recordsBody"></tbody>
@@ -109,7 +105,7 @@
   </div>
 </div>
 
-<!-- Send Application Modal -->
+<!-- Modal -->
 <div id="editModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -140,20 +136,25 @@
 
 <div id="toast" class="toast">Application sent successfully!</div>
 
-<script>
-/* ---------- Your existing JS ---------- */
+<!-- Firebase + App Logic -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+  authDomain: "aimanzamani.firebaseapp.com",
+  projectId: "aimanzamani",
+  storageBucket: "aimanzamani.appspot.com",
+  messagingSenderId: "63348630728",
+  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 const recordsBody = document.getElementById('recordsBody');
-
-menuToggle.addEventListener('click', ()=>{ sidebar.classList.toggle('collapsed'); });
-
-document.addEventListener('click',(e)=>{
-  if(window.innerWidth<=768 && sidebar.classList.contains('show')){
-    if(!sidebar.contains(e.target) && e.target!==menuToggle) sidebar.classList.remove('show');
-  }
-});
-
 const modal = document.getElementById('editModal');
 const closeBtn = modal.querySelector('.close');
 const saveBtn = document.getElementById('saveBtn');
@@ -161,29 +162,44 @@ const cancelBtn = document.getElementById('cancelBtn');
 const openApplicationModal = document.getElementById('openApplicationModal');
 const toast = document.getElementById('toast');
 
+menuToggle.addEventListener('click', ()=> sidebar.classList.toggle('collapsed'));
+
 function showToast(message){
   toast.textContent=message;
   toast.classList.add('show');
-  setTimeout(()=>{toast.classList.remove('show');},2000);
+  setTimeout(()=>toast.classList.remove('show'),2000);
 }
 
-function renderRecords(){
-  const records = JSON.parse(localStorage.getItem('absenceRecords'))||[];
+// Render records from Firestore
+async function renderRecords(){
+  const querySnapshot = await getDocs(collection(db, "absenceRecords"));
   recordsBody.innerHTML='';
-  records.forEach((rec, idx)=>{
+  let idx = 0;
+  querySnapshot.forEach((docSnap)=>{
+    const rec = docSnap.data();
+    idx++;
     const tr=document.createElement('tr');
     tr.innerHTML=`
-      <td>${idx+1}</td>
+      <td>${idx}</td>
       <td>${rec.studentName}</td>
       <td>${rec.course}</td>
       <td>${rec.reason}</td>
       <td>${rec.duration}</td>
       <td><span class="status ${rec.status.toLowerCase().replace(' ','-')}">${rec.status}</span></td>
+      <td><button class="delete-btn" data-id="${docSnap.id}">Delete</button></td>
     `;
     recordsBody.appendChild(tr);
   });
+
+  document.querySelectorAll('.delete-btn').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      const id = e.target.getAttribute('data-id');
+      await deleteDoc(doc(db, "absenceRecords", id));
+      showToast('Record deleted successfully!');
+      renderRecords();
+    });
+  });
 }
-window.addEventListener('storage', renderRecords);
 
 function openModal(){
   modal.classList.add('show');
@@ -194,54 +210,27 @@ function openModal(){
 }
 closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
 
-saveBtn.onclick = () => {
+saveBtn.onclick = async () => {
   const studentName = document.getElementById('modalStudentName').value.trim();
   const course = document.getElementById('modalCourse').value.trim();
   const reason = document.getElementById('modalReason').value.trim();
   const duration = document.getElementById('modalDuration').value;
   if(!studentName || !course || !reason){ alert('Please fill in all fields!'); return; }
-  const records = JSON.parse(localStorage.getItem('absenceRecords'))||[];
-  records.push({studentName, course, reason, duration, status:'In Progress'});
-  localStorage.setItem('absenceRecords', JSON.stringify(records));
-  renderRecords();
-  modal.classList.remove('show');
-  showToast('Application sent successfully!');
-}
+
+  const newRecord = {studentName, course, reason, duration, status:'In Progress'};
+
+  try {
+    await addDoc(collection(db, "absenceRecords"), newRecord);
+    showToast('Application sent successfully!');
+    modal.classList.remove('show');
+    renderRecords();
+  } catch (e) {
+    alert("Error saving to Firestore: " + e.message);
+  }
+};
 
 openApplicationModal.onclick = openModal;
 renderRecords();
-</script>
-
-<!-- ---------- Firebase Script (merged) ---------- -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-  authDomain: "aimanzamani.firebaseapp.com",
-  projectId: "aimanzamani",
-  storageBucket: "aimanzamani.appspot.com",
-  messagingSenderId: "63348630728",
-  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// Example: save a test record to Firestore
-// (you can integrate this into saveBtn.onclick later)
-async function testSave() {
-  try {
-    await addDoc(collection(db, "testRecords"), { sample: "Hello Firestore" });
-    console.log("Test record saved!");
-  } catch (e) {
-    console.error("Error adding document: ", e);
-  }
-}
 </script>
 
 </body>
