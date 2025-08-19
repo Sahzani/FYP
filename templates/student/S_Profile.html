@@ -374,8 +374,12 @@
                     </div>
                     <form id="profile-form" class="profile-details">
                         <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" id="full-name-input" value="" disabled>
+                            <label>First Name</label>
+                            <input type="text" id="first-name-input" value="" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" id="last-name-input" value="" disabled>
                         </div>
                         <div class="form-group">
                             <label>Nickname</label>
@@ -460,10 +464,11 @@
         const saveProfileBtn = document.getElementById('save-profile-btn');
         const passwordForm = document.getElementById('password-form');
         const cancelPasswordBtn = document.getElementById('cancel-password-btn');
-        // Removed the userIdDisplay element since it's no longer shown
+        
         const userProfilePic = document.getElementById('user-profile-pic');
         const userProfilePicHeader = document.getElementById('user-profile-pic-header');
-        const fullNameInput = document.getElementById('full-name-input');
+        const firstNameInput = document.getElementById('first-name-input');
+        const lastNameInput = document.getElementById('last-name-input');
         const nicknameInput = document.getElementById('nickname-input');
         const phoneInput = document.getElementById('phone-input');
         const roleTypeInput = document.getElementById('role-type-input');
@@ -516,7 +521,8 @@
                             if (docSnap.exists()) {
                                 const data = docSnap.data();
                                 // Populate form fields with data from Firestore
-                                fullNameInput.value = data.fullName || '';
+                                firstNameInput.value = data.firstName || '';
+                                lastNameInput.value = data.lastName || '';
                                 nicknameInput.value = data.nickname || '';
                                 phoneInput.value = data.phoneNumber || '';
                                 roleTypeInput.value = data.roleType || '';
@@ -527,7 +533,7 @@
                                 emailInput.value = data.email || '';
                                 
                                 // Update header and profile picture
-                                headerUserName.textContent = data.nickname || data.fullName || 'User';
+                                headerUserName.textContent = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Student';
                                 if (data.profilePicUrl) {
                                     userProfilePic.src = data.profilePicUrl;
                                     userProfilePicHeader.src = data.profilePicUrl;
@@ -559,6 +565,7 @@
             const updatedData = {
                 nickname: nicknameInput.value,
                 phoneNumber: phoneInput.value,
+                profilePicUrl: userProfilePic.src
                 // Add any other fields you want to save here
             };
             
@@ -567,7 +574,7 @@
                 await setDoc(userDocRef, updatedData, { merge: true });
                 profileStatusMessage.textContent = 'Profile updated successfully!';
                 profileStatusMessage.style.color = 'green';
-                console.log("Profile updated successfully!");
+                
             } catch (e) {
                 console.error("Error updating document: ", e);
                 profileStatusMessage.textContent = 'Failed to save profile. Please try again.';
@@ -583,7 +590,7 @@
             const confirmPassword = confirmPasswordInput.value;
 
             // Simple validation: check if all fields are filled and passwords match
-            if (currentPassword === '' || newPassword === '' || confirmPassword === '') {
+            if  (!currentPassword || !newPassword || !confirmPassword) {
                 passwordStatusMessage.textContent = 'Please fill in all password fields.';
                 passwordStatusMessage.style.color = 'red';
                 return;
