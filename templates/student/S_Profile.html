@@ -9,7 +9,7 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        /* Base Styling from user's example */
+        /* Base Styling */
         * {
             margin: 0;
             padding: 0;
@@ -20,6 +20,7 @@
             height: 100%;
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+            overflow: hidden; /* Prevent body scroll, let main-content handle it */
         }
 
         /* Fixed Header */
@@ -87,6 +88,7 @@
             box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
             font-family: 'Open Sans', sans-serif;
             overflow-y: auto;
+            z-index: 5;
         }
 
         .sidebar-section {
@@ -96,7 +98,7 @@
         .sidebar-section-title {
             font-size: 11px;
             text-transform: uppercase;
-            color: #012970; /* Changed color to #012970 */
+            color: #012970;
             margin-bottom: 10px;
             letter-spacing: 0.5px;
             font-weight: 600;
@@ -124,20 +126,22 @@
             color: #4154F1;
         }
 
-        /* Style for the red logout text */
         .text-red-500 {
-            color: #ef4444; /* A shade of red for the icon */
+            color: #ef4444;
         }
 
         /* Main Content Styling for the Profile Page */
         .main-content {
-            flex-grow: 1;
             padding: 20px;
-            margin-left: 260px; /* To make space for the sidebar */
-            margin-top: 60px; /* To make space for the header */
+            margin-left: 260px; /* To make space for the fixed sidebar */
+            margin-top: 60px; /* To make space for the fixed header */
+            height: calc(100vh - 60px);
+            overflow-y: auto;
         }
 
         .profile-sections {
+            max-width: 800px;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -232,7 +236,7 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            max-width: 400px; /* Constrains the width of the password fields */
+            max-width: 400px;
         }
 
         .card-actions {
@@ -267,6 +271,17 @@
         .btn-secondary:hover {
             background-color: #5a6268;
         }
+        
+        .status-message {
+            margin-top: 15px;
+            font-size: 14px;
+            font-family: 'Open Sans', sans-serif;
+            font-style: italic;
+            color: #333;
+        }
+        
+        /* Removed loading-overlay style as it's no longer needed */
+        
 
         /* Responsive */
         @media (max-width: 992px) {
@@ -303,11 +318,14 @@
             .main-content {
                 margin-left: 0;
                 margin-top: 0;
+                height: auto;
             }
         }
     </style>
 </head>
 <body>
+    <!-- The loading overlay has been removed from here -->
+
     <header>
         <div class="header-content">
             <a href="#" style="text-decoration: none; color: inherit;">iAttend</a>
@@ -315,8 +333,9 @@
                 <input type="text" placeholder="Search...">
             </div>
             <div class="user-info">
-                <span>Peterpan</span>
-                <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=PP" alt="User Profile Picture">
+                <a href="S_profile.html" class="flex items-center space-x-3 cursor-pointer"></a>
+                <span id="header-user-name"></span>
+                <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile Picture">
             </div>
         </div>
     </header>
@@ -335,7 +354,7 @@
         </div>
         <div class="sidebar-section">
             <div class="sidebar-section-title">Logout</div>
-            <a class="sidebar-link" href="Login_Page.html"><i class="fas fa-sign-out-alt text-red-500"></i> Logout</a>
+            <a class="sidebar-link" href="/templates/combinePage/Login.html"><i class="fas fa-sign-out-alt text-red-500"></i> Logout</a>
         </div>
     </div>
 
@@ -343,6 +362,7 @@
         <div class="profile-sections">
             <div class="card user-profile-card">
                 <h2>User Profile</h2>
+                <!-- Removed the line that displayed the User ID to the student -->
                 <div class="profile-content">
                     <div class="profile-pic-container">
                         <!-- Profile picture displayed here -->
@@ -352,107 +372,244 @@
                         <!-- Camera icon to trigger the file input -->
                         <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
                     </div>
-                    <div class="profile-details">
+                    <form id="profile-form" class="profile-details">
                         <div class="form-group">
-                            <label>First Name</label>
-                            <input type="text" value="Peter" disabled>
-                        </div>
-                        <div class="form-group">
-                            <label>Last Name</label>
-                            <input type="text" value="Pan" disabled>
+                            <label>Full Name</label>
+                            <input type="text" id="full-name-input" value="" disabled>
                         </div>
                         <div class="form-group">
                             <label>Nickname</label>
-                            <input type="text" value="Pete">
+                            <input type="text" id="nickname-input" value="">
                         </div>
                         <div class="form-group">
                             <label>Phone Number</label>
-                            <input type="text" value="+60123456789">
+                            <input type="text" id="phone-input" value="">
                         </div>
                         <div class="form-group">
                             <label>Role Type</label>
-                            <input type="text" value="Student" disabled>
+                            <input type="text" id="role-type-input" value="Student" disabled>
                         </div>
                         <div class="form-group">
                             <label>Course</label>
-                            <input type="text" value="Diploma in Arts & Technology" disabled>
+                            <input type="text" id="course-input" value="" disabled>
                         </div>
                         <div class="form-group">
                             <label>Student ID</label>
-                            <input type="text" value="123456" disabled>
+                            <input type="text" id="student-id-input" value="" disabled>
                         </div>
                         <div class="form-group">
                             <label>Class</label>
-                            <input type="text" value="DADT02" disabled>
+                            <input type="text" id="class-input" value="" disabled>
                         </div>
                         <div class="form-group">
                             <label>Intake</label>
-                            <input type="text" value="Intake 20" disabled>
+                            <input type="text" id="intake-input" value="" disabled>
                         </div>
                         <div class="form-group">
                             <label>Email</label>
-                            <input type="email" value="PeterPan@student.au.edu" disabled>
+                            <input type="email" id="email-input" value="" disabled>
                         </div>
-                    </div>
+                    </form>
                 </div>
                 <div class="card-actions">
-                    <button class="btn btn-primary" onclick="validatePassword()">Saved Changes</button>
-                    <button class="btn btn-secondary" onclick="alert('Action cancelled.')">Cancel</button>
+                    <button id="save-profile-btn" class="btn btn-primary">Save Changes</button>
                 </div>
+                <div id="profile-status-message" class="status-message"></div>
             </div>
 
             <div class="card password-change-card">
                 <h2>Password Change</h2>
-                <div class="password-form-content">
-                    <div class="form-group">
-                        <label>Current Password</label>
-                        <input type="password" id="current-password">
+                <form id="password-form">
+                    <div class="password-form-content">
+                        <div class="form-group">
+                            <label>Current Password</label>
+                            <input type="password" id="current-password">
+                        </div>
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" id="new-password">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm Password</label>
+                            <input type="password" id="confirm-password">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>New Password</label>
-                        <input type="password" id="new-password">
+                    <div class="card-actions">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" id="cancel-password-btn" class="btn btn-secondary">Cancel</button>
                     </div>
-                    <div class="form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" id="confirm-password">
-                    </div>
-                </div>
-                <div class="card-actions">
-                    <button class="btn btn-primary" onclick="validatePassword()">Saved Changes</button>
-                    <button class="btn btn-secondary" onclick="clearPasswordFields()">Cancel</button>
-                </div>
+                    <div id="password-status-message" class="status-message"></div>
+                </form>
             </div>
         </div>
     </div>
 
-    <script>
-        // Function to handle the password validation and change
-        function validatePassword() {
-            const newPassword = document.getElementById('new-password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-            if (newPassword && confirmPassword && newPassword === confirmPassword) {
-                // In a real application, this would send data to a server.
-                alert('Password changed successfully!');
-                clearPasswordFields();
-            } else if (!newPassword || !confirmPassword) {
-                alert('Please fill in all password fields.');
-            } else {
-                alert('New passwords do not match!');
-            }
-        }
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Function to clear the password fields
-        function clearPasswordFields() {
-            document.getElementById('current-password').value = '';
-            document.getElementById('new-password').value = '';
-            document.getElementById('confirm-password').value = '';
-        }
+        // Global variables for Firebase services and user data
+        let db;
+        let auth;
+        let userId;
+        let userDocRef;
 
-        // JavaScript to handle the profile picture upload
+        // Get all the DOM elements and store them in variables
         const profilePicUpload = document.getElementById('profile-pic-upload');
+        const saveProfileBtn = document.getElementById('save-profile-btn');
+        const passwordForm = document.getElementById('password-form');
+        const cancelPasswordBtn = document.getElementById('cancel-password-btn');
+        // Removed the userIdDisplay element since it's no longer shown
         const userProfilePic = document.getElementById('user-profile-pic');
         const userProfilePicHeader = document.getElementById('user-profile-pic-header');
+        const fullNameInput = document.getElementById('full-name-input');
+        const nicknameInput = document.getElementById('nickname-input');
+        const phoneInput = document.getElementById('phone-input');
+        const roleTypeInput = document.getElementById('role-type-input');
+        const courseInput = document.getElementById('course-input');
+        const studentIdInput = document.getElementById('student-id-input');
+        const classInput = document.getElementById('class-input');
+        const intakeInput = document.getElementById('intake-input');
+        const emailInput = document.getElementById('email-input');
+        const profileStatusMessage = document.getElementById('profile-status-message');
+        const currentPasswordInput = document.getElementById('current-password');
+        const newPasswordInput = document.getElementById('new-password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const passwordStatusMessage = document.getElementById('password-status-message');
+        const headerUserName = document.getElementById('header-user-name');
+        
+        /**
+         * Initializes Firebase and authenticates the user.
+         */
+        const initApp = async () => {
+            try {
+                // Use a check to ensure the variables exist and provide fallbacks if not
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Check for the custom auth token provided by the canvas environment.
+                if (typeof __initial_auth_token !== 'undefined') {
+                    // Sign in with the provided custom token.
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    // If no custom token is provided, sign in anonymously as a fallback.
+                    await signInAnonymously(auth);
+                }
+
+                // Listen for authentication state changes to get the user ID
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        // No longer displaying the user ID
+                        
+                        // Use the correct Firestore path for user data to avoid permission errors
+                        userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
+                        console.log("Firestore User Document Path:", userDocRef.path);
+
+                        // Listen for real-time updates to the profile data
+                        onSnapshot(userDocRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                const data = docSnap.data();
+                                // Populate form fields with data from Firestore
+                                fullNameInput.value = data.fullName || '';
+                                nicknameInput.value = data.nickname || '';
+                                phoneInput.value = data.phoneNumber || '';
+                                roleTypeInput.value = data.roleType || '';
+                                courseInput.value = data.course || '';
+                                studentIdInput.value = data.studentID || '';
+                                classInput.value = data.studentClass || '';
+                                intakeInput.value = data.intake || '';
+                                emailInput.value = data.email || '';
+                                
+                                // Update header and profile picture
+                                headerUserName.textContent = data.nickname || data.fullName || 'User';
+                                if (data.profilePicUrl) {
+                                    userProfilePic.src = data.profilePicUrl;
+                                    userProfilePicHeader.src = data.profilePicUrl;
+                                }
+                            } else {
+                                // If no profile exists, leave fields blank
+                                console.log("No profile data found, fields will be blank.");
+                            }
+                        }, (error) => {
+                            console.error("Error getting profile data: ", error);
+                        });
+                    } else {
+                        console.log("User is not signed in.");
+                    }
+                });
+            } catch (e) {
+                console.error("Error initializing Firebase: ", e);
+            }
+        };
+
+        // Function to handle saving user profile changes
+        const saveUserProfile = async () => {
+            if (!userId) {
+                profileStatusMessage.textContent = "Error: User not authenticated. Please reload the page.";
+                profileStatusMessage.style.color = 'red';
+                return;
+            }
+
+            const updatedData = {
+                nickname: nicknameInput.value,
+                phoneNumber: phoneInput.value,
+                // Add any other fields you want to save here
+            };
+            
+            try {
+                // Use setDoc with merge: true to create or update the document
+                await setDoc(userDocRef, updatedData, { merge: true });
+                profileStatusMessage.textContent = 'Profile updated successfully!';
+                profileStatusMessage.style.color = 'green';
+                console.log("Profile updated successfully!");
+            } catch (e) {
+                console.error("Error updating document: ", e);
+                profileStatusMessage.textContent = 'Failed to save profile. Please try again.';
+                profileStatusMessage.style.color = 'red';
+            }
+        };
+
+        // Function to handle the password validation and change
+        const validatePassword = (e) => {
+            e.preventDefault();
+            const currentPassword = currentPasswordInput.value;
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            // Simple validation: check if all fields are filled and passwords match
+            if (currentPassword === '' || newPassword === '' || confirmPassword === '') {
+                passwordStatusMessage.textContent = 'Please fill in all password fields.';
+                passwordStatusMessage.style.color = 'red';
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                passwordStatusMessage.textContent = 'New passwords do not match!';
+                passwordStatusMessage.style.color = 'red';
+                return;
+            }
+
+            // In a real application, you would send the data to a server for verification
+            passwordStatusMessage.textContent = 'Password changed successfully!';
+            passwordStatusMessage.style.color = 'green';
+            clearPasswordFields();
+        };
+
+        // Function to clear the password fields
+        const clearPasswordFields = () => {
+            currentPasswordInput.value = '';
+            newPasswordInput.value = '';
+            confirmPasswordInput.value = '';
+            passwordStatusMessage.textContent = '';
+        };
+
+        // JavaScript to handle the profile picture upload
         profilePicUpload.addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
@@ -468,6 +625,14 @@
                 reader.readAsDataURL(file);
             }
         });
+        
+        // Add event listeners for button clicks
+        saveProfileBtn.addEventListener('click', saveUserProfile);
+        passwordForm.addEventListener('submit', validatePassword);
+        cancelPasswordBtn.addEventListener('click', clearPasswordFields);
+
+        // Call the initialization function on window load
+        window.onload = initApp;
     </script>
 </body>
 </html>
