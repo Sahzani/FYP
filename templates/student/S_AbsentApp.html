@@ -2,19 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Absence Records</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  html,body{height:100%;font-family:'Roboto',sans-serif;background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
-  header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
+  html,body{height:100%;font-family:'Poppins',sans-serif;background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
+  header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding: 0 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000; justify-content: space-between;}
   #menu-toggle{display:block;font-size:28px;margin-right:15px;cursor:pointer;}
+  .header-left { display: flex; align-items: center; }
   .sidebar{position: fixed;top:60px;left:0;width:240px;height:calc(100% - 60px);background: linear-gradient(180deg,#FFEED3 0%,#FFEED3 100%);padding:15px 0;box-shadow:2px 0 15px rgba(1,41,112,0.08);font-family:'Poppins',sans-serif;transition:width 0.3s ease, transform 0.3s ease;z-index:999;border-top-right-radius:12px;overflow:hidden;}
   .sidebar.collapsed { width:70px; }
   .sidebar-section{margin-bottom:25px;padding:0 15px;}
-  .sidebar-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#5D5FEF;margin-bottom:10px;padding-left:10px;transition:opacity 0.3s;}
+  .sidebar-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#5D5FEF;margin-bottom:10px;padding-left:10px;transition:opacity 0.3s; white-space:nowrap;}
   .sidebar.collapsed .sidebar-section-title{opacity:0;}
   .sidebar-link{display:flex;align-items:center;gap:10px;padding:12px 15px;margin-bottom:8px;border-radius:8px;font-size:15px;font-weight:500;color:#1A237E;text-decoration:none;transition:all 0.25s ease;white-space:nowrap;}
   .sidebar.collapsed .sidebar-link span{display:none;}
@@ -22,7 +23,7 @@
   .sidebar-link:hover{background: rgba(255,255,255,0.5);transform:translateX(4px);}
   .sidebar-link.active{background: rgba(255,255,255,0.7);color:#4154F1;font-weight:600;box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2);}
   .main{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s ease;}
-  .sidebar.collapsed ~ .main{margin-left:80px;}
+  .sidebar.collapsed ~ .main{margin-left:90px;}
   .page-title{font-family:'Poppins',sans-serif;font-size:28px;font-weight:500;color:#444444;margin-left:50px;margin-top:10px;margin-bottom:-1px;}
   .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-left:50px;margin-bottom:30px;}
   .breadcrumb .section{color:#989797;}
@@ -58,24 +59,23 @@
 </head>
 <body>
 
+<!-- Header -->
 <header>
-    <!-- New Header with toggle button and clickable user info -->
-    <header>
-        <span id="menu-toggle" style="margin-right: 15px;">&#9776;</span>
-        <div class="header-content">
-            <a href="#" style="text-decoration: none; color: inherit;">iAttend</a>
-            <div class="user-info">
-                <span id="header-user-name"></span>
-                <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile Picture">
-            </div>
-        </div>
-    </header>
+    <div class="header-left">
+        <span id="menu-toggle">&#9776;</span>
+        <a href="#" style="text-decoration: none; color: inherit;">iAttend</a>
+    </div>
+    <div class="user-info">
+        <a href="S_Profile.html"> <!-- Link to the profile page -->
+            <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile Picture" style="border-radius: 50%; display: block;">
+        </a>
+    </div>
 </header>
 
-
+<!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="S_Dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    <a class="sidebar-link" href="#"><i class="fas fa-home"></i><span>Dashboard</span></a>
     <div class="sidebar-section-title">Analyse</div>
     <a class="sidebar-link" href="#"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
   </div>
@@ -88,6 +88,7 @@
   </div>
 </div>
 
+<!-- Main Content -->
 <div class="main">
   <h1 class="page-title">Absence Records</h1>
   <h2 class="breadcrumb">
@@ -110,17 +111,19 @@
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody id="recordsBody"></tbody>
+      <tbody id="recordsBody">
+        <!-- Records will be injected here by JavaScript -->
+      </tbody>
     </table>
   </div>
 </div>
 
 <!-- Modal -->
-<div id="editModal" class="modal">
+<div id="applicationModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
       <span>New Absence Application</span>
-      <span class="close">&times;</span>
+      <span class="close" style="cursor:pointer; font-size: 28px;">&times;</span>
     </div>
     <div class="modal-body">
       <label>Student Name</label>
@@ -137,110 +140,181 @@
         <option value="1 week">1 week</option>
       </select>
       <div class="modal-buttons">
-        <button class="save-btn" id="saveBtn">Send</button>
-        <button class="cancel-btn" id="cancelBtn">Cancel</button>
+        <button class="cancel-btn">Cancel</button>
+        <button class="save-btn">Send</button>
       </div>
     </div>
   </div>
 </div>
 
-<div id="toast" class="toast">Application sent successfully!</div>
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
 
 <!-- Firebase + App Logic -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+  // Firebase Imports
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-  authDomain: "aimanzamani.firebaseapp.com",
-  projectId: "aimanzamani",
-  storageBucket: "aimanzamani.appspot.com",
-  messagingSenderId: "63348630728",
-  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+  // --- CONFIGURATION ---
+  const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+  const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-const menuToggle = document.getElementById('menu-toggle');
-const sidebar = document.querySelector('.sidebar');
-const recordsBody = document.getElementById('recordsBody');
-const modal = document.getElementById('editModal');
-const closeBtn = modal.querySelector('.close');
-const saveBtn = document.getElementById('saveBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-const openApplicationModal = document.getElementById('openApplicationModal');
-const toast = document.getElementById('toast');
-
-menuToggle.addEventListener('click', ()=> sidebar.classList.toggle('collapsed'));
-
-function showToast(message){
-  toast.textContent=message;
-  toast.classList.add('show');
-  setTimeout(()=>toast.classList.remove('show'),2000);
-}
-
-// Render records from Firestore
-async function renderRecords(){
-  const querySnapshot = await getDocs(collection(db, "absenceRecords"));
-  recordsBody.innerHTML='';
-  let idx = 0;
-  querySnapshot.forEach((docSnap)=>{
-    const rec = docSnap.data();
-    idx++;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${idx}</td>
-      <td>${rec.studentName}</td>
-      <td>${rec.course}</td>
-      <td>${rec.reason}</td>
-      <td>${rec.duration}</td>
-      <td><span class="status ${rec.status.toLowerCase().replace(' ','-')}">${rec.status}</span></td>
-      <td><button class="delete-btn" data-id="${docSnap.id}">Delete</button></td>
-    `;
-    recordsBody.appendChild(tr);
-  });
-
-  document.querySelectorAll('.delete-btn').forEach(btn=>{
-    btn.addEventListener('click', async (e)=>{
-      const id = e.target.getAttribute('data-id');
-      await deleteDoc(doc(db, "absenceRecords", id));
-      showToast('Record deleted successfully!');
-      renderRecords();
-    });
-  });
-}
-
-function openModal(){
-  modal.classList.add('show');
-  document.getElementById('modalStudentName').value='';
-  document.getElementById('modalCourse').value='';
-  document.getElementById('modalReason').value='';
-  document.getElementById('modalDuration').value='1 day';
-}
-closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
-
-saveBtn.onclick = async () => {
-  const studentName = document.getElementById('modalStudentName').value.trim();
-  const course = document.getElementById('modalCourse').value.trim();
-  const reason = document.getElementById('modalReason').value.trim();
-  const duration = document.getElementById('modalDuration').value;
-  if(!studentName || !course || !reason){ alert('Please fill in all fields!'); return; }
-
-  const newRecord = {studentName, course, reason, duration, status:'In Progress'};
+  // --- FIREBASE INITIALIZATION ---
+  let app, auth, db, userId;
+  let recordsCollectionRef;
+  let unsubscribeRecords = null;
 
   try {
-    await addDoc(collection(db, "absenceRecords"), newRecord);
-    showToast('Application sent successfully!');
-    modal.classList.remove('show');
-    renderRecords();
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
   } catch (e) {
-    alert("Error saving to Firestore: " + e.message);
+      console.error("Error initializing Firebase:", e);
+      showToast("Error connecting to the service.");
   }
-};
 
-openApplicationModal.onclick = openModal;
-renderRecords();
+  // --- DOM ELEMENTS ---
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const recordsBody = document.getElementById('recordsBody');
+  const modal = document.getElementById('applicationModal');
+  const closeBtn = modal.querySelector('.close');
+  const saveBtn = modal.querySelector('.save-btn');
+  const cancelBtn = modal.querySelector('.cancel-btn');
+  const openApplicationModalBtn = document.getElementById('openApplicationModal');
+  const toast = document.getElementById('toast');
+
+  // --- UI EVENT LISTENERS ---
+  menuToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+  openApplicationModalBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  cancelBtn.addEventListener('click', closeModal);
+  saveBtn.addEventListener('click', handleSaveApplication);
+
+  // --- AUTHENTICATION ---
+  onAuthStateChanged(auth, async (user) => {
+      if (user) {
+          userId = user.uid;
+          console.log("User authenticated with UID:", userId);
+          setupFirestoreListeners();
+      } else {
+          console.log("No user found, attempting to sign in...");
+          userId = null;
+          if (unsubscribeRecords) unsubscribeRecords();
+          recordsBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 1rem;">Please wait, authenticating...</td></tr>';
+          try {
+              if (initialAuthToken) {
+                  await signInWithCustomToken(auth, initialAuthToken);
+              } else {
+                  await signInAnonymously(auth);
+              }
+          } catch (error) {
+              console.error("Authentication failed:", error);
+              showToast("Authentication failed. Please refresh.");
+          }
+      }
+  });
+
+  // --- FIRESTORE ---
+  function setupFirestoreListeners() {
+    if (!userId) return;
+    const collectionPath = `artifacts/${appId}/public/data/absenceRecords`;
+    recordsCollectionRef = collection(db, collectionPath);
+    const q = query(recordsCollectionRef);
+    unsubscribeRecords = onSnapshot(q, renderRecords, (error) => {
+        console.error("Error listening to records:", error);
+        showToast("Error fetching records.");
+        recordsBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 1rem; color: red;">Error loading data.</td></tr>';
+    });
+  }
+
+  // --- RENDERING ---
+  function renderRecords(querySnapshot) {
+      recordsBody.innerHTML = '';
+      if (querySnapshot.empty) {
+          recordsBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 1rem; color: #555;">No absence records found.</td></tr>';
+          return;
+      }
+      let idx = 0;
+      querySnapshot.forEach((docSnap) => {
+          const rec = docSnap.data();
+          idx++;
+          const tr = document.createElement('tr');
+          const statusClass = rec.status.toLowerCase().replace(' ', '-');
+          tr.innerHTML = `
+            <td>${idx}</td>
+            <td>${rec.studentName || 'N/A'}</td>
+            <td>${rec.course || 'N/A'}</td>
+            <td>${rec.reason || 'N/A'}</td>
+            <td>${rec.duration || 'N/A'}</td>
+            <td><span class="status ${statusClass}">${rec.status}</span></td>
+            <td><button class="delete-btn" data-id="${docSnap.id}">Delete</button></td>
+          `;
+          recordsBody.appendChild(tr);
+      });
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', handleDeleteRecord);
+      });
+  }
+  
+  // --- ACTIONS ---
+  async function handleSaveApplication() {
+      const studentName = document.getElementById('modalStudentName').value.trim();
+      const course = document.getElementById('modalCourse').value.trim();
+      const reason = document.getElementById('modalReason').value.trim();
+      const duration = document.getElementById('modalDuration').value;
+      if (!studentName || !course || !reason) {
+          showToast('Please fill in all fields!');
+          return;
+      }
+      if (!recordsCollectionRef) {
+          showToast("Database connection not ready.");
+          return;
+      }
+      const newRecord = { studentName, course, reason, duration, status: 'In Progress', createdBy: userId };
+      try {
+          await addDoc(recordsCollectionRef, newRecord);
+          showToast('Application sent successfully!');
+          closeModal();
+      } catch (e) {
+          console.error("Error saving to Firestore: ", e);
+          showToast("Error: Could not send application.");
+      }
+  }
+
+  async function handleDeleteRecord(e) {
+      const docId = e.target.getAttribute('data-id');
+      if (!docId) return;
+      try {
+          await deleteDoc(doc(db, `artifacts/${appId}/public/data/absenceRecords`, docId));
+          showToast('Record deleted successfully!');
+      } catch (error) {
+          console.error("Error deleting document: ", error);
+          showToast("Error deleting record.");
+      }
+  }
+
+  // --- UTILITY / MODAL ---
+  function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  function openModal() {
+      modal.classList.add('show');
+      document.getElementById('modalStudentName').value = '';
+      document.getElementById('modalCourse').value = '';
+      document.getElementById('modalReason').value = '';
+      document.getElementById('modalDuration').value = '1 day';
+  }
+
+  function closeModal() {
+      modal.classList.remove('show');
+  }
 </script>
 
 </body>
