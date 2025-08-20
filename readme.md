@@ -11,9 +11,9 @@ Feature 3
 Add images or GIFs to showcase the UI or functionality.
 
 ## Installation
-Steps to install and set up the project.
+Steps to install and set up the project. 
 
-## Usage
+## Usage (User Manua)
 Instructions on how to run and use the project.
 
 ## Technologies Used
