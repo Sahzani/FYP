@@ -13,7 +13,7 @@ Add images or GIFs to showcase the UI or functionality.
 ## Installation
 Steps to install and set up the project. 
 
-## Usage (User Manua)
+## Usage (User Manual)
 Instructions on how to run and use the project.
 
 ## Technologies Used
