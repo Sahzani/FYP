@@ -1,110 +1,65 @@
-from flask import Flask, render_template, Response, jsonify
+from flask import Flask, render_template, Response
 import cv2, os, threading, time
 import numpy as np
-from datetime import datetime, time as dt_time
+from datetime import datetime
 import face_recognition
 import firebase_admin
-from firebase_admin import credentials, db
+from firebase_admin import credentials, firestore
 
-# ======= Firebase Admin Setup =======
+# ===== Firebase Setup =====
 cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred, {
-    "databaseURL": "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app"
-})
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
-# ======= Flask =======
+# ===== Flask App =====
 app = Flask(__name__)
 
-# ======= Load Faces =======
-PATH = 'student_pics'
-images, classNames = [], []
+# ===== Load Students from Firestore =====
+STUDENTS = {}       # Firestore docID -> student info
+encodings = []      # face encodings
+classNames = []     # corresponding Firestore IDs
 
-if not os.path.isdir(PATH):
-    os.makedirs(PATH, exist_ok=True)
+students_ref = db.collection("students")
+docs = students_ref.stream()
 
-print("[DEBUG] Loading images from folder:", PATH)
-for cl in os.listdir(PATH):
-    img_path = os.path.join(PATH, cl)
-    if os.path.isfile(img_path):
-        img = cv2.imread(img_path)
-        if img is not None:
-            images.append(img)
-            classNames.append(cl)  # store filename
-            print(f"[DEBUG] Loaded image: {cl}")
+print("[INFO] Loading students from Firestore...")
 
-def findEncodings(imgs):
-    encs = []
-    for im, fname in zip(imgs, classNames):
-        rgb = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-        face_encs = face_recognition.face_encodings(rgb)
-        if face_encs:
-            encs.append(face_encs[0])
-            print(f"[DEBUG] Encoding found for {fname}")
-        else:
-            print(f"[WARN] No face found in {fname}")
-    return encs
+for doc in docs:
+    data = doc.to_dict()
+    student_id = doc.id
+    STUDENTS[student_id] = data
 
-encodeListKnown = findEncodings(images)
-print(f"[INFO] Total encodings loaded: {len(encodeListKnown)}")
+    photo_filename = data.get("student_pics")
+    if not photo_filename:
+        print(f"[WARN] Student {student_id} has no photo, skipping")
+        continue
 
-# ======= Load Students from Firebase =======
-def fetch_students():
-    students_snap = db.reference("students").get() or {}
-    students_dict = {}
-    for key, info in students_snap.items():
-        photo = info.get("student_pics")
-        if photo:
-            students_dict[photo] = info
-    return students_dict
+    photo_path = os.path.join("student_pics", photo_filename)
+    if not os.path.exists(photo_path):
+        print(f"[WARN] Photo {photo_filename} not found locally, skipping")
+        continue
 
-STUDENTS = fetch_students()
-print("[DEBUG] Firebase student photo filenames:")
-for fname, info in STUDENTS.items():
-    print(f"student_pics: '{fname}', name: '{info.get('name')}'")
+    img = cv2.imread(photo_path)
+    if img is None:
+        print(f"[WARN] Cannot read {photo_filename}, skipping")
+        continue
 
-# ======= Attendance =======
-_last_seen_push = {}
-COOLDOWN_SECONDS = 30
-CLASS_START = dt_time(8, 0)
-CLASS_END   = dt_time(9, 0)
-LATE_AFTER  = dt_time(8, 15)
-
-def mark_attendance(uid: str, name: str, email: str, late=False):
-    date = datetime.now().strftime('%Y-%m-%d')
-    now_iso = datetime.now().isoformat(timespec='seconds')
-    node = db.reference(f"attendance/{date}/{uid}")
-    existing = node.get()
-    record = {
-        "uid": uid,
-        "name": name,
-        "email": email,
-        "first_seen": now_iso if existing is None else existing.get("first_seen"),
-        "last_seen": now_iso,
-        "count": 1 if existing is None else int(existing.get("count", 1)) + 1,
-        "late": late
-    }
-    if existing is None:
-        node.set(record)
+    rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    encode = face_recognition.face_encodings(rgb_img)
+    if encode:
+        encodings.append(encode[0])
+        classNames.append(student_id)
+        print(f"[OK] Loaded encoding for {student_id} ({photo_filename})")
     else:
-        node.update(record)
+        print(f"[WARN] No face found in {photo_filename}")
 
-def _should_push(uid: str) -> bool:
-    now = time.time()
-    last = _last_seen_push.get(uid, 0)
-    if now - last >= COOLDOWN_SECONDS:
-        _last_seen_push[uid] = now
-        return True
-    return False
+print(f"[INFO] Total students with encodings: {len(encodings)}")
 
-def is_within_class_window():
-    now = datetime.now().time()
-    return CLASS_START <= now <= CLASS_END
+# ===== Attendance Tracking =====
+attended_students = set()  # Track who has been detected
+live_attendance = []       # List of {name, email, time}
 
-def is_late():
-    now = datetime.now().time()
-    return now > LATE_AFTER
-
-# ======= Camera Thread =======
+# ===== Camera Thread =====
 camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 latest_frame = None
 frame_lock = threading.Lock()
@@ -115,51 +70,60 @@ def camera_loop():
     while True:
         ok, frame = camera.read()
         if not ok:
-            print("[WARN] Cannot grab frame.")
             time.sleep(0.1)
             continue
 
         frame_count += 1
         recognized_faces = []
 
-        if frame_count % 7 == 0 and len(encodeListKnown) > 0:
-            small = cv2.resize(frame, (0,0), fx=0.3, fy=0.3)
+        # Process every 5th frame
+        if frame_count % 5 == 0 and encodings:
+            small = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
             rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
             boxes = face_recognition.face_locations(rgb_small, model="hog")
-            encs  = face_recognition.face_encodings(rgb_small, boxes)
+            face_encs = face_recognition.face_encodings(rgb_small, boxes)
 
-            print(f"[DEBUG] Found {len(encs)} face(s) in frame.")
-
-            for enc, (top, right, bottom, left) in zip(encs, boxes):
-                matches = face_recognition.compare_faces(encodeListKnown, enc, tolerance=0.6)
-                dists = face_recognition.face_distance(encodeListKnown, enc)
-                name = "Unknown"
+            for enc, (top, right, bottom, left) in zip(face_encs, boxes):
+                matches = face_recognition.compare_faces(encodings, enc, tolerance=0.6)
+                dists = face_recognition.face_distance(encodings, enc)
                 if len(dists) > 0:
-                    best = np.argmin(dists)
-                    if matches[best]:
-                        filename = classNames[best]
-                        info = STUDENTS.get(filename)
-                        if info:
-                            uid = info["uid"]
-                            email = info.get("email", "")
-                            name = info.get("name", filename)
-                            if is_within_class_window() and _should_push(uid):
-                                mark_attendance(uid, name, email, late=is_late())
-                            print(f"[DEBUG] Detected face matched with image file: {filename}")
-                        else:
-                            print(f"[WARN] Student info for {filename} not found in Firebase.")
-                    else:
-                        print(f"[DEBUG] Face did not match known encodings.")
-                else:
-                    print("[DEBUG] No encodings found for detected face.")
+                    best_idx = np.argmin(dists)
+                    if matches[best_idx]:
+                        student_id = classNames[best_idx]
 
-                top, right, bottom, left = int(top/0.3), int(right/0.3), int(bottom/0.3), int(left/0.3)
-                recognized_faces.append((name, left, top, right, bottom))
+                        if student_id not in attended_students:
+                            attended_students.add(student_id)
+                            student_data = STUDENTS.get(student_id, {})
+                            name = student_data.get("name", student_id)
+                            email = student_data.get("email", "")
+                            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        for (name, x1, y1, x2, y2) in recognized_faces:
-            cv2.rectangle(frame, (x1,y1), (x2,y2), (0,255,0), 2)
-            cv2.rectangle(frame, (x1, y2-35), (x2, y2), (0,255,0), cv2.FILLED)
-            cv2.putText(frame, name, (x1+6, y2-6), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255,255,255), 1)
+                            # Add to live attendance list
+                            live_attendance.append({
+                                "name": name,
+                                "email": email,
+                                "time": now
+                            })
+
+                            # Optionally save in Firestore
+                            db.collection("attendance").add({
+                                "student_id": student_id,
+                                "name": name,
+                                "email": email,
+                                "time": now
+                            })
+
+                            print(f"[INFO] {name} detected at {now}")
+
+                        # Draw bounding box
+                        top, right, bottom, left = [v*4 for v in (top, right, bottom, left)]
+                        recognized_faces.append((student_id, left, top, right, bottom))
+
+        # Draw rectangles
+        for student_id, x1, y1, x2, y2 in recognized_faces:
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(frame, STUDENTS[student_id].get("name", student_id),
+                        (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
         ok, buf = cv2.imencode(".jpg", frame)
         if ok:
@@ -171,13 +135,13 @@ def get_latest_frame():
     with frame_lock:
         return latest_frame
 
-# ======= Flask Routes =======
+# ===== Flask Routes =====
 @app.route('/')
 def index():
     return render_template('T_attendance_report.html')
 
-@app.route('/video')
-def video():
+@app.route('/video_feed')
+def video_feed():
     def gen_frames():
         while True:
             frame = get_latest_frame()
@@ -187,25 +151,12 @@ def video():
                 time.sleep(0.05)
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/attendance_data')
-def attendance_data():
-    today = datetime.now().strftime('%Y-%m-%d')
-    snap = db.reference(f"attendance/{today}").get() or {}
-    rows = []
-    for uid, rec in snap.items():
-        rows.append({
-            "uid": uid,
-            "name": rec.get("name"),
-            "email": rec.get("email"),
-            "first_seen": rec.get("first_seen"),
-            "last_seen": rec.get("last_seen"),
-            "count": rec.get("count", 1),
-            "late": rec.get("late", False)
-        })
-    return jsonify(rows)
+@app.route('/live_attendance')
+def live_attendance_route():
+    return {"attendance": live_attendance}
 
-# ======= Run =======
-if __name__ == '__main__':
+# ===== Run Flask =====
+if __name__ == "__main__":
     t = threading.Thread(target=camera_loop, daemon=True)
     t.start()
     try:
