@@ -56,8 +56,8 @@ for doc in docs:
 print(f"[INFO] Total students with encodings: {len(encodings)}")
 
 # ===== Attendance Tracking =====
-attended_students = set()  # Track who has been detected
-live_attendance = []       # List of {name, email, time}
+attended_students = set()  # track who has been detected
+live_attendance = []       # list of {name, email, class, time}
 
 # ===== Camera Thread =====
 camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
@@ -76,9 +76,8 @@ def camera_loop():
         frame_count += 1
         recognized_faces = []
 
-        # Process every 5th frame
-        if frame_count % 5 == 0 and encodings:
-            small = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+        if frame_count % 5 == 0 and len(encodings) > 0:
+            small = cv2.resize(frame, (0,0), fx=0.25, fy=0.25)
             rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
             boxes = face_recognition.face_locations(rgb_small, model="hog")
             face_encs = face_recognition.face_encodings(rgb_small, boxes)
@@ -90,26 +89,30 @@ def camera_loop():
                     best_idx = np.argmin(dists)
                     if matches[best_idx]:
                         student_id = classNames[best_idx]
-
                         if student_id not in attended_students:
                             attended_students.add(student_id)
                             student_data = STUDENTS.get(student_id, {})
-                            name = student_data.get("name", student_id)
-                            email = student_data.get("email", "")
+
+                            # Compose full name
+                            name = f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip()
+                            email = student_data.get("email","")
+                            student_class = student_data.get("studentClass","")
                             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
                             # Add to live attendance list
                             live_attendance.append({
                                 "name": name,
                                 "email": email,
+                                "class": student_class,
                                 "time": now
                             })
 
-                            # Optionally save in Firestore
+                            # Optional: save to Firestore
                             db.collection("attendance").add({
                                 "student_id": student_id,
                                 "name": name,
                                 "email": email,
+                                "class": student_class,
                                 "time": now
                             })
 
@@ -119,11 +122,10 @@ def camera_loop():
                         top, right, bottom, left = [v*4 for v in (top, right, bottom, left)]
                         recognized_faces.append((student_id, left, top, right, bottom))
 
-        # Draw rectangles
         for student_id, x1, y1, x2, y2 in recognized_faces:
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(frame, STUDENTS[student_id].get("name", student_id),
-                        (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
+            cv2.putText(frame, f"{STUDENTS[student_id].get('firstName','')} {STUDENTS[student_id].get('lastName','')}", 
+                        (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
 
         ok, buf = cv2.imencode(".jpg", frame)
         if ok:
@@ -146,7 +148,7 @@ def video_feed():
         while True:
             frame = get_latest_frame()
             if frame:
-                yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n'+frame+b'\r\n')
             else:
                 time.sleep(0.05)
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -159,7 +161,5 @@ def live_attendance_route():
 if __name__ == "__main__":
     t = threading.Thread(target=camera_loop, daemon=True)
     t.start()
-    try:
-        app.run(host='0.0.0.0', port=5000, debug=False)
-    finally:
-        camera.release()
+    app.run(host='0.0.0.0', port=5000, debug=False)
+    camera.release()
