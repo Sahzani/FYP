@@ -16,8 +16,7 @@
   @media (max-width: 768px) { #sidebar { left: -16rem; position: fixed; top: 0; height: 100%; z-index: 30; } #sidebar.show { left: 0; } }
   main { transition: margin-left 0.3s; margin-left: 16rem; padding: 40px 20px; }
   @media (max-width:768px){ main{margin-left:0;} }
-
-  .attendance-table-wrapper { max-width: 900px; margin: 20px auto; }
+  .attendance-table-wrapper { max-width: 1000px; margin: 20px auto; }
 </style>
 </head>
 <body>
@@ -59,21 +58,23 @@
   <h2 class="text-2xl font-bold text-gray-800 mb-1">Daily Attendance</h2>
   <p class="text-sm text-gray-500 mb-6">Dashboard / Daily Attendance</p>
 
-  <!-- Filter by Class -->
-  <div class="mb-6 bg-white p-4 rounded-2xl shadow flex flex-wrap gap-4 items-center justify-center">
+  <!-- Filters -->
+  <div class="mb-6 bg-white p-4 rounded-2xl shadow flex flex-wrap gap-4 items-center">
     <label class="font-semibold text-gray-700">Select Class:</label>
-    <select id="class-select" class="p-2 rounded border border-gray-300">
-      <option value="all">All Classes</option>
-      <!-- dynamically fill with classes from backend -->
+    <select id="class-filter" class="p-2 rounded border border-gray-300">
+      <option value="">All Classes</option>
+      <option value="Class A">Class A</option>
+      <option value="Class B">Class B</option>
+      <option value="Class C">Class C</option>
     </select>
     <button id="filter-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Filter</button>
   </div>
 
   <!-- Attendance Table -->
   <div class="attendance-table-wrapper bg-white p-6 rounded-2xl shadow">
-    <h3 class="text-xl font-bold text-gray-800 mb-4">Today’s Attendance</h3>
+    <h3 class="text-xl font-bold text-gray-800 mb-4">Attendance Records</h3>
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200" id="daily-attendance-table">
+      <table class="min-w-full divide-y divide-gray-200" id="attendance-table">
         <thead>
           <tr class="bg-gray-50">
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
@@ -102,12 +103,15 @@ overlay.addEventListener('click', () => {
     overlay.classList.add('hidden');
 });
 
-// Fetch daily attendance
-async function fetchDailyAttendance(classFilter='all') {
+// Fetch daily attendance with optional class filter
+async function fetchDailyAttendance(classFilter = "") {
+    let url = '/daily_attendance';
+    if(classFilter) url += `?class=${classFilter}`;
+
     try {
-        const response = await fetch(`/daily_attendance?class=${classFilter}`);
+        const response = await fetch(url);
         const data = await response.json();
-        const tbody = document.querySelector('#daily-attendance-table tbody');
+        const tbody = document.querySelector('#attendance-table tbody');
         tbody.innerHTML = '';
 
         data.attendance.forEach(entry => {
@@ -116,7 +120,7 @@ async function fetchDailyAttendance(classFilter='all') {
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${entry.name}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${entry.email}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${entry.class_name}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${entry.class || ''}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${entry.time}</td>
             `;
             tbody.appendChild(row);
@@ -129,10 +133,10 @@ async function fetchDailyAttendance(classFilter='all') {
 // Initial load
 fetchDailyAttendance();
 
-// Filter by class
+// Filter button
 document.getElementById('filter-btn').addEventListener('click', () => {
-    const classFilter = document.getElementById('class-select').value;
-    fetchDailyAttendance(classFilter);
+    const selectedClass = document.getElementById('class-filter').value;
+    fetchDailyAttendance(selectedClass);
 });
 </script>
 
