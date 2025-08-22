@@ -422,7 +422,7 @@
         </div>
     </header>
 
-    <!-- Sidebar with updated links and removed profile link -->
+    <!-- Sidebar with updated links -->
     <div class="sidebar">
         <div class="sidebar-section">
             <a class="sidebar-link" href="S_Dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
@@ -434,6 +434,7 @@
         <div class="sidebar-section">
             <div class="sidebar-section-title">Request</div>
             <a class="sidebar-link" href="S_AbsentApp.html"><i class="fas fa-file-alt"></i><span>Absent Application</span></a>
+            <a class="sidebar-link" href="S_ContactUs.html"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
         </div>
         <div class="sidebar-section">
             <a class="sidebar-link" href="/templates/combinePage/Login.html"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
@@ -536,243 +537,214 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables for Firebase services and user data
-        let db;
-        let auth;
-        let userId;
-        let userDocRef;
-        let initialProfileData = {};
-        
-        // DOM elements
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.querySelector('.sidebar');
-        const profilePicUpload = document.getElementById('profile-pic-upload');
-        const saveProfileBtn = document.getElementById('save-profile-btn');
-        const cancelProfileBtn = document.getElementById('cancel-profile-btn');
-        const userProfilePic = document.getElementById('user-profile-pic');
-        const userProfilePicHeader = document.getElementById('user-profile-pic-header');
-        const firstNameInput = document.getElementById('first-name-input');
-        const lastNameInput = document.getElementById('last-name-input');
-        const nicknameInput = document.getElementById('nickname-input');
-        const phoneInput = document.getElementById('phone-input');
-        const roleTypeInput = document.getElementById('role-type-input');
-        const courseInput = document.getElementById('course-input');
-        const studentIdInput = document.getElementById('student-id-input');
-        const classInput = document.getElementById('class-input');
-        const intakeInput = document.getElementById('intake-input');
-        const emailInput = document.getElementById('email-input');
-        const profileStatusMessage = document.getElementById('profile-status-message');
-        const headerUserName = document.getElementById('header-user-name');
-        
-        // Modal-specific elements
-        const changePasswordButton = document.getElementById('changePasswordButton');
-        const passwordModal = document.getElementById('passwordModal');
-        const closeModalButton = document.getElementById('closeModal');
-        const currentPasswordInput = document.getElementById('currentPassword');
-        const newPasswordInput = document.getElementById('newPassword');
-        const confirmPasswordInput = document.getElementById('confirmPassword');
-        const submitButton = document.getElementById('submitButton');
-        const cancelButton = document.getElementById('cancelButton');
-        const messageBox = document.getElementById('messageBox');
-        const passwordForm = document.getElementById('password-form');
-        
-        /**
-         * Initializes Firebase and authenticates the user.
-         */
-        const initApp = async () => {
-            try {
-                // Use a check to ensure the variables exist and provide fallbacks if not
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    // Firebase config
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+        authDomain: "aimanzamani.firebaseapp.com",
+        projectId: "aimanzamani",
+        storageBucket: "aimanzamani.appspot.com",
+        messagingSenderId: "63348630728",
+        appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+    };
 
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+    // Initialize Firebase once
+    const app = initializeApp(firebaseConfig);
+    let auth = getAuth(app);
+    let db = getFirestore(app);
 
-                // Check for the custom auth token provided by the canvas environment.
-                if (typeof __initial_auth_token !== 'undefined') {
-                    // Sign in with the provided custom token.
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    // If no custom token is provided, sign in anonymously as a fallback.
-                    await signInAnonymously(auth);
-                }
+    // Global variables for user
+    let userId, userDocRef, initialProfileData = {};
 
-                // Listen for authentication state changes to get the user ID
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        
-                        // Use the correct Firestore path for user data to avoid permission errors
-                        userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
-                        console.log("Firestore User Document Path:", userDocRef.path);
+    // DOM elements
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const profilePicUpload = document.getElementById('profile-pic-upload');
+    const saveProfileBtn = document.getElementById('save-profile-btn');
+    const cancelProfileBtn = document.getElementById('cancel-profile-btn');
+    const userProfilePic = document.getElementById('user-profile-pic');
+    const userProfilePicHeader = document.getElementById('user-profile-pic-header');
+    const firstNameInput = document.getElementById('first-name-input');
+    const lastNameInput = document.getElementById('last-name-input');
+    const nicknameInput = document.getElementById('nickname-input');
+    const phoneInput = document.getElementById('phone-input');
+    const roleTypeInput = document.getElementById('role-type-input');
+    const courseInput = document.getElementById('course-input');
+    const studentIdInput = document.getElementById('student-id-input');
+    const classInput = document.getElementById('class-input');
+    const intakeInput = document.getElementById('intake-input');
+    const emailInput = document.getElementById('email-input');
+    const profileStatusMessage = document.getElementById('profile-status-message');
+    const headerUserName = document.getElementById('header-user-name');
 
-                        // Listen for real-time updates to the profile data
-                        onSnapshot(userDocRef, (docSnap) => {
-                            if (docSnap.exists()) {
-                                const data = docSnap.data();
-                                // Store a snapshot of the initial data to allow for cancellation
-                                initialProfileData = { ...data };
+    // Modal-specific elements
+    const changePasswordButton = document.getElementById('changePasswordButton');
+    const passwordModal = document.getElementById('passwordModal');
+    const closeModalButton = document.getElementById('closeModal');
+    const currentPasswordInput = document.getElementById('currentPassword');
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const submitButton = document.getElementById('submitButton');
+    const cancelButton = document.getElementById('cancelButton');
+    const messageBox = document.getElementById('messageBox');
+    const passwordForm = document.getElementById('password-form');
 
-                                // Populate form fields with data from Firestore
-                                firstNameInput.value = data.firstName || '';
-                                lastNameInput.value = data.lastName || '';
-                                nicknameInput.value = data.nickname || '';
-                                phoneInput.value = data.phoneNumber || '';
-                                roleTypeInput.value = data.roleType || '';
-                                courseInput.value = data.course || '';
-                                studentIdInput.value = data.studentID || '';
-                                classInput.value = data.studentClass || '';
-                                intakeInput.value = data.intake || '';
-                                emailInput.value = data.email || '';
-                                
-                                // Update header and profile picture
-                                headerUserName.textContent = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Student';
-                                if (data.profilePicUrl) {
-                                    userProfilePic.src = data.profilePicUrl;
-                                    userProfilePicHeader.src = data.profilePicUrl;
-                                }
-                            } else {
-                                // If no profile exists, leave fields blank
-                                console.log("No profile data found, fields will be blank.");
-                                initialProfileData = { firstName: '', lastName: '', nickname: '', phoneNumber: '', profilePicUrl: '' };
+    /**
+     * Initializes Firebase authentication and loads profile data.
+     */
+    const initApp = async () => {
+        try {
+            // Try sign in
+            if (typeof __initial_auth_token !== 'undefined') {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            // Listen for auth state changes
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    
+                    // Firestore path for user profile
+                    userDocRef = doc(db, "users", userId);
+
+                    // Listen for real-time profile updates
+                    onSnapshot(userDocRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            initialProfileData = { ...data };
+
+                            // Populate form fields
+                            firstNameInput.value = data.firstName || '';
+                            lastNameInput.value = data.lastName || '';
+                            nicknameInput.value = data.nickname || '';
+                            phoneInput.value = data.phoneNumber || '';
+                            roleTypeInput.value = data.roleType || '';
+                            courseInput.value = data.course || '';
+                            studentIdInput.value = data.studentID || '';
+                            classInput.value = data.studentClass || '';
+                            intakeInput.value = data.intake || '';
+                            emailInput.value = data.email || '';
+
+                            // Update UI
+                            headerUserName.textContent = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Student';
+                            if (data.profilePicUrl) {
+                                userProfilePic.src = data.profilePicUrl;
+                                userProfilePicHeader.src = data.profilePicUrl;
                             }
-                        }, (error) => {
-                            console.error("Error getting profile data: ", error);
-                        });
-                    } else {
-                        console.log("User is not signed in.");
-                    }
-                });
-            } catch (e) {
-                console.error("Error initializing Firebase: ", e);
-            }
+                        } else {
+                            console.log("No profile data found.");
+                            initialProfileData = {};
+                        }
+                    }, (error) => {
+                        console.error("Error getting profile data: ", error);
+                    });
+                } else {
+                    console.log("User is not signed in.");
+                }
+            });
+        } catch (e) {
+            console.error("Error initializing Firebase: ", e);
+        }
+    };
+
+    // Save profile changes
+    const saveUserProfile = async () => {
+        if (!userId) {
+            profileStatusMessage.textContent = "Error: User not authenticated. Please reload the page.";
+            profileStatusMessage.style.color = 'red';
+            return;
+        }
+
+        const updatedData = {
+            nickname: nicknameInput.value,
+            phoneNumber: phoneInput.value,
+            profilePicUrl: userProfilePic.src
         };
 
-        // Function to handle saving user profile changes
-        const saveUserProfile = async () => {
-            if (!userId) {
-                profileStatusMessage.textContent = "Error: User not authenticated. Please reload the page.";
-                profileStatusMessage.style.color = 'red';
-                return;
-            }
+        try {
+            await setDoc(userDocRef, updatedData, { merge: true });
+            profileStatusMessage.textContent = 'Profile updated successfully!';
+            profileStatusMessage.style.color = 'green';
+        } catch (e) {
+            console.error("Error updating document: ", e);
+            profileStatusMessage.textContent = 'Failed to save profile. Please try again.';
+            profileStatusMessage.style.color = 'red';
+        }
+    };
 
-            const updatedData = {
-                nickname: nicknameInput.value,
-                phoneNumber: phoneInput.value,
-                profilePicUrl: userProfilePic.src
-                // Add any other fields you want to save here
+    // Cancel profile changes
+    const cancelUserProfile = () => {
+        nicknameInput.value = initialProfileData.nickname || '';
+        phoneInput.value = initialProfileData.phoneNumber || '';
+        userProfilePic.src = initialProfileData.profilePicUrl || 'https://placehold.co/120x120/E9E9E9/333333?text=User';
+        userProfilePicHeader.src = initialProfileData.profilePicUrl || 'https://placehold.co/36x36/899BBD/ffffff?text=U';
+        profileStatusMessage.textContent = 'Changes have been cancelled.';
+        profileStatusMessage.style.color = 'gray';
+    };
+
+    // --- Modal Functions ---
+    function showModal() { passwordModal.classList.add('open'); }
+    function hideModal() {
+        passwordModal.classList.remove('open');
+        currentPasswordInput.value = '';
+        newPasswordInput.value = '';
+        confirmPasswordInput.value = '';
+        messageBox.textContent = '';
+    }
+    function showMessage(text, isError) {
+        messageBox.textContent = text;
+        messageBox.style.color = isError ? 'red' : 'green';
+    }
+
+    // --- Event Handlers ---
+    profilePicUpload.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageUrl = e.target.result;
+                userProfilePic.src = imageUrl;
+                userProfilePicHeader.src = imageUrl;
             };
-            
-            try {
-                // Use setDoc with merge: true to create or update the document
-                await setDoc(userDocRef, updatedData, { merge: true });
-                profileStatusMessage.textContent = 'Profile updated successfully!';
-                profileStatusMessage.style.color = 'green';
-                
-            } catch (e) {
-                console.error("Error updating document: ", e);
-                profileStatusMessage.textContent = 'Failed to save profile. Please try again.';
-                profileStatusMessage.style.color = 'red';
-            }
-        };
-        
-        // Function to handle canceling user profile changes
-        const cancelUserProfile = () => {
-            // Revert form fields to their initial state from the snapshot
-            nicknameInput.value = initialProfileData.nickname || '';
-            phoneInput.value = initialProfileData.phoneNumber || '';
-            
-            // Revert profile picture
-            userProfilePic.src = initialProfileData.profilePicUrl || 'https://placehold.co/120x120/E9E9E9/333333?text=User';
-            userProfilePicHeader.src = initialProfileData.profilePicUrl || 'https://placehold.co/36x36/899BBD/ffffff?text=U';
-            
-            // Clear any status messages
-            profileStatusMessage.textContent = 'Changes have been cancelled.';
-            profileStatusMessage.style.color = 'gray';
-        };
+            reader.readAsDataURL(file);
+        }
+    });
 
-        // --- Modal Functions ---
-        function showModal() {
-            passwordModal.classList.add('open');
+    changePasswordButton.addEventListener('click', showModal);
+    closeModalButton.addEventListener('click', hideModal);
+    cancelButton.addEventListener('click', hideModal);
+
+    passwordForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const currentPassword = currentPasswordInput.value;
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showMessage('Please fill in all password fields.', true);
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            showMessage('New passwords do not match!', true);
+            return;
         }
 
-        function hideModal() {
-            passwordModal.classList.remove('open');
-            // Clear fields on close
-            currentPasswordInput.value = '';
-            newPasswordInput.value = '';
-            confirmPasswordInput.value = '';
-            messageBox.textContent = '';
-        }
+        showMessage('Password changed successfully!', false);
+        setTimeout(hideModal, 2000);
+    });
 
-        function showMessage(text, isError) {
-            messageBox.textContent = text;
-            messageBox.style.color = isError ? 'red' : 'green';
-        }
+    saveProfileBtn.addEventListener('click', saveUserProfile);
+    cancelProfileBtn.addEventListener('click', cancelUserProfile);
+    menuToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
 
-        // --- Event Handlers ---
-        
-        // JavaScript to handle the profile picture upload
-        profilePicUpload.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const imageUrl = e.target.result;
-                    userProfilePic.src = imageUrl;
-                    userProfilePicHeader.src = imageUrl;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+    // Init on load
+    window.onload = initApp;
+</script>
 
-        // Add event listeners for the new buttons and form
-        changePasswordButton.addEventListener('click', showModal);
-        closeModalButton.addEventListener('click', hideModal);
-        cancelButton.addEventListener('click', hideModal);
-        
-        passwordForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const currentPassword = currentPasswordInput.value;
-            const newPassword = newPasswordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
-
-            // Check if all password fields are filled
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                showMessage('Please fill in all password fields.', true);
-                return;
-            }
-
-            // Check if the new passwords match
-            if (newPassword !== confirmPassword) {
-                showMessage('New passwords do not match!', true);
-                return;
-            }
-
-            // NOTE: In a real application, you would send the `currentPassword` to a server
-            // for verification before changing the password. This is a front-end only simulation.
-            showMessage('Password changed successfully!', false);
-            
-            // Hide the modal after a brief delay to let the user see the success message
-            setTimeout(hideModal, 2000); // 2-second delay
-        });
-        
-        // Add event listeners for profile buttons
-        saveProfileBtn.addEventListener('click', saveUserProfile);
-        cancelProfileBtn.addEventListener('click', cancelUserProfile);
-        
-        // New sidebar toggle functionality
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-        });
-
-        // Call the initialization function on window load
-        window.onload = initApp;
-    </script>
 </body>
 </html>

@@ -62,24 +62,36 @@
   <div class="card">
     <form id="studentForm">
       <div class="form-group">
-        <label for="studentName">Full Name</label>
-        <input type="text" id="studentName" placeholder="Enter student's name" required>
+        <label for="first-name-input">First Name</label>
+        <input type="text" id="first-name-input" placeholder="Enter first name" required>
       </div>
       <div class="form-group">
-        <label for="studentEmail">Email</label>
-        <input type="email" id="studentEmail" placeholder="Enter student's email" required>
+        <label for="last-name-input">Last Name</label>
+        <input type="text" id="last-name-input" placeholder="Enter last name" required>
+      </div>
+      <div class="form-group">
+        <label for="email-input">Email</label>
+        <input type="email" id="email-input" placeholder="Enter student's email" required>
+      </div>
+      <div class="form-group">
+        <label for="course-input">Course</label>
+        <input type="text" id="course-input" placeholder="Enter course" required>
+      </div>
+      <div class="form-group">
+        <label for="intake-input">Intake</label>
+        <input type="text" id="intake-input" placeholder="Enter intake" required>
       </div>
       <div class="form-group">
         <label for="studentPassword">Password</label>
         <input type="password" id="studentPassword" placeholder="Set password" required>
       </div>
       <div class="form-group">
-        <label for="studentClass">Class</label>
-        <input type="text" id="studentClass" placeholder="Enter student's class" required>
+        <label for="class-input">Class</label>
+        <input type="text" id="class-input" placeholder="Enter class" required>
       </div>
       <div class="form-group">
-        <label for="studentID">Student ID</label>
-        <input type="text" id="studentID" placeholder="Enter student ID" required>
+        <label for="student-id-input">Student ID</label>
+        <input type="text" id="student-id-input" placeholder="Enter student ID" required>
       </div>
       <button type="submit" class="submit-btn">Add Student</button>
     </form>
@@ -88,7 +100,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 // Firebase config
@@ -109,24 +121,32 @@ const studentForm = document.getElementById('studentForm');
 
 studentForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const name = document.getElementById('studentName').value.trim();
-  const email = document.getElementById('studentEmail').value.trim();
+
+  const firstName = document.getElementById('first-name-input').value.trim();
+  const lastName = document.getElementById('last-name-input').value.trim();
+  const email = document.getElementById('email-input').value.trim();
+  const course = document.getElementById('course-input').value.trim();
+  const intake = document.getElementById('intake-input').value.trim();
   const password = document.getElementById('studentPassword').value.trim();
-  const studentClass = document.getElementById('studentClass').value.trim();
-  const studentID = document.getElementById('studentID').value.trim();
+  const studentClass = document.getElementById('class-input').value.trim();
+  const studentID = document.getElementById('student-id-input').value.trim();
 
   try {
     // Create user in Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
     // Add user details to Firestore
-    await addDoc(collection(db, "students"), {
+    await setDoc(doc(db, "students", userCredential.user.uid), {
       uid: userCredential.user.uid,
-      name,
+      firstName,
+      lastName,
       email,
+      course,
+      intake,
       studentClass,
       studentID,
-      role: "student"
+      roleType: "student" // default role
+      // nickname and phoneNumber will be added by student later
     });
 
     alert("✅ Student added successfully!");

@@ -79,8 +79,11 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>Name</th>
+          <th>First Name</th>
+          <th>Last Name</th>
           <th>Email</th>
+          <th>Course</th>
+          <th>Intake</th>
           <th>Class</th>
           <th>Student ID</th>
           <th>Actions</th>
@@ -99,10 +102,16 @@
       <span class="close" id="closeEditModal">&times;</span>
     </div>
     <div class="modal-body">
-      <label>Name</label>
-      <input type="text" id="editName">
+      <label>First Name</label>
+      <input type="text" id="editFirstName">
+      <label>Last Name</label>
+      <input type="text" id="editLastName">
       <label>Email</label>
       <input type="email" id="editEmail">
+      <label>Course</label>
+      <input type="text" id="editCourse">
+      <label>Intake</label>
+      <input type="text" id="editIntake">
       <label>Class</label>
       <input type="text" id="editClass">
       <label>Student ID</label>
@@ -170,13 +179,16 @@ function renderStudents(snapshot){
     const tr = document.createElement('tr');
     tr.innerHTML=`
       <td>${index}</td>
-      <td>${s.name}</td>
-      <td>${s.email}</td>
+      <td>${s.firstName||'-'}</td>
+      <td>${s.lastName||'-'}</td>
+      <td>${s.email||'-'}</td>
+      <td>${s.course||'-'}</td>
+      <td>${s.intake||'-'}</td>
       <td>${s.studentClass||'-'}</td>
       <td>${s.studentID||'-'}</td>
       <td>
-        <button class="action-btn edit-btn" onclick="openEditModal('${docSnap.id}','${s.name}','${s.email}','${s.studentClass}','${s.studentID}')">Edit</button>
-        <button class="action-btn delete-btn" onclick="openDeleteModal('${docSnap.id}','${s.name}')">Delete</button>
+        <button class="action-btn edit-btn" onclick="openEditModal('${docSnap.id}','${s.firstName}','${s.lastName}','${s.email}','${s.course}','${s.intake}','${s.studentClass}','${s.studentID}')">Edit</button>
+        <button class="action-btn delete-btn" onclick="openDeleteModal('${docSnap.id}','${s.firstName} ${s.lastName}')">Delete</button>
       </td>
     `;
     studentsBody.appendChild(tr);
@@ -193,16 +205,23 @@ onSnapshot(collection(db,"students"), snapshot=>{
 document.getElementById('menu-toggle').addEventListener('click',()=>{document.querySelector('.sidebar').classList.toggle('show');});
 
 // --- Edit Modal ---
-const editName = document.getElementById('editName');
+const editFirstName = document.getElementById('editFirstName');
+const editLastName = document.getElementById('editLastName');
 const editEmail = document.getElementById('editEmail');
+const editCourse = document.getElementById('editCourse');
+const editIntake = document.getElementById('editIntake');
 const editClass = document.getElementById('editClass');
 const editID = document.getElementById('editID');
+
 document.getElementById('closeEditModal').onclick = document.getElementById('cancelEditBtn').onclick = ()=>editModal.classList.remove('show');
 
-window.openEditModal = (id,name,email,sClass,sID)=>{
+window.openEditModal = (id, firstName, lastName, email, course, intake, sClass, sID)=>{
   currentEditId=id;
-  editName.value=name;
+  editFirstName.value=firstName;
+  editLastName.value=lastName;
   editEmail.value=email;
+  editCourse.value=course;
+  editIntake.value=intake;
   editClass.value=sClass||'';
   editID.value=sID||'';
   editModal.classList.add('show');
@@ -211,8 +230,11 @@ window.openEditModal = (id,name,email,sClass,sID)=>{
 document.getElementById('saveEditBtn').onclick=async ()=>{
   if(!currentEditId) return;
   await updateDoc(doc(db,"students",currentEditId),{
-    name: editName.value,
+    firstName: editFirstName.value,
+    lastName: editLastName.value,
     email: editEmail.value,
+    course: editCourse.value,
+    intake: editIntake.value,
     studentClass: editClass.value,
     studentID: editID.value
   });
