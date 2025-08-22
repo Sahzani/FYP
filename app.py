@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 from datetime import timedelta
@@ -42,7 +42,7 @@ def login():
                     session["user"] = email
                     session["role"] = "admin"
                     session.permanent = True if remember == "on" else False
-                    return redirect(url_for("admin_dashboard"))  # ✅ goes to A_Homepage.html
+                    return redirect(url_for("admin_dashboard"))
                 else:
                     flash("Invalid password for admin.")
                     return redirect(url_for("home"))
@@ -92,6 +92,42 @@ def login():
     except auth.UserNotFoundError:
         flash("Invalid email or password")
         return redirect(url_for("home"))
+
+# ------------------ Add Student (with photo filename) ------------------
+@app.route("/admin/add_student", methods=["POST"])
+def add_student():
+    try:
+        first_name = request.form.get("firstName")
+        last_name = request.form.get("lastName")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        student_class = request.form.get("studentClass")
+        student_id = request.form.get("studentID")
+        course = request.form.get("course")
+        intake = request.form.get("intake")
+        photo_filename = request.form.get("photo")  # e.g., "Alex.jpg"
+
+        # Create Auth user
+        user = auth.create_user(email=email, password=password)
+
+        # Add to Firestore
+        db.collection("students").document(user.uid).set({
+            "uid": user.uid,
+            "firstName": first_name,
+            "lastName": last_name,
+            "email": email,
+            "studentClass": student_class,
+            "studentID": student_id,
+            "course": course,
+            "intake": intake,
+            "roleType": "student",
+            "photo": photo_filename  # just store the filename
+        })
+
+        return jsonify({"success": True, "message": "Student added successfully!"})
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
 
 # ------------------ Student Dashboard ------------------
 @app.route("/student_dashboard")
