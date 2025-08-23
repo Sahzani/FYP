@@ -1,555 +1,604 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Absence Records</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-<style>
-  * { margin:0; 
-    padding:0; 
-    box-sizing:border-box; 
-  }
-
-  html,body {height:100%;
-    font-family:'Roboto',sans-serif;background: linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);
-  }
-
-  header {
-    position:fixed;
-    top:0;
-    left:0;
-    right:0;
-    height:60px;
-    background:#fff;
-    box-shadow:0 2px 20px rgba(1,41,112,0.1);
-    display:flex;
-    align-items:center;
-    padding-left:20px;
-    font-family:'Nunito',sans-serif;
-    font-weight:700;
-    font-size:26px;color:#212529;
-    z-index:1000;
-  }
-
-  #menu-toggle {
-    display:block;
-    font-size:28px;
-    margin-right:15px;
-    cursor:pointer;
-  }
-
-  .sidebar {
-    position: fixed;
-    top:60px;
-    left:0;
-    width:240px;
-    height:calc(100% - 60px);
-    background: linear-gradient(180deg,#FFEED3 0%,#FFEED3 100%);
-    padding:15px 0;
-    box-shadow:2px 0 15px rgba(1,41,112,0.08);
-    font-family:'Poppins',sans-serif;
-    transition:width 0.3s ease, transform 0.3s ease;
-    z-index:999;
-    border-top-right-radius:12px;
-    overflow:hidden;
-  }
-
-  .sidebar.collapsed { 
-    width:70px; 
-  }
-
-  .sidebar-section {
-    margin-bottom:25px;
-    padding:0 15px;
-  }
-
-  .sidebar-section-title {
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:1px;
-    color:#5D5FEF;
-    margin-bottom:10px;
-    padding-left:10px;
-    transition:opacity 0.3s;
-  }
-
-  .sidebar.collapsed .sidebar-section-title {
-    opacity:0;
-  }
-
-  .sidebar-link {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:12px 15px;
-    margin-bottom:8px;
-    border-radius:8px;
-    font-size:15px;
-    font-weight:500;
-    color:#1A237E;
-    text-decoration:none;
-    transition:all 0.25s ease;
-    white-space:nowrap;
-  }
-
-  .sidebar.collapsed .sidebar-link span {
-    display:none;
-  }
-
-  .sidebar-link i {
-    width:18px;
-    text-align:center;
-  }
-
-  .sidebar-link:hover {
-    background: rgba(255,255,255,0.5);
-    transform:translateX(4px);
-  }
-
-  .sidebar-link.active {
-    background: rgba(255,255,255,0.7);
-    color:#4154F1;
-    font-weight:600;
-    box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2);
-  }
-
-  .main {
-    margin-left:260px;
-    padding:100px 30px 30px;
-    font-family:'Nunito',sans-serif;
-    transition:margin-left 0.3s ease;
-  }
-
-  .sidebar.collapsed ~ .main {margin-left:80px;
-  }
-
-  .page-title {
-    font-family:'Poppins',sans-serif;
-    font-size:28px;
-    font-weight:500;
-    color:#444444;
-    margin-left:50px;
-    margin-top:10px;
-    margin-bottom:-1px;
-  }
-
-  .breadcrumb {
-    font-family:'Nunito',sans-serif;
-    font-size:14px;
-    font-weight:600;
-    margin-left:50px;
-    margin-bottom:30px;
-  }
-
-  .breadcrumb .section { 
-    color:#989797;
-  }
-
-  .breadcrumb .current {
-    color:#444444;
-  }
-
-  .absence-records1 {
-    font-family:'Poppins',sans-serif;
-    font-size:15px;
-    font-weight:500;
-    color:#0d47a1;
-    margin-bottom:15px;
-  }
-
-  .card {
-    background:#fff;
-    border-radius:10px;
-    box-shadow:0px 0px 30px rgba(1,41,112,0.1);
-    padding:20px;
-    max-width:1111px;
-    min-width:460px;
-    margin-left:50px;
-    position:relative;
-  }
-
-  .attendance-table {
-    width:100%;
-    border-collapse:collapse;
-    font-family:'Poppins',sans-serif;
-    font-size:14px;
-  }
-
-  .attendance-table th {
-    background-color:#f8f7ff;
-    text-align:left;
-    padding:12px;
-    font-weight:500;
-  }
-
-  .attendance-table td {
-    padding:12px;
-    border-top:1px solid #ddd;
-  }
-
-  .status {
-    display:inline-block;
-    padding:6px 14px;
-    border-radius:6px;
-    font-size:13px;
-    font-weight:500;
-    color:#fff;
-  }
-
-  .status.in-progress {
-    background-color:#3b5bfd;
-  }
-
-  .status.approved {
-    background-color:#2cd4b4;
-  }
-
-  .status.rejected {
-    background-color:#ff4c4c;
-  }
-
-  .send-application-btn {
-    background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);
-    color:white;
-    font-family:'Poppins',sans-serif;
-    font-size:13px;
-    font-weight:500;
-    padding:8px 16px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    transition:all 0.25s ease;
-    box-shadow:0px 4px 12px rgba(0,102,255,0.3);
-    position:absolute;
-    top:-50px;
-    right:2px;
-    text-decoration:none;
-    display:inline-block;
-  }
-
-  .send-application-btn:hover {
-    transform:translateY(-1px);
-    box-shadow:0px 6px 16px rgba(0,102,255,0.4);
-  }
-
-  .modal {
-    display:none;
-    position:fixed;
-    z-index:10000;
-    left:0;
-    top:0;
-    width:100%;
-    height:100%;
-    overflow:auto;
-    background-color:rgba(0,0,0,0.5);
-    justify-content:center;
-    align-items:center;
-    transition:opacity 0.3s;
-  }
-
-  .modal.show {
-    display:flex;
-    opacity:1;
-  }
-
-  .modal-content {
-    background:#fff;
-    margin:auto;
-    padding:0;
-    border-radius:12px;
-    width:90%;
-    max-width:450px;
-    position:relative;
-    overflow:hidden;
-    transform:translateY(-50px);
-    transition:transform 0.3s;
-  }
-
-  .modal.show .modal-content {
-    transform:translateY(0);
-  }
-
-  .modal-header {
-    background: linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);
-    padding:15px;
-    color:white;
-    font-family:'Poppins',sans-serif;
-    font-size:20px;
-    font-weight:600;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-  }
-
-  .modal-body {
-    padding:20px;
-  }
-
-  .modal label {
-    display:block;
-    margin:10px 0 5px;
-    color:#012970;
-    font-weight:600;
-  }
-
-  .modal input, .modal select {
-    width:100%;
-    padding:10px;
-    border-radius:8px;
-    border:1px solid #ccc;
-    font-size:14px;
-    margin-bottom:12px;
-  }
-
-  .modal-buttons {
-    text-align:right;
-    margin-top:10px;
-  }
-
-  .modal button {
-    padding:10px 16px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    font-family:'Poppins',sans-serif;
-    font-weight:500;
-    font-size:14px;
-    margin-left:10px;
-  }
-
-  .modal .save-btn {
-    background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);
-    color:white;
-  }
-
-  .modal .cancel-btn {
-    background:#ccc;
-    color:#000;
-  }
-
-  .toast {
-    position:fixed;
-    bottom:20px;
-    right:20px;
-    background:#1e90ff;
-    color:white;
-    padding:12px 20px;
-    border-radius:8px;
-    font-family:'Poppins',sans-serif;
-    font-size:14px;
-    opacity:0;
-    transform:translateY(20px);
-    transition:all 0.5s;
-    z-index:9999;
-  }
-
-  .toast.show {
-    opacity:1;
-    transform:translateY(0);
-  }
-
-  .delete-btn {
-    background:#ff4c4c;
-    color:white;
-    border:none;
-    padding:6px 12px;
-    border-radius:6px;
-    cursor:pointer;
-    font-size:13px;
-  }
-
-  .delete-btn:hover {
-    background:#e63c3c;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Absence Records</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap"
+    rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-</style>
+
+    html,
+    body {
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 1000;
+    }
+
+    #menu-toggle {
+      display: block;
+      font-size: 28px;
+      margin-right: 15px;
+      cursor: pointer;
+    }
+
+    .header-content {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 0 20px;
+      transition: background 0.2s ease;
+      border-radius: 8px;
+    }
+
+    .user-info:hover {
+      background-color: #f0f0f0;
+    }
+
+    .user-info img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .user-info span {
+      font-size: 16px;
+      font-weight: 600;
+      color: #444;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 240px;
+      height: calc(100% - 60px);
+      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
+      padding: 15px 0;
+      box-shadow: 2px 0 15px rgba(1, 41, 112, 0.08);
+      font-family: 'Poppins', sans-serif;
+      transition: width 0.3s ease, transform 0.3s ease;
+      z-index: 999;
+      border-top-right-radius: 12px;
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed {
+      width: 70px;
+    }
+
+    .sidebar-section {
+      margin-bottom: 25px;
+      padding: 0 15px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #5D5FEF;
+      margin-bottom: 10px;
+      padding-left: 10px;
+      transition: opacity 0.3s;
+    }
+
+    .sidebar.collapsed .sidebar-section-title {
+      opacity: 0;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 15px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #1A237E;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+
+    .sidebar.collapsed .sidebar-link span {
+      display: none;
+    }
+
+    .sidebar-link i {
+      width: 18px;
+      text-align: center;
+    }
+
+    .sidebar-link:hover {
+      background: rgba(255, 255, 255, 0.5);
+      transform: translateX(4px);
+    }
+
+    .sidebar-link.active {
+      background: rgba(255, 255, 255, 0.7);
+      color: #4154F1;
+      font-weight: 600;
+      box-shadow: inset 0 0 0 1px rgba(181, 116, 28, 0.2);
+    }
+
+    .main {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      font-family: 'Nunito', sans-serif;
+      transition: margin-left 0.3s ease;
+    }
+
+    .sidebar.collapsed~.main {
+      margin-left: 80px;
+    }
+
+    .page-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 28px;
+      font-weight: 500;
+      color: #444444;
+      margin-left: 50px;
+      margin-top: 10px;
+      margin-bottom: -1px;
+    }
+
+    .breadcrumb {
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      margin-left: 50px;
+      margin-bottom: 30px;
+    }
+
+    .breadcrumb .section {
+      color: #989797;
+    }
+
+    .breadcrumb .current {
+      color: #444444;
+    }
+
+    .absence-records1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: #0d47a1;
+      margin-bottom: 15px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0px 0px 30px rgba(1, 41, 112, 0.1);
+      padding: 20px;
+      max-width: 1111px;
+      min-width: 460px;
+      margin-left: 50px;
+      position: relative;
+    }
+
+    .attendance-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+    }
+
+    .attendance-table th {
+      background-color: #f8f7ff;
+      text-align: left;
+      padding: 12px;
+      font-weight: 500;
+    }
+
+    .attendance-table td {
+      padding: 12px;
+      border-top: 1px solid #ddd;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .status.in-progress {
+      background-color: #3b5bfd;
+    }
+
+    .status.approved {
+      background-color: #2cd4b4;
+    }
+
+    .status.rejected {
+      background-color: #ff4c4c;
+    }
+
+    .send-application-btn {
+      background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%);
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0px 4px 12px rgba(0, 102, 255, 0.3);
+      position: absolute;
+      top: -50px;
+      right: 2px;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .send-application-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0px 6px 16px rgba(0, 102, 255, 0.4);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.3s;
+    }
+
+    .modal.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-content {
+      background: #fff;
+      margin: auto;
+      padding: 0;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 450px;
+      position: relative;
+      overflow: hidden;
+      transform: translateY(-50px);
+      transition: transform 0.3s;
+    }
+
+    .modal.show .modal-content {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%);
+      padding: 15px;
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .modal label {
+      display: block;
+      margin: 10px 0 5px;
+      color: #012970;
+      font-weight: 600;
+    }
+
+    .modal input,
+    .modal select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .modal-buttons {
+      text-align: right;
+      margin-top: 10px;
+    }
+
+    .modal button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      margin-left: 10px;
+    }
+
+    .modal .save-btn {
+      background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%);
+      color: white;
+    }
+
+    .modal .cancel-btn {
+      background: #ccc;
+      color: #000;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1e90ff;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s;
+      z-index: 9999;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .delete-btn {
+      background: #ff4c4c;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .delete-btn:hover {
+      background: #e63c3c;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- Header -->
-<header>
-    <div class="header-left">
-        <span id="menu-toggle">&#9776;</span>
-        <a href="#" style="text-decoration: none; color: inherit;">iAttend</a>
+  <!-- Header with toggle button and clickable user info -->
+  <header>
+    <span id="menu-toggle" style="margin-right: 15px;">&#9776;</span>
+    <div class="header-content">
+      <a href="#" style="text-decoration: none; color: inherit;">iAttend</a>
+      <a href="S_Profile.html" style="text-decoration: none; color: inherit;">
+        <div class="user-info">
+          <span id="header-user-name"></span>
+          <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U"
+            alt="User Profile Picture">
+        </div>
+      </a>
     </div>
-    <div class="user-info">
-        <a href="S_Profile.html"> <!-- Link to the profile page -->
-            <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile Picture" style="border-radius: 50%; display: block;">
-        </a>
+  </header>
+
+  <!-- Sidebar with updated links -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="S_Dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link" href="#"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
     </div>
-</header>
-
-
-<div class="sidebar">
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="S_Dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
-    <div class="sidebar-section-title">Analyse</div>
-    <a class="sidebar-link" href="#"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
-  </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Request</div>
-    <a class="sidebar-link active" href="#"><i class="fas fa-file-alt"></i><span>Absent Application</span></a>
-  </div>
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="#"><i class="fas fa-sign-out-alt"></i><span>Log out</span></a>
-  </div>
-</div>
-
-<div class="main">
-  <h1 class="page-title">Absence Records</h1>
-  <h2 class="breadcrumb">
-    <span class="section">Absent Application</span> / 
-    <span class="current">Absence Records</span>
-  </h2>
-
-  <div class="card">
-    <button id="openApplicationModal" class="send-application-btn">Send application</button>
-    <h2 class="absence-records1">Absence records</h2>
-    <table class="attendance-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Student name</th>
-          <th>Course</th>
-          <th>Absence reason</th>
-          <th>Absence for</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="recordsBody"></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Modal -->
-<div id="editModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span>New Absence Application</span>
-      <span class="close">&times;</span>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Request</div>
+      <a class="sidebar-link active" href="S_AbsentApp.html"><i class="fas fa-file-alt"></i><span>Absent
+          Application</span></a>
+      <a class="sidebar-link" href="S_ContactUs.html"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
     </div>
-    <div class="modal-body">
-      <label>Student Name</label>
-      <input type="text" id="modalStudentName">
-      <label>Course</label>
-      <input type="text" id="modalCourse">
-      <label>Reason</label>
-      <input type="text" id="modalReason">
-      <label>Duration</label>
-      <select id="modalDuration">
-        <option value="1 day">1 day</option>
-        <option value="2 days">2 days</option>
-        <option value="3 days">3 days</option>
-        <option value="1 week">1 week</option>
-      </select>
-      <div class="modal-buttons">
-        <button class="save-btn" id="saveBtn">Send</button>
-        <button class="cancel-btn" id="cancelBtn">Cancel</button>
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="#"><i class="fas fa-sign-out-alt"></i><span>Log out</span></a>
+    </div>
+  </div>
+
+  <div class="main">
+    <h1 class="page-title">Absence Records</h1>
+    <h2 class="breadcrumb">
+      <span class="section">Absent Application</span> /
+      <span class="current">Absence Records</span>
+    </h2>
+
+    <div class="card">
+      <button id="openApplicationModal" class="send-application-btn">Send application</button>
+      <h2 class="absence-records1">Absence records</h2>
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student name</th>
+            <th>Course</th>
+            <th>Absence reason</th>
+            <th>Absence for</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="recordsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>New Absence Application</span>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <label>Student Name</label>
+        <input type="text" id="modalStudentName">
+        <label>Course</label>
+        <input type="text" id="modalCourse">
+        <label>Reason</label>
+        <input type="text" id="modalReason">
+        <label>Duration</label>
+        <select id="modalDuration">
+          <option value="1 day">1 day</option>
+          <option value="2 days">2 days</option>
+          <option value="3 days">3 days</option>
+          <option value="1 week">1 week</option>
+        </select>
+        <div class="modal-buttons">
+          <button class="save-btn" id="saveBtn">Send</button>
+          <button class="cancel-btn" id="cancelBtn">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<div id="toast" class="toast">Application sent successfully!</div>
+  <div id="toast" class="toast">Application sent successfully!</div>
 
-<!-- Firebase + App Logic -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+  <!-- Firebase + App Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-  authDomain: "aimanzamani.firebaseapp.com",
-  projectId: "aimanzamani",
-  storageBucket: "aimanzamani.appspot.com",
-  messagingSenderId: "63348630728",
-  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+      authDomain: "aimanzamani.firebaseapp.com",
+      projectId: "aimanzamani",
+      storageBucket: "aimanzamani.appspot.com",
+      messagingSenderId: "63348630728",
+      appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-const menuToggle = document.getElementById('menu-toggle');
-const sidebar = document.querySelector('.sidebar');
-const recordsBody = document.getElementById('recordsBody');
-const modal = document.getElementById('editModal');
-const closeBtn = modal.querySelector('.close');
-const saveBtn = document.getElementById('saveBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-const openApplicationModal = document.getElementById('openApplicationModal');
-const toast = document.getElementById('toast');
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const recordsBody = document.getElementById('recordsBody');
+    const modal = document.getElementById('editModal');
+    const closeBtn = modal.querySelector('.close');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const openApplicationModal = document.getElementById('openApplicationModal');
+    const toast = document.getElementById('toast');
 
-menuToggle.addEventListener('click', ()=> sidebar.classList.toggle('collapsed'));
+    menuToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
 
-function showToast(message){
-  toast.textContent=message;
-  toast.classList.add('show');
-  setTimeout(()=>toast.classList.remove('show'),2000);
-}
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
 
-// Render records from Firestore
-async function renderRecords(){
-  const querySnapshot = await getDocs(collection(db, "absenceRecords"));
-  recordsBody.innerHTML='';
-  let idx = 0;
-  querySnapshot.forEach((docSnap)=>{
-    const rec = docSnap.data();
-    idx++;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
+    // Render records from Firestore
+    async function renderRecords() {
+      const querySnapshot = await getDocs(collection(db, "absenceRecords"));
+      recordsBody.innerHTML = '';
+      let idx = 0;
+      querySnapshot.forEach((docSnap) => {
+        const rec = docSnap.data();
+        idx++;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
       <td>${idx}</td>
       <td>${rec.studentName}</td>
       <td>${rec.course}</td>
       <td>${rec.reason}</td>
       <td>${rec.duration}</td>
-      <td><span class="status ${rec.status.toLowerCase().replace(' ','-')}">${rec.status}</span></td>
+      <td><span class="status ${rec.status.toLowerCase().replace(' ', '-')}">${rec.status}</span></td>
       <td><button class="delete-btn" data-id="${docSnap.id}">Delete</button></td>
     `;
-    recordsBody.appendChild(tr);
-  });
+        recordsBody.appendChild(tr);
+      });
 
-  document.querySelectorAll('.delete-btn').forEach(btn=>{
-    btn.addEventListener('click', async (e)=>{
-      const id = e.target.getAttribute('data-id');
-      await deleteDoc(doc(db, "absenceRecords", id));
-      showToast('Record deleted successfully!');
-      renderRecords();
-    });
-  });
-}
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.target.getAttribute('data-id');
+          await deleteDoc(doc(db, "absenceRecords", id));
+          showToast('Record deleted successfully!');
+          renderRecords();
+        });
+      });
+    }
 
-function openModal(){
-  modal.classList.add('show');
-  document.getElementById('modalStudentName').value='';
-  document.getElementById('modalCourse').value='';
-  document.getElementById('modalReason').value='';
-  document.getElementById('modalDuration').value='1 day';
-}
-closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
+    function openModal() {
+      modal.classList.add('show');
+      document.getElementById('modalStudentName').value = '';
+      document.getElementById('modalCourse').value = '';
+      document.getElementById('modalReason').value = '';
+      document.getElementById('modalDuration').value = '1 day';
+    }
+    closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
 
-saveBtn.onclick = async () => {
-  const studentName = document.getElementById('modalStudentName').value.trim();
-  const course = document.getElementById('modalCourse').value.trim();
-  const reason = document.getElementById('modalReason').value.trim();
-  const duration = document.getElementById('modalDuration').value;
-  if(!studentName || !course || !reason){ alert('Please fill in all fields!'); return; }
+    saveBtn.onclick = async () => {
+      const studentName = document.getElementById('modalStudentName').value.trim();
+      const course = document.getElementById('modalCourse').value.trim();
+      const reason = document.getElementById('modalReason').value.trim();
+      const duration = document.getElementById('modalDuration').value;
+      if (!studentName || !course || !reason) { alert('Please fill in all fields!'); return; }
 
-  const newRecord = {studentName, course, reason, duration, status:'In Progress'};
+      const newRecord = { studentName, course, reason, duration, status: 'In Progress' };
 
-  try {
-    await addDoc(collection(db, "absenceRecords"), newRecord);
-    showToast('Application sent successfully!');
-    modal.classList.remove('show');
+      try {
+        await addDoc(collection(db, "absenceRecords"), newRecord);
+        showToast('Application sent successfully!');
+        modal.classList.remove('show');
+        renderRecords();
+      } catch (e) {
+        alert("Error saving to Firestore: " + e.message);
+      }
+    };
+
+    openApplicationModal.onclick = openModal;
     renderRecords();
-  } catch (e) {
-    alert("Error saving to Firestore: " + e.message);
-  }
-};
-
-openApplicationModal.onclick = openModal;
-renderRecords();
-</script>
+  </script>
 
 </body>
+
 </html>
