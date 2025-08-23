@@ -21,7 +21,7 @@ html, body {
 }
 main { transition: margin-left 0.3s; margin-left:16rem; padding:40px 20px; }
 @media (max-width:768px){main{margin-left:0;}}
-#video-container img{width:100%; max-width:480px; display:block; margin:0 auto; border-radius:12px;}
+#video-container img{width:100%; max-width:640px; display:block; margin:0 auto; border-radius:12px;}
 .attendance-table-wrapper{max-width:800px; margin:20px auto;}
 </style>
 {% endraw %}
@@ -103,7 +103,8 @@ main { transition: margin-left 0.3s; margin-left:16rem; padding:40px 20px; }
 <p class="text-sm text-gray-500 mb-6">Dashboard / Attendance Report</p>
 
 <div id="video-container" class="mb-6">
-  <img id="webcam-feed" src="http://localhost:5000/video_feed" alt="Live Attendance Feed">
+  <!-- UPDATED: Video feed from Flask camera app on port 5001 -->
+  <img id="webcam-feed" src="http://localhost:5001/video_feed" width="640" alt="Live Attendance Feed">
 </div>
 
 <div class="attendance-table-wrapper bg-white p-6 rounded-2xl shadow">
