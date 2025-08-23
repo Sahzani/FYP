@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response
+from flask import Flask, Response
 import cv2, os, threading, time
 import numpy as np
 from datetime import datetime
@@ -29,7 +29,7 @@ for doc in docs:
     student_id = doc.id
     STUDENTS[student_id] = data
 
-    photo_filename = data.get("student_pics")
+    photo_filename = data.get("photo")  # stored filename in Firestore
     if not photo_filename:
         print(f"[WARN] Student {student_id} has no photo, skipping")
         continue
@@ -57,10 +57,9 @@ print(f"[INFO] Total students with encodings: {len(encodings)}")
 
 # ===== Attendance Tracking =====
 attended_students = set()  # track who has been detected
-live_attendance = []       # list of {name, email, class, time}
 
 # ===== Camera Thread =====
-camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)  # adjust camera index
 latest_frame = None
 frame_lock = threading.Lock()
 
@@ -99,15 +98,7 @@ def camera_loop():
                             student_class = student_data.get("studentClass","")
                             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                            # Add to live attendance list
-                            live_attendance.append({
-                                "name": name,
-                                "email": email,
-                                "class": student_class,
-                                "time": now
-                            })
-
-                            # Optional: save to Firestore
+                            # Write to Firestore
                             db.collection("attendance").add({
                                 "student_id": student_id,
                                 "name": name,
@@ -138,10 +129,6 @@ def get_latest_frame():
         return latest_frame
 
 # ===== Flask Routes =====
-@app.route('/')
-def index():
-    return render_template('T_attendance_report.html')
-
 @app.route('/video_feed')
 def video_feed():
     def gen_frames():
@@ -152,10 +139,6 @@ def video_feed():
             else:
                 time.sleep(0.05)
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-@app.route('/live_attendance')
-def live_attendance_route():
-    return {"attendance": live_attendance}
 
 # ===== Run Flask =====
 if __name__ == "__main__":
