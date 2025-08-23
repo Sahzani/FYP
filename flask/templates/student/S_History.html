@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Attendance history</title>
-    
+    <title>Student Attendance History</title>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Google Fonts: Open Sans & Nunito -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&family=Open+Sans:wght@400;600;700&display=swap"
+        rel="stylesheet">
 
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -24,12 +26,38 @@
         }
 
         /* Header Styles */
-        .page-header {
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
             background: #fff;
             box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+            display: flex;
+            align-items: center;
+            padding-left: 20px;
             font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 26px;
+            color: #212529;
+            z-index: 1000;
         }
-        
+
+        #menu-toggle {
+            display: block;
+            font-size: 28px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .header-content {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .logo {
             font-weight: 700;
             font-size: 26px;
@@ -58,11 +86,14 @@
             gap: 10px;
             padding: 10px 12px;
             margin-bottom: 10px;
-            background: transparent; /* Links are on the sidebar background */
+            background: transparent;
+            /* Links are on the sidebar background */
             border-radius: 4px;
             font-size: 15px;
-            font-weight: 600; /* Set to semibold */
-            color: #012970; /* Dark blue for normal links */
+            font-weight: 600;
+            /* Set to semibold */
+            color: #012970;
+            /* Dark blue for normal links */
             text-decoration: none;
             transition: background 0.3s;
             cursor: pointer;
@@ -74,16 +105,19 @@
 
         .sidebar-link.active {
             background: none;
-            color: #3485E4; /* Lighter blue for active link */
+            color: #3485E4;
+            /* Lighter blue for active link */
         }
-        
+
         .main-content {
-            margin-left: 260px; /* Same as sidebar width */
+            margin-left: 260px;
+            /* Same as sidebar width */
         }
 
         .content-card {
             background-color: #ffffff;
-            border-radius: 1rem; /* A bit more rounded */
+            border-radius: 1rem;
+            /* A bit more rounded */
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
 
@@ -95,15 +129,18 @@
                 z-index: 40;
                 transition: transform 0.3s ease-in-out;
             }
+
             .sidebar.open {
                 transform: translateX(0);
             }
+
             .main-content {
                 margin-left: 0;
             }
         }
     </style>
 </head>
+
 <body>
 
     <!-- Header -->
@@ -116,13 +153,6 @@
             <div class="logo">iAttend</div>
         </div>
 
-        <!-- Search Bar -->
-        <div class="hidden md:block w-1/3">
-             <div class="relative w-full max-w-sm">
-                <input type="text" placeholder="Search" class="w-full pl-10 pr-4 py-2 text-sm text-gray-700 placeholder-gray-500 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            </div>
-        </div>
 
         <!-- User Profile -->
         <div class="flex items-center space-x-3">
@@ -137,7 +167,7 @@
         <nav>
             <!-- Dashboard Link -->
             <div class="mb-4">
-                 <a href="S_Dashboard.html" class="sidebar-link">
+                <a href="S_Dashboard.html" class="sidebar-link">
                     <i class="fas fa-th-large w-5 text-center"></i>
                     <span>Dashboard</span>
                 </a>
@@ -151,7 +181,7 @@
                     <span>Attendance</span>
                 </a>
             </div>
-            
+
             <!-- Request Section -->
             <div class="mb-4">
                 <div class="sidebar-section-title px-3">Request</div>
@@ -160,7 +190,7 @@
                     <span>Absent Application</span>
                 </a>
             </div>
-            
+
             <!-- Get Out Section -->
             <div class="mb-4">
                 <div class="sidebar-section-title px-3">Getout</div>
@@ -223,4 +253,5 @@
     </script>
 
 </body>
+
 </html>
