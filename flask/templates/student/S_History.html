@@ -1,257 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Attendance History</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Attendance History</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); overflow:hidden; }
 
-    <!-- Google Fonts: Open Sans & Nunito -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700&family=Open+Sans:wght@400;600;700&display=swap"
-        rel="stylesheet">
+    /* Header */
+    header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito', sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+    #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
+    .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
+    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; }
+    .user-info:hover { background:#f0f0f0; }
+    .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+    .user-info span { font-size:16px; font-weight:600; color:#444; }
 
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    /* Sidebar */
+    .sidebar {
+      position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px);
+      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
+      padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08);
+      font-family:'Poppins',sans-serif; transition:width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden;
+    }
+    .sidebar.collapsed { width:70px; }
+    .sidebar-section { margin-bottom:25px; padding:0 15px; }
+    .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
+    .sidebar.collapsed .sidebar-section-title { opacity:0; }
+    .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
+    .sidebar.collapsed .sidebar-link span { display:none; }
+    .sidebar-link i { width:18px; text-align:center; }
+    .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
+    .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
 
-    <style>
-        /* Custom styles to match the new design */
-        body {
-            background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-            font-family: 'Open Sans', sans-serif;
-        }
+    /* Main content */
+    .main {
+      margin-left:260px; padding:100px 30px 30px; font-family:'Nunito', sans-serif; transition:margin-left 0.3s ease;
+      height:100vh; overflow-y:auto;
+    }
+    .sidebar.collapsed ~ .main { margin-left:80px; }
 
-        /* Header Styles */
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: #fff;
-            box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
-            display: flex;
-            align-items: center;
-            padding-left: 20px;
-            font-family: 'Nunito', sans-serif;
-            font-weight: 700;
-            font-size: 26px;
-            color: #212529;
-            z-index: 1000;
-        }
+    .page-title { font-family:'Poppins', sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
+    .breadcrumb { font-family:'Nunito', sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
+    .breadcrumb .section { color:#989797; }
+    .breadcrumb .current { color:#444444; }
 
-        #menu-toggle {
-            display: block;
-            font-size: 28px;
-            margin-right: 15px;
-            cursor: pointer;
-        }
+    /* Card for Attendance */
+    .card {
+      background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover { transform: translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
+    .card h2 { margin-top:0; margin-bottom:20px; font-family:'Nunito',sans-serif; font-weight:600; font-size:24px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
 
-        .header-content {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-weight: 700;
-            font-size: 26px;
-            color: #012970;
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-            background: #FFEED3;
-            box-shadow: 0 0 20px rgba(1, 41, 112, 0.1);
-            font-family: 'Open Sans', sans-serif;
-        }
-
-        .sidebar-section-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #899BBD;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            background: transparent;
-            /* Links are on the sidebar background */
-            border-radius: 4px;
-            font-size: 15px;
-            font-weight: 600;
-            /* Set to semibold */
-            color: #012970;
-            /* Dark blue for normal links */
-            text-decoration: none;
-            transition: background 0.3s;
-            cursor: pointer;
-        }
-
-        .sidebar-link:hover {
-            background: #ffe1ab;
-        }
-
-        .sidebar-link.active {
-            background: none;
-            color: #3485E4;
-            /* Lighter blue for active link */
-        }
-
-        .main-content {
-            margin-left: 260px;
-            /* Same as sidebar width */
-        }
-
-        .content-card {
-            background-color: #ffffff;
-            border-radius: 1rem;
-            /* A bit more rounded */
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-
-        /* Responsive sidebar */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                position: fixed;
-                z-index: 40;
-                transition: transform 0.3s ease-in-out;
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-        }
-    </style>
+    table { width:100%; border-collapse:collapse; }
+    thead { background:#f9f9f9; }
+    th, td { padding:12px; text-align:left; font-size:15px; }
+    th { color:#555; text-transform:uppercase; font-size:13px; font-weight:600; border-bottom:2px solid #ddd; }
+    td { color:#333; border-bottom:1px solid #eee; }
+    tr:hover td { background:#fafafa; }
+    .status-present { color:green; font-weight:600; }
+    .status-absent { color:red; font-weight:600; }
+  </style>
 </head>
-
 <body>
+  <!-- Header -->
+  <header>
+    <span id="menu-toggle">&#9776;</span>
+    <div class="header-content">
+      <a href="S_Dashboard.html" style="text-decoration:none;color:inherit;">iAttend</a>
+      <a href="S_Profile.html" class="user-info">
+        <span id="header-user-name">Loading...</span>
+        <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile Picture">
+      </a>
+    </div>
+  </header>
 
-    <!-- Header -->
-    <header class="page-header fixed top-0 left-0 right-0 h-[60px] flex items-center justify-between px-5 z-50">
-        <div class="flex items-center">
-            <!-- Mobile Menu Toggle -->
-            <button id="menu-toggle" class="md:hidden mr-4 text-2xl text-gray-600">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="logo">iAttend</div>
-        </div>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="S_Dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link active" href="S_History.html"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Request</div>
+      <a class="sidebar-link" href="S_AbsentApp.html"><i class="fas fa-file-alt"></i><span>Absent Application</span></a>
+      <a class="sidebar-link" href="S_ContactUs.html"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
+    </div>
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="/templates/combinePage/Login.html"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+  </div>
 
+  <!-- Main -->
+  <div class="main">
+    <h1 class="page-title">Attendance History</h1>
+    <div class="breadcrumb"><span class="section">Attendance</span> / <span class="current">Attendance History</span></div>
 
-        <!-- User Profile -->
-        <div class="flex items-center space-x-3">
-            <a href="S_Profile.html" class="flex items-center space-x-3 cursor-pointer"></a>
-            <span class="font-semibold text-gray-700"></span>
-            <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=P" alt="User Avatar" class="h-10 w-10 rounded-full">
-        </div>
-    </header>
+    <div class="card">
+      <h2>Recent Attendance</h2>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Subject</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="attendance-table-body">
+            <tr><td colspan="4">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar fixed top-[60px] left-0 h-full w-[260px] p-5 z-40">
-        <nav>
-            <!-- Dashboard Link -->
-            <div class="mb-4">
-                <a href="S_Dashboard.html" class="sidebar-link">
-                    <i class="fas fa-th-large w-5 text-center"></i>
-                    <span>Dashboard</span>
-                </a>
-            </div>
+  <!-- Firebase + Firestore -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-            <!-- Analyse Section -->
-            <div class="mb-4">
-                <div class="sidebar-section-title px-3">Analyse</div>
-                <a href="S_History.html" class="sidebar-link active">
-                    <i class="fas fa-list-alt w-5 text-center"></i>
-                    <span>Attendance</span>
-                </a>
-            </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+      authDomain: "aimanzamani.firebaseapp.com",
+      databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "aimanzamani",
+      storageBucket: "aimanzamani.firebasestorage.app",
+      messagingSenderId: "63348630728",
+      appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+    };
 
-            <!-- Request Section -->
-            <div class="mb-4">
-                <div class="sidebar-section-title px-3">Request</div>
-                <a href="S_AbsentApp.html" class="sidebar-link">
-                    <i class="fas fa-paper-plane w-5 text-center"></i>
-                    <span>Absent Application</span>
-                </a>
-            </div>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-            <!-- Get Out Section -->
-            <div class="mb-4">
-                <div class="sidebar-section-title px-3">Getout</div>
-                <a href="/templates/combinePage/Login.html" class="sidebar-link">
-                    <i class="fas fa-sign-out-alt w-5 text-center text-red-500"></i>
-                    <span>Logout</span>
-                </a>
-            </div>
-        </nav>
-    </aside>
+    async function loadAttendance() {
+      const tbody = document.getElementById("attendance-table-body");
+      tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
 
-    <!-- Main Content -->
-    <main class="main-content pt-24 px-4 md:px-8 pb-8">
-        <!-- Page Title and Breadcrumbs -->
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Attendance History</h1>
-            <p class="text-sm text-gray-500 mt-1">Attendance / Attendance History</p>
-        </div>
+      try {
+        const q = query(collection(db, "attendance"), orderBy("date", "desc"));
+        const snapshot = await getDocs(q);
 
-        <!-- Attendance Table Card -->
-        <div class="content-card mt-6 p-6">
-            <h2 class="text-xl font-bold text-[#012970] mb-4">Recent Attendance</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 border-b-2 border-gray-200">
-                        <tr>
-                            <th class="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Time</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Module</th>
-                            <th class="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="border-b">
-                            <td class="p-4 text-gray-700">05-08-2025</td>
-                            <td class="p-4 text-gray-700">8:00am - 11:00am</td>
-                            <td class="p-4 text-gray-700">Programming</td>
-                            <td class="p-4 text-green-600 font-semibold">Present</td>
-                        </tr>
-                        <tr>
-                            <td class="p-4 text-gray-700">05-08-2025</td>
-                            <td class="p-4 text-gray-700">2:00pm - 4:00pm</td>
-                            <td class="p-4 text-gray-700">Computer System</td>
-                            <td class="p-4 text-green-600 font-semibold">Present</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
+        if (snapshot.empty) {
+          tbody.innerHTML = "<tr><td colspan='4'>No attendance records found</td></tr>";
+          return;
+        }
 
-    <script>
-        // JavaScript for mobile menu toggle
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.getElementById('sidebar');
-
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
+        tbody.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${data.date || ""}</td>
+            <td>${data.time || ""}</td>
+            <td>${data.subject || ""}</td>
+            <td class="${data.status === "Present" ? "status-present" : "status-absent"}">${data.status}</td>
+          `;
+          tbody.appendChild(tr);
         });
-    </script>
+      } catch (e) {
+        console.error("Error loading attendance:", e);
+        tbody.innerHTML = "<tr><td colspan='4'>Error loading data</td></tr>";
+      }
+    }
 
+    loadAttendance();
+  </script>
+
+  <script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    menuToggle.addEventListener('click', ()=> sidebar.classList.toggle('collapsed'));
+  </script>
 </body>
-
 </html>
