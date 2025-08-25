@@ -1,153 +1,282 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iAttend - Attendance Report</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iAttend - Attendance Report</title>
 
-{% raw %}
-<style>
-html, body {
-  height: 100%;
-  font-family: 'Roboto', sans-serif;
-  background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-}
-#sidebar { transition: left 0.3s ease; }
-@media (max-width:768px){
-  #sidebar{left:-16rem; position:fixed; top:0; height:100%; z-index:30;}
-  #sidebar.show{left:0;}
-}
-main { transition: margin-left 0.3s; margin-left:16rem; padding:40px 20px; }
-@media (max-width:768px){main{margin-left:0;}}
-#video-container img{width:100%; max-width:640px; display:block; margin:0 auto; border-radius:12px;}
-.attendance-table-wrapper{max-width:800px; margin:20px auto;}
+  <!-- Fonts and Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
-/* Sidebar */
-    .sidebar { position: fixed; top: 60px; left: 0; width: 240px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding: 15px 0; box-shadow: 2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; z-index: 999; border-top-right-radius: 12px; overflow: hidden;}
-    .sidebar.collapsed { width: 70px;}
-    .sidebar-section { margin-bottom: 25px; padding: 0 15px;}
-    .sidebar-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #5D5FEF; margin-bottom: 10px; padding-left: 10px; transition: opacity 0.3s;}
-    .sidebar.collapsed .sidebar-section-title { opacity: 0;}
-    .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; font-size: 15px; font-weight: 500; color: #1A237E; text-decoration: none; transition: all 0.25s ease; white-space: nowrap;}
-    .sidebar.collapsed .sidebar-link span { display: none;}
-    .sidebar-link i { width: 18px; text-align: center;}
-    .sidebar-link:hover { background: rgba(255,255,255,0.5); transform: translateX(4px);}
-    .sidebar-link.active { background: rgba(255,255,255,0.7); color: #4154F1; font-weight: 600;}
+  <!-- Style from S_Profile.html -->
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
 
-    /* Main content */
-    .main { margin-left: 260px; padding: 100px 30px 30px; min-height: 100vh; transition: margin-left 0.3s ease;}
-    .sidebar.collapsed ~ .main { margin-left: 80px;}
-</style>
-{% endraw %}
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1,41,112,0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 1000;
+    }
+    #menu-toggle {
+      display: block;
+      font-size: 28px;
+      margin-right: 15px;
+      cursor: pointer;
+    }
+    .header-content {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 0 20px;
+      transition: background 0.2s ease;
+      border-radius: 8px;
+    }
+    .user-info:hover { background-color: #f0f0f0; }
+    .user-info img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .user-info span {
+      font-size: 16px;
+      font-weight: 600;
+      color: #444;
+    }
 
-<script type="module">
-  // Firebase SDK
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 240px;
+      height: calc(100% - 60px);
+      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
+      padding: 15px 0;
+      box-shadow: 2px 0 15px rgba(1,41,112,0.08);
+      transition: width 0.3s ease;
+      z-index: 999;
+      border-top-right-radius: 12px;
+      overflow: hidden;
+    }
+    .sidebar.collapsed { width: 70px; }
+    .sidebar-section { margin-bottom: 25px; padding: 0 15px; }
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #5D5FEF;
+      margin-bottom: 10px;
+      padding-left: 10px;
+      transition: opacity 0.3s;
+    }
+    .sidebar.collapsed .sidebar-section-title { opacity: 0; }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 15px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #1A237E;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .sidebar.collapsed .sidebar-link span { display: none; }
+    .sidebar-link i { width: 18px; text-align: center; }
+    .sidebar-link:hover {
+      background: rgba(255,255,255,0.5);
+      transform: translateX(4px);
+    }
+    .sidebar-link.active {
+      background: rgba(255,255,255,0.7);
+      color: #4154F1;
+      font-weight: 600;
+    }
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-    authDomain: "aimanzamani.firebaseapp.com",
-    databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "aimanzamani",
-    storageBucket: "aimanzamani.firebasestorage.app",
-    messagingSenderId: "63348630728",
-    appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-  };
+    /* Main Content */
+    .main {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      min-height: 100vh;
+      transition: margin-left 0.3s ease;
+    }
+    .sidebar.collapsed ~ .main { margin-left: 80px; }
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    /* Attendance */
+    .attendance-container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 40px;
+    }
+    .attendance-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #012970;
+      margin-bottom: 10px;
+    }
+    .video-container img {
+      width: 100%;
+      max-width: 640px;
+      display: block;
+      margin: 0 auto 20px;
+      border-radius: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f7f7f7;
+      font-weight: 600;
+      color: #333;
+    }
+    tbody tr:hover {
+      background-color: #fdf5e6;
+    }
 
-  async function fetchAttendance() {
-    const tbody = document.querySelector('#attendance-table tbody');
-    tbody.innerHTML = '';
-    const q = query(collection(db, 'attendance'), orderBy('time', 'desc'), limit(50));
-    const snapshot = await getDocs(q);
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${data.name || ''}</td>
-        <td>${data.email || ''}</td>
-        <td>${data.class || ''}</td>
-        <td>${data.time || ''}</td>
-      `;
-      tbody.appendChild(row);
-    });
-  }
-
-  fetchAttendance();
-  setInterval(fetchAttendance, 5000);
-</script>
+    @media (max-width: 768px) {
+      .main { margin-left: 0; padding: 90px 15px; }
+    }
+  </style>
 </head>
 
 <body>
-<header class="fixed top-0 left-0 right-0 h-16 bg-white shadow flex justify-between items-center px-4 z-40">
-  <div class="flex items-center space-x-4">
-    <button id="menu-toggle" class="text-2xl md:hidden"><i class="fas fa-bars"></i></button>
-    <div class="text-2xl font-bold text-gray-800">iAttend Teacher</div>
+  <!-- Header -->
+  <header>
+    <span id="menu-toggle">&#9776;</span>
+    <div class="header-content">
+      <div>iAttend Teacher</div>
+      <a href="#" class="user-info">
+        <span>Teacher Name</span>
+        <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
+      </a>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="T_dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Class</div>
+      <a class="sidebar-link" href="T_class_list.html"><i class="fas fa-school"></i><span>View Class List</span></a>
+      <a class="sidebar-link" href="T_DailyAttend.html"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Reports</div>
+      <a class="sidebar-link active" href="T_attendance_report.html"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
+    </div>
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="/teacher/logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
   </div>
-  <div class="flex items-center space-x-4">
-    <a href="#" class="flex items-center space-x-2">
-      <span class="font-semibold text-gray-800">Teacher Name</span>
-      <div class="h-10 w-10 rounded-full overflow-hidden">
-        <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher" class="w-full h-full object-cover">
+
+  <!-- Main -->
+  <div class="main">
+    <div class="attendance-container">
+      <div class="attendance-title">Attendance Report</div>
+      <div class="video-container">
+        <img id="webcam-feed" src="http://localhost:5001/video_feed" alt="Live Attendance Feed">
       </div>
-    </a>
+
+      <table id="attendance-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Class</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
-</header>
 
-<!-- Sidebar -->
-<div id="sidebar" class="sidebar fixed top-16 left-0 w-64 h-[calc(100%-4rem)] bg-[#FFEED3] p-4 shadow overflow-y-auto z-30">
-  <div class="mb-6">
-    <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Menu</div>
-    <a href="T_dashboard.html" class="sidebar-link flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-    <a href="T_class_list.html" class="sidebar-link flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-school"></i> View Class List</a>
-    <a href="T_DailyAttend.html" class="sidebar-link flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold"><i class="fas fa-clipboard-check"></i> Daily Attend</a>
-    <a href="T_attendance_report.html" class="sidebar-link flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold bg-[#e5d7b8]"><i class="fas fa-file-alt"></i> Attendance Report</a>
-  </div>
-  <div>
-    <a href="/teacher/logout" class="flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-red-600 font-semibold"><i class="fas fa-sign-out-alt"></i> Logout</a>
-  </div>
-</div>
+  <!-- Firebase & Toggle Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
-<div id="overlay" class="fixed inset-0 bg-black bg-opacity-30 hidden z-20"></div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+      authDomain: "aimanzamani.firebaseapp.com",
+      databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "aimanzamani",
+      storageBucket: "aimanzamani.appspot.com",
+      messagingSenderId: "63348630728",
+      appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+    };
 
-<main>
-<h2 class="text-2xl font-bold text-gray-800 mb-1">Attendance Report</h2>
-<p class="text-sm text-gray-500 mb-6">Dashboard / Attendance Report</p>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-<div id="video-container" class="mb-6">
-  <!-- UPDATED: Video feed from Flask camera app on port 5001 -->
-  <img id="webcam-feed" src="http://localhost:5001/video_feed" width="640" alt="Live Attendance Feed">
-</div>
+    async function fetchAttendance() {
+      const tbody = document.querySelector('#attendance-table tbody');
+      tbody.innerHTML = '';
+      const q = query(collection(db, 'attendance'), orderBy('time', 'desc'), limit(50));
+      const snapshot = await getDocs(q);
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${data.name || ''}</td>
+          <td>${data.email || ''}</td>
+          <td>${data.class || ''}</td>
+          <td>${data.time || ''}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
 
-<div class="attendance-table-wrapper bg-white p-6 rounded-2xl shadow">
-  <h3 class="text-xl font-bold text-gray-800 mb-4">Live Attendance Records</h3>
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200" id="attendance-table">
-      <thead>
-        <tr class="bg-gray-50">
-          <th>Name</th>
-          <th>Email</th>
-          <th>Class</th>
-          <th>Timestamp</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200"></tbody>
-    </table>
-  </div>
-</div>
-</main>
+    fetchAttendance();
+    setInterval(fetchAttendance, 5000);
+  </script>
 
-<script>
-const menuToggle = document.getElementById('menu-toggle');
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('overlay');
-menuToggle.addEventListener('click', ()=>{sidebar.classList.toggle('show'); overlay.classList.toggle('hidden');});
-overlay.addEventListener('click', ()=>{sidebar.classList.remove('show'); overlay.classList.add('hidden');});
-</script>
+  <script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+  </script>
 </body>
 </html>
