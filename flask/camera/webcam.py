@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response
+from flask import Flask, Response
 import cv2, os, threading, time
 import numpy as np
 from datetime import datetime
@@ -29,7 +29,7 @@ for doc in docs:
     student_id = doc.id
     STUDENTS[student_id] = data
 
-    photo_filename = data.get("student_pics")
+    photo_filename = data.get("photo")  # stored filename in Firestore
     if not photo_filename:
         print(f"[WARN] Student {student_id} has no photo, skipping")
         continue
@@ -56,11 +56,10 @@ for doc in docs:
 print(f"[INFO] Total students with encodings: {len(encodings)}")
 
 # ===== Attendance Tracking =====
-attended_students = set()  # Track who has been detected
-live_attendance = []       # List of {name, email, time}
+attended_students = set()  # track who has been detected
 
 # ===== Camera Thread =====
-camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)  # adjust camera index
 latest_frame = None
 frame_lock = threading.Lock()
 
@@ -76,9 +75,8 @@ def camera_loop():
         frame_count += 1
         recognized_faces = []
 
-        # Process every 5th frame
-        if frame_count % 5 == 0 and encodings:
-            small = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+        if frame_count % 5 == 0 and len(encodings) > 0:
+            small = cv2.resize(frame, (0,0), fx=0.25, fy=0.25)
             rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
             boxes = face_recognition.face_locations(rgb_small, model="hog")
             face_encs = face_recognition.face_encodings(rgb_small, boxes)
@@ -90,26 +88,22 @@ def camera_loop():
                     best_idx = np.argmin(dists)
                     if matches[best_idx]:
                         student_id = classNames[best_idx]
-
                         if student_id not in attended_students:
                             attended_students.add(student_id)
                             student_data = STUDENTS.get(student_id, {})
-                            name = student_data.get("name", student_id)
-                            email = student_data.get("email", "")
+
+                            # Compose full name
+                            name = f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip()
+                            email = student_data.get("email","")
+                            student_class = student_data.get("studentClass","")
                             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                            # Add to live attendance list
-                            live_attendance.append({
-                                "name": name,
-                                "email": email,
-                                "time": now
-                            })
-
-                            # Optionally save in Firestore
+                            # Write to Firestore
                             db.collection("attendance").add({
                                 "student_id": student_id,
                                 "name": name,
                                 "email": email,
+                                "class": student_class,
                                 "time": now
                             })
 
@@ -119,11 +113,10 @@ def camera_loop():
                         top, right, bottom, left = [v*4 for v in (top, right, bottom, left)]
                         recognized_faces.append((student_id, left, top, right, bottom))
 
-        # Draw rectangles
         for student_id, x1, y1, x2, y2 in recognized_faces:
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(frame, STUDENTS[student_id].get("name", student_id),
-                        (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
+            cv2.putText(frame, f"{STUDENTS[student_id].get('firstName','')} {STUDENTS[student_id].get('lastName','')}", 
+                        (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
 
         ok, buf = cv2.imencode(".jpg", frame)
         if ok:
@@ -136,30 +129,20 @@ def get_latest_frame():
         return latest_frame
 
 # ===== Flask Routes =====
-@app.route('/')
-def index():
-    return render_template('T_attendance_report.html')
-
 @app.route('/video_feed')
 def video_feed():
     def gen_frames():
         while True:
             frame = get_latest_frame()
             if frame:
-                yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n'+frame+b'\r\n')
             else:
                 time.sleep(0.05)
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-@app.route('/live_attendance')
-def live_attendance_route():
-    return {"attendance": live_attendance}
 
 # ===== Run Flask =====
 if __name__ == "__main__":
     t = threading.Thread(target=camera_loop, daemon=True)
     t.start()
-    try:
-        app.run(host='0.0.0.0', port=5000, debug=False)
-    finally:
-        camera.release()
+    app.run(host='0.0.0.0', port=5001, debug=False)
+    camera.release()

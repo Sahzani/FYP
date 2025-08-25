@@ -93,6 +93,10 @@
         <label for="student-id-input">Student ID</label>
         <input type="text" id="student-id-input" placeholder="Enter student ID" required>
       </div>
+      <div class="form-group">
+        <label for="photo-input">Photo Filename</label>
+        <input type="text" id="photo-input" placeholder="e.g., Alex.jpg" required>
+      </div>
       <button type="submit" class="submit-btn">Add Student</button>
     </form>
   </div>
@@ -100,7 +104,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 // Firebase config
@@ -130,6 +134,7 @@ studentForm.addEventListener('submit', async (e) => {
   const password = document.getElementById('studentPassword').value.trim();
   const studentClass = document.getElementById('class-input').value.trim();
   const studentID = document.getElementById('student-id-input').value.trim();
+  const photoFilename = document.getElementById('photo-input').value.trim();
 
   try {
     // Create user in Firebase Auth
@@ -145,8 +150,8 @@ studentForm.addEventListener('submit', async (e) => {
       intake,
       studentClass,
       studentID,
-      roleType: "student" // default role
-      // nickname and phoneNumber will be added by student later
+      photo: photoFilename,  // store filename only
+      roleType: "student"
     });
 
     alert("✅ Student added successfully!");
