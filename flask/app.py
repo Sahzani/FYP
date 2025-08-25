@@ -100,6 +100,16 @@ def admin_dashboard():
         return render_template("admin/A_Homepage.html")
     return redirect(url_for("home"))
 
+<<<<<<< HEAD
+=======
+# ------------------ Student Pages ------------------
+@app.route("/student/attendance")
+def student_attendance():
+    if session.get("role") == "student":
+        return render_template("student/S_History.html")
+    return redirect(url_for("home"))
+
+>>>>>>> 0954bd9c60c8923ba80a24180eff60eabcce815f
 # ------------------ Teacher Pages ------------------
 @app.route("/teacher/profile")
 def teacher_profile():

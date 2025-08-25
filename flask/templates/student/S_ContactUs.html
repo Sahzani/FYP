@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<<<<<<< HEAD
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Student Contact Us</title>
@@ -416,5 +417,218 @@
         // Call the initialization function on window load
         window.onload = initApp;
     </script>
+=======
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Contact Us</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); overflow:hidden; }
+    header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+    #menu-toggle { display:block; font-size:28px; margin-right:15px; cursor:pointer; }
+    .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
+    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; transition:0.2s; border-radius:8px; }
+    .user-info:hover { background:#f0f0f0; }
+    .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+    .user-info span { font-size:16px; font-weight:600; color:#444; }
+
+    .sidebar { position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif; transition:width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden; }
+    .sidebar.collapsed { width:70px; }
+    .sidebar-section { margin-bottom:25px; padding:0 15px; }
+    .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
+    .sidebar.collapsed .sidebar-section-title { opacity:0; }
+    .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.3s ease; white-space:nowrap; }
+    .sidebar.collapsed .sidebar-link span { display:none; }
+    .sidebar-link i { width:18px; text-align:center; }
+    .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
+    .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
+
+    .main { margin-left:260px; padding:100px 30px 30px; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; display:flex; flex-direction:column; align-items:center; gap:30px; }
+    .sidebar.collapsed ~ .main { margin-left:80px; }
+
+    .card { background:#fff; padding:25px 30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); max-width:650px; width:100%; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .card:hover { transform: translateY(-6px); box-shadow: 0 12px 25px rgba(0,0,0,0.15); }
+    .card h2 { margin-top:0; margin-bottom:20px; font-weight:600; font-size:24px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
+
+    .form-group { display:flex; flex-direction:column; margin-bottom:15px; }
+    .form-group label { font-size:14px; color:#555; margin-bottom:5px; font-weight:600; }
+    .form-group input, .form-group textarea { padding:10px 12px; border:1px solid #ddd; border-radius:6px; background-color:#fcfcfc; font-size:15px; width:100%; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+    .form-group input[readonly] { background-color:#f0f0f0; cursor:not-allowed; }
+    .form-group input:hover, .form-group textarea:hover { border-color: #4154F1; box-shadow: 0 0 6px rgba(65,84,241,0.3); }
+    .form-group textarea { height:120px; resize:vertical; }
+
+    .btn { padding:10px 20px; border-radius:6px; cursor:pointer; border:none; font-weight:600; transition:all 0.3s ease, transform 0.2s ease; }
+    .btn-primary { background:#4154F1; color:#fff; width:100%; }
+    .btn-primary:hover { background:#0d29e9; transform: scale(1.03); }
+
+    .social-links a { display:inline-block; margin-right:10px; position:relative; text-decoration:none; color:#1A237E; font-weight:500; transition: transform 0.2s ease, color 0.3s ease; }
+    .social-links a i { margin-right:5px; }
+    .social-links a:hover { color:#4154F1; transform: translateY(-3px); }
+    .social-links a::after { content:"Copied!"; position:absolute; top:-25px; left:50%; transform:translateX(-50%); background:#4154F1; color:#fff; font-size:12px; padding:3px 8px; border-radius:4px; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+    .social-links a.copied::after { opacity:1; }
+
+    .map-container { width:100%; height:300px; border-radius:12px; overflow:hidden; margin-top:15px; box-shadow:0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
+    .map-container iframe { transition: transform 0.3s ease; }
+    .map-container:hover iframe { transform: scale(1.02); }
+
+    .map-description { margin-top:10px; font-size:14px; color:#555; }
+  </style>
+</head>
+<body>
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="S_Dashboard.html" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="S_Profile.html">
+      <div class="user-info">
+        <span id="header-user-name">Loading...</span>
+        <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="Profile">
+      </div>
+    </a>
+  </div>
+</header>
+
+<div class="sidebar">
+  <div class="sidebar-section"><a class="sidebar-link" href="S_Dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Analyse</div>
+    <a class="sidebar-link" href="S_History.html"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Request</div>
+    <a class="sidebar-link" href="S_AbsentApp.html"><i class="fas fa-file-alt"></i><span>Absent Application</span></a>
+    <a class="sidebar-link active" href="S_ContactUs.html"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
+  </div>
+  <div class="sidebar-section"><a class="sidebar-link" href="/templates/flask/combinePage/Login.html"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></div>
+</div>
+
+<div class="main">
+  <!-- Contact Form -->
+  <div class="card">
+    <h2>Send a Message</h2>
+    <form id="contact-form">
+      <div class="form-group">
+        <label for="name">Your Name</label>
+        <input type="text" id="name" readonly>
+      </div>
+      <div class="form-group">
+        <label for="email">Your Email</label>
+        <input type="email" id="email" readonly>
+      </div>
+      <div class="form-group">
+        <label for="message">Message</label>
+        <textarea id="message" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Send Message</button>
+      <div id="contact-status-message" class="status-message"></div>
+    </form>
+  </div>
+
+  <!-- Direct Contact Info -->
+  <div class="card">
+    <h2>Direct Contact</h2>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="text" id="contact-email" value="maintainer@example.com" readonly>
+    </div>
+    <div class="form-group">
+      <label>Phone</label>
+      <input type="text" id="contact-phone" value="+673 123 4567" readonly>
+    </div>
+    <div class="form-group">
+      <label>Social Media / WhatsApp</label>
+      <div class="social-links">
+        <a href="mailto:maintainer@example.com" id="copy-email"><i class="fas fa-envelope"></i>Email</a>
+        <a href="https://wa.me/6731234567" target="_blank" id="copy-whatsapp"><i class="fab fa-whatsapp"></i>WhatsApp</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Location -->
+  <div class="card">
+    <h2>Location</h2>
+    <div class="map-container">
+      <iframe
+        src="https://www.google.com/maps?q=Politeknik+Brunei+Main+Campus,+Brunei&output=embed"
+        width="100%"
+        height="100%"
+        style="border:0;"
+        allowfullscreen=""
+        loading="lazy">
+      </iframe>
+    </div>
+    <div class="map-description">
+      Politeknik Brunei Main Campus<br>
+      Jalan Ong Sum Ping, Bandar Seri Begawan, Brunei Darussalam
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+  authDomain: "aimanzamani.firebaseapp.com",
+  projectId: "aimanzamani",
+  storageBucket: "aimanzamani.appspot.com",
+  messagingSenderId: "63348630728",
+  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+document.getElementById('menu-toggle').addEventListener('click', () => {
+  document.querySelector('.sidebar').classList.toggle('collapsed');
+});
+
+// Fill dummy user info (for testing without login)
+document.getElementById('name').value = "Test User";
+document.getElementById('email').value = "test@example.com";
+document.getElementById('header-user-name').textContent = "Test User";
+
+// Handle contact form submission
+document.getElementById('contact-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('email').value;
+  const message = document.getElementById('message').value.trim();
+  if(!message) return;
+
+  try {
+    await addDoc(collection(db, "contactMessages"), {
+      name: name,
+      email: email,
+      message: message,
+      timestamp: serverTimestamp()
+    });
+    const status = document.getElementById('contact-status-message');
+    status.textContent = "Message sent successfully!";
+    status.style.color = "green";
+    setTimeout(()=>{status.textContent='';},2000);
+    document.getElementById('message').value = '';
+  } catch(err) {
+    console.error(err);
+    const status = document.getElementById('contact-status-message');
+    status.textContent = "Error sending message.";
+    status.style.color = "red";
+  }
+});
+
+// Copy links
+const copyToClipboard = (text, element) => {
+  navigator.clipboard.writeText(text).then(()=> {
+    element.classList.add('copied');
+    setTimeout(()=> element.classList.remove('copied'), 1500);
+  });
+};
+document.getElementById('copy-email').addEventListener('click', e=> { e.preventDefault(); copyToClipboard(document.getElementById('contact-email').value, e.currentTarget); });
+document.getElementById('copy-whatsapp').addEventListener('click', e=> { e.preventDefault(); copyToClipboard("https://wa.me/6731234567", e.currentTarget); });
+</script>
+>>>>>>> 0954bd9c60c8923ba80a24180eff60eabcce815f
 </body>
 </html>
