@@ -100,6 +100,20 @@ def student_dashboard():
         return render_template("student/S_Dashboard.html")
     return redirect(url_for("home"))
 
+# Student: Absent Application
+@app.route("/student/absent_app")
+def student_absent_app():
+    if session.get("role") == "student":
+        return render_template("student/S_AbsentApp.html")
+    return redirect(url_for("home"))
+
+# Student: Attendance History
+@app.route("/student/history")
+def student_history():
+    if session.get("role") == "student":
+        return render_template("student/S_History.html")
+    return redirect(url_for("home"))
+
 # ------------------ Teacher Dashboard ------------------
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
