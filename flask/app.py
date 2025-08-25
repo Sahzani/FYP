@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 from datetime import timedelta
@@ -7,7 +7,7 @@ import os
 # ------------------ Flask Setup ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # change this in production
+app.secret_key = "supersecretkey"
 app.permanent_session_lifetime = timedelta(days=30)
 
 # ------------------ Firebase Setup ------------------
@@ -20,7 +20,7 @@ db = firestore.client()
 # ------------------ Routes ------------------
 @app.route("/")
 def home():
-    return render_template("combinePage/Login.html")  # your login page
+    return render_template("combinePage/Login.html")  # login page
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -33,32 +33,22 @@ def login():
         return redirect(url_for("home"))
 
     try:
-        # ---------- ADMIN LOGIN ----------
         if email == "admin@admin.edu":
             doc = db.collection("admin").document("admin").get()
-            if doc.exists:
-                admin_data = doc.to_dict()
-                if admin_data.get("password") == password:
-                    session["user"] = email
-                    session["role"] = "admin"
-                    session.permanent = True if remember == "on" else False
-                    return redirect(url_for("admin_dashboard"))  # ✅ goes to A_Homepage.html
-                else:
-                    flash("Invalid password for admin.")
-                    return redirect(url_for("home"))
+            if doc.exists and doc.to_dict().get("password") == password:
+                session["user"] = email
+                session["role"] = "admin"
+                session.permanent = True if remember == "on" else False
+                return redirect(url_for("admin_dashboard"))
             else:
-                flash("Admin not found in Firestore.")
+                flash("Invalid admin credentials.")
                 return redirect(url_for("home"))
 
-        # ---------- STUDENT / TEACHER LOGIN ----------
+        # ---------- Student / Teacher ----------
         user = auth.get_user_by_email(email)
         uid = user.uid
 
-        collections = {
-            "student": "students",
-            "teacher": "teachers"
-        }
-
+        collections = {"student": "students", "teacher": "teachers"}
         role = None
         user_doc = None
 
@@ -75,12 +65,10 @@ def login():
             flash("User not found in Firestore.")
             return redirect(url_for("home"))
 
-        # Save session
         session["user"] = email
         session["role"] = role
         session.permanent = True if remember == "on" else False
 
-        # Redirect by role
         if role == "student":
             return redirect(url_for("student_dashboard"))
         elif role == "teacher":
@@ -93,41 +81,54 @@ def login():
         flash("Invalid email or password")
         return redirect(url_for("home"))
 
-# ------------------ Student Dashboard ------------------
+# ------------------ Dashboards ------------------
 @app.route("/student_dashboard")
 def student_dashboard():
     if session.get("role") == "student":
         return render_template("student/S_Dashboard.html")
     return redirect(url_for("home"))
 
-# Student: Absent Application
-@app.route("/student/absent_app")
-def student_absent_app():
-    if session.get("role") == "student":
-        return render_template("student/S_AbsentApp.html")
-    return redirect(url_for("home"))
-
-# Student: Attendance History
-@app.route("/student/history")
-def student_history():
-    if session.get("role") == "student":
-        return render_template("student/S_History.html")
-    return redirect(url_for("home"))
-
-# ------------------ Teacher Dashboard ------------------
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
     if session.get("role") == "teacher":
         return render_template("teacher/T_dashboard.html")
     return redirect(url_for("home"))
 
-# ------------------ Admin Dashboard & Pages ------------------
 @app.route("/admin_dashboard")
 def admin_dashboard():
     if session.get("role") == "admin":
         return render_template("admin/A_Homepage.html")
     return redirect(url_for("home"))
 
+# ------------------ Teacher Pages ------------------
+@app.route("/teacher/profile")
+def teacher_profile():
+    if session.get("role") == "teacher":
+        return render_template("teacher/T_profile.html")
+    return redirect(url_for("home"))
+
+@app.route("/teacher/class_list")
+def teacher_class_list():
+    if session.get("role") == "teacher":
+        return render_template("teacher/T_class_list.html")
+    return redirect(url_for("home"))
+
+@app.route("/teacher/attendance")
+def teacher_attendance():
+    if session.get("role") == "teacher":
+        return render_template("teacher/T_attendance_report.html")
+    return redirect(url_for("home"))
+
+@app.route("/teacher/login")
+def teacher_login():
+    return render_template("teacher/T_login.html")
+
+@app.route("/teacher/logout")
+def teacher_logout():
+    session.clear()
+    return redirect(url_for("home"))
+
+# ------------------ Admin Pages ------------------
 @app.route("/admin/student_add")
 def admin_student_add():
     if session.get("role") == "admin":
@@ -152,17 +153,16 @@ def admin_teacher_list():
         return render_template("admin/A_Teacher-List.html")
     return redirect(url_for("home"))
 
-# ------------------ Logout ------------------
+# ------------------ Logout / Signup ------------------
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("home"))
 
-# ------------------ Signup placeholder ------------------
 @app.route("/signup")
 def signup():
     return "Signup page coming soon!"
 
-# ------------------ Run App ------------------
+# ------------------ Run Flask ------------------
 if __name__ == "__main__":
     app.run(debug=True)

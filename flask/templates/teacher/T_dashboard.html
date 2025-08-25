@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iAttend Teacher Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Sidebar */
+    .sidebar { position: fixed; top: 60px; left: 0; width: 240px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding: 15px 0; box-shadow: 2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; z-index: 999; border-top-right-radius: 12px; overflow: hidden;}
+    .sidebar.collapsed { width: 70px;}
+    .sidebar-section { margin-bottom: 25px; padding: 0 15px;}
+    .sidebar-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #5D5FEF; margin-bottom: 10px; padding-left: 10px; transition: opacity 0.3s;}
+    .sidebar.collapsed .sidebar-section-title { opacity: 0;}
+    .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; font-size: 15px; font-weight: 500; color: #1A237E; text-decoration: none; transition: all 0.25s ease; white-space: nowrap;}
+    .sidebar.collapsed .sidebar-link span { display: none;}
+    .sidebar-link i { width: 18px; text-align: center;}
+    .sidebar-link:hover { background: rgba(255,255,255,0.5); transform: translateX(4px);}
+    .sidebar-link.active { background: rgba(255,255,255,0.7); color: #4154F1; font-weight: 600;}
+
+    /* Main content */
+    .main { margin-left: 260px; padding: 100px 30px 30px; min-height: 100vh; transition: margin-left 0.3s ease;}
+    .sidebar.collapsed ~ .main { margin-left: 80px;}
+  </style>
+</head>
+<body class="bg-gradient-to-br from-[#FFE5B4] to-[#F5EEDC]">
+
+<!-- Header -->
+<header class="fixed top-0 left-0 right-0 h-16 bg-white shadow flex justify-between items-center px-4 z-40">
+  <div class="flex items-center space-x-4">
+    <button id="menu-toggle" class="text-2xl md:hidden"><i class="fas fa-bars"></i></button>
+    <div class="text-2xl font-bold text-gray-800">iAttend Teacher</div>
+  </div>
+  <div class="flex items-center space-x-4">
+    <a href="T_profile.html" class="flex items-center space-x-2">
+      <span id="header-user-name" class="font-semibold text-gray-800">Loading...</span>
+      <div class="h-10 w-10 rounded-full overflow-hidden">
+        <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=T" alt="User Profile Picture" class="w-full h-full object-cover">
+      </div>
+    </a>
+  </div>
+</header>
+
+<!-- Sidebar -->
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-section mb-6">
+    <div class="sidebar-section-title">Menu</div>
+
+    <a href="T_dashboard.html" class="sidebar-link flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold bg-[#e5d7b8]">
+      <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+    </a>
+
+    <a href="T_profile.html" class="sidebar-link flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+      <i class="fas fa-user"></i> <span>Profile</span>
+    </a>
+
+    <a href="T_class_list.html" class="sidebar-link flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+      <i class="fas fa-school"></i> <span>View Class List</span>
+    </a>
+
+    <a href="T_DailyAttend.html" class="sidebar-link flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-[#012970] font-semibold">
+      <i class="fas fa-clipboard-check"></i> <span>Daily Attend</span>
+    </a>
+
+  </div>
+
+  <div>
+    <a id="logout-btn" href="T_login.html" class="sidebar-link flex items-center gap-2 p-2 rounded hover:bg-[#ffe1ab] text-red-600 font-semibold">
+      <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+    </a>
+  </div>
+</div>
+
+<!-- Main Content -->
+<main class="main pt-20 px-6 md:ml-64 transition-all duration-300">
+  <!-- Profile card -->
+  <div class="bg-white p-6 rounded-2xl shadow flex items-center space-x-4 mb-6">
+    <div class="h-16 w-16 rounded-full overflow-hidden">
+      <img id="teacher-profile-pic" src="https://placehold.co/64x64/b8c6ff/ffffff?text=T" class="w-full h-full object-cover">
+    </div>
+    <div>
+      <h3 id="teacher-name" class="font-bold text-gray-800 text-lg">Teacher Name</h3>
+      <p id="teacher-id" class="text-gray-500 text-sm">ID: T001</p>
+      <p id="teacher-email" class="text-gray-500 text-sm">Email: teacher@example.com</p>
+      <p class="text-gray-500 text-sm">Role: Teacher</p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white p-6 rounded-2xl shadow text-center">
+      <h3 class="font-semibold text-gray-500 mb-2">My Classes</h3>
+      <span class="text-3xl font-bold text-blue-600">5</span>
+    </div>
+    <div class="bg-white p-6 rounded-2xl shadow text-center">
+      <h3 class="font-semibold text-gray-500 mb-2">Students Present</h3>
+      <span class="text-3xl font-bold text-green-600">120</span>
+    </div>
+    <div class="bg-white p-6 rounded-2xl shadow text-center">
+      <h3 class="font-semibold text-gray-500 mb-2">Students Absent</h3>
+      <span class="text-3xl font-bold text-red-600">10</span>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="bg-white p-6 rounded-2xl shadow mb-6 max-w-4xl mx-auto">
+    <canvas id="attendanceBar" width="600" height="350"></canvas>
+  </div>
+</main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+  import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+    authDomain: "aimanzamani.firebaseapp.com",
+    databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "aimanzamani",
+    storageBucket: "aimanzamani.firebasestorage.app",
+    messagingSenderId: "63348630728",
+    appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Auth check & load teacher info
+  onAuthStateChanged(auth, async user => {
+    if (user) {
+      const docSnap = await getDoc(doc(db, "users", user.uid));
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        document.getElementById("teacher-name").innerText = data.name;
+        document.getElementById("teacher-email").innerText = "Email: " + data.email;
+        document.getElementById("teacher-id").innerText = "ID: " + (data.id || "T001");
+        document.getElementById("header-role").innerText = "Teacher";
+        document.getElementById("header-profile-pic").src = data.profilePic || "https://placehold.co/40x40/b8c6ff/ffffff?text=T";
+        document.getElementById("teacher-profile-pic").src = data.profilePic || "https://placehold.co/64x64/b8c6ff/ffffff?text=T";
+      }
+    } else {
+      window.location.href = "{{ url_for('login') }}";
+    }
+  });
+
+  // Logout
+  document.getElementById("logout-btn").addEventListener("click", async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = "{{ url_for('login') }}";
+  });
+
+  // Chart.js
+  const ctx = document.getElementById('attendanceBar').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Present', 'Late', 'Absent'],
+      datasets: [{
+        label: 'Students',
+        data: [120, 8, 10],
+        backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true }, x: { grid: { display: false } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+</script>
+</body>
+</html>
