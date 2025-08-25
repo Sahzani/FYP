@@ -101,8 +101,8 @@ def admin_dashboard():
     return redirect(url_for("home"))
 
 # ------------------ Student Pages ------------------
-@app.route("/student/history")
-def student_history():
+@app.route("/student/attendance")
+def student_attendance():
     if session.get("role") == "student":
         return render_template("student/S_History.html")
     return redirect(url_for("home"))
