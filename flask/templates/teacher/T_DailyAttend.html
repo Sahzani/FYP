@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<<<<<<< HEAD
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>iAttend - Daily Attendance</title>
@@ -108,12 +109,265 @@ async function fetchDailyAttendance(classFilter = "") {
     if(classFilter) url += `?class=${classFilter}`;
 
     try {
+=======
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iAttend Daily Attendance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+    }
+
+    /* Header */
+    header { 
+      position: fixed; top: 0; left: 0; right: 0; height: 60px; 
+      background: #fff; 
+      box-shadow: 0 2px 20px rgba(1,41,112,0.1); 
+      display: flex; align-items: center; padding-left: 20px; 
+      font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 26px; color: #212529; z-index: 1000;
+      justify-content: space-between;
+    }
+    #menu-toggle { display: block; font-size: 28px; margin-right: 15px; cursor: pointer;}
+    .header-left {
+      display: flex;
+      align-items: center;
+    }
+    .header-user-info {
+      display: flex; align-items: center; gap: 15px; padding: 0 20px; transition: background 0.2s ease; border-radius: 8px; cursor: pointer;
+      font-weight: 600; color: #444;
+      text-decoration: none;
+    }
+    .header-user-info:hover { background-color: #f0f0f0;}
+    .header-user-info img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover;}
+    
+    /* Sidebar */
+    .sidebar { 
+      position: fixed; top: 60px; left: 0; width: 240px; height: calc(100% - 60px); 
+      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); 
+      padding: 15px 0; box-shadow: 2px 0 15px rgba(1,41,112,0.08); 
+      transition: width 0.3s ease; z-index: 999; border-top-right-radius: 12px; overflow: hidden;
+    }
+    .sidebar.collapsed { width: 70px;}
+    .sidebar-section { margin-bottom: 25px; padding: 0 15px;}
+    .sidebar-section-title { 
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #5D5FEF; margin-bottom: 10px; padding-left: 10px; 
+      transition: opacity 0.3s;
+    }
+    .sidebar.collapsed .sidebar-section-title { opacity: 0;}
+    .sidebar-link { 
+      display: flex; align-items: center; gap: 10px; padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; 
+      font-size: 15px; font-weight: 500; color: #1A237E; text-decoration: none; 
+      transition: all 0.25s ease; white-space: nowrap;
+    }
+    .sidebar.collapsed .sidebar-link span { display: none;}
+    .sidebar-link i { width: 18px; text-align: center;}
+    .sidebar-link:hover { background: rgba(255,255,255,0.5); transform: translateX(4px);}
+    .sidebar-link.active { background: rgba(255,255,255,0.7); color: #4154F1; font-weight: 600;}
+
+    /* Main content */
+    .main { 
+      margin-left: 260px; padding: 100px 30px 30px; min-height: 100vh; 
+      transition: margin-left 0.3s ease;
+      color: #212529;
+    }
+    .sidebar.collapsed ~ .main { margin-left: 80px;}
+    @media(max-width: 768px) {
+      .main { margin-left: 0; padding: 90px 15px; }
+      .sidebar { position: fixed; z-index: 1000; }
+    }
+
+    /* Page Title & Breadcrumb */
+    .page-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      margin-bottom: 4px;
+      color: #012970;
+    }
+    .breadcrumb {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    /* Filter area */
+    .filter-container {
+      background: #fff;
+      padding: 20px 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      max-width: 900px;
+      margin-bottom: 30px;
+    }
+    .filter-container label {
+      font-weight: 600;
+      color: #444;
+      white-space: nowrap;
+    }
+    .filter-container select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      font-family: 'Poppins', sans-serif;
+      min-width: 180px;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+    }
+    .filter-container select:focus {
+      outline: none;
+      border-color: #5D5FEF;
+      box-shadow: 0 0 8px rgba(93,95,239,0.4);
+    }
+    .filter-btn {
+      padding: 10px 24px;
+      background-color: #5D5FEF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      white-space: nowrap;
+    }
+    .filter-btn:hover {
+      background-color: #4154F1;
+    }
+
+    /* Attendance Table Container */
+    .attendance-table-wrapper {
+      max-width: 900px;
+      background: #fff;
+      padding: 30px 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      font-family: 'Poppins', sans-serif;
+      color: #444;
+    }
+    thead tr {
+      background-color: #f1f3ff;
+    }
+    th, td {
+      padding: 14px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      font-weight: 600;
+      color: #5D5FEF;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+    tbody tr:hover {
+      background-color: #f9faff;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <span id="menu-toggle">&#9776;</span>
+      <div>iAttend</div>
+    </div>
+    <a href="#" class="header-user-info">
+      <span>Teacher Name</span>
+      <img src="https://placehold.co/36x36/b8c6ff/ffffff?text=T" alt="Teacher" />
+    </a>
+  </header>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="T_dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Class</div>
+      <a class="sidebar-link" href="T_class_list.html"><i class="fas fa-school"></i><span>View Class List</span></a>
+      <a class="sidebar-link active" href="T_DailyAttend.html"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Reports</div>
+      <a class="sidebar-link" href="T_attendance_report.html"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
+    </div>
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="/teacher/logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <h1 class="page-title">Daily Attendance</h1>
+    <div class="breadcrumb">Dashboard / Daily Attendance</div>
+
+    <!-- Filters -->
+    <div class="filter-container">
+      <label for="class-filter">Select Class:</label>
+      <select id="class-filter">
+        <option value="">All Classes</option>
+        <option value="Class A">Class A</option>
+        <option value="Class B">Class B</option>
+        <option value="Class C">Class C</option>
+      </select>
+      <button id="filter-btn" class="filter-btn">Filter</button>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="attendance-table-wrapper">
+      <table id="attendance-table" aria-label="Attendance Records">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Class</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Dynamic rows here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+
+    async function fetchDailyAttendance(classFilter = "") {
+      let url = '/daily_attendance';
+      if(classFilter) url += `?class=${classFilter}`;
+
+      try {
+>>>>>>> 0954bd9c60c8923ba80a24180eff60eabcce815f
         const response = await fetch(url);
         const data = await response.json();
         const tbody = document.querySelector('#attendance-table tbody');
         tbody.innerHTML = '';
 
         data.attendance.forEach(entry => {
+<<<<<<< HEAD
             const row = document.createElement('tr');
             row.classList.add("hover:bg-gray-100");
             row.innerHTML = `
@@ -139,5 +393,30 @@ document.getElementById('filter-btn').addEventListener('click', () => {
 });
 </script>
 
+=======
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${entry.name}</td>
+            <td>${entry.email}</td>
+            <td>${entry.class || ''}</td>
+            <td>${entry.time}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch(err) {
+        console.error('Error fetching daily attendance:', err);
+      }
+    }
+
+    // Initial load
+    fetchDailyAttendance();
+
+    // Filter button event
+    document.getElementById('filter-btn').addEventListener('click', () => {
+      const selectedClass = document.getElementById('class-filter').value;
+      fetchDailyAttendance(selectedClass);
+    });
+  </script>
+>>>>>>> 0954bd9c60c8923ba80a24180eff60eabcce815f
 </body>
 </html>
