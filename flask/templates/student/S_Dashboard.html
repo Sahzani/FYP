@@ -1,68 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<<<<<<< HEAD
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Student Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <style>
-        /* Base Styling */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); overflow: hidden; }
-
-        header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1); display: flex; align-items: center; padding-left: 20px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 26px; color: #212529; z-index: 1000; }
-        #menu-toggle { display: block; font-size: 28px; margin-right: 15px; cursor: pointer; }
-        .header-content { width: 100%; display: flex; justify-content: space-between; align-items: center; }
-        .user-info { display: flex; align-items: center; gap: 15px; padding: 0 20px; transition: background 0.2s ease; border-radius: 8px; }
-        .user-info:hover { background-color: #f0f0f0; }
-        .user-info img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
-        .user-info span { font-size: 16px; font-weight: 600; color: #444; }
-
-        .sidebar { position: fixed; top: 60px; left: 0; width: 240px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding: 15px 0; box-shadow: 2px 0 15px rgba(1, 41, 112, 0.08); font-family: 'Poppins', sans-serif; transition: width 0.3s ease, transform 0.3s ease; z-index: 999; border-top-right-radius: 12px; overflow: hidden; }
-        .sidebar.collapsed { width: 70px; }
-        .sidebar-section { margin-bottom: 25px; padding: 0 15px; }
-        .sidebar-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #5D5FEF; margin-bottom: 10px; padding-left: 10px; transition: opacity 0.3s; }
-        .sidebar.collapsed .sidebar-section-title { opacity: 0; }
-        .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; font-size: 15px; font-weight: 500; color: #1A237E; text-decoration: none; transition: all 0.25s ease; white-space: nowrap; }
-        .sidebar.collapsed .sidebar-link span { display: none; }
-        .sidebar-link i { width: 18px; text-align: center; }
-        .sidebar-link:hover { background: rgba(255, 255, 255, 0.5); transform: translateX(4px); }
-        .sidebar-link.active { background: rgba(255, 255, 255, 0.7); color: #4154F1; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(181, 116, 28, 0.2); }
-
-        .main-content { margin-left: 260px; padding: 100px 30px 30px; font-family: 'Nunito', sans-serif; transition: margin-left 0.3s ease; height: 100vh; overflow-y: auto; }
-        .sidebar.collapsed ~ .main-content { margin-left: 80px; }
-
-        .grid-container { display: grid; gap: 1.5rem; }
-        .card-spacing { margin-bottom: 1.5rem; }
-        .card { background-color: #fff; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1); }
-        .profile-info { display: flex; align-items: center; gap: 1rem; }
-        .profile-info img { border-radius: 9999px; object-fit: cover; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1.5rem; }
-        .stats-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .icon-circle { width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; background-color: #4154F1; color: white; border-radius: 9999px; margin-bottom: 0.75rem; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; text-align: center; }
-        .calendar-day { padding: 0.5rem; border-radius: 9999px; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition-property: background-color, transform; transition-duration: 0.2s; transition-timing-function: ease-in-out; }
-        .calendar-day:hover { background-color: #f3f4f6; }
-        .calendar-day.current-day { background-color: #4154F1; color: white; font-weight: 700; }
-
-        .attendance-rate-container { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .progress-circle { position: relative; width: 8rem; height: 8rem; border-radius: 50%; background: conic-gradient(#22c55e 0%, #22c55e 96%, #e2e8f0 96%, #e2e8f0 100%); display: flex; align-items: center; justify-content: center; }
-        .progress-circle .inner-circle { width: 6.5rem; height: 6.5rem; background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .progress-text { font-size: 2.25rem; font-weight: 700; color: #012970; }
-
-        .recent-attendance-table { width: 100%; border-collapse: collapse; }
-        .recent-attendance-table th, .recent-attendance-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
-        .recent-attendance-table th { background-color: #f9fafb; font-size: 0.75rem; text-transform: uppercase; color: #4b5563; }
-        .recent-attendance-table tbody tr:last-child td { border-bottom: none; }
-
-        @media (min-width: 1024px) {
-            .grid-container-lg { grid-template-columns: 2fr 3fr; }
-            .grid-container-lg-2 { grid-template-columns: repeat(2, 1fr); }
-        }
-    </style>
-=======
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Student Dashboard</title>
@@ -115,120 +53,16 @@
 
   @media (min-width:1024px){ .grid-container-lg{grid-template-columns:3fr 2fr;} .grid-container-lg-2{grid-template-columns:repeat(2,1fr);} }
 </style>
->>>>>>> 0954bd9c60c8923ba80a24180eff60eabcce815f
 </head>
 <body>
 
 <header>
-<<<<<<< HEAD
-    <span id="menu-toggle">&#9776;</span>
-    <div class="header-content">
-        <a href="#" style="text-decoration: none; color: inherit;">iAttend</a>
-        <a href="S_Profile.html" class="user-info">
-            <span id="header-user-name">Loading...</span>
-            <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=P" alt="User Profile Picture">
-        </a>
-    </div>
-</header>
-
-<div class="sidebar">
-    <div class="sidebar-section">
-        <a class="sidebar-link active" href="#" id="nav-dashboard"><i class="fas fa-home"></i><span>Dashboard</span></a>
-    </div>
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">Analyse</div>
-        <a class="sidebar-link" href="S_History.html" id="nav-attendance"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
-    </div>
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">Request</div>
-        <a class="sidebar-link" href="S_AbsentApp.html" id="nav-absent"><i class="fas fa-file-alt"></i><span>Absent Application</span></a>
-        <a class="sidebar-link" href="S_ContactUs.html" id="nav-contact"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
-    </div>
-    <div class="sidebar-section">
-        <a class="sidebar-link" href="/templates/combinePage/Login.html" id="nav-logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
-    </div>
-</div>
-
-<div class="main-content">
-    <h2>Welcome <span id="welcome-name">Student</span>!</h2>
-    <p>Dashboard / Home</p>
-
-    <div class="grid-container-lg grid-container card-spacing">
-        <div class="card">
-            <div class="profile-info">
-                <img id="profile-pic" src="https://placehold.co/64x64/b8c6ff/ffffff?text=P" alt="User Profile Picture">
-                <div>
-                    <h3 id="profile-name">Student</h3>
-                    <p>ID: <span id="profile-id">N/A</span></p>
-                    <p>Email: <span id="profile-email">N/A</span></p>
-                    <p>Class: <span id="profile-class">N/A</span></p>
-                    <p>Intake: <span id="profile-intake">N/A</span></p>
-                    <p>Semester <span id="profile-semester">N/A</span></p>
-                </div>
-            </div>
-        </div>
-
-        <div class="stats-grid">
-            <div class="card stats-card">
-                <div class="icon-circle"><i class="fas fa-hourglass-half"></i></div>
-                <p>Days Late</p>
-                <span id="stats-late">0</span>
-            </div>
-            <div class="card stats-card">
-                <div class="icon-circle"><i class="fas fa-user-check"></i></div>
-                <p>Days Present</p>
-                <span id="stats-present">0</span>
-            </div>
-            <div class="card stats-card">
-                <div class="icon-circle"><i class="fas fa-user-times"></i></div>
-                <p>Days Absent</p>
-                <span id="stats-absent">0</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid-container-lg-2 grid-container card-spacing">
-        <div class="card" style="display: flex; align-items: center; gap: 1rem;">
-            <div class="icon-circle" id="today-icon"><i class="fas fa-check-circle" style="font-size: 1.5rem;"></i></div>
-            <div>
-                <h3>Today's Attendance</h3>
-                <p id="today-status">Loading...</p>
-                <p id="today-note"></p>
-            </div>
-        </div>
-        <div class="card" style="background-color: #F6F8FE; display: flex; align-items: flex-start; gap: 1rem;">
-            <div class="icon-circle" style="background-color: #4154F1;"><i class="fas fa-bell" style="font-size: 1.5rem;"></i></div>
-            <div style="flex-grow: 1;">
-                <h3>Notification</h3>
-                <p id="notification-message">Loading...</p>
-            </div>
-            <span id="notification-timestamp"></span>
-        </div>
-    </div>
-
-    <div class="card card-spacing">
-        <h3>Recent Attendance</h3>
-        <div style="overflow-x: auto;">
-            <table id="recent-attendance-table" class="recent-attendance-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Subject</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </div>
-=======
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
     <a href="S_Dashboard.html" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="S_Profile.html" class="user-info">
       <span id="header-user-name">Loading...</span>
-      <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile Picture">
+      <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=P" alt="User Profile Picture">
     </a>
   </div>
 </header>
@@ -247,12 +81,12 @@
     <a class="sidebar-link" href="S_ContactUs.html"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
   </div>
   <div class="sidebar-section">
-    <a class="sidebar-link" href="/flask/templates/combinePage/Login.html"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    <a class="sidebar-link" href="/templates/combinePage/Login.html"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
 <div class="main-content">
-  <h2>Welcome <span id="welcome-name">[Student name]</span>!</h2>
+  <h2>Welcome <span id="welcome-name">Student</span>!</h2>
   <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Home</span></div>
 
   <div class="grid-container-lg grid-container card-spacing">
@@ -308,7 +142,6 @@
     </div>
   </div>
 
->>>>>>> 0954bd9c60c8923ba80a24180eff60eabcce815f
 </div>
 
 <script type="module">
@@ -317,15 +150,6 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 import { getFirestore, doc, onSnapshot, collection, query, orderBy, limit, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
-<<<<<<< HEAD
-    apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-    authDomain: "aimanzamani.firebaseapp.com",
-    databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "aimanzamani",
-    storageBucket: "aimanzamani.firebasestorage.app",
-    messagingSenderId: "63348630728",
-    appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-=======
   apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
   authDomain: "aimanzamani.firebaseapp.com",
   databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -333,133 +157,11 @@ const firebaseConfig = {
   storageBucket: "aimanzamani.firebasestorage.app",
   messagingSenderId: "63348630728",
   appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
->>>>>>> 0954bd9c60c8923ba80a24180eff60eabcce815f
 };
 
 let db, auth, userId;
 
 const initApp = async () => {
-<<<<<<< HEAD
-    try {
-        const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-
-        await signInAnonymously(auth);
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-                fetchUserProfile(userId);
-                fetchAttendanceStats(userId);
-                fetchTodayAttendance(userId);
-                fetchRecentAttendance(userId);
-            }
-        });
-    } catch (e) {
-        console.error("Firebase init error:", e);
-    }
-};
-
-// User profile
-const fetchUserProfile = (uid) => {
-    const userDocRef = doc(db, 'artifacts', firebaseConfig.projectId, 'users', uid, 'profile', 'data');
-    onSnapshot(userDocRef, (docSnap) => {
-        if (!docSnap.exists()) return;
-        const data = docSnap.data();
-        document.getElementById('header-user-name').textContent = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Student';
-        document.getElementById('welcome-name').textContent = `${data.firstName || 'Student'}`;
-        document.getElementById('profile-name').textContent = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Student';
-        document.getElementById('profile-id').textContent = data.studentID || 'N/A';
-        document.getElementById('profile-email').textContent = data.email || 'N/A';
-        document.getElementById('profile-class').textContent = data.studentClass || 'N/A';
-        document.getElementById('profile-intake').textContent = data.intake || 'N/A';
-        document.getElementById('profile-semester').textContent = data.semester || 'N/A';
-        if (data.profilePicUrl) {
-            document.getElementById('profile-pic').src = data.profilePicUrl;
-            document.getElementById('user-profile-pic-header').src = data.profilePicUrl;
-        }
-    });
-};
-
-// Attendance stats (Present, Late, Absent)
-const fetchAttendanceStats = async (uid) => {
-    const attendanceRef = collection(db, 'artifacts', firebaseConfig.projectId, 'users', uid, 'attendance');
-    const snapshot = await getDocs(attendanceRef);
-    let present = 0, absent = 0, late = 0;
-
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        if(data.status === 'Present') present++;
-        else if(data.status === 'Absent') absent++;
-        else if(data.status === 'Late') late++;
-    });
-
-    document.getElementById('stats-present').textContent = present;
-    document.getElementById('stats-absent').textContent = absent;
-    document.getElementById('stats-late').textContent = late;
-};
-
-// Today’s Attendance
-const fetchTodayAttendance = (uid) => {
-    const attendanceRef = collection(db, 'artifacts', firebaseConfig.projectId, 'users', uid, 'attendance');
-    const today = new Date();
-    today.setHours(0,0,0,0);
-
-    const q = query(attendanceRef, where('timestamp', '>=', today), orderBy('timestamp', 'desc'), limit(1));
-    onSnapshot(q, (snapshot) => {
-        if(snapshot.empty) return;
-        const data = snapshot.docs[0].data();
-        const statusEl = document.getElementById('today-status');
-        const noteEl = document.getElementById('today-note');
-        const iconEl = document.getElementById('today-icon');
-
-        statusEl.textContent = data.status || 'N/A';
-        noteEl.textContent = data.note || '';
-        if(data.status === 'Present'){
-            iconEl.style.backgroundColor = '#22c55e';
-            iconEl.innerHTML = '<i class="fas fa-check-circle" style="font-size:1.5rem;"></i>';
-        } else if(data.status === 'Late'){
-            iconEl.style.backgroundColor = '#facc15';
-            iconEl.innerHTML = '<i class="fas fa-hourglass-half" style="font-size:1.5rem;"></i>';
-        } else if(data.status === 'Absent'){
-            iconEl.style.backgroundColor = '#ef4444';
-            iconEl.innerHTML = '<i class="fas fa-user-times" style="font-size:1.5rem;"></i>';
-        }
-    });
-};
-
-// Recent attendance
-const fetchRecentAttendance = (uid) => {
-    const attendanceRef = collection(db, 'artifacts', firebaseConfig.projectId, 'users', uid, 'attendance');
-    const q = query(attendanceRef, orderBy('timestamp', 'desc'), limit(5));
-
-    onSnapshot(q, (snapshot) => {
-        const tbody = document.getElementById('recent-attendance-table').querySelector('tbody');
-        tbody.innerHTML = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const date = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : 'N/A';
-            const time = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString() : 'N/A';
-            const row = `<tr>
-                <td>${date}</td>
-                <td>${time}</td>
-                <td>${data.subject || 'N/A'}</td>
-                <td style="color:${data.status==='Present'?'#22c55e':data.status==='Late'?'#facc15':'#ef4444'};font-weight:600">${data.status || 'N/A'}</td>
-            </tr>`;
-            tbody.insertAdjacentHTML('beforeend', row);
-        });
-    });
-};
-
-initApp();
-
-// Sidebar toggle
-const sidebar = document.querySelector('.sidebar');
-document.getElementById('menu-toggle').addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-});
-=======
   try {
     const app = initializeApp(firebaseConfig);
     auth = getAuth(app);
@@ -555,7 +257,6 @@ const generateCalendar = () => {
 initApp();
 generateCalendar();
 document.getElementById('menu-toggle').addEventListener('click',()=>{ document.querySelector('.sidebar').classList.toggle('collapsed'); });
->>>>>>> 0954bd9c60c8923ba80a24180eff60eabcce815f
 </script>
 
 </body>
