@@ -104,7 +104,7 @@ def camera_loop():
                                 "name": name,
                                 "email": email,
                                 "class": student_class,
-                                "time": now
+                                "time": firestore.SERVER_TIMESTAMP 
                             })
 
                             print(f"[INFO] {name} detected at {now}")

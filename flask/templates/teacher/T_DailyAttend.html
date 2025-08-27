@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>iAttend - Daily Attendance</title>
 
-  <!-- Fonts and Icons -->
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
@@ -30,13 +33,13 @@
     .sidebar.collapsed .sidebar-link span { display:none; }
     .sidebar-link i { width:18px; text-align:center; }
     .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
-    .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
+    .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
 
     .main { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito', sans-serif; transition:margin-left 0.3s ease; min-height:100vh; }
     .sidebar.collapsed ~ .main { margin-left:80px; }
 
-    .page-title { font-family:'Poppins', sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
-    .breadcrumb { font-family:'Nunito', sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
+    .page-title { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
+    .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
     .breadcrumb .section { color:#989797; }
     .breadcrumb .current { color:#444444; }
 
@@ -52,18 +55,12 @@
     td { color:#333; border-bottom:1px solid #eee; }
     tr:hover td { background:#fafafa; }
     .status-present { color:green; font-weight:600; }
-    .status-late { color:orange; font-weight:600; }
     .status-absent { color:red; font-weight:600; }
 
-    .filter { margin-bottom:20px; }
-    select { padding:8px; border-radius:6px; }
-
-    @media(max-width:768px){
-      .main { margin-left:0; padding:90px 15px; }
-      .sidebar { position:fixed; z-index:1000; }
-    }
+    @media(max-width:768px){ .main { margin-left:0; padding:90px 15px; } .sidebar { position:fixed; z-index:1000; } }
   </style>
 </head>
+
 <body>
   <!-- Header -->
   <header>
@@ -71,7 +68,7 @@
     <div class="header-content">
       <div>iAttend Teacher</div>
       <a href="#" class="user-info">
-        <span>Teacher Name</span>
+        <span>Teacher</span>
         <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
       </a>
     </div>
@@ -85,11 +82,11 @@
     <div class="sidebar-section">
       <div class="sidebar-section-title">Class</div>
       <a class="sidebar-link" href="T_class_list.html"><i class="fas fa-school"></i><span>View Class List</span></a>
-      <a class="sidebar-link active" href="T_DailyAttend.html"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
+      <a class="sidebar-link" href="T_DailyAttend.html"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Reports</div>
-      <a class="sidebar-link" href="T_attendance_report.html"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
+      <a class="sidebar-link active" href="T_DailyAttendReport.html"><i class="fas fa-file-alt"></i><span>Daily Attendance</span></a>
     </div>
     <div class="sidebar-section">
       <a class="sidebar-link" href="/teacher/logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
@@ -100,13 +97,6 @@
   <div class="main">
     <h1 class="page-title">Daily Attendance</h1>
     <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Daily Attendance</span></div>
-
-    <div class="card filter">
-      <label for="classFilter">Filter by Class:</label>
-      <select id="classFilter">
-        <option value="all">All Classes</option>
-      </select>
-    </div>
 
     <div class="card">
       <h2>Attendance List</h2>
@@ -127,95 +117,89 @@
     </div>
   </div>
 
-  <!-- Firebase & Scripts -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+  <!-- Firebase & Script -->
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-      authDomain: "aimanzamani.firebaseapp.com",
-      projectId: "aimanzamani",
-      storageBucket: "aimanzamani.appspot.com",
-      messagingSenderId: "63348630728",
-      appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+    authDomain: "aimanzamani.firebaseapp.com",
+    projectId: "aimanzamani",
+    storageBucket: "aimanzamani.appspot.com",
+    messagingSenderId: "63348630728",
+    appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const tableBody = document.querySelector('#attendance-table tbody');
 
-    const tableBody = document.querySelector('#attendance-table tbody');
-    const classFilter = document.getElementById('classFilter');
-    let allStudents = [];
+  let students = {};
 
-    async function loadStudents() {
-      const snapshot = await getDocs(collection(db, 'students'));
-      const classes = new Set();
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        allStudents.push({
-          student_id: data.student_id,
-          name: data.name,
-          email: data.email,
-          class: data.class
-        });
-        classes.add(data.class);
-      });
-      // Populate class filter
-      classes.forEach(cls => {
-        const opt = document.createElement('option');
-        opt.value = cls;
-        opt.textContent = cls;
-        classFilter.appendChild(opt);
-      });
-    }
+  async function loadStudents() {
+    const snapshot = await getDocs(collection(db, 'students'));
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      students[data.uid] = {   // ✅ use uid to match attendance.student_id
+        name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
+        class: data.studentClass
+      };
+    });
+  }
 
-    async function loadAttendance() {
-      tableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
-      const attendanceSnap = await getDocs(collection(db, 'attendance'));
-      const today = new Date().toISOString().split('T')[0];
+  async function loadAttendance() {
+    tableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+    const today = new Date().toISOString().split('T')[0];
+    const attendanceSnapshot = await getDocs(query(collection(db, 'attendance'), orderBy('time','asc')));
+    const statusMap = {};
 
-      const studentStatus = {};
-      allStudents.forEach(stu => {
-        studentStatus[stu.student_id] = { ...stu, status:'Absent', time:'-' };
-      });
+    // ✅ Initialize all students as Absent
+    Object.entries(students).forEach(([id, student]) => {
+      statusMap[id] = {...student, status:'Absent', time:'-'};
+    });
 
-      attendanceSnap.forEach(doc => {
-        const data = doc.data();
-        const attendanceDate = data.time.split(' ')[0];
-        if(studentStatus[data.student_id] && attendanceDate === today){
-          studentStatus[data.student_id].status = data.late ? 'Late' : 'Present';
-          studentStatus[data.student_id].time = data.time.split(' ')[1];
+    // ✅ Mark Present if attendance exists today
+    attendanceSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.time && data.time.toDate) {
+        const dateObj = data.time.toDate();
+        const recordDate = dateObj.toISOString().split('T')[0];
+        const recordTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (recordDate === today && statusMap[data.student_id]) {
+          statusMap[data.student_id].status = 'Present';
+          statusMap[data.student_id].time = recordTime;
         }
-      });
+      }
+    });
 
-      tableBody.innerHTML = '';
-      Object.values(studentStatus).forEach(stu => {
-        if(classFilter.value === 'all' || classFilter.value === stu.class){
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${stu.name}</td>
-            <td>${stu.email}</td>
-            <td>${stu.class}</td>
-            <td class="status-${stu.status.toLowerCase()}">${stu.status}</td>
-            <td>${stu.time}</td>
-          `;
-          tableBody.appendChild(row);
-        }
-      });
-    }
+    // ✅ Render table
+    tableBody.innerHTML = '';
+    Object.values(statusMap).forEach(s => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${s.name}</td>
+        <td>${s.email}</td>
+        <td>${s.class}</td>
+        <td class="status-${s.status.toLowerCase()}">${s.status}</td>
+        <td>${s.time}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  }
 
-    classFilter.addEventListener('change', loadAttendance);
+  // Load students then attendance
+  loadStudents().then(loadAttendance);
+  setInterval(loadAttendance, 10000);
+</script>
 
-    // Load everything
-    loadStudents().then(loadAttendance);
-    setInterval(loadAttendance, 10000);
-  </script>
 
   <script>
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
-    menuToggle.addEventListener('click', ()=> sidebar.classList.toggle('collapsed'));
+    menuToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
   </script>
 </body>
 </html>
