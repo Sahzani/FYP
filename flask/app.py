@@ -82,7 +82,7 @@ def login():
         return redirect(url_for("home"))
 
 # ------------------ Dashboards ------------------
-@app.route("/student/dashboard")
+@app.route("/student_dashboard")
 def student_dashboard():
     if session.get("role") == "student":
         return render_template("student/S_Dashboard.html")
