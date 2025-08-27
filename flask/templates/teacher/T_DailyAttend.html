@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>iAttend - Attendance Report</title>
+  <title>iAttend - Daily Attendance</title>
 
   <!-- Fonts and Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
@@ -13,7 +13,6 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
 
-    /* Header */
     header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
     #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
     .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
@@ -22,13 +21,7 @@
     .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
     .user-info span { font-size:16px; font-weight:600; color:#444; }
 
-    /* Sidebar */
-    .sidebar {
-      position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px);
-      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-      padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08);
-      transition:width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden;
-    }
+    .sidebar { position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition:width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden; }
     .sidebar.collapsed { width:70px; }
     .sidebar-section { margin-bottom:25px; padding:0 15px; }
     .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
@@ -39,10 +32,7 @@
     .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
     .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
 
-    /* Main content */
-    .main {
-      margin-left:260px; padding:100px 30px 30px; font-family:'Nunito', sans-serif; transition:margin-left 0.3s ease; min-height:100vh;
-    }
+    .main { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito', sans-serif; transition:margin-left 0.3s ease; min-height:100vh; }
     .sidebar.collapsed ~ .main { margin-left:80px; }
 
     .page-title { font-family:'Poppins', sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
@@ -50,15 +40,10 @@
     .breadcrumb .section { color:#989797; }
     .breadcrumb .current { color:#444444; }
 
-    /* Card for Attendance */
-    .card {
-      background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
+    .card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; }
     .card:hover { transform: translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
     .card h2 { margin-top:0; margin-bottom:20px; font-family:'Nunito',sans-serif; font-weight:600; font-size:24px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
 
-    /* Attendance Table */
     .table-responsive { overflow-x:auto; }
     table { width:100%; border-collapse:collapse; min-width:600px; }
     thead { background:#f9f9f9; }
@@ -67,19 +52,18 @@
     td { color:#333; border-bottom:1px solid #eee; }
     tr:hover td { background:#fafafa; }
     .status-present { color:green; font-weight:600; }
+    .status-late { color:orange; font-weight:600; }
     .status-absent { color:red; font-weight:600; }
 
-    /* Webcam feed */
-    .video-container img { width:100%; max-width:640px; display:block; margin:0 auto 20px; border-radius:12px; }
+    .filter { margin-bottom:20px; }
+    select { padding:8px; border-radius:6px; }
 
-    /* Responsive */
     @media(max-width:768px){
       .main { margin-left:0; padding:90px 15px; }
       .sidebar { position:fixed; z-index:1000; }
     }
   </style>
 </head>
-
 <body>
   <!-- Header -->
   <header>
@@ -114,15 +98,18 @@
 
   <!-- Main Content -->
   <div class="main">
-    <h1 class="page-title">Attendance Report</h1>
-    <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Attendance Report</span></div>
+    <h1 class="page-title">Daily Attendance</h1>
+    <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Daily Attendance</span></div>
+
+    <div class="card filter">
+      <label for="classFilter">Filter by Class:</label>
+      <select id="classFilter">
+        <option value="all">All Classes</option>
+      </select>
+    </div>
 
     <div class="card">
-      <h2>Live Attendance Feed</h2>
-      <div class="video-container">
-        <img id="webcam-feed" src="http://localhost:5001/video_feed" alt="Live Attendance Feed">
-      </div>
-
+      <h2>Attendance List</h2>
       <div class="table-responsive">
         <table id="attendance-table">
           <thead>
@@ -130,7 +117,8 @@
               <th>Name</th>
               <th>Email</th>
               <th>Class</th>
-              <th>Timestamp</th>
+              <th>Status</th>
+              <th>Time</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -139,15 +127,14 @@
     </div>
   </div>
 
-  <!-- Firebase & Toggle Script -->
+  <!-- Firebase & Scripts -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
       authDomain: "aimanzamani.firebaseapp.com",
-      databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "aimanzamani",
       storageBucket: "aimanzamani.appspot.com",
       messagingSenderId: "63348630728",
@@ -157,33 +144,72 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    async function fetchAttendance() {
-      const tbody = document.querySelector('#attendance-table tbody');
-      tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+    const tableBody = document.querySelector('#attendance-table tbody');
+    const classFilter = document.getElementById('classFilter');
+    let allStudents = [];
 
-      try {
-        const q = query(collection(db, 'attendance'), orderBy('time','desc'), limit(50));
-        const snapshot = await getDocs(q);
-        tbody.innerHTML = '';
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${data.name || ''}</td>
-            <td>${data.email || ''}</td>
-            <td>${data.class || ''}</td>
-            <td>${data.time || ''}</td>
-          `;
-          tbody.appendChild(row);
+    async function loadStudents() {
+      const snapshot = await getDocs(collection(db, 'students'));
+      const classes = new Set();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        allStudents.push({
+          student_id: data.student_id,
+          name: data.name,
+          email: data.email,
+          class: data.class
         });
-      } catch(err) {
-        console.error(err);
-        tbody.innerHTML = '<tr><td colspan="4">Error loading data</td></tr>';
-      }
+        classes.add(data.class);
+      });
+      // Populate class filter
+      classes.forEach(cls => {
+        const opt = document.createElement('option');
+        opt.value = cls;
+        opt.textContent = cls;
+        classFilter.appendChild(opt);
+      });
     }
 
-    fetchAttendance();
-    setInterval(fetchAttendance, 5000);
+    async function loadAttendance() {
+      tableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+      const attendanceSnap = await getDocs(collection(db, 'attendance'));
+      const today = new Date().toISOString().split('T')[0];
+
+      const studentStatus = {};
+      allStudents.forEach(stu => {
+        studentStatus[stu.student_id] = { ...stu, status:'Absent', time:'-' };
+      });
+
+      attendanceSnap.forEach(doc => {
+        const data = doc.data();
+        const attendanceDate = data.time.split(' ')[0];
+        if(studentStatus[data.student_id] && attendanceDate === today){
+          studentStatus[data.student_id].status = data.late ? 'Late' : 'Present';
+          studentStatus[data.student_id].time = data.time.split(' ')[1];
+        }
+      });
+
+      tableBody.innerHTML = '';
+      Object.values(studentStatus).forEach(stu => {
+        if(classFilter.value === 'all' || classFilter.value === stu.class){
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${stu.name}</td>
+            <td>${stu.email}</td>
+            <td>${stu.class}</td>
+            <td class="status-${stu.status.toLowerCase()}">${stu.status}</td>
+            <td>${stu.time}</td>
+          `;
+          tableBody.appendChild(row);
+        }
+      });
+    }
+
+    classFilter.addEventListener('change', loadAttendance);
+
+    // Load everything
+    loadStudents().then(loadAttendance);
+    setInterval(loadAttendance, 10000);
   </script>
 
   <script>
