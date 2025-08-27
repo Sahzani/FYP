@@ -35,38 +35,46 @@
     .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
     .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
 
-    .main { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito', sans-serif; transition:margin-left 0.3s ease; min-height:100vh; }
+    .main { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; min-height:100vh; }
     .sidebar.collapsed ~ .main { margin-left:80px; }
 
     .page-title { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
-    .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
+    .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:20px; }
     .breadcrumb .section { color:#989797; }
     .breadcrumb .current { color:#444444; }
 
-    .card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-    .card:hover { transform: translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
-    .card h2 { margin-top:0; margin-bottom:20px; font-family:'Nunito',sans-serif; font-weight:600; font-size:24px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
+    .controls { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+
+    .card { background:#fff; padding:20px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .card:hover { transform: translateY(-3px); box-shadow:0 12px 26px rgba(0,0,0,0.12); }
+    .card h2 { margin-top:0; margin-bottom:16px; font-family:'Nunito',sans-serif; font-weight:600; font-size:22px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
+
+    .legend { font-size:14px; color:#555; display:flex; gap:14px; align-items:center; margin-bottom:6px; }
+    .dot { display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:6px; }
+    .present { color:#1c7d1c; }
+    .late { color:#d17b00; }
+    .absent { color:#c0392b; }
 
     .table-responsive { overflow-x:auto; }
-    table { width:100%; border-collapse:collapse; min-width:600px; }
+    table { width:100%; border-collapse:collapse; min-width:720px; }
     thead { background:#f9f9f9; }
     th, td { padding:12px; text-align:left; font-size:15px; }
     th { color:#555; text-transform:uppercase; font-size:13px; font-weight:600; border-bottom:2px solid #ddd; }
     td { color:#333; border-bottom:1px solid #eee; }
     tr:hover td { background:#fafafa; }
-    .status-present { color:green; font-weight:600; }
-    .status-absent { color:red; font-weight:600; }
+    .status-present { color:#1c7d1c; font-weight:700; }
+    .status-late { color:#d17b00; font-weight:700; }
+    .status-absent { color:#c0392b; font-weight:700; }
 
     @media(max-width:768px){ .main { margin-left:0; padding:90px 15px; } .sidebar { position:fixed; z-index:1000; } }
   </style>
 </head>
 
 <body>
-  <!-- Header -->
   <header>
     <span id="menu-toggle">&#9776;</span>
     <div class="header-content">
-      <div>iAttend Teacher</div>
+      <div>iAttend</div>
       <a href="#" class="user-info">
         <span>Teacher</span>
         <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
@@ -74,7 +82,6 @@
     </div>
   </header>
 
-  <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-section">
       <a class="sidebar-link" href="T_dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
@@ -82,24 +89,46 @@
     <div class="sidebar-section">
       <div class="sidebar-section-title">Class</div>
       <a class="sidebar-link" href="T_class_list.html"><i class="fas fa-school"></i><span>View Class List</span></a>
-      <a class="sidebar-link" href="T_DailyAttend.html"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
+      <a class="sidebar-link active" href="T_DailyAttend.html"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Reports</div>
-      <a class="sidebar-link active" href="T_DailyAttendReport.html"><i class="fas fa-file-alt"></i><span>Daily Attendance</span></a>
+      <a class="sidebar-link" href="T_DailyAttendReport.html"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
     </div>
     <div class="sidebar-section">
       <a class="sidebar-link" href="/teacher/logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
     </div>
   </div>
 
-  <!-- Main Content -->
   <div class="main">
     <h1 class="page-title">Daily Attendance</h1>
     <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Daily Attendance</span></div>
 
     <div class="card">
-      <h2>Attendance List</h2>
+      <div class="controls">
+        <label class="text-sm text-slate-600">Class:
+          <select id="classFilter" class="ml-2 rounded-md border border-slate-300 px-2 py-1">
+            <option value="all">All Classes</option>
+          </select>
+        </label>
+
+        <label class="text-sm text-slate-600">Date:
+          <input id="datePicker" type="date" class="ml-2 rounded-md border border-slate-300 px-2 py-1" />
+        </label>
+
+        <label class="text-sm text-slate-600">Late after:
+          <input id="lateCutoff" type="time" value="08:15" class="ml-2 rounded-md border border-slate-300 px-2 py-1" />
+        </label>
+
+        <button id="refreshBtn" class="rounded-md bg-indigo-600 text-white px-3 py-1 text-sm hover:bg-indigo-700">Refresh</button>
+      </div>
+
+      <div class="legend">
+        <span><span class="dot" style="background:#1c7d1c;"></span> Present</span>
+        <span><span class="dot" style="background:#d17b00;"></span> Late</span>
+        <span><span class="dot" style="background:#c0392b;"></span> Absent</span>
+      </div>
+
       <div class="table-responsive">
         <table id="attendance-table">
           <thead>
@@ -117,89 +146,153 @@
     </div>
   </div>
 
-  <!-- Firebase & Script -->
- <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+  <!-- Firebase Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-    authDomain: "aimanzamani.firebaseapp.com",
-    projectId: "aimanzamani",
-    storageBucket: "aimanzamani.appspot.com",
-    messagingSenderId: "63348630728",
-    appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+      authDomain: "aimanzamani.firebaseapp.com",
+      projectId: "aimanzamani",
+      storageBucket: "aimanzamani.appspot.com",
+      messagingSenderId: "63348630728",
+      appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const tableBody = document.querySelector('#attendance-table tbody');
+    const classFilter = document.getElementById('classFilter');
+    const datePicker  = document.getElementById('datePicker');
+    const lateCutoff  = document.getElementById('lateCutoff');
+    const refreshBtn  = document.getElementById('refreshBtn');
+    const tableBody   = document.querySelector('#attendance-table tbody');
 
-  let students = {};
+    function localYMD(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
 
-  async function loadStudents() {
-    const snapshot = await getDocs(collection(db, 'students'));
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      students[data.uid] = {   // ✅ use uid to match attendance.student_id
-        name: `${data.firstName} ${data.lastName}`,
-        email: data.email,
-        class: data.studentClass
-      };
-    });
-  }
+    function formatTime(ts) {
+      if (!ts) return '-';
+      const d = ts.toDate();
+      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    }
 
-  async function loadAttendance() {
-    tableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
-    const today = new Date().toISOString().split('T')[0];
-    const attendanceSnapshot = await getDocs(query(collection(db, 'attendance'), orderBy('time','asc')));
-    const statusMap = {};
+    let studentsByUid = {};
+    let classesSet = new Set();
 
-    // ✅ Initialize all students as Absent
-    Object.entries(students).forEach(([id, student]) => {
-      statusMap[id] = {...student, status:'Absent', time:'-'};
-    });
+    async function loadStudents() {
+      studentsByUid = {};
+      classesSet = new Set();
 
-    // ✅ Mark Present if attendance exists today
-    attendanceSnapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.time && data.time.toDate) {
-        const dateObj = data.time.toDate();
-        const recordDate = dateObj.toISOString().split('T')[0];
-        const recordTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const snap = await getDocs(collection(db,'students'));
+      snap.forEach(doc => {
+        const s = doc.data();
+        const uid = doc.id;
+        if (!uid) return;
+        const fullName = [s.firstName||'',s.lastName||''].join(' ').trim();
+        studentsByUid[uid] = {
+          name: fullName || (s.name||''),
+          email: s.email||'',
+          class: s.studentClass||''
+        };
+        if(s.studentClass) classesSet.add(s.studentClass);
+      });
 
-        if (recordDate === today && statusMap[data.student_id]) {
-          statusMap[data.student_id].status = 'Present';
-          statusMap[data.student_id].time = recordTime;
+      classFilter.innerHTML = '<option value="all">All Classes</option>';
+      [...classesSet].sort().forEach(cls=>{
+        const opt = document.createElement('option');
+        opt.value = cls; opt.textContent = cls;
+        classFilter.appendChild(opt);
+      });
+    }
+
+    async function loadDailyAttendance() {
+      const selectedClass = classFilter.value;
+      const ymd = datePicker.value || localYMD(new Date());
+      const [cutHH, cutMM] = (lateCutoff.value||'08:15').split(':');
+
+      tableBody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+
+      const startTs = Timestamp.fromDate(new Date(`${ymd}T00:00:00`));
+      const endTs   = Timestamp.fromDate(new Date(`${ymd}T23:59:59`));
+
+      const attSnap = await getDocs(
+        query(collection(db,'attendance'),
+              where('time','>=',startTs),
+              where('time','<=',endTs))
+      );
+
+      const firstCheckInByUid = {};
+      attSnap.forEach(doc=>{
+        const a = doc.data();
+        const sid = a.student_id || doc.id;
+        const cls = a.class||'';
+        if(!sid) return;
+        if(selectedClass!=='all' && cls!==selectedClass) return;
+
+        const t = a.time;
+        if(!firstCheckInByUid[sid] || t.toMillis() < firstCheckInByUid[sid].toMillis()){
+          firstCheckInByUid[sid] = t;
         }
+      });
+
+      const rows = [];
+      Object.entries(studentsByUid).forEach(([uid,s])=>{
+        if(selectedClass!=='all' && s.class!==selectedClass) return;
+
+        const ts = firstCheckInByUid[uid] || null;
+        let status = 'Absent';
+        if(ts){
+          const d = ts.toDate();
+          status = (d.getHours()>parseInt(cutHH) || (d.getHours()==parseInt(cutHH) && d.getMinutes()>parseInt(cutMM))) ? 'Late':'Present';
+        }
+
+        rows.push({
+          name:s.name,email:s.email,class:s.class,time:formatTime(ts),status
+        });
+      });
+
+      rows.sort((a,b)=>a.name.localeCompare(b.name));
+
+      tableBody.innerHTML='';
+      if(rows.length===0){
+        tableBody.innerHTML=`<tr><td colspan="5">No students found${selectedClass!=='all'?' for class '+selectedClass:''}.</td></tr>`;
+        return;
       }
-    });
 
-    // ✅ Render table
-    tableBody.innerHTML = '';
-    Object.values(statusMap).forEach(s => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${s.name}</td>
-        <td>${s.email}</td>
-        <td>${s.class}</td>
-        <td class="status-${s.status.toLowerCase()}">${s.status}</td>
-        <td>${s.time}</td>
-      `;
-      tableBody.appendChild(row);
-    });
-  }
+      rows.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML=`
+          <td>${r.name}</td>
+          <td>${r.email}</td>
+          <td>${r.class}</td>
+          <td class="status-${r.status.toLowerCase()}">${r.status}</td>
+          <td>${r.time}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
 
-  // Load students then attendance
-  loadStudents().then(loadAttendance);
-  setInterval(loadAttendance, 10000);
-</script>
+    datePicker.value = localYMD(new Date());
+    refreshBtn.addEventListener('click', loadDailyAttendance);
+    classFilter.addEventListener('change', loadDailyAttendance);
+    datePicker.addEventListener('change', loadDailyAttendance);
+    lateCutoff.addEventListener('change', loadDailyAttendance);
 
+    await loadStudents();
+    await loadDailyAttendance();
+    setInterval(loadDailyAttendance, 90000);
+
+  </script>
 
   <script>
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
-    menuToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+    menuToggle.addEventListener('click',()=>sidebar.classList.toggle('collapsed'));
   </script>
 </body>
 </html>
