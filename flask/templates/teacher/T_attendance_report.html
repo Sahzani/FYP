@@ -11,51 +11,34 @@
 
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { 
-      height:100%; 
-      font-family:'Poppins',sans-serif; 
-      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-    }
-    header { 
-      position:fixed; top:0; left:0; right:0; height:60px; 
-      background:#fff; display:flex; align-items:center; 
-      padding-left:20px; font-family:'Nunito',sans-serif;
-      font-weight:700; font-size:26px; color:#212529; 
-      z-index:1002; box-shadow:0 2px 20px rgba(1,41,112,0.1);
-    }
+    html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+    header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1002; box-shadow:0 2px 20px rgba(1,41,112,0.1);}
     #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
     .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
     .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; cursor:pointer; }
     .user-info:hover { background:#f0f0f0; }
-    .sidebar {
-      position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px);
-      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-      padding-top:15px; box-shadow:2px 0 15px rgba(1,41,112,0.08);
-      transition: width 0.3s ease; overflow:hidden; border-top-right-radius:12px; z-index:1001;
-      font-family:'Poppins',sans-serif;
-    }
+
+    /* Sidebar */
+    .sidebar { position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding-top:15px; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; overflow:hidden; border-top-right-radius:12px; z-index:1001; font-family:'Poppins',sans-serif; }
     .sidebar.collapsed { width:70px; }
     .sidebar-section { margin-bottom:25px; padding:0 15px; }
-    .sidebar-section-title { 
-      font-family:'Nunito',sans-serif;
-      font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; 
-      margin-bottom:10px; padding-left:10px; transition: opacity 0.3s; 
-    }
+    .sidebar-section-title { font-family:'Nunito',sans-serif; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition: opacity 0.3s; }
     .sidebar.collapsed .sidebar-section-title { opacity:0; }
     .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
     .sidebar-link i { width:18px; text-align:center; }
     .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
     .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
+
     .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease; }
     .sidebar.collapsed ~ .main { margin-left:80px; }
-    .card { 
-      background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:30px; 
-      font-family:'Poppins',sans-serif; 
-    }
+
+    .card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:30px; font-family:'Poppins',sans-serif; }
     .card h2 { font-family:'Poppins',sans-serif; margin-bottom:15px; }
+
     table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; }
     th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
     th { font-weight:600; text-transform:uppercase; font-size:13px; }
+    img { max-width:100%; border-radius:12px; }
   </style>
 </head>
 
@@ -65,7 +48,7 @@
     <div class="header-content">
       <div>iAttend Teacher</div>
       <a href="#" class="user-info">
-        <span>Teacher</span>
+        <span>{{ session['user']['email'] if session.get('user') else 'Teacher' }}</span>
         <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
       </a>
     </div>
@@ -73,15 +56,15 @@
 
   <div class="sidebar">
     <div class="sidebar-section">
-      <a class="sidebar-link" href="#"><i class="fas fa-home"></i><span>Dashboard</span></a>
+      <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Class</div>
-      <a class="sidebar-link" href="#"><i class="fas fa-school"></i><span>View Class List</span></a>
-      <a class="sidebar-link active" href="#"><i class="fas fa-clipboard-check"></i><span>Attendance Report</span></a>
+      <a class="sidebar-link" href="{{ url_for('teacher_class_list') }}"><i class="fas fa-school"></i><span>View Class List</span></a>
+      <a class="sidebar-link active" href="{{ url_for('teacher_attendance') }}"><i class="fas fa-clipboard-check"></i><span>Attendance Report</span></a>
     </div>
     <div class="sidebar-section">
-      <a class="sidebar-link" href="#"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+      <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
     </div>
   </div>
 
@@ -135,7 +118,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Save class times & activate scanning
     document.getElementById("saveTimes").addEventListener("click", async () => {
       const start = document.getElementById("startTime").value;
       const cutoff = document.getElementById("cutoffTime").value;
@@ -147,7 +129,6 @@
       alert("Times saved! Camera will start scanning now.");
     });
 
-    // Fetch latest attendance
     async function fetchAttendance() {
       const tbody = document.querySelector('#attendance-table tbody');
       tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
