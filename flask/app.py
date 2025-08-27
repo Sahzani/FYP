@@ -82,7 +82,7 @@ def login():
         return redirect(url_for("home"))
 
 # ------------------ Dashboards ------------------
-@app.route("/student_dashboard")
+@app.route("/student/dashboard")
 def student_dashboard():
     if session.get("role") == "student":
         return render_template("student/S_Dashboard.html")
@@ -105,6 +105,24 @@ def admin_dashboard():
 def student_attendance():
     if session.get("role") == "student":
         return render_template("student/S_History.html")
+    return redirect(url_for("home"))
+
+@app.route("/student/absentapp")
+def student_absentapp():
+    if session.get("role") == "student":
+        return render_template("student/S_AbsentApp.html")
+    return redirect(url_for("home"))
+
+@app.route("/student/profile")
+def student_profile():
+    if session.get("role") == "student":
+        return render_template("student/S_Profile.html")
+    return redirect(url_for("home"))
+
+@app.route("/student/contact")
+def student_contact():
+    if session.get("role") == "student":
+        return render_template("student/S_ContactUs.html")
     return redirect(url_for("home"))
 
 # ------------------ Teacher Pages ------------------
