@@ -72,6 +72,13 @@ def camera_loop():
             time.sleep(0.1)
             continue
 
+        # Check if scanning is active
+        settings_doc = db.collection("settings").document("attendanceTimes").get()
+        settings = settings_doc.to_dict() or {}
+        if not settings.get("active", False):
+            time.sleep(1)
+            continue
+
         frame_count += 1
         recognized_faces = []
 
