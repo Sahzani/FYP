@@ -76,16 +76,16 @@
 </head>
 
 <body>
-  <header>
-    <span id="menu-toggle">&#9776;</span>
-    <div class="header-content">
-      <div>iAttend Teacher</div>
-      <a href="#" class="user-info">
-        <span>Teacher</span>
-        <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
-      </a>
-    </div>
-  </header>
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <div>iAttend</div>
+    <a href="#" class="user-info">
+      <span>{{ session['user']['email'] if session.get('user') else 'Teacher' }}</span>
+      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
+    </a>
+  </div>
+</header>
 
   <!-- Sidebar -->
  <div class="sidebar">

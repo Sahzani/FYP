@@ -29,7 +29,7 @@ for doc in docs:
     student_id = doc.id
     STUDENTS[student_id] = data
 
-    photo_filename = data.get("photo")  # stored filename in Firestore
+    photo_filename = data.get("photo")
     if not photo_filename:
         print(f"[WARN] Student {student_id} has no photo, skipping")
         continue
@@ -56,10 +56,10 @@ for doc in docs:
 print(f"[INFO] Total students with encodings: {len(encodings)}")
 
 # ===== Attendance Tracking =====
-attended_students = set()  # track who has been detected
+attended_students = {}  # Firestore ID -> status written
 
 # ===== Camera Thread =====
-camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)  # adjust camera index
+camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 latest_frame = None
 frame_lock = threading.Lock()
 
@@ -72,12 +72,17 @@ def camera_loop():
             time.sleep(0.1)
             continue
 
-        # Check if scanning is active
+        # Fetch class times
         settings_doc = db.collection("settings").document("attendanceTimes").get()
         settings = settings_doc.to_dict() or {}
         if not settings.get("active", False):
             time.sleep(1)
             continue
+
+        start_time_str = settings.get("startTime", "08:30")
+        cutoff_time_str = settings.get("cutoffTime", "09:00")
+        start_time = datetime.strptime(start_time_str, "%H:%M").time()
+        cutoff_time = datetime.strptime(cutoff_time_str, "%H:%M").time()
 
         frame_count += 1
         recognized_faces = []
@@ -97,25 +102,34 @@ def camera_loop():
                         student_id = classNames[best_idx]
 
                         if student_id not in attended_students:
-                            attended_students.add(student_id)
+                            # Determine Present / Late / Absent
+                            now_time = datetime.now().time()
+                            if now_time <= start_time:
+                                status = "Present"
+                            elif now_time <= cutoff_time:
+                                status = "Late"
+                            else:
+                                status = "Absent"
+
+                            attended_students[student_id] = status
+
                             student_data = STUDENTS.get(student_id, {})
                             name = f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip()
                             email = student_data.get("email","")
                             student_class = student_data.get("studentClass","")
-                            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                            # Write to Firestore
+                            # Save to Firestore
                             db.collection("attendance").add({
                                 "student_id": student_id,
                                 "name": name,
                                 "email": email,
                                 "class": student_class,
+                                "status": status,
                                 "time": firestore.SERVER_TIMESTAMP
                             })
 
-                            print(f"[INFO] {name} detected at {now}")
+                            print(f"[INFO] {name} detected at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} as {status}")
 
-                # Always append face info
                 recognized_faces.append((student_id, left, top, right, bottom))
 
         # Draw rectangles and labels
