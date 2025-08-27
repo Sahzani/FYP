@@ -464,8 +464,8 @@
   <header>
     <span id="menu-toggle">&#9776;</span>
     <div class="header-content">
-      <a href="S_Dashboard.html" style="text-decoration:none;color:inherit;">iAttend</a>
-      <a href="S_Profile.html" class="user-info">
+      <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
+      <a href="{{ url_for('student_profile') }}" class="user-info">
         <span id="header-user-name">Loading...</span>
         <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile">
       </a>
@@ -475,19 +475,19 @@
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-section">
-      <a class="sidebar-link" href="S_Dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+      <a class="sidebar-link" href="{{ url_for('student_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Analyse</div>
-      <a class="sidebar-link" href="S_History.html"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
+      <a class="sidebar-link" href="{{ url_for('student_attendance') }}"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Request</div>
-      <a class="sidebar-link active" href="S_AbsentApp.html"><i class="fas fa-file-alt"></i><span>Absent Application</span></a>
-      <a class="sidebar-link" href="S_ContactUs.html"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
+      <a class="sidebar-link active" href="{{ url_for('student_absentapp') }}"><i class="fas fa-file-alt"></i><span>Absent Application</span></a>
+      <a class="sidebar-link" href="{{ url_for('student_contact') }}"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
     </div>
     <div class="sidebar-section">
-      <a class="sidebar-link" href="#"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+      <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
     </div>
   </div>
 
