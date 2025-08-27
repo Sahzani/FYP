@@ -178,6 +178,12 @@ def teacher_attendance():
         return render_template("teacher/T_attendance_report.html")
     return redirect(url_for("home"))
 
+@app.route("/teacher/daily")
+def teacher_daily_attend():
+    if session.get("role") == "teacher":
+        return render_template("teacher/T_DailyAttend.html")
+    return redirect(url_for("home"))
+
 @app.route("/teacher/login")
 def teacher_login():
     return render_template("teacher/T_login.html")
