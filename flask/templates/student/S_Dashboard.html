@@ -69,19 +69,19 @@
 
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link active" href="S_Dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    <a class="sidebar-link active" href="{{ url_for('student_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-title">Analyse</div>
-    <a class="sidebar-link" href="S_History.html"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
+    <a class="sidebar-link" href="{{ url_for('student_attendance') }}"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-title">Request</div>
     <a class="sidebar-link" href="S_AbsentApp.html"><i class="fas fa-file-alt"></i><span>Absent Application</span></a>
     <a class="sidebar-link" href="S_ContactUs.html"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
   </div>
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="/templates/combinePage/Login.html"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
