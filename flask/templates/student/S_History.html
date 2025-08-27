@@ -52,6 +52,8 @@
     .status-absent { color:red; font-weight:600; }
 
     .attendance-percentage { font-size:16px; font-weight:600; margin-bottom:15px; }
+    .text-green-600 { color: green; font-weight:700; }
+    .text-red-600 { color: red; font-weight:700; }
   </style>
 </head>
 <body>
@@ -60,7 +62,7 @@
   <div class="header-content">
     <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="{{ url_for('student_profile') }}" class="user-info">
-      <span id="header-user-name">Loading...</span>
+      <span id="header-user-name">{{ session['user']['email'] }}</span>
       <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=P" alt="User Profile Picture">
     </a>
   </div>
@@ -88,9 +90,30 @@
   <h1 class="page-title">Attendance History</h1>
   <div class="breadcrumb"><span class="section">Attendance</span> / <span class="current">Attendance History</span></div>
 
+  <!-- Summary card -->
   <div class="card">
-    <h2>Your Attendance</h2>
-    <p class="attendance-percentage">Attendance Percentage: <span id="attendance-percentage">0%</span></p>
+    <h2>Your Attendance Summary</h2>
+    <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+      <div style="background:#f0f0f0; padding:10px 15px; border-radius:8px; font-weight:600;">
+        Total Classes: {{ total }}
+      </div>
+      <div style="background:#d4edda; color:#155724; padding:10px 15px; border-radius:8px; font-weight:600;">
+        Present: {{ present }}
+      </div>
+      <div style="background:#f8d7da; color:#721c24; padding:10px 15px; border-radius:8px; font-weight:600;">
+        Absent: {{ absent }}
+      </div>
+      <div style="padding:10px 15px; border-radius:8px; font-weight:600; 
+        background: {% if percentage >= 75 %}#d4edda{% else %}#f8d7da{% endif %};
+        color: {% if percentage >= 75 %}#155724{% else %}#721c24{% endif %};">
+        Attendance: {{ percentage }}%
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance table card -->
+  <div class="card" style="margin-top:20px;">
+    <h2>Attendance Records</h2>
     <div class="table-responsive">
       <table>
         <thead>
@@ -102,85 +125,27 @@
             <th>Remarks</th>
           </tr>
         </thead>
-        <tbody id="attendance-table-body">
-          <tr><td colspan="4">Loading...</td></tr>
+        <tbody>
+          {% if records %}
+            {% for record in records %}
+              {% set row_percentage = 100 if record.status == 'Present' else 0 %}
+              <tr title="Attendance: {{ row_percentage }}%" style="background-color: {% if record.status == 'Present' %}#d4edda{% else %}#f8d7da{% endif %};">
+                <td>{{ record.date }}</td>
+                <td>{{ record.time }}</td>
+                <td>{{ record.subject }}</td>
+                <td class="{% if record.status == 'Present' %}status-present{% else %}status-absent{% endif %}">{{ record.status }}</td>
+                <td>{{ record.remarks or '-' }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="5">No attendance records found</td></tr>
+          {% endif %}
         </tbody>
       </table>
     </div>
   </div>
 </div>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-    authDomain: "aimanzamani.firebaseapp.com",
-    projectId: "aimanzamani",
-    storageBucket: "aimanzamani.firebasestorage.app",
-    messagingSenderId: "63348630728",
-    appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // Replace this with the real student's ID or email from Flask session
-  const currentStudentId = "{{ session['user_id'] }}"; // e.g., email or ID
-
-  async function loadAttendance() {
-    const tbody = document.getElementById("attendance-table-body");
-    tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
-
-    try {
-      const q = query(
-        collection(db, "attendance"),
-        where("studentId", "==", currentStudentId),
-        orderBy("date", "desc")
-      );
-      const snapshot = await getDocs(q);
-
-      let total = 0;
-      let presentCount = 0;
-
-      if (snapshot.empty) {
-        tbody.innerHTML = "<tr><td colspan='4'>No attendance records found</td></tr>";
-        document.getElementById("attendance-percentage").textContent = "0%";
-        return;
-      }
-
-      tbody.innerHTML = "";
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        total++;
-        if(data.status === "Present") presentCount++;
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${data.date || ""}</td>
-          <td>${data.time || ""}</td>
-          <td>${data.subject || ""}</td>
-          <td class="${data.status === "Present" ? "status-present" : "status-absent"}" title="${data.remarks || ''}">
-            ${data.status}
-          </td>
-          <td>${data.remarks || "-"}</td> 
-        `;
-        tbody.appendChild(tr);
-      });
-
-      const percentage = total ? ((presentCount / total) * 100).toFixed(2) : 0;
-      document.getElementById("attendance-percentage").textContent = `${percentage}%`;
-
-    } catch (e) {
-      console.error("Error loading attendance:", e);
-      tbody.innerHTML = "<tr><td colspan='4'>Error loading data</td></tr>";
-      document.getElementById("attendance-percentage").textContent = "0%";
-    }
-  }
-
-  loadAttendance();
-</script>
+    
 
 <script>
   const menuToggle = document.getElementById('menu-toggle');
