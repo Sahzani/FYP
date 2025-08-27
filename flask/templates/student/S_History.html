@@ -99,6 +99,7 @@
             <th>Time</th>
             <th>Subject</th>
             <th>Status</th>
+            <th>Remarks</th>
           </tr>
         </thead>
         <tbody id="attendance-table-body">
@@ -160,7 +161,10 @@
           <td>${data.date || ""}</td>
           <td>${data.time || ""}</td>
           <td>${data.subject || ""}</td>
-          <td class="${data.status === "Present" ? "status-present" : "status-absent"}">${data.status}</td>
+          <td class="${data.status === "Present" ? "status-present" : "status-absent"}" title="${data.remarks || ''}">
+            ${data.status}
+          </td>
+          <td>${data.remarks || "-"}</td> 
         `;
         tbody.appendChild(tr);
       });

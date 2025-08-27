@@ -33,10 +33,11 @@ def login():
         return redirect(url_for("home"))
 
     try:
+        # ---------- Admin Login ----------
         if email == "admin@admin.edu":
             doc = db.collection("admin").document("admin").get()
             if doc.exists and doc.to_dict().get("password") == password:
-                session["user"] = email
+                session["user"] = {"uid": "admin", "email": email}  # ✅ store as dict
                 session["role"] = "admin"
                 session.permanent = True if remember == "on" else False
                 return redirect(url_for("admin_dashboard"))
@@ -45,7 +46,7 @@ def login():
                 return redirect(url_for("home"))
 
         # ---------- Student / Teacher ----------
-        user = auth.get_user_by_email(email)
+        user = auth.get_user_by_email(email)   # Firebase lookup
         uid = user.uid
 
         collections = {"student": "students", "teacher": "teachers"}
@@ -65,7 +66,8 @@ def login():
             flash("User not found in Firestore.")
             return redirect(url_for("home"))
 
-        session["user"] = email
+        # ✅ FIX: Store both uid + email in session
+        session["user"] = {"uid": uid, "email": email}
         session["role"] = role
         session.permanent = True if remember == "on" else False
 
@@ -101,11 +103,43 @@ def admin_dashboard():
     return redirect(url_for("home"))
 
 # ------------------ Student Pages ------------------
-@app.route("/student/attendance")
-def student_attendance():
-    if session.get("role") == "student":
-        return render_template("student/S_History.html")
-    return redirect(url_for("home"))
+@app.route("/student/history")
+def student_history():
+    if 'user' not in session:  # check if logged in
+        return redirect(url_for('login'))
+
+    user_id = session['user']['uid']  # get student ID from session
+
+    # 🔹 Fetch attendance records from Firestore
+    attendance_ref = firestore.client().collection('attendance').where('student_id', '==', user_id)
+    docs = attendance_ref.stream()
+
+    records = []
+    total = 0
+    present = 0
+    absent = 0
+
+    for doc in docs:
+        data = doc.to_dict()
+        records.append(data)
+
+        total += 1
+        if data.get('status') == 'Present':
+            present += 1
+        elif data.get('status') == 'Absent':
+            absent += 1
+
+    # 🔹 Calculate percentage
+    percentage = (present / total * 100) if total > 0 else 0
+
+    return render_template(
+        "student/S_History.html",
+        records=records,
+        present=present,
+        absent=absent,
+        total=total,
+        percentage=round(percentage, 2)
+    )
 
 @app.route('/student/absentapp')
 def student_absentapp():
