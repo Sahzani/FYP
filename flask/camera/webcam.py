@@ -82,24 +82,23 @@ def camera_loop():
         frame_count += 1
         recognized_faces = []
 
-        if frame_count % 5 == 0 and len(encodings) > 0:
+        if frame_count % 5 == 0:
             small = cv2.resize(frame, (0,0), fx=0.25, fy=0.25)
             rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
             boxes = face_recognition.face_locations(rgb_small, model="hog")
             face_encs = face_recognition.face_encodings(rgb_small, boxes)
 
             for enc, (top, right, bottom, left) in zip(face_encs, boxes):
-                matches = face_recognition.compare_faces(encodings, enc, tolerance=0.6)
-                dists = face_recognition.face_distance(encodings, enc)
-                if len(dists) > 0:
-                    best_idx = np.argmin(dists)
-                    if matches[best_idx]:
+                student_id = None
+                if encodings:
+                    matches = face_recognition.compare_faces(encodings, enc, tolerance=0.6)
+                    if True in matches:
+                        best_idx = np.argmax(matches)
                         student_id = classNames[best_idx]
+
                         if student_id not in attended_students:
                             attended_students.add(student_id)
                             student_data = STUDENTS.get(student_id, {})
-
-                            # Compose full name
                             name = f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip()
                             email = student_data.get("email","")
                             student_class = student_data.get("studentClass","")
@@ -111,19 +110,24 @@ def camera_loop():
                                 "name": name,
                                 "email": email,
                                 "class": student_class,
-                                "time": firestore.SERVER_TIMESTAMP 
+                                "time": firestore.SERVER_TIMESTAMP
                             })
 
                             print(f"[INFO] {name} detected at {now}")
 
-                        # Draw bounding box
-                        top, right, bottom, left = [v*4 for v in (top, right, bottom, left)]
-                        recognized_faces.append((student_id, left, top, right, bottom))
+                # Always append face info
+                recognized_faces.append((student_id, left, top, right, bottom))
 
+        # Draw rectangles and labels
         for student_id, x1, y1, x2, y2 in recognized_faces:
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
-            cv2.putText(frame, f"{STUDENTS[student_id].get('firstName','')} {STUDENTS[student_id].get('lastName','')}", 
-                        (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+            x1, y1, x2, y2 = [v*4 for v in (x1, y1, x2, y2)]
+            if student_id:
+                name = f"{STUDENTS[student_id].get('firstName','')} {STUDENTS[student_id].get('lastName','')}".strip()
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
+                cv2.putText(frame, name, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
+            else:
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0,0,255), 2)
+                cv2.putText(frame, "Unknown", (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
 
         ok, buf = cv2.imencode(".jpg", frame)
         if ok:
