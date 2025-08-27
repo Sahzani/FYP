@@ -103,8 +103,8 @@ def admin_dashboard():
     return redirect(url_for("home"))
 
 # ------------------ Student Pages ------------------
-@app.route("/student/history")
-def student_history():
+@app.route("/student_attendance")
+def student_attendance():
     if 'user' not in session:  # check if logged in
         return redirect(url_for('login'))
 
