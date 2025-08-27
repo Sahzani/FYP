@@ -5,81 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>iAttend - Attendance Report</title>
 
-  <!-- Tailwind (optional, keep if you need utility classes) -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Fonts and Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
   <style>
+    /* Your existing styles */
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-
-    /* Header */
-    header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+    header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; display:flex; align-items:center; padding-left:20px; font-weight:700; font-size:26px; color:#212529; z-index:1000; box-shadow:0 2px 20px rgba(1,41,112,0.1);}
     #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
     .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
-    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; }
+    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; cursor:pointer; }
     .user-info:hover { background:#f0f0f0; }
-    .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-    .user-info span { font-size:16px; font-weight:600; color:#444; }
-
-    /* Sidebar */
-    .sidebar {
-      position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px);
-      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-      padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08);
-      transition:width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden;
-    }
+    .sidebar { position:fixed; top:60px; left:0; width:240px; height:calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; border-top-right-radius:12px; overflow:hidden; transition: width 0.3s; box-shadow:2px 0 15px rgba(1,41,112,0.08); z-index:999; }
     .sidebar.collapsed { width:70px; }
-    .sidebar-section { margin-bottom:25px; padding:0 15px; }
-    .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
-    .sidebar.collapsed .sidebar-section-title { opacity:0; }
-    .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
+    .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; }
+    .sidebar-link span { transition:0.3s; }
     .sidebar.collapsed .sidebar-link span { display:none; }
-    .sidebar-link i { width:18px; text-align:center; }
-    .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
-    .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
-
-    /* Main content */
-    .main {
-      margin-left:260px; padding:100px 30px 30px; font-family:'Nunito', sans-serif; transition:margin-left 0.3s ease; min-height:100vh;
-    }
+    .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition: margin-left 0.3s; }
     .sidebar.collapsed ~ .main { margin-left:80px; }
-
-    .page-title { font-family:'Poppins', sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
-    .breadcrumb { font-family:'Nunito', sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
-    .breadcrumb .section { color:#989797; }
-    .breadcrumb .current { color:#444444; }
-
-    /* Card for Attendance */
-    .card {
-      background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .card:hover { transform: translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
-    .card h2 { margin-top:0; margin-bottom:20px; font-family:'Nunito',sans-serif; font-weight:600; font-size:24px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
-
-    /* Attendance Table */
-    .table-responsive { overflow-x:auto; }
-    table { width:100%; border-collapse:collapse; min-width:600px; }
-    thead { background:#f9f9f9; }
-    th, td { padding:12px; text-align:left; font-size:15px; }
-    th { color:#555; text-transform:uppercase; font-size:13px; font-weight:600; border-bottom:2px solid #ddd; }
-    td { color:#333; border-bottom:1px solid #eee; }
-    tr:hover td { background:#fafafa; }
+    .card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:30px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
+    th { font-weight:600; text-transform:uppercase; font-size:13px; }
     .status-present { color:green; font-weight:600; }
+    .status-late { color:orange; font-weight:600; }
     .status-absent { color:red; font-weight:600; }
-
-    /* Webcam feed */
-    .video-container img { width:100%; max-width:640px; display:block; margin:0 auto 20px; border-radius:12px; }
-
-    /* Responsive */
-    @media(max-width:768px){
-      .main { margin-left:0; padding:90px 15px; }
-      .sidebar { position:fixed; z-index:1000; }
-    }
   </style>
 </head>
 
@@ -98,59 +50,60 @@
 
   <!-- Sidebar -->
   <div class="sidebar">
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="T_dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Class</div>
-      <a class="sidebar-link" href="T_class_list.html"><i class="fas fa-school"></i><span>View Class List</span></a>
-      <a class="sidebar-link" href="T_DailyAttend.html"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Reports</div>
-      <a class="sidebar-link active" href="T_attendance_report.html"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
-    </div>
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="/teacher/logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
-    </div>
+    <a class="sidebar-link" href="T_dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    <a class="sidebar-link" href="T_class_list.html"><i class="fas fa-school"></i><span>View Class List</span></a>
+    <a class="sidebar-link active" href="T_attendance_report.html"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
+    <a class="sidebar-link" href="/teacher/logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 
   <!-- Main Content -->
   <div class="main">
     <h1 class="page-title">Attendance Report</h1>
-    <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Attendance Report</span></div>
 
+    <!-- Teacher sets class time -->
+    <div class="card">
+      <h2>Set Class Time</h2>
+      <label>Class Start:
+        <input type="time" id="startTime" value="08:30">
+      </label>
+      <label style="margin-left:20px;">Late Cutoff:
+        <input type="time" id="cutoffTime" value="09:00">
+      </label>
+      <button id="saveTimes" class="px-4 py-2 bg-blue-600 text-white rounded-lg ml-4">Save</button>
+    </div>
+
+    <!-- Live webcam feed -->
     <div class="card">
       <h2>Live Attendance Feed</h2>
-      <div class="video-container">
-        <img id="webcam-feed" src="http://localhost:5001/video_feed" alt="Live Attendance Feed">
-      </div>
+      <img id="webcam-feed" src="http://localhost:5001/video_feed" alt="Live Feed">
+    </div>
 
-      <div class="table-responsive">
-        <table id="attendance-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Class</th>
-              <th>Timestamp</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+    <!-- Attendance Table -->
+    <div class="card">
+      <h2>Attendance Table</h2>
+      <table id="attendance-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Class</th>
+            <th>Status</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Firebase & Toggle Script -->
+  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
       authDomain: "aimanzamani.firebaseapp.com",
-      databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "aimanzamani",
       storageBucket: "aimanzamani.appspot.com",
       messagingSenderId: "63348630728",
@@ -160,29 +113,33 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // Save class times
+    document.getElementById("saveTimes").addEventListener("click", async () => {
+      const start = document.getElementById("startTime").value;
+      const cutoff = document.getElementById("cutoffTime").value;
+      await setDoc(doc(db, "settings", "attendanceTimes"), { startTime: start, cutoffTime: cutoff });
+      alert("Times saved!");
+    });
+
+    // Load last 50 attendance records
     async function fetchAttendance() {
       const tbody = document.querySelector('#attendance-table tbody');
-      tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-
-      try {
-        const q = query(collection(db, 'attendance'), orderBy('time','desc'), limit(50));
-        const snapshot = await getDocs(q);
-        tbody.innerHTML = '';
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${data.name || ''}</td>
-            <td>${data.email || ''}</td>
-            <td>${data.class || ''}</td>
-            <td>${data.time || ''}</td>
-          `;
-          tbody.appendChild(row);
-        });
-      } catch(err) {
-        console.error(err);
-        tbody.innerHTML = '<tr><td colspan="4">Error loading data</td></tr>';
-      }
+      tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+      const q = query(collection(db, 'attendance'), orderBy('time','desc'), limit(50));
+      const snapshot = await getDocs(q);
+      tbody.innerHTML = '';
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${data.name || ''}</td>
+          <td>${data.email || ''}</td>
+          <td>${data.class || ''}</td>
+          <td class="status-${(data.status || 'absent').toLowerCase()}">${data.status || 'Absent'}</td>
+          <td>${data.time || ''}</td>
+        `;
+        tbody.appendChild(row);
+      });
     }
 
     fetchAttendance();
@@ -192,9 +149,7 @@
   <script>
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
-    menuToggle.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-    });
+    menuToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
   </script>
 </body>
 </html>
