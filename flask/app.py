@@ -107,10 +107,10 @@ def student_attendance():
         return render_template("student/S_History.html")
     return redirect(url_for("home"))
 
-@app.route("/student/absentapp")
+@app.route('/student/absentapp')
 def student_absentapp():
     if session.get("role") == "student":
-        return render_template("student/S_AbsentApp.html")
+        return render_template('student/S_AbsentApp.html')
     return redirect(url_for("home"))
 
 @app.route("/student/profile")
