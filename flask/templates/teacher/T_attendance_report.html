@@ -64,6 +64,15 @@
     th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
     th { font-weight:600; text-transform:uppercase; font-size:13px; }
 
+    /* Main */
+    .main { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito', sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
+    .sidebar.collapsed ~ .main { margin-left:80px; }
+
+    .page-title { font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
+    .breadcrumb { font-size:14px; font-weight:600; margin-bottom:30px; }
+    .breadcrumb .section { color:#989797; }
+    .breadcrumb .current { color:#444; }
+
     /* Optional: color-coded status */
     td.status-Present { color: green; font-weight:600; }
     td.status-Late { color: orange; font-weight:600; }
@@ -102,7 +111,8 @@
 </div>
 
 <div class="main">
-  <h1 class="page-title">Attendance Report</h1>
+    <h1 class="page-title">Attendance Report</h1>
+    <div class="breadcrumb"><span class="section">Reports</span> / <span class="current">Attendance Report</span></div>
 
   <div class="card">
     <h2>Set Class Time</h2>
