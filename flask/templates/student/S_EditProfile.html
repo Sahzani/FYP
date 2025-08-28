@@ -109,8 +109,8 @@
         <div class="header-content">
             <a href="#" style="text-decoration:none;color:inherit;">iAttend</a>
             <div class="user-info">
-                <span id="header-user-name">Loading...</span>
-
+                <span>{{ session['user']['email'] if session.get('user') else 'Student' }}</span>
+                
                 <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile Picture">
             </div>
         </div>
