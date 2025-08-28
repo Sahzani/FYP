@@ -19,7 +19,6 @@ header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shado
 .user-info:hover{background:#f0f0f0;}
 .user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
 .user-info span{font-size:16px;font-weight:600;color:#444;}
-
 /* Sidebar */
 .sidebar{position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition:width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden;}
 .sidebar.collapsed{width:70px;}
@@ -31,11 +30,9 @@ header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shado
 .sidebar-link i{width:18px;text-align:center;}
 .sidebar-link:hover{background:rgba(255,255,255,0.5);transform:translateX(4px);}
 .sidebar-link.active{background:rgba(255,255,255,0.7);color:#4154F1;font-weight:600;}
-
 /* Main content */
 .main{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s ease;min-height:100vh;}
 .sidebar.collapsed ~ .main{margin-left:80px;}
-
 /* Page elements */
 .page-title{font-family:'Poppins',sans-serif;font-size:28px;font-weight:500;color:#444;margin-bottom:10px;}
 .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-bottom:20px;}
@@ -61,16 +58,15 @@ tr:hover td{background:#fafafa;}
 .status-late{color:#d17b00;font-weight:700;}
 .status-absent{color:#c0392b;}
 @media(max-width:768px){.main{margin-left:0;padding:90px 15px;}.sidebar{position:fixed;z-index:1000;}}
-
 </style>
 </head>
 <body>
 
- <header>
+<header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
-    <a href="{{ url_for('teacher_profile') }}" class="user-info">
+    <div>iAttend</div>
+    <a href="#" class="user-info">
       <span>{{ session['user']['email'] if session.get('user') else 'Teacher' }}</span>
       <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
     </a>
@@ -183,10 +179,10 @@ async function loadStudents(){
   });
 }
 
+// ===== NEW loadDailyAttendance() reads saved status =====
 async function loadDailyAttendance(){
   const selectedClass = classFilter.value;
   const ymd = datePicker.value || localYMD(new Date());
-  const [cutHH,cutMM] = (lateCutoff.value||'08:15').split(':');
 
   tableBody.innerHTML='<tr><td colspan="5">Loading...</td></tr>';
 
@@ -196,35 +192,39 @@ async function loadDailyAttendance(){
   const attQuery = query(collection(db,'attendance'),where('time','>=',startTs),where('time','<=',endTs));
   const attSnap = await getDocs(attQuery);
 
-  const firstCheckInByUid = {};
+  const attMap = {};
   attSnap.forEach(doc=>{
     const a=doc.data();
     const uid=a.student_id||doc.id;
     const cls=a.class||'';
     if(!uid) return;
     if(selectedClass!=='all' && cls!==selectedClass) return;
-    const t=a.time;
-    if(!firstCheckInByUid[uid] || t.toMillis() < firstCheckInByUid[uid].toMillis()){
-      firstCheckInByUid[uid]=t;
+    if(!attMap[uid] || a.time.toMillis() < attMap[uid].time.toMillis()){
+      attMap[uid]=a; // store whole record including saved status
     }
   });
 
   const rows=[];
   Object.entries(studentsByUid).forEach(([uid,s])=>{
     if(selectedClass!=='all' && s.class!==selectedClass) return;
-    const ts=firstCheckInByUid[uid]||null;
+    const record = attMap[uid]||null;
     let status='Absent';
-    if(ts){
-      const d=ts.toDate();
-      status=(d.getHours()>parseInt(cutHH) || (d.getHours()==parseInt(cutHH) && d.getMinutes()>parseInt(cutMM)))?'Late':'Present';
+    let time='-';
+    if(record){
+      status = record.status || 'Present'; // read saved status
+      time = formatTime(record.time);
     }
-    rows.push({name:s.name,email:s.email,class:s.class,time:formatTime(ts),status});
+    rows.push({name:s.name,email:s.email,class:s.class,time,status});
   });
 
   rows.sort((a,b)=>a.name.localeCompare(b.name));
 
   tableBody.innerHTML='';
-  if(rows.length===0){tableBody.innerHTML=`<tr><td colspan="5">No students found${selectedClass!=='all'?' for class '+selectedClass:''}.</td></tr>`;return;}
+  if(rows.length===0){
+    tableBody.innerHTML=`<tr><td colspan="5">No students found${selectedClass!=='all'?' for class '+selectedClass:''}.</td></tr>`;
+    return;
+  }
+
   rows.forEach(r=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`
