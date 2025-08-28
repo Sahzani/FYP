@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 from datetime import timedelta
+from werkzeug.utils import secure_filename
+
 import os
 
 # ------------------ Flask Setup ------------------
@@ -238,7 +240,6 @@ def student_profile():
 # ------------------ Student Edit Profile ------------------
 @app.route("/student/editprofile", methods=["GET", "POST"])
 def student_editprofile():
-    # Check user role
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
@@ -253,6 +254,7 @@ def student_editprofile():
     student_data = None
     for doc in student_doc:
         student_data = doc.to_dict()
+        student_ref = doc.reference
         break
 
     if not student_data:
@@ -260,21 +262,30 @@ def student_editprofile():
         return redirect(url_for("student_dashboard"))
 
     if request.method == "POST":
-        # Handle profile update
         nickname = request.form.get("nickname")
         phone = request.form.get("phone")
-        profile_pic = request.form.get("profile_pic")  # Optional: base64 or URL from front-end
+        profile_pic_file = request.files.get("profilePic")  # File from HTML
+
+        update_data = {
+            "nickname": nickname,
+            "phone": phone
+        }
+
+        # Handle profile picture upload locally
+        if profile_pic_file and profile_pic_file.filename != "":
+            filename = secure_filename(profile_pic_file.filename)
+            # Save to 'static/uploads/student_profiles/<uid>/'
+            upload_dir = os.path.join("static", "uploads", "student_profiles", uid)
+            os.makedirs(upload_dir, exist_ok=True)
+            file_path = os.path.join(upload_dir, filename)
+            profile_pic_file.save(file_path)
+            # Store relative path from 'static/' in Firestore
+            update_data["profilePic"] = f"uploads/student_profiles/{uid}/{filename}"
 
         # Update Firestore
-        student_ref = db.collection("students").document(student_data["uid"])
-        student_ref.update({
-            "nickname": nickname,
-            "phone": phone,
-            "profilePic": profile_pic
-        })
-
+        student_ref.update(update_data)
         flash("Profile updated successfully!")
-        return redirect(url_for("student_EditProfile"))
+        return redirect(url_for("student_editprofile"))
 
     # Prepare profile fields for GET
     profile = {
@@ -286,14 +297,12 @@ def student_editprofile():
         "studentClass": student_data.get("studentClass", "-"),
         "phone": student_data.get("phone", "-"),
         "email": user.get("email", "-"),
-        "profile_pic": student_data.get("profilePic", "https://placehold.co/140x140/E9E9E9/333333?text=User"),
+        "profile_pic": student_data.get("profilePic", "uploads/default/user.png"),  # default relative path
         "course": student_data.get("course", "-"),
         "intake": student_data.get("intake", "-")
     }
 
     return render_template("student/S_EditProfile.html", profile=profile)
-
-
 # ------------------ Change Password for student ------------------
 @app.route("/student/change_password", methods=["POST"])
 def student_change_password():
@@ -315,7 +324,7 @@ def student_change_password():
 
     if new_password != confirm_password:
         flash("New password and confirmation do not match.", "error")
-        return redirect(url_for("student_editprofile"))
+        return redirect(url_for("student_EditProfile"))
 
     # TODO: Implement password verification and update using Firebase Auth
     # For example:
