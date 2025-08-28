@@ -86,9 +86,67 @@ def login():
 # ------------------ Dashboards ------------------
 @app.route("/student_dashboard")
 def student_dashboard():
-    if session.get("role") == "student":
-        return render_template("student/S_Dashboard.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
+
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("home"))
+
+    uid = user["uid"]
+
+    # Fetch student info
+    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
+    student_data = None
+    for doc in student_doc:
+        student_data = doc.to_dict()
+        break
+
+    full_name = "Student"
+    if student_data:
+        first = student_data.get("firstName", "")
+        last = student_data.get("lastName", "")
+        full_name = f"{first} {last}".strip() or "Student"
+
+    # Fetch attendance stats
+    attendance_docs = db.collection("attendance").where("student_id", "==", uid).stream()
+    present = absent = late = streak = 0
+    unexcused_absences = 0
+    temp_streak = 0
+
+    for doc in attendance_docs:
+        data = doc.to_dict()
+        status = data.get("status")
+        if status == "Present":
+            present += 1
+            temp_streak += 1
+        elif status == "Late":
+            late += 1
+            temp_streak = 0
+        elif status == "Absent":
+            absent += 1
+            if not data.get("letter"):
+                unexcused_absences += 1
+            temp_streak = 0
+        streak = max(streak, temp_streak)
+
+    # Notifications
+    if late >= 3:
+        notification = "You have been late more than 3 times!"
+    elif unexcused_absences >= 3:
+        notification = "Your attendance rate is dropped due to 3 unexcused absences this month."
+    else:
+        notification = "No new notifications."
+
+    return render_template(
+        "student/S_Dashboard.html",
+        full_name=full_name,
+        stats_present=present,
+        stats_absent=absent,
+        stats_late=late,
+        attendance_streak=streak,
+        notification_message=notification
+    )
 
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
@@ -147,11 +205,44 @@ def student_absentapp():
         return render_template('student/S_AbsentApp.html')
     return redirect(url_for("home"))
 
+# ------------------ Student Profile ------------------
 @app.route("/student/profile")
 def student_profile():
-    if session.get("role") == "student":
-        return render_template("student/S_Profile.html")
-    return redirect(url_for("home"))
+    # Check user role
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
+
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("home"))
+
+    uid = user.get("uid")
+
+    # Fetch student info from Firestore
+    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
+    student_data = None
+    for doc in student_doc:
+        student_data = doc.to_dict()
+        break
+
+    if not student_data:
+        flash("Student data not found.")
+        return redirect(url_for("student_dashboard"))
+
+    # Prepare profile fields with defaults
+    profile = {
+        "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
+        "student_id": student_data.get("studentID", "-"),
+        "nickname": student_data.get("nickname", "-"),
+        "studentClass": student_data.get("studentClass", "-"),  
+        "phone": student_data.get("phone", "-"),
+        "email": user.get("email", "-"),
+        "profile_pic": student_data.get("profilePic", "https://placehold.co/140x140/E9E9E9/333333?text=User"),
+        "course": student_data.get("course", "-"),
+        "intake": student_data.get("intake", "-")
+    }
+
+    return render_template("student/S_Profile.html", profile=profile)
 
 @app.route("/student/contact")
 def student_contact():
@@ -194,7 +285,6 @@ def teacher_logout():
     return redirect(url_for("home"))
 
 # ------------------ Admin Pages ------------------
-
 # STUDENTS
 @app.route("/admin/student_add")
 def admin_student_add():
