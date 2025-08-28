@@ -52,30 +52,17 @@
         .breadcrumb .section { color:#989797; }
         .breadcrumb .current { color:#444444; }
 
-        .card {
-            background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+        .card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .card:hover { transform: translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
-
         .card h2 { margin-top:0; margin-bottom:20px; font-family:'Nunito',sans-serif; font-weight:600; font-size:24px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
 
         .profile-content { display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap; }
-       .profile-pic-container {
-    width: 120px;
-    height: 120px;
-    position: relative;
-    flex-shrink: 0;      /* prevent shrinking in flex layouts */
-}
-
-.profile-pic-container img {
-    width: 120px;        /* match container width */
-    height: 120px;       /* match container height */
-    display: block;      /* remove inline spacing */
-    border-radius: 50%;  /* perfect circle */
-    object-fit: cover;   /* cover the container without distortion */
-    border: 2px solid #ddd;
-}
+        .profile-pic-container {
+            width: 120px; height: 120px; position: relative; flex-shrink: 0;
+        }
+        .profile-pic-container img {
+            width: 120px; height: 120px; display: block; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;
+        }
         .profile-pic-container:hover img { border:2px solid #4154F1; }
         .edit-icon {
             position:absolute; bottom:0; right:0; background:#4154F1; color:#fff; padding:8px; border-radius:50%; cursor:pointer; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background 0.3s ease;
@@ -85,9 +72,7 @@
         .profile-details { flex-grow:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); gap:20px; }
         .form-group { display:flex; flex-direction:column; }
         .form-group label { font-size:14px; color:#555; margin-bottom:5px; font-weight:600; }
-        .form-group input {
-            padding:10px 12px; border:1px solid #ddd; border-radius:5px; background:#fcfcfc; font-size:15px; font-family:'Open Sans',sans-serif; transition:0.3s;
-        }
+        .form-group input { padding:10px 12px; border:1px solid #ddd; border-radius:5px; background:#fcfcfc; font-size:15px; font-family:'Open Sans',sans-serif; transition:0.3s; }
         .form-group input:focus { border-color:#4154F1; box-shadow:0 0 5px rgba(65,84,241,0.4); outline:none; }
         .form-group input:disabled { background:#f5f5f5; color:#777; cursor:not-allowed; }
 
@@ -113,15 +98,15 @@
 </head>
 <body>
     <header>
-    <span id="menu-toggle">&#9776;</span>
-    <div class="header-content">
-      <a href="{{ url_for('student_dashboard') }}" style="text-decoration: none; color: inherit;">iAttend</a>
-      <a href="{{ url_for('student_profile') }}" class="user-info">
-        <span>{{ profile.full_name }}</span>
-        <img id="user-profile-pic-header" src="{{ profile.profile_pic }}" alt="User Profile Picture">
-      </a>
-    </div>
-  </header>
+        <span id="menu-toggle">&#9776;</span>
+        <div class="header-content">
+            <a href="{{ url_for('student_dashboard') }}" style="text-decoration: none; color: inherit;">iAttend</a>
+            <a href="{{ url_for('student_profile') }}" class="user-info">
+                <span>{{ profile.full_name }}</span>
+                <img id="user-profile-pic-header" src="{{ profile.profile_pic }}" alt="User Profile Picture">
+            </a>
+        </div>
+    </header>
 
     <!-- Sidebar -->
     <div class="sidebar">
@@ -143,86 +128,86 @@
     </div>
 
     <div class="main">
-        <div class="profile-sections">
-            <!-- Profile Card -->
-            <div class="card user-profile-card">
-                <h2>Edit User Profile</h2>
-                <div class="profile-content">
-                    <div class="profile-pic-container">
-                        <img id="user-profile-pic" src="{{ profile.profile_pic }}" alt="Profile Picture">
-                        <input type="file" name="profilePic" id="profile-pic-upload" form="profile-form" style="display:none;">
-                        <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
+    <div class="profile-sections">
+        <div class="card user-profile-card">
+            <h2>Edit User Profile</h2>
+            <div class="profile-content">
+                <div class="profile-pic-container">
+                    <img id="user-profile-pic" src="{{ profile.profile_pic }}" alt="Profile Picture">
+                    <input type="file" name="profilePic" id="profile-pic-upload" form="profile-form" style="display:none;">
+                    <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
+                </div>
+                <form id="profile-form" class="profile-details" method="POST" action="{{ url_for('student_editprofile') }}" enctype="multipart/form-data">
+                    <div class="form-group"><label>First Name</label><input type="text" name="firstName" value="{{ profile.full_name.split(' ')[0] }}" disabled></div>
+                    <div class="form-group"><label>Last Name</label><input type="text" name="lastName" value="{{ profile.full_name.split(' ')[1] if profile.full_name.split(' ')|length>1 else '' }}" disabled></div>
+                    <div class="form-group"><label>Nickname</label><input type="text" name="nickname" value="{{ profile.nickname }}"></div>
+                    <div class="form-group"><label>Phone Number</label><input type="text" name="phone" value="{{ profile.phone }}"></div>
+                    <div class="form-group"><label>Role Type</label><input type="text" value="Student" disabled></div>
+                    <div class="form-group"><label>Course</label><input type="text" value="{{ profile.course }}" disabled></div>
+                    <div class="form-group"><label>Student ID</label><input type="text" value="{{ profile.student_id }}" disabled></div>
+                    <div class="form-group"><label>Class</label><input type="text" value="{{ profile.studentClass }}" disabled></div>
+                    <div class="form-group"><label>Intake</label><input type="text" value="{{ profile.intake }}" disabled></div>
+                    <div class="form-group"><label>Email</label><input type="email" value="{{ profile.email }}" disabled></div>
+                    <div class="card-actions">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
                     </div>
-                    <form id="profile-form" class="profile-details" method="POST" action="{{ url_for('student_editprofile') }}" enctype="multipart/form-data">
-                        <div class="form-group"><label>First Name</label><input type="text" name="firstName" value="{{ profile.full_name.split(' ')[0] }}" disabled></div>
-                        <div class="form-group"><label>Last Name</label><input type="text" name="lastName" value="{{ profile.full_name.split(' ')[1] if profile.full_name.split(' ')|length>1 else '' }}" disabled></div>
-                        <div class="form-group"><label>Nickname</label><input type="text" name="nickname" value="{{ profile.nickname }}"></div>
-                        <div class="form-group"><label>Phone Number</label><input type="text" name="phone" value="{{ profile.phone }}"></div>
-                        <div class="form-group"><label>Role Type</label><input type="text" value="Student" disabled></div>
-                        <div class="form-group"><label>Course</label><input type="text" value="{{ profile.course }}" disabled></div>
-                        <div class="form-group"><label>Student ID</label><input type="text" value="{{ profile.student_id }}" disabled></div>
-                        <div class="form-group"><label>Class</label><input type="text" value="{{ profile.studentClass }}" disabled></div>
-                        <div class="form-group"><label>Intake</label><input type="text" value="{{ profile.intake }}" disabled></div>
-                        <div class="form-group"><label>Email</label><input type="email" value="{{ profile.email }}" disabled></div>
-                        <div class="card-actions">
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Password Change Card -->
-            <div class="card password-change-card">
-                <h2>Password Change</h2>
-                <button id="changePasswordButton" class="btn btn-primary">Change Password</button>
+                </form>
             </div>
         </div>
-    </div>
 
-    <!-- Password Change Modal -->
-    <div id="passwordModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close-btn" id="closeModal">&times;</span>
-            <h2>Change Password</h2>
-            <form id="password-form" method="POST" action="{{ url_for('student_change_password') }}">
-                <div class="form-group"><label>Current Password</label><input type="password" name="currentPassword" required></div>
-                <div class="form-group"><label>New Password</label><input type="password" name="newPassword" required></div>
-                <div class="form-group"><label>Confirm Password</label><input type="password" name="confirmPassword" required></div>
-                <div class="card-actions">
-                    <button type="button" class="btn btn-secondary" id="cancelButton">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
+        <div class="card password-change-card">
+            <h2>Password Change</h2>
+            <button id="changePasswordButton" class="btn btn-primary">Change Password</button>
         </div>
     </div>
+</div>
 
-    <script>
-        // Sidebar toggle
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.querySelector('.sidebar');
-        menuToggle.addEventListener('click', ()=> sidebar.classList.toggle('collapsed'));
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close-btn" id="closeModal">&times;</span>
+        <h2>Change Password</h2>
+        <form id="password-form" method="POST" action="{{ url_for('student_change_password') }}">
+            <div class="form-group"><label>Current Password</label><input type="password" name="currentPassword" required></div>
+            <div class="form-group"><label>New Password</label><input type="password" name="newPassword" required></div>
+            <div class="form-group"><label>Confirm Password</label><input type="password" name="confirmPassword" required></div>
+            <div class="card-actions">
+                <button type="button" class="btn btn-secondary" id="cancelButton">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-        // Profile picture preview
-        const profilePicUpload = document.getElementById('profile-pic-upload');
-        const userProfilePic = document.getElementById('user-profile-pic');
-        profilePicUpload.addEventListener('change', (e)=>{
-            const file = e.target.files[0];
-            if(file){
-                const reader = new FileReader();
-                reader.onload = (ev)=> userProfilePic.src = ev.target.result;
-                reader.readAsDataURL(file);
-            }
-        });
+<script>
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+menuToggle.addEventListener('click', ()=> sidebar.classList.toggle('collapsed'));
 
-        // Password Modal
-        const changePasswordButton = document.getElementById('changePasswordButton');
-        const passwordModal = document.getElementById('passwordModal');
-        const closeModalButton = document.getElementById('closeModal');
-        const cancelButton = document.getElementById('cancelButton');
+// Profile picture preview (also updates header pic)
+const profilePicUpload = document.getElementById('profile-pic-upload');
+const userProfilePic = document.getElementById('user-profile-pic');
+const userProfileHeaderPic = document.getElementById('user-profile-pic-header');
 
-        changePasswordButton.addEventListener('click', ()=> passwordModal.classList.add('open'));
-        closeModalButton.addEventListener('click', ()=> passwordModal.classList.remove('open'));
-        cancelButton.addEventListener('click', ()=> passwordModal.classList.remove('open'));
-    </script>
+profilePicUpload.addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(file){
+        const reader = new FileReader();
+        reader.onload = (ev)=>{
+            userProfilePic.src = ev.target.result;
+            userProfileHeaderPic.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+const changePasswordButton = document.getElementById('changePasswordButton');
+const passwordModal = document.getElementById('passwordModal');
+const closeModalButton = document.getElementById('closeModal');
+const cancelButton = document.getElementById('cancelButton');
+
+changePasswordButton.addEventListener('click', ()=> passwordModal.classList.add('open'));
+closeModalButton.addEventListener('click', ()=> passwordModal.classList.remove('open'));
+cancelButton.addEventListener('click', ()=> passwordModal.classList.remove('open'));
+</script>
 </body>
 </html>
