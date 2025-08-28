@@ -37,7 +37,7 @@ def login():
         if email == "admin@admin.edu":
             doc = db.collection("admin").document("admin").get()
             if doc.exists and doc.to_dict().get("password") == password:
-                session["user"] = {"uid": "admin", "email": email}  # ✅ store as dict
+                session["user"] = {"uid": "admin", "email": email}
                 session["role"] = "admin"
                 session.permanent = True if remember == "on" else False
                 return redirect(url_for("admin_dashboard"))
@@ -66,7 +66,6 @@ def login():
             flash("User not found in Firestore.")
             return redirect(url_for("home"))
 
-        # ✅ FIX: Store both uid + email in session
         session["user"] = {"uid": uid, "email": email}
         session["role"] = role
         session.permanent = True if remember == "on" else False
@@ -95,7 +94,6 @@ def student_dashboard():
 
     uid = user["uid"]
 
-    # Fetch student info
     student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
     student_data = None
     for doc in student_doc:
@@ -108,7 +106,6 @@ def student_dashboard():
         last = student_data.get("lastName", "")
         full_name = f"{first} {last}".strip() or "Student"
 
-    # Fetch attendance stats
     attendance_docs = db.collection("attendance").where("student_id", "==", uid).stream()
     present = absent = late = streak = 0
     unexcused_absences = 0
@@ -130,7 +127,6 @@ def student_dashboard():
             temp_streak = 0
         streak = max(streak, temp_streak)
 
-    # Notifications
     if late >= 3:
         notification = "You have been late more than 3 times!"
     elif unexcused_absences >= 3:
@@ -163,12 +159,11 @@ def admin_dashboard():
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")
 def student_attendance():
-    if 'user' not in session:  # check if logged in
+    if 'user' not in session:
         return redirect(url_for('login'))
 
-    user_id = session['user']['uid']  # get student ID from session
+    user_id = session['user']['uid']
 
-    # 🔹 Fetch attendance records from Firestore
     attendance_ref = firestore.client().collection('attendance').where('student_id', '==', user_id)
     docs = attendance_ref.stream()
 
@@ -187,7 +182,6 @@ def student_attendance():
         elif data.get('status') == 'Absent':
             absent += 1
 
-    # 🔹 Calculate percentage
     percentage = (present / total * 100) if total > 0 else 0
 
     return render_template(
@@ -208,7 +202,6 @@ def student_absentapp():
 # ------------------ Student Profile ------------------
 @app.route("/student/profile")
 def student_profile():
-    # Check user role
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
@@ -218,7 +211,6 @@ def student_profile():
 
     uid = user.get("uid")
 
-    # Fetch student info from Firestore
     student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
     student_data = None
     for doc in student_doc:
@@ -229,7 +221,6 @@ def student_profile():
         flash("Student data not found.")
         return redirect(url_for("student_dashboard"))
 
-    # Prepare profile fields with defaults
     profile = {
         "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
         "student_id": student_data.get("studentID", "-"),
@@ -251,12 +242,6 @@ def student_contact():
     return redirect(url_for("home"))
 
 # ------------------ Teacher Pages ------------------
-@app.route("/teacher/profile")
-def teacher_profile():
-    if session.get("role") == "teacher":
-        return render_template("teacher/T_profile.html")
-    return redirect(url_for("home"))
-
 @app.route("/teacher/class_list")
 def teacher_class_list():
     if session.get("role") == "teacher":
@@ -284,8 +269,39 @@ def teacher_logout():
     session.clear()
     return redirect(url_for("home"))
 
+# ------------------ Teacher Profile ------------------
+@app.route("/teacher/profile")
+def teacher_profile():
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("home"))
+
+    uid = user.get("uid")
+
+    teacher_doc = db.collection("teachers").where("uid", "==", uid).limit(1).stream()
+    teacher_data = None
+    for doc in teacher_doc:
+        teacher_data = doc.to_dict()
+        break
+
+    if not teacher_data:
+        flash("Teacher data not found.")
+        return redirect(url_for("teacher_dashboard"))
+
+    profile = {
+        "name": teacher_data.get("name", "Teacher"),
+        "teacher_id": teacher_data.get("teacherID", "-"),
+        "department": teacher_data.get("department", "-"),
+        "email": user.get("email", "-"),
+        "profile_pic": teacher_data.get("profilePic", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+    }
+
+    return render_template("teacher/T_Profile.html", profile=profile)
+
 # ------------------ Admin Pages ------------------
-# STUDENTS
 @app.route("/admin/student_add")
 def admin_student_add():
     if session.get("role") == "admin":
@@ -304,7 +320,6 @@ def admin_student_assign():
         return render_template("admin/A_Student-Assign.html")
     return redirect(url_for("home"))
 
-# TEACHERS
 @app.route("/admin/teacher_add")
 def admin_teacher_add():
     if session.get("role") == "admin":
@@ -323,7 +338,6 @@ def admin_teacher_assign():
         return render_template("admin/A_Teacher-Assign.html")
     return redirect(url_for("home"))
 
-# SYSTEM
 @app.route("/admin/rooms")
 def admin_rooms():
     if session.get("role") == "admin":
@@ -336,7 +350,6 @@ def admin_schedule_upload():
         return render_template("admin/A_Schedule-Upload.html")
     return redirect(url_for("home"))
 
-# LOGS
 @app.route("/admin/attendance_logs")
 def admin_attendance_logs():
     if session.get("role") == "admin":
@@ -349,7 +362,6 @@ def admin_change_logs():
         return render_template("admin/A_Change-Logs.html")
     return redirect(url_for("home"))
 
-# USER ACCOUNTS
 @app.route("/admin/roles")
 def admin_roles():
     if session.get("role") == "admin":
@@ -362,7 +374,6 @@ def admin_email_setup():
         return render_template("admin/A_Email-Setup.html")
     return redirect(url_for("home"))
 
-# ATTENDANCE
 @app.route("/admin/summary")
 def admin_summary():
     if session.get("role") == "admin":
