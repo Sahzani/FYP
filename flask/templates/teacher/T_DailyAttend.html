@@ -66,11 +66,11 @@ tr:hover td{background:#fafafa;}
 </head>
 <body>
 
-<header>
+ <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <div>iAttend</div>
-    <a href="#" class="user-info">
+    <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="{{ url_for('teacher_profile') }}" class="user-info">
       <span>{{ session['user']['email'] if session.get('user') else 'Teacher' }}</span>
       <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
     </a>
