@@ -18,7 +18,7 @@
     header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; box-shadow: 0 2px 20px rgba(1,41,112,0.1); display: flex; align-items: center; padding-left: 20px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 26px; color: #212529; z-index: 1000;}
     #menu-toggle { display: block; font-size: 28px; margin-right: 15px; cursor: pointer;}
     .header-content { width: 100%; display: flex; justify-content: space-between; align-items: center;}
-    .user-info { display: flex; align-items: center; gap: 15px; padding: 0 20px; transition: background 0.2s ease; border-radius: 8px;}
+    .user-info { display: flex; align-items: center; gap: 15px; padding: 0 20px; transition: background 0.2s ease; border-radius: 8px; text-decoration: none;}
     .user-info:hover { background-color: #f0f0f0;}
     .user-info img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover;}
     .user-info span { font-size: 16px; font-weight: 600; color: #444;}
@@ -57,36 +57,34 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header>
-    <span id="menu-toggle">&#9776;</span>
-    <div class="header-content">
-      <a href="T_dashboard.html" style="text-decoration: none; color: inherit;">iAttend</a>
-      <a href="T_profile.html" class="user-info">
-        <span id="header-user-name">Loading...</span>
-        <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=T" alt="User Profile Picture">
-      </a>
-    </div>
-  </header>
-
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="T_dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Class</div>
-      <a class="sidebar-link" href="T_class_list.html"><i class="fas fa-school"></i><span>View Class List</span></a>
-      <a class="sidebar-link" href="T_DailyAttend.html"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Reports</div>
-      <a class="sidebar-link" href="T_attendance_report.html"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
-    </div>
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="T_login.html"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
-    </div>
+ <header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="{{ url_for('teacher_profile') }}" class="user-info">
+      <span>{{ session['user']['email'] if session.get('user') else 'Teacher' }}</span>
+      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
+    </a>
   </div>
+</header>
+
+  <div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Class</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_class_list') }}"><i class="fas fa-school"></i><span>View Class List</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_daily_attend') }}"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reports</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
+  </div>
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  </div>
+</div>
 
   <!-- Main -->
   <div class="main">
@@ -134,7 +132,7 @@
       </div>
 
       <!-- Edit Profile Button -->
-      <a href="T_EditProfile.html" class="edit-btn"><i class="fas fa-edit"></i> Edit Profile</a>
+      <a href="Teacher_EditProfile.html" class="edit-btn"><i class="fas fa-edit"></i> Edit Profile</a>
     </div>
   </div>
 
