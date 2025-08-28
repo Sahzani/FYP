@@ -84,17 +84,16 @@
 </head>
 <body>
 
-  <!-- Header -->
   <header>
-    <span id="menu-toggle">&#9776;</span>
-    <div class="header-content">
-      <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
-      <a href="{{ url_for('teacher_dashboard') }}" class="user-info">
-        <span>Teacher</span>
-        <img src="https://placehold.co/36x36/b8c6ff/ffffff?text=T" alt="Teacher">
-      </a>
-    </div>
-  </header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="{{ url_for('teacher_profile') }}" class="user-info">
+      <span>{{ session['user']['email'] if session.get('user') else 'Teacher' }}</span>
+      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
+    </a>
+  </div>
+</header>
 
   <!-- Sidebar -->
   <div class="sidebar">
