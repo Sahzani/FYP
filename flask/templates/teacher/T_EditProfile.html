@@ -118,24 +118,23 @@
         </div>
     </header>
 
-    <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="T_dashboard.html"><i class="fas fa-home"></i><span>Dashboard</span></a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Class</div>
-      <a class="sidebar-link" href="T_class_list.html"><i class="fas fa-school"></i><span>View Class List</span></a>
-      <a class="sidebar-link" href="T_DailyAttend.html"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Reports</div>
-      <a class="sidebar-link" href="T_attendance_report.html"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
-    </div>
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="/teacher/logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
-    </div>
+    <div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link active" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Class</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_class_list') }}"><i class="fas fa-school"></i><span>View Class List</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_daily_attend') }}"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reports</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
+  </div>
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  </div>
+</div>
 
     <!-- Main content -->
     <div class="main">
