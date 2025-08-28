@@ -61,7 +61,7 @@
   <div class="header-content">
     <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="{{ url_for('student_profile') }}" class="user-info">
-      <span id="header-user-name">Loading...</span>
+      <span>{{ session['user']['email'] if session.get('user') else 'Student' }}</span>
       <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=P" alt="User Profile Picture">
     </a>
   </div>
@@ -86,7 +86,7 @@
 </div>
 
 <div class="main-content">
-  <h2>Welcome <span id="welcome-name">Student</span>!</h2>
+  <h2>Welcome, <span id="student-name">{{ session['user']['email'] if session.get('user') else 'Student' }}</span>!</h2>
   <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Home</span></div>
 
   <div class="grid-container-lg grid-container card-spacing">
