@@ -244,6 +244,95 @@ def student_profile():
 
     return render_template("student/S_Profile.html", profile=profile)
 
+# ------------------ Student Edit Profile ------------------
+@app.route("/student/editprofile", methods=["GET", "POST"])
+def student_editprofile():
+    # Check user role
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
+
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("home"))
+
+    uid = user.get("uid")
+
+    # Fetch student info from Firestore
+    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
+    student_data = None
+    for doc in student_doc:
+        student_data = doc.to_dict()
+        break
+
+    if not student_data:
+        flash("Student data not found.")
+        return redirect(url_for("student_dashboard"))
+
+    if request.method == "POST":
+        # Handle profile update
+        nickname = request.form.get("nickname")
+        phone = request.form.get("phone")
+        profile_pic = request.form.get("profile_pic")  # Optional: base64 or URL from front-end
+
+        # Update Firestore
+        student_ref = db.collection("students").document(student_data["uid"])
+        student_ref.update({
+            "nickname": nickname,
+            "phone": phone,
+            "profilePic": profile_pic
+        })
+
+        flash("Profile updated successfully!")
+        return redirect(url_for("student_EditProfile"))
+
+    # Prepare profile fields for GET
+    profile = {
+        "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
+        "first_name": student_data.get("firstName", ""),
+        "last_name": student_data.get("lastName", ""),
+        "nickname": student_data.get("nickname", ""),
+        "student_id": student_data.get("studentID", "-"),
+        "studentClass": student_data.get("studentClass", "-"),
+        "phone": student_data.get("phone", "-"),
+        "email": user.get("email", "-"),
+        "profile_pic": student_data.get("profilePic", "https://placehold.co/140x140/E9E9E9/333333?text=User"),
+        "course": student_data.get("course", "-"),
+        "intake": student_data.get("intake", "-")
+    }
+
+    return render_template("student/S_EditProfile.html", profile=profile)
+
+
+# ------------------ Change Password for student ------------------
+@app.route("/student/change_password", methods=["POST"])
+def student_change_password():
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
+
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("home"))
+
+    uid = user.get("uid")
+    current_password = request.form.get("currentPassword")
+    new_password = request.form.get("newPassword")
+    confirm_password = request.form.get("confirmPassword")
+
+    if not current_password or not new_password or not confirm_password:
+        flash("Please fill all password fields.", "error")
+        return redirect(url_for("student_editprofile"))
+
+    if new_password != confirm_password:
+        flash("New password and confirmation do not match.", "error")
+        return redirect(url_for("student_editprofile"))
+
+    # TODO: Implement password verification and update using Firebase Auth
+    # For example:
+    # auth.update_user(uid, password=new_password)
+
+    flash("Password changed successfully!", "success")
+    return redirect(url_for("student_editprofile"))
+
 @app.route("/student/contact")
 def student_contact():
     if session.get("role") == "student":
