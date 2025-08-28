@@ -19,6 +19,27 @@ firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
+# ------------------ Context Processor for Teacher Profile ------------------
+@app.context_processor
+def inject_teacher_profile():
+    if session.get("role") == "teacher":
+        user = session.get("user")
+        if user:
+            uid = user.get("uid")
+            teacher_doc = db.collection("teachers").where("uid", "==", uid).limit(1).stream()
+            teacher_data = None
+            for doc in teacher_doc:
+                teacher_data = doc.to_dict()
+                break
+            if teacher_data:
+                return {
+                    "profile": {
+                        "name": teacher_data.get("name", "Teacher"),
+                        "profile_pic": teacher_data.get("profilePic", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+                    }
+                }
+    return {}
+
 # ------------------ Routes ------------------
 @app.route("/")
 def home():
@@ -148,9 +169,9 @@ def student_dashboard():
 
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
-    if session.get("role") == "teacher":
-        return render_template("teacher/T_dashboard.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+    return render_template("teacher/T_dashboard.html")
 
 @app.route("/admin_dashboard")
 def admin_dashboard():
@@ -342,21 +363,21 @@ def student_contact():
 # ------------------ Teacher Pages ------------------
 @app.route("/teacher/class_list")
 def teacher_class_list():
-    if session.get("role") == "teacher":
-        return render_template("teacher/T_class_list.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+    return render_template("teacher/T_class_list.html")
 
 @app.route("/teacher/attendance")
 def teacher_attendance():
-    if session.get("role") == "teacher":
-        return render_template("teacher/T_attendance_report.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+    return render_template("teacher/T_attendance_report.html")
 
 @app.route("/teacher/daily_attend")
 def teacher_daily_attend():
-    if session.get("role") == "teacher":
-        return render_template("teacher/T_DailyAttend.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+    return render_template("teacher/T_DailyAttend.html")
 
 @app.route("/teacher/login")
 def teacher_login():
