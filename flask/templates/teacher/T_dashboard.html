@@ -12,7 +12,7 @@ body { margin: 0; font-family: 'Poppins', sans-serif; background: linear-gradien
 header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
 #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
 .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
-.user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; }
+.user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; text-decoration: none; }
 .user-info:hover { background:#f0f0f0; }
 .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
 .user-info span { font-size:16px; font-weight:600; color:#444; }
@@ -59,8 +59,8 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <div>iAttend</div>
-    <a href="#" class="user-info">
+    <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="{{ url_for('teacher_profile') }}" class="user-info">
       <span>{{ session['user']['email'] if session.get('user') else 'Teacher' }}</span>
       <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
     </a>
