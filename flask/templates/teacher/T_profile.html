@@ -8,23 +8,16 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
   <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-    }
-
-    /* Header */
+    body { margin: 0; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
     header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #fff; box-shadow: 0 2px 20px rgba(1,41,112,0.1); display: flex; align-items: center; padding-left: 20px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 26px; color: #212529; z-index: 1000;}
-    #menu-toggle { display: block; font-size: 28px; margin-right: 15px; cursor: pointer;}
+    #menu-toggle { font-size: 28px; margin-right: 15px; cursor: pointer;}
     .header-content { width: 100%; display: flex; justify-content: space-between; align-items: center;}
-    .user-info { display: flex; align-items: center; gap: 15px; padding: 0 20px; transition: background 0.2s ease; border-radius: 8px; text-decoration: none;}
+    .user-info { display: flex; align-items: center; gap: 15px; padding: 0 20px; transition: background 0.2s ease; border-radius: 8px;}
     .user-info:hover { background-color: #f0f0f0;}
     .user-info img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover;}
     .user-info span { font-size: 16px; font-weight: 600; color: #444;}
 
-    /* Sidebar */
-    .sidebar { position: fixed; top: 60px; left: 0; width: 240px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding: 15px 0; box-shadow: 2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; z-index: 999; border-top-right-radius: 12px; overflow: hidden;}
+    .sidebar { position: fixed; top: 60px; left: 0; width: 240px; height: calc(100% - 60px); background: #FFEED3; padding: 15px 0; box-shadow: 2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; z-index: 999; border-top-right-radius: 12px; overflow: hidden;}
     .sidebar.collapsed { width: 70px;}
     .sidebar-section { margin-bottom: 25px; padding: 0 15px;}
     .sidebar-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #5D5FEF; margin-bottom: 10px; padding-left: 10px; transition: opacity 0.3s;}
@@ -35,11 +28,9 @@
     .sidebar-link:hover { background: rgba(255,255,255,0.5); transform: translateX(4px);}
     .sidebar-link.active { background: rgba(255,255,255,0.7); color: #4154F1; font-weight: 600;}
 
-    /* Main content */
     .main { margin-left: 260px; padding: 100px 30px 30px; min-height: 100vh; transition: margin-left 0.3s ease;}
     .sidebar.collapsed ~ .main { margin-left: 80px;}
 
-    /* Profile card */
     .profile-card { max-width: 900px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; text-align: center;}
     .profile-card img { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 4px solid #FFE5B4;}
     .profile-name { font-size: 26px; font-weight: 600; color: #012970; margin-bottom: 5px;}
@@ -57,127 +48,68 @@
   </style>
 </head>
 <body>
- <header>
-  <span id="menu-toggle">&#9776;</span>
-  <div class="header-content">
-    <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
-    <a href="{{ url_for('teacher_profile') }}" class="user-info">
-      <span>{{ session['user']['email'] if session.get('user') else 'Teacher' }}</span>
-      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
-    </a>
-  </div>
-</header>
+  <!-- Header -->
+  <header>
+    <span id="menu-toggle">&#9776;</span>
+    <div class="header-content">
+      <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration: none; color: inherit;">iAttend</a>
+      <a href="{{ url_for('teacher_profile') }}" class="user-info">
+        <span>{{ profile.full_name }}</span>
+        <img id="user-profile-pic-header" src="{{ profile.profile_pic }}" alt="Teacher Profile Picture">
+      </a>
+    </div>
+  </header>
 
+  <!-- Sidebar -->
   <div class="sidebar">
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Class</div>
+      <a class="sidebar-link" href="{{ url_for('teacher_class_list') }}"><i class="fas fa-school"></i><span>View Class List</span></a>
+      <a class="sidebar-link" href="{{ url_for('teacher_daily_attend') }}"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Reports</div>
+      <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
+    </div>
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
   </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Class</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_class_list') }}"><i class="fas fa-school"></i><span>View Class List</span></a>
-    <a class="sidebar-link" href="{{ url_for('teacher_daily_attend') }}"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
-  </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Reports</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
-  </div>
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
-  </div>
-</div>
 
   <!-- Main -->
   <div class="main">
     <div class="profile-card">
-      <img id="profile-pic" src="https://placehold.co/140x140/E9E9E9/333333?text=User" alt="Profile Picture">
-      <div class="profile-name" id="profile-name">Loading...</div>
-      <div class="profile-sub" id="profile-sub">Loading...</div>
+      <img id="profile-pic" src="{{ profile.profile_pic }}" alt="Profile Picture">
+      <div class="profile-name">{{ profile.name }}</div>
+      <div class="profile-sub">Department: {{ profile.department }}</div>
 
       <div class="info-grid">
         <div class="info-item">
           <i class="fas fa-id-card"></i>
           <div class="info-text">
             <div class="info-label">Teacher ID</div>
-            <div class="info-value" id="teacher-id">Loading...</div>
-          </div>
-        </div>
-        <div class="info-item">
-          <i class="fas fa-users"></i>
-          <div class="info-text">
-            <div class="info-label">Class</div>
-            <div class="info-value" id="class">Loading...</div>
-          </div>
-        </div>
-        <div class="info-item">
-          <i class="fas fa-user"></i>
-          <div class="info-text">
-            <div class="info-label">Nickname</div>
-            <div class="info-value" id="nickname">Loading...</div>
-          </div>
-        </div>
-        <div class="info-item">
-          <i class="fas fa-phone"></i>
-          <div class="info-text">
-            <div class="info-label">Phone Number</div>
-            <div class="info-value" id="phone">Loading...</div>
+            <div class="info-value">{{ profile.teacher_id }}</div>
           </div>
         </div>
         <div class="info-item">
           <i class="fas fa-envelope"></i>
           <div class="info-text">
             <div class="info-label">Email</div>
-            <div class="info-value" id="email">Loading...</div>
+            <div class="info-value">{{ profile.email }}</div>
           </div>
         </div>
       </div>
 
       <!-- Edit Profile Button -->
-      <a href="Teacher_EditProfile.html" class="edit-btn"><i class="fas fa-edit"></i> Edit Profile</a>
+      <a href="#" class="edit-btn"><i class="fas fa-edit"></i> Edit Profile</a>
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-      authDomain: "aimanzamani.firebaseapp.com",
-      databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "aimanzamani",
-      storageBucket: "aimanzamani.firebasestorage.app",
-      messagingSenderId: "63348630728",
-      appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // Example: load teacher T001 data
-    const teacherId = "T001";
-    const teacherRef = ref(db, `teachers/${teacherId}`);
-
-    get(teacherRef).then((snapshot) => {
-      if(snapshot.exists()){
-        const data = snapshot.val();
-        document.getElementById("profile-name").textContent = data.name;
-        document.getElementById("profile-sub").textContent = `${data.subject} • ${data.department}`;
-        document.getElementById("teacher-id").textContent = teacherId;
-        document.getElementById("nickname").textContent = data.nickname;
-        document.getElementById("class").textContent = data.class;
-        document.getElementById("phone").textContent = data.phone;
-        document.getElementById("email").textContent = data.email;
-        document.getElementById("header-user-name").textContent = data.name;
-        document.getElementById("user-profile-pic-header").src = data.profilePic;
-        document.getElementById("profile-pic").src = data.profilePic;
-      } else {
-        console.error("No data available");
-      }
-    }).catch((error) => { console.error(error); });
-
-    // Sidebar toggle
+  <!-- Sidebar toggle -->
+  <script>
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
     menuToggle.addEventListener('click', () => {

@@ -79,10 +79,21 @@ def camera_loop():
             time.sleep(1)
             continue
 
-        start_time_str = settings.get("startTime", "08:30")
-        cutoff_time_str = settings.get("cutoffTime", "09:00")
-        start_time = datetime.strptime(start_time_str, "%H:%M").time()
-        cutoff_time = datetime.strptime(cutoff_time_str, "%H:%M").time()
+        # Safe handling for time strings
+        start_time_str = settings.get("startTime") or "08:30"
+        cutoff_time_str = settings.get("cutoffTime") or "09:00"
+
+        try:
+            start_time = datetime.strptime(start_time_str, "%H:%M").time()
+        except ValueError:
+            print(f"[WARN] Invalid startTime '{start_time_str}', using default 08:30")
+            start_time = datetime.strptime("08:30", "%H:%M").time()
+
+        try:
+            cutoff_time = datetime.strptime(cutoff_time_str, "%H:%M").time()
+        except ValueError:
+            print(f"[WARN] Invalid cutoffTime '{cutoff_time_str}', using default 09:00")
+            cutoff_time = datetime.strptime("09:00", "%H:%M").time()
 
         frame_count += 1
         recognized_faces = []
