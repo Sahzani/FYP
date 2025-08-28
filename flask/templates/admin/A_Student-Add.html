@@ -17,10 +17,11 @@ padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700;
 font-size:26px; color:#212529; z-index:1002; }
 #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
 
-/* Sidebar */
-.sidebar { position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
-transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px; }
+.sidebar {
+  position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
+  padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
+  transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px;
+}
 .sidebar.collapsed { width:70px; overflow:hidden; }
 .sidebar-section { margin-bottom:25px; padding:0 15px; }
 .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
@@ -65,44 +66,67 @@ input, select { width:100%; padding:10px; border-radius:6px; border:1px solid #c
   iAttend Admin
 </header>
 
-<!-- Sidebar -->
+<!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
+  <!-- Dashboard -->
   <div class="sidebar-section">
-    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" 
-       href="{{ url_for('admin_dashboard') }}">
+    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
 
+  <!-- Management -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
-
-    <div class="sidebar-dropdown {% if request.endpoint in ['admin_student_list','admin_student_add'] %}active{% endif %}">
+    <!-- Students -->
+    <div class="sidebar-dropdown">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
       </a>
       <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint=='admin_student_list' %}active{% endif %}" 
-           href="{{ url_for('admin_student_list') }}">All Students</a>
-        <a class="sidebar-link {% if request.endpoint=='admin_student_add' %}active{% endif %}" 
-           href="{{ url_for('admin_student_add') }}">Add Student</a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
+        <a class="sidebar-link " href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
       </div>
     </div>
-
-    <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_list','admin_teacher_add'] %}active{% endif %}">
+    <!-- Teachers -->
+    <div class="sidebar-dropdown">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
       </a>
       <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint=='admin_teacher_list' %}active{% endif %}" 
-           href="{{ url_for('admin_teacher_list') }}">All Teachers</a>
-        <a class="sidebar-link {% if request.endpoint=='admin_teacher_add' %}active{% endif %}" 
-           href="{{ url_for('admin_teacher_add') }}">Add Teacher</a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
       </div>
     </div>
   </div>
 
+  <!-- System -->
   <div class="sidebar-section">
+    <div class="sidebar-section-title">System</div>
+    <a class="sidebar-link" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
+  </div>
+
+  <!-- Logs -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Logs</div>
+    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
+  </div>
+
+  <!-- User Accounts -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">User Accounts</div>
+    <a class="sidebar-link" href="{{ url_for('admin_roles') }}"><i class="fas fa-users-cog"></i><span>Manage Roles</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_email_setup') }}"><i class="fas fa-envelope"></i><span>Email Setup</span></a>
+  </div>
+
+  <!-- Attendance -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Attendance</div>
+    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
     <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
