@@ -194,16 +194,12 @@ def teacher_logout():
     return redirect(url_for("home"))
 
 # ------------------ Admin Pages ------------------
+
+# STUDENTS
 @app.route("/admin/student_add")
 def admin_student_add():
     if session.get("role") == "admin":
         return render_template("admin/A_Student-Add.html")
-    return redirect(url_for("home"))
-
-@app.route("/admin/teacher_add")
-def admin_teacher_add():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Teacher-Add.html")
     return redirect(url_for("home"))
 
 @app.route("/admin/student_list")
@@ -212,10 +208,75 @@ def admin_student_list():
         return render_template("admin/A_Student-List.html")
     return redirect(url_for("home"))
 
+@app.route("/admin/student_assign")
+def admin_student_assign():
+    if session.get("role") == "admin":
+        return render_template("admin/A_Student-Assign.html")
+    return redirect(url_for("home"))
+
+# TEACHERS
+@app.route("/admin/teacher_add")
+def admin_teacher_add():
+    if session.get("role") == "admin":
+        return render_template("admin/A_Teacher-Add.html")
+    return redirect(url_for("home"))
+
 @app.route("/admin/teacher_list")
 def admin_teacher_list():
     if session.get("role") == "admin":
         return render_template("admin/A_Teacher-List.html")
+    return redirect(url_for("home"))
+
+@app.route("/admin/teacher_assign")
+def admin_teacher_assign():
+    if session.get("role") == "admin":
+        return render_template("admin/A_Teacher-Assign.html")
+    return redirect(url_for("home"))
+
+# SYSTEM
+@app.route("/admin/rooms")
+def admin_rooms():
+    if session.get("role") == "admin":
+        return render_template("admin/A_Rooms.html")
+    return redirect(url_for("home"))
+
+@app.route("/admin/schedule_upload")
+def admin_schedule_upload():
+    if session.get("role") == "admin":
+        return render_template("admin/A_Schedule-Upload.html")
+    return redirect(url_for("home"))
+
+# LOGS
+@app.route("/admin/attendance_logs")
+def admin_attendance_logs():
+    if session.get("role") == "admin":
+        return render_template("admin/A_Attendance-Logs.html")
+    return redirect(url_for("home"))
+
+@app.route("/admin/change_logs")
+def admin_change_logs():
+    if session.get("role") == "admin":
+        return render_template("admin/A_Change-Logs.html")
+    return redirect(url_for("home"))
+
+# USER ACCOUNTS
+@app.route("/admin/roles")
+def admin_roles():
+    if session.get("role") == "admin":
+        return render_template("admin/A_Roles.html")
+    return redirect(url_for("home"))
+
+@app.route("/admin/email_setup")
+def admin_email_setup():
+    if session.get("role") == "admin":
+        return render_template("admin/A_Email-Setup.html")
+    return redirect(url_for("home"))
+
+# ATTENDANCE
+@app.route("/admin/summary")
+def admin_summary():
+    if session.get("role") == "admin":
+        return render_template("admin/A_Summary.html")
     return redirect(url_for("home"))
 
 # ------------------ Logout / Signup ------------------

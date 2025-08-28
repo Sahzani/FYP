@@ -1,177 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>iAttend Header</title>
-  <style>
-    /* Reset margin/padding */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin Dashboard - Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
 
-    html, body {
-      height: 100%;
-      font-family: 'Roboto', sans-serif;
-      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-    }
+/* ========== HEADER ========== */
+header {
+  position: fixed; top:0; left:0; right:0; height:60px; background:#fff;
+  box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center;
+  padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700;
+  font-size:26px; color:#212529; z-index:1002;
+}
+#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
+.header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
+.user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; cursor:pointer; }
+.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+.user-info span { font-size:16px; font-weight:600; color:#444; }
 
-    /* Header fixed on top */
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: #fff;
-      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
-      display: flex;
-      align-items: center;
-      padding-left: 20px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-      font-size: 26px;
-      color: #212529;
-      z-index: 1000;
-    }
+/* ========== SIDEBAR ========== */
+.sidebar {
+  position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
+  padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
+  transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px;
+}
+.sidebar.collapsed { width:70px; overflow:hidden; }
+.sidebar-section { margin-bottom:25px; padding:0 15px; }
+.sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
+.sidebar.collapsed .sidebar-section-title { opacity:0; }
+.sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
+.sidebar-link i { width:18px; text-align:center; }
+.sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
+.sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
 
-    /* Mobile hamburger */
-    #menu-toggle {
-      display: none;
-      font-size: 28px;
-      margin-right: 15px;
-      cursor: pointer;
-    }
+/* Dropdown */
+.sidebar-dropdown { display:flex; flex-direction:column; }
+.dropdown-menu { display:none; flex-direction:column; padding-left:20px; }
+.sidebar-dropdown.active .dropdown-menu { display:flex; }
+.sidebar-dropdown .dropdown-toggle i { margin-left:auto; transition: transform 0.3s; }
+.sidebar-dropdown.active .dropdown-toggle i { transform: rotate(180deg); }
 
-    /* Sidebar */
-    .sidebar {
-      position: fixed;
-      top: 60px;
-      left: 0;
-      width: 260px;
-      height: calc(100% - 60px);
-      background: #FFEED3;
-      padding: 20px;
-      box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1);
-      font-family: 'Open Sans', sans-serif;
-      transition: left 0.3s ease;
-      z-index: 999;
-    }
+/* ========== MAIN CONTENT ========== */
+.main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
+.sidebar.collapsed ~ .main-content { margin-left:80px; }
 
-    .sidebar-section {
-      margin-bottom: 30px;
-    }
-
-    .sidebar-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #899BBD;
-      margin-bottom: 10px;
-    }
-
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: #FFEED3;
-      border-radius: 4px;
-      font-size: 15px;
-      font-weight: 600;
-      color: #012970;
-      text-decoration: none;
-      transition: background 0.3s;
-    }
-
-    .sidebar-link.active {
-      background: rgba(221, 168, 83, 0.44);
-      color: #4154F1;
-    }
-
-    .sidebar-link:hover {
-      background: #ffe1ab;
-    }
-
-    /* Main content */
-    .main {
-      margin-left: 260px;
-      padding: 100px 30px 30px;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      #menu-toggle {
-        display: block;
-      }
-
-      .sidebar {
-        left: -260px; /* hide sidebar off-screen */
-        width: 260px;
-      }
-
-      .sidebar.show {
-        left: 0; /* show sidebar */
-      }
-
-      .main {
-        margin-left: 0;
-        padding: 80px 20px 20px;
-      }
-    }
-  </style>
+/* ========== MOBILE ========== */
+@media (max-width:768px){
+  .sidebar { left:-260px; width:240px; position:fixed; top:0; height:100%; overflow-y:auto; z-index:1001; transition:left 0.3s ease; }
+  .sidebar.active { left:0; }
+  .main-content { margin-left:0 !important; }
+}
+</style>
 </head>
 <body>
 
-  <header>
-    <span id="menu-toggle">&#9776;</span>
-    iAttend
-  </header>
-
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Analyse</div>
-      <a class="sidebar-link active" href="#">Dashboard</a>
-      <a class="sidebar-link" href="#">Attendance</a>
-      <a class="sidebar-link" href="#">Absence</a>
-      <a class="sidebar-link" href="#">Report</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Manage</div>
-      <a class="sidebar-link" href="#">Teacher</a>
-      <a class="sidebar-link" href="#">Student</a>
-      <a class="sidebar-link" href="#">Subject</a>
-    </div>
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="#">Logout</a>
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <span>iAttend Admin</span>
+    <div class="user-info">
+      <span>Admin</span>
+      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin Profile Picture">
     </div>
   </div>
+</header>
 
-  <div class="main">
-    <h1>Welcome to iAttend</h1>
-    <p>Main content goes here...</p>
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="#"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Management</div>
+    <div class="sidebar-dropdown">
+      <a href="#" class="sidebar-link dropdown-toggle"><i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i></a>
+      <div class="dropdown-menu">
+        <a class="sidebar-link" href="#"><span>All Students</span></a>
+        <a class="sidebar-link" href="#"><span>Add Student</span></a>
+      </div>
+    </div>
+    <div class="sidebar-dropdown">
+      <a href="#" class="sidebar-link dropdown-toggle"><i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i></a>
+      <div class="dropdown-menu">
+        <a class="sidebar-link" href="#"><span>All Teachers</span></a>
+        <a class="sidebar-link" href="#"><span>Add Teacher</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">System</div>
+    <a class="sidebar-link" href="#"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
+    <a class="sidebar-link" href="#"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Logs</div>
+    <a class="sidebar-link" href="#"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link" href="#"><i class="fas fa-history"></i><span>Change Logs</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">User Accounts</div>
+    <a class="sidebar-link" href="#"><i class="fas fa-users-cog"></i><span>Manage Roles</span></a>
+    <a class="sidebar-link" href="#"><i class="fas fa-envelope"></i><span>Email Setup</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Attendance</div>
+    <a class="sidebar-link" href="#"><i class="fas fa-chart-line"></i><span>Summary</span></a>
+    <a class="sidebar-link" href="#"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  </div>
+</div>
 
-  <script>
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
+<!-- Main Content -->
+<div class="main-content">
+  <h2>Page Title</h2>
+  <p>Use this space to build your page content.</p>
+</div>
 
-    // Toggle sidebar on mobile
-    menuToggle.addEventListener('click', () => {
-      sidebar.classList.toggle('show');
-    });
+<script>
+/* Sidebar toggle */
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+menuToggle.addEventListener('click', () => {
+  if (window.innerWidth <= 768) { sidebar.classList.toggle('active'); } 
+  else { sidebar.classList.toggle('collapsed'); }
+});
 
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', (e) => {
-      if (window.innerWidth <= 768 && sidebar.classList.contains('show')) {
-        if (!sidebar.contains(e.target) && e.target !== menuToggle) {
-          sidebar.classList.remove('show');
-        }
-      }
-    });
-  </script>
+/* Dropdown toggle */
+document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+  toggle.addEventListener('click', e => {
+    e.preventDefault();
+    toggle.parentElement.classList.toggle('active');
+  });
+});
+</script>
 
 </body>
 </html>

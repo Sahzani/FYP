@@ -7,9 +7,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <style>
+/* ========== RESET & BASE ========== */
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
 
+/* ========== HEADER ========== */
 header {
   position: fixed; top:0; left:0; right:0; height:60px; background:#fff;
   box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center;
@@ -26,7 +28,7 @@ header {
 .breadcrumb .section { color:#989797; }
 .breadcrumb .current { color:#444444; }
 
-/* Sidebar */
+/* ========== SIDEBAR ========== */
 .sidebar {
   position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
   padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
@@ -48,11 +50,11 @@ header {
 .sidebar-dropdown .dropdown-toggle i { margin-left:auto; transition: transform 0.3s; }
 .sidebar-dropdown.active .dropdown-toggle i { transform: rotate(180deg); }
 
-/* Main Content */
+/* ========== MAIN CONTENT ========== */
 .main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
 .sidebar.collapsed ~ .main-content { margin-left:80px; }
 
-/* Cards */
+/* ========== CARDS & STATS ========== */
 h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
 p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:20px; }
 .grid-container { display:grid; gap:1.5rem; }
@@ -70,11 +72,9 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
 
 @media (min-width:1024px){ .grid-container-lg{grid-template-columns:3fr 2fr;} .grid-container-lg-2{grid-template-columns:repeat(2,1fr);} }
 
-/* Mobile Sidebar Overlay */
+/* ========== MOBILE ========== */
 @media (max-width:768px){
-  .sidebar { 
-    left:-260px; width:240px; position:fixed; top:0; height:100%; overflow-y:auto; z-index:1001; transition:left 0.3s ease; 
-  }
+  .sidebar { left:-260px; width:240px; position:fixed; top:0; height:100%; overflow-y:auto; z-index:1001; transition:left 0.3s ease; }
   .sidebar.active { left:0; }
   .main-content { margin-left:0 !important; }
 }
@@ -93,83 +93,83 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
   </div>
 </header>
 
-<!-- Sidebar -->
+<!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
   <!-- Dashboard -->
   <div class="sidebar-section">
-    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" 
-       href="{{ url_for('admin_dashboard') }}">
+    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
 
-  <!-- Management Section -->
+  <!-- Management -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
-
-    <!-- Students Dropdown -->
-    <div class="sidebar-dropdown {% if request.endpoint in ['admin_student_list', 'admin_student_add'] %}active{% endif %}">
+    <!-- Students -->
+    <div class="sidebar-dropdown">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
       </a>
       <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint=='admin_student_list' %}active{% endif %}" 
-           href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
-        <a class="sidebar-link {% if request.endpoint=='admin_student_add' %}active{% endif %}" 
-           href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
       </div>
     </div>
-
-    <!-- Teachers Dropdown -->
-    <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_list', 'admin_teacher_add'] %}active{% endif %}">
+    <!-- Teachers -->
+    <div class="sidebar-dropdown">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
       </a>
       <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint=='admin_teacher_list' %}active{% endif %}" 
-           href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
-        <a class="sidebar-link {% if request.endpoint=='admin_teacher_add' %}active{% endif %}" 
-           href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
       </div>
     </div>
   </div>
 
-  <!-- Attendance Section -->
+  <!-- System -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">System</div>
+    <a class="sidebar-link" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
+  </div>
+
+  <!-- Logs -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Logs</div>
+    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
+  </div>
+
+  <!-- User Accounts -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">User Accounts</div>
+    <a class="sidebar-link" href="{{ url_for('admin_roles') }}"><i class="fas fa-users-cog"></i><span>Manage Roles</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_email_setup') }}"><i class="fas fa-envelope"></i><span>Email Setup</span></a>
+  </div>
+
+  <!-- Attendance -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>
-    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" 
-       href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
     <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
-<!-- Main Content -->
+<!-- ========== MAIN CONTENT ========== -->
 <div class="main-content">
   <h2>Welcome <span id="welcome-name">Admin</span>!</h2>
   <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Home</span></div>
 
+  <!-- Stats -->
   <div class="grid-container-lg grid-container card-spacing">
     <div class="stats-grid">
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-user-graduate"></i></div>
-        <p>Total Students</p>
-        <span id="stats-students">0</span>
-      </div>
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-chalkboard-teacher"></i></div>
-        <p>Total Teachers</p>
-        <span id="stats-teachers">0</span>
-      </div>
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-user-check"></i></div>
-        <p>Present Today</p>
-        <span id="stats-present">0</span>
-      </div>
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-user-times"></i></div>
-        <p>Absent Today</p>
-        <span id="stats-absent">0</span>
-      </div>
+      <div class="card stats-card"><div class="icon-circle"><i class="fas fa-user-graduate"></i></div><p>Total Students</p><span id="stats-students">0</span></div>
+      <div class="card stats-card"><div class="icon-circle"><i class="fas fa-chalkboard-teacher"></i></div><p>Total Teachers</p><span id="stats-teachers">0</span></div>
+      <div class="card stats-card"><div class="icon-circle"><i class="fas fa-user-check"></i></div><p>Present Today</p><span id="stats-present">0</span></div>
+      <div class="card stats-card"><div class="icon-circle"><i class="fas fa-user-times"></i></div><p>Absent Today</p><span id="stats-absent">0</span></div>
     </div>
 
     <div>
@@ -179,8 +179,15 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
         <div id="calendar" class="calendar"></div>
       </div>
     </div>
+
+    <!-- Bar Chart Card -->
+    <div class="card" style="margin-top:1.5rem;">
+      <h3 style="margin-bottom:10px;">Monthly Attendance Chart</h3>
+      <canvas id="attendanceChart" height="150"></canvas>
+    </div>
   </div>
 
+  <!-- Notifications -->
   <div class="grid-container-lg-2 grid-container card-spacing">
     <div class="card" style="background-color:#F6F8FE; display:flex;align-items:flex-start;gap:1rem;">
       <div class="icon-circle" style="background-color:#4154F1;"><i class="fas fa-bell" style="font-size:1.5rem;"></i></div>
@@ -196,7 +203,7 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
@@ -219,25 +226,36 @@ const initApp = async () => {
 };
 
 const fetchAdminStats = async () => {
-  const studentsSnap = await getDocs(collection(db,'students'));
-  document.getElementById('stats-students').textContent = studentsSnap.size;
-  const teachersSnap = await getDocs(collection(db,'teachers'));
-  document.getElementById('stats-teachers').textContent = teachersSnap.size;
-
-  const attendanceSnap = await getDocs(collection(db,'attendance'));
-  let present=0, absent=0;
-  attendanceSnap.forEach(doc=>{
-    const data = doc.data();
-    const today = new Date(); today.setHours(0,0,0,0);
-    const attDate = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-    attDate.setHours(0,0,0,0);
-    if(attDate.getTime() === today.getTime()){
-      if(data.status==='Present') present++;
-      else if(data.status==='Absent') absent++;
-    }
+  // Students
+  onSnapshot(collection(db,'students'), snapshot => {
+    document.getElementById('stats-students').textContent = snapshot.size;
   });
-  document.getElementById('stats-present').textContent = present;
-  document.getElementById('stats-absent').textContent = absent;
+
+  // Teachers
+  onSnapshot(collection(db,'teachers'), snapshot => {
+    document.getElementById('stats-teachers').textContent = snapshot.size;
+  });
+
+  // Attendance
+  onSnapshot(collection(db,'attendance'), snapshot => {
+    let present = 0, absent = 0;
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const attDate = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+      attDate.setHours(0,0,0,0);
+
+      if(attDate.getTime() === today.getTime()) {
+        if(data.status === 'Present') present++;
+        else if(data.status === 'Absent') absent++;
+      }
+    });
+
+    document.getElementById('stats-present').textContent = present;
+    document.getElementById('stats-absent').textContent = absent;
+  });
+
   document.getElementById('notification-message').textContent = 'No new notifications.';
 };
 
@@ -263,22 +281,76 @@ const generateCalendar = () => {
 initApp();
 generateCalendar();
 
-// Sidebar toggle
+/* Sidebar toggle */
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
-
 menuToggle.addEventListener('click', () => {
-  if(window.innerWidth <= 768) sidebar.classList.toggle('active');
-  else sidebar.classList.toggle('collapsed');
+  if (window.innerWidth <= 768) { sidebar.classList.toggle('active'); } 
+  else { sidebar.classList.toggle('collapsed'); }
 });
 
-// Dropdown toggle
-document.querySelectorAll('.dropdown-toggle').forEach(drop => {
-  drop.addEventListener('click', e => {
+/* Dropdown toggle */
+document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+  toggle.addEventListener('click', e => {
     e.preventDefault();
-    drop.parentElement.classList.toggle('active');
+    toggle.parentElement.classList.toggle('active');
   });
 });
+
+// --- Chart.js CDN & render attendance chart ---
+const script = document.createElement('script');
+script.src = "https://cdn.jsdelivr.net/npm/chart.js";
+document.head.appendChild(script);
+
+script.onload = () => {
+  const attendanceChartCtx = document.getElementById('attendanceChart').getContext('2d');
+  let attendanceChart;
+
+  const renderAttendanceChart = () => {
+    onSnapshot(collection(db,'attendance'), snapshot => {
+      const monthlySummary = {};
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const attDate = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+        if(attDate.getMonth() === currentMonth && attDate.getFullYear() === currentYear){
+          const day = attDate.getDate();
+          if(!monthlySummary[day]) monthlySummary[day] = { present:0, absent:0 };
+          if(data.status==='Present') monthlySummary[day].present++;
+          else if(data.status==='Absent') monthlySummary[day].absent++;
+        }
+      });
+
+      const labels = Object.keys(monthlySummary).map(d => `Day ${d}`);
+      const presentData = Object.values(monthlySummary).map(d => d.present);
+      const absentData = Object.values(monthlySummary).map(d => d.absent);
+
+      if(attendanceChart) attendanceChart.destroy();
+
+      attendanceChart = new Chart(attendanceChartCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Present', data: presentData, backgroundColor: '#4CAF50' },
+            { label: 'Absent', data: absentData, backgroundColor: '#F44336' }
+          ]
+        },
+        options: {
+          responsive:true,
+          plugins:{ legend:{ position:'top' } },
+          scales: { x:{ stacked:true }, y:{ stacked:true, beginAtZero:true } }
+        }
+      });
+    });
+  };
+
+  renderAttendanceChart();
+};
 </script>
+
 </body>
 </html>
