@@ -61,7 +61,7 @@
   <div class="header-content">
     <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="{{ url_for('student_profile') }}" class="user-info">
-      <span>{{ session['user']['email'] if session.get('user') else 'Student' }}</span>
+      <span id="header-user-name">{{ full_name }}</span>
       <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=P" alt="User Profile Picture">
     </a>
   </div>
@@ -87,7 +87,7 @@
 </div>
 
 <div class="main-content">
-  <h2>Welcome, <span id="student-name">{{ session['user']['email'] if session.get('user') else 'Student' }}</span>!</h2>
+  <h2>Welcome, <span id="student-name">{{ full_name }}</span>!</h2>
   <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Home</span></div>
 
   <div class="grid-container-lg grid-container card-spacing">
@@ -95,22 +95,22 @@
       <div class="card stats-card">
         <div class="icon-circle"><i class="fas fa-hourglass-half"></i></div>
         <p>Days Late</p>
-        <span id="stats-late">0</span>
+        <span id="stats-late">{{ stats_late }}</span>
       </div>
       <div class="card stats-card">
         <div class="icon-circle"><i class="fas fa-user-check"></i></div>
         <p>Days Present</p>
-        <span id="stats-present">0</span>
+        <span id="stats-present">{{ stats_present }}</span>
       </div>
       <div class="card stats-card">
         <div class="icon-circle"><i class="fas fa-user-times"></i></div>
         <p>Days Absent</p>
-        <span id="stats-absent">0</span>
+        <span id="stats-absent">{{ stats_absent }}</span>
       </div>
       <div class="card stats-card">
         <div class="icon-circle"><i class="fas fa-fire"></i></div>
         <p>Attendance Streak</p>
-        <span id="attendance-streak">0</span>
+        <span id="attendance-streak">{{ attendance_streak }}</span>
       </div>
     </div>
 
@@ -129,7 +129,7 @@
       <div class="icon-circle" id="today-icon"><i class="fas fa-check-circle" style="font-size:1.5rem;"></i></div>
       <div>
         <h3>Today's Attendance</h3>
-        <p id="today-status">Loading...</p>
+        <p id="today-status">N/A</p>
         <p id="today-note"></p>
       </div>
     </div>
@@ -137,7 +137,7 @@
       <div class="icon-circle" style="background-color:#4154F1;"><i class="fas fa-bell" style="font-size:1.5rem;"></i></div>
       <div style="flex-grow:1;">
         <h3>Notification</h3>
-        <p id="notification-message">Loading...</p>
+        <p id="notification-message">{{ notification_message }}</p>
       </div>
       <span id="notification-timestamp"></span>
     </div>
@@ -145,98 +145,8 @@
 
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, onSnapshot, collection, query, orderBy, limit, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-  authDomain: "aimanzamani.firebaseapp.com",
-  databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "aimanzamani",
-  storageBucket: "aimanzamani.firebasestorage.app",
-  messagingSenderId: "63348630728",
-  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-};
-
-let db, auth, userId;
-
-const initApp = async () => {
-  try {
-    const app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-
-    await signInAnonymously(auth);
-
-    onAuthStateChanged(auth, async (user) => {
-      if(user){
-        userId = user.uid;
-        fetchUserProfile(userId);
-        fetchAttendanceStats(userId);
-        fetchTodayAttendance(userId);
-      }
-    });
-  } catch(e) { console.error("Firebase init error:", e); }
-};
-
-const fetchUserProfile = (uid) => {
-  const userDocRef = doc(db, 'artifacts', firebaseConfig.projectId, 'users', uid, 'profile', 'data');
-  onSnapshot(userDocRef, (docSnap) => {
-    if(!docSnap.exists()) return;
-    const data = docSnap.data();
-    const fullName = `${data.firstName||''} ${data.lastName||''}`.trim() || 'Student';
-    document.getElementById('header-user-name').textContent = fullName;
-    document.getElementById('welcome-name').textContent = fullName;
-  });
-};
-
-const fetchAttendanceStats = async (uid) => {
-  const attendanceRef = collection(db, 'artifacts', firebaseConfig.projectId, 'users', uid, 'attendance');
-  const snapshot = await getDocs(attendanceRef);
-  let present=0, absent=0, late=0, unexcusedAbsences=0;
-  let streak = 0;
-
-  snapshot.forEach(doc=>{
-    const data=doc.data();
-    if(data.status==='Present') { present++; streak++; }
-    else { streak=0; } 
-    if(data.status==='Absent'){ absent++; if(!data.letter) unexcusedAbsences++; }
-    else if(data.status==='Late') late++;
-  });
-
-  document.getElementById('stats-present').textContent = present;
-  document.getElementById('stats-absent').textContent = absent;
-  document.getElementById('stats-late').textContent = late;
-  document.getElementById('attendance-streak').textContent = streak;
-
-  const notificationEl = document.getElementById('notification-message');
-  if(late >= 3){ notificationEl.textContent = 'You have been late more than 3 times!'; }
-  else if(unexcusedAbsences >= 3){ notificationEl.textContent = 'Your attendance rate is dropped due to 3 unexcused absences this month.'; }
-  else { notificationEl.textContent = 'No new notifications.'; }
-};
-
-const fetchTodayAttendance = (uid) => {
-  const attendanceRef = collection(db, 'artifacts', firebaseConfig.projectId, 'users', uid, 'attendance');
-  const today = new Date(); today.setHours(0,0,0,0);
-  const q = query(attendanceRef, where('timestamp','>=',today), orderBy('timestamp','desc'), limit(1));
-  onSnapshot(q,(snapshot)=>{
-    if(snapshot.empty) return;
-    const data = snapshot.docs[0].data();
-    const statusEl = document.getElementById('today-status');
-    const noteEl = document.getElementById('today-note');
-    const iconEl = document.getElementById('today-icon');
-    statusEl.textContent = data.status||'N/A';
-    noteEl.textContent = data.note||'';
-    if(data.status==='Present'){ iconEl.style.backgroundColor='#22c55e'; iconEl.innerHTML='<i class="fas fa-check-circle" style="font-size:1.5rem;"></i>'; }
-    else if(data.status==='Late'){ iconEl.style.backgroundColor='#facc15'; iconEl.innerHTML='<i class="fas fa-hourglass-half" style="font-size:1.5rem;"></i>'; }
-    else if(data.status==='Absent'){ iconEl.style.backgroundColor='#ef4444'; iconEl.innerHTML='<i class="fas fa-user-times" style="font-size:1.5rem;"></i>'; }
-  });
-};
-
-// Calendar generation with month/year
-const generateCalendar = () => {
+<script>
+function generateCalendar(){
   const calendarEl = document.getElementById('calendar');
   const headerEl = document.getElementById('calendar-header');
   const now = new Date();
@@ -244,20 +154,21 @@ const generateCalendar = () => {
   const monthName = now.toLocaleString('default', { month: 'long' });
   const year = now.getFullYear();
   headerEl.textContent = `${monthName} ${year}`;
-  const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate();
+  const daysInMonth = new Date(year, now.getMonth()+1, 0).getDate();
   calendarEl.innerHTML = '';
-  for (let d = 1; d <= daysInMonth; d++) {
+  for(let d=1; d<=daysInMonth; d++){
     const dayEl = document.createElement('div');
     dayEl.className = 'calendar-day';
-    if (d === today) dayEl.classList.add('current-day');
+    if(d===today) dayEl.classList.add('current-day');
     dayEl.textContent = d;
     calendarEl.appendChild(dayEl);
   }
-};
+}
 
-initApp();
 generateCalendar();
-document.getElementById('menu-toggle').addEventListener('click',()=>{ document.querySelector('.sidebar').classList.toggle('collapsed'); });
+document.getElementById('menu-toggle').addEventListener('click', ()=>{
+  document.querySelector('.sidebar').classList.toggle('collapsed');
+});
 </script>
 
 </body>
