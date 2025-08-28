@@ -15,7 +15,7 @@ header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff;
 box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center;
 padding-left:20px; font-family:'Nunito', sans-serif; font-weight:700;
 font-size:26px; color:#212529; z-index:1002; }
-#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
+#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; display:none; }
 .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
 .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; }
 .user-info:hover { background:#f0f0f0; }
@@ -79,12 +79,28 @@ td { padding:12px; border-top:1px solid #ddd; }
 .toast { position:fixed; bottom:20px; right:20px; background:#1e90ff; color:white; padding:12px 20px; border-radius:8px; font-family:'Poppins',sans-serif; font-size:14px; box-shadow:0 4px 12px rgba(0,102,255,0.3); opacity:0; transform:translateY(20px); transition:all 0.5s; z-index:9999; }
 .toast.show { opacity:1; transform:translateY(0); }
 
-/* Responsive */
+/* Mobile responsiveness */
 @media(max-width:768px){ 
   #menu-toggle{display:block;} 
-  .sidebar{left:-260px;} 
+  .sidebar{left:-260px; width:240px;} 
   .sidebar.show{left:0;} 
-  .main-content{margin-left:0;padding:80px 20px 20px;} 
+  .main-content{margin-left:0;padding:80px 15px 20px;} 
+
+  /* Filters stack vertically */
+  .card > div { display:flex; flex-direction:column; gap:10px; margin-bottom:15px; }
+  .card select { width:100%; }
+
+  /* Table scroll */
+  table { display:block; overflow-x:auto; white-space:nowrap; }
+  th, td { padding:10px; }
+
+  /* Modals full width */
+  .modal-content { width:95%; max-width:none; }
+
+  /* Reduce font-size slightly */
+  header { font-size:22px; }
+  .sidebar-link { font-size:14px; }
+  .breadcrumb { font-size:12px; }
 }
 </style>
 </head>
@@ -93,7 +109,7 @@ td { padding:12px; border-top:1px solid #ddd; }
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <a href="{{ url_for('admin_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend Admin</a>
+    <a href="#" style="text-decoration:none;color:inherit;">iAttend Admin</a>
     <a href="#" class="user-info">
       <span id="header-user-name">Admin</span>
       <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin Profile Picture">
@@ -102,7 +118,9 @@ td { padding:12px; border-top:1px solid #ddd; }
 </header>
 
 <!-- Sidebar -->
+<!-- Sidebar -->
 <div class="sidebar">
+  <!-- Dashboard -->
   <div class="sidebar-section">
     <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" 
        href="{{ url_for('admin_dashboard') }}">
@@ -110,21 +128,24 @@ td { padding:12px; border-top:1px solid #ddd; }
     </a>
   </div>
 
+  <!-- Management Section -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
 
+    <!-- Students Dropdown -->
     <div class="sidebar-dropdown {% if request.endpoint in ['admin_student_list', 'admin_student_add'] %}active{% endif %}">
-      <a href="#" class="sidebar-link dropdown-toggle">
+      <a href="#" class="sidebar-link dropdown-toggle active">
         <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
       </a>
       <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint=='admin_student_list' %}active{% endif %}" 
+        <a class="sidebar-link {% if request.endpoint=='admin_student_list' %}active{% endif %} active 
            href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
         <a class="sidebar-link {% if request.endpoint=='admin_student_add' %}active{% endif %}" 
            href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
       </div>
     </div>
 
+    <!-- Teachers Dropdown -->
     <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_list', 'admin_teacher_add'] %}active{% endif %}">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
@@ -138,8 +159,38 @@ td { padding:12px; border-top:1px solid #ddd; }
     </div>
   </div>
 
+  <!-- System Management -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">System</div>
+    <a class="sidebar-link {% if request.endpoint=='admin_rooms' %}active{% endif %}" 
+       href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
+    <a class="sidebar-link {% if request.endpoint=='admin_schedule_upload' %}active{% endif %}" 
+       href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
+  </div>
+
+  <!-- Logs -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Logs</div>
+    <a class="sidebar-link {% if request.endpoint=='admin_attendance_logs' %}active{% endif %}" 
+       href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link {% if request.endpoint=='admin_change_logs' %}active{% endif %}" 
+       href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
+  </div>
+
+  <!-- User Accounts -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">User Accounts</div>
+    <a class="sidebar-link {% if request.endpoint=='admin_roles' %}active{% endif %}" 
+       href="{{ url_for('admin_roles') }}"><i class="fas fa-users-cog"></i><span>Manage Roles</span></a>
+    <a class="sidebar-link {% if request.endpoint=='admin_email_setup' %}active{% endif %}" 
+       href="{{ url_for('admin_email_setup') }}"><i class="fas fa-envelope"></i><span>Email Setup</span></a>
+  </div>
+
+  <!-- Attendance Section -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>
+    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" 
+       href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
     <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
@@ -150,6 +201,10 @@ td { padding:12px; border-top:1px solid #ddd; }
   <div class="breadcrumb"><span class="section">Management</span> / <span class="current">Students</span></div>
 
   <div class="card">
+    <div style="margin-bottom:15px;">
+      <select id="filterCourse"><option value="">All Courses</option></select>
+      <select id="filterClass"><option value="">All Classes</option></select>
+    </div>
     <table>
       <thead>
         <tr>
@@ -172,10 +227,7 @@ td { padding:12px; border-top:1px solid #ddd; }
 <!-- Edit Modal -->
 <div id="editModal" class="modal">
   <div class="modal-content">
-    <div class="modal-header">
-      <span>Edit Student</span>
-      <span class="close" id="closeEditModal">&times;</span>
-    </div>
+    <div class="modal-header"><span>Edit Student</span><span class="close" id="closeEditModal">&times;</span></div>
     <div class="modal-body">
       <label>First Name</label><input type="text" id="editFirstName">
       <label>Last Name</label><input type="text" id="editLastName">
@@ -195,10 +247,7 @@ td { padding:12px; border-top:1px solid #ddd; }
 <!-- Delete Modal -->
 <div id="deleteModal" class="modal">
   <div class="modal-content">
-    <div class="modal-header">
-      <span>Confirm Delete</span>
-      <span class="close" id="closeDeleteModal">&times;</span>
-    </div>
+    <div class="modal-header"><span>Confirm Delete</span><span class="close" id="closeDeleteModal">&times;</span></div>
     <div class="modal-body" id="deleteModalBody"></div>
     <div class="modal-buttons">
       <button class="save-btn" id="confirmDeleteBtn">Delete</button>
@@ -225,10 +274,13 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const studentsBody = document.getElementById('studentsBody');
+const filterCourse = document.getElementById('filterCourse');
+const filterClass = document.getElementById('filterClass');
 const editModal = document.getElementById('editModal');
 const deleteModal = document.getElementById('deleteModal');
 const toast = document.getElementById('toast');
 let currentEditId = null, currentDeleteId = null;
+let allStudents = [];
 
 function showToast(message){
   toast.textContent = message;
@@ -236,14 +288,23 @@ function showToast(message){
   setTimeout(()=>{toast.classList.remove('show');},2000);
 }
 
-function renderStudents(snapshot){
+function renderFilters(students){
+  const courses = new Set();
+  const classes = new Set();
+  students.forEach(s => {
+    if(s.course) courses.add(s.course);
+    if(s.studentClass) classes.add(s.studentClass);
+  });
+  filterCourse.innerHTML = `<option value="">All Courses</option>` + [...courses].map(c=>`<option value="${c}">${c}</option>`).join('');
+  filterClass.innerHTML = `<option value="">All Classes</option>` + [...classes].map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+function renderStudents(students){
   studentsBody.innerHTML = '';
   let index = 1;
-  snapshot.forEach(docSnap=>{
-    const s = docSnap.data();
+  students.forEach(s=>{
     const tr = document.createElement('tr');
-    tr.innerHTML=`
-      <td>${index}</td>
+    tr.innerHTML=`<td>${index}</td>
       <td>${s.firstName||'-'}</td>
       <td>${s.lastName||'-'}</td>
       <td>${s.email||'-'}</td>
@@ -252,21 +313,37 @@ function renderStudents(snapshot){
       <td>${s.studentClass||'-'}</td>
       <td>${s.studentID||'-'}</td>
       <td>
-        <button class="action-btn edit-btn" onclick="openEditModal('${docSnap.id}','${s.firstName}','${s.lastName}','${s.email}','${s.course}','${s.intake}','${s.studentClass}','${s.studentID}')">Edit</button>
-        <button class="action-btn delete-btn" onclick="openDeleteModal('${docSnap.id}','${s.firstName} ${s.lastName}')">Delete</button>
-      </td>
-    `;
+        <button class="action-btn edit-btn" onclick="openEditModal('${s.id}','${s.firstName}','${s.lastName}','${s.email}','${s.course}','${s.intake}','${s.studentClass}','${s.studentID}')">Edit</button>
+        <button class="action-btn delete-btn" onclick="openDeleteModal('${s.id}','${s.firstName} ${s.lastName}')">Delete</button>
+      </td>`;
     studentsBody.appendChild(tr);
     index++;
   });
 }
 
-onSnapshot(collection(db,"students"), snapshot=>{ renderStudents(snapshot); });
+function filterAndRender(){
+  const courseVal = filterCourse.value;
+  const classVal = filterClass.value;
+  let filtered = allStudents.filter(s=>{
+    return (courseVal === '' || s.course === courseVal) &&
+           (classVal === '' || s.studentClass === classVal);
+  });
+  renderStudents(filtered);
+}
+
+onSnapshot(collection(db,"students"), snapshot=>{
+  allStudents = snapshot.docs.map(docSnap=>({...docSnap.data(), id:docSnap.id}));
+  renderFilters(allStudents);
+  filterAndRender();
+});
+
+filterCourse.addEventListener('change', filterAndRender);
+filterClass.addEventListener('change', filterAndRender);
 
 // Sidebar toggle
 document.getElementById('menu-toggle').addEventListener('click',()=>{
   const sidebar = document.querySelector('.sidebar');
-  if(window.innerWidth <= 768) sidebar.classList.toggle('active');
+  if(window.innerWidth <= 768) sidebar.classList.toggle('show');
   else sidebar.classList.toggle('collapsed');
 });
 
@@ -312,5 +389,6 @@ document.getElementById('confirmDeleteBtn').onclick= async ()=>{
   deleteModal.classList.remove('show'); showToast('Student deleted!');
 };
 </script>
+
 </body>
 </html>

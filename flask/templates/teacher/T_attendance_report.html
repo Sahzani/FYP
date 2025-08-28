@@ -16,8 +16,6 @@
       font-family:'Poppins',sans-serif; 
       background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
     }
-
-    /* Header */
     header { 
       position:fixed; top:0; left:0; right:0; height:60px; 
       background:#fff; display:flex; align-items:center; 
@@ -30,7 +28,6 @@
     .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; cursor:pointer; }
     .user-info:hover { background:#f0f0f0; }
 
-    /* Sidebar */
     .sidebar {
       position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px);
       background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
@@ -53,16 +50,14 @@
       color:#1A237E; text-decoration:none; 
       transition:all 0.25s ease; white-space:nowrap; 
     }
-    .sidebar.collapsed .sidebar-link span { display:none; } /* hide text when collapsed */
+    .sidebar.collapsed .sidebar-link span { display:none; }
     .sidebar-link i { width:18px; text-align:center; }
     .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
     .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
 
-    /* Main */
     .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease; }
     .sidebar.collapsed ~ .main { margin-left:80px; }
 
-    /* Cards */
     .card { 
       background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:30px; 
       font-family:'Poppins',sans-serif; 
@@ -72,6 +67,11 @@
     table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; }
     th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
     th { font-weight:600; text-transform:uppercase; font-size:13px; }
+
+    /* Optional: color-coded status */
+    td.status-Present { color: green; font-weight:600; }
+    td.status-Late { color: orange; font-weight:600; }
+    td.status-Absent { color: red; font-weight:600; }
   </style>
 </head>
 
@@ -87,8 +87,7 @@
   </div>
 </header>
 
-  <!-- Sidebar -->
- <div class="sidebar">
+<div class="sidebar">
   <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
@@ -106,100 +105,149 @@
   </div>
 </div>
 
-  <!-- Main Content -->
-  <div class="main">
-    <h1 class="page-title">Attendance Report</h1>
+<div class="main">
+  <h1 class="page-title">Attendance Report</h1>
 
-    <div class="card">
-      <h2>Set Class Time</h2>
-      <label>Class Start:
-        <input type="time" id="startTime" value="08:30">
-      </label>
-      <label style="margin-left:20px;">Late Cutoff:
-        <input type="time" id="cutoffTime" value="09:00">
-      </label>
-      <button id="saveTimes" class="px-4 py-2 bg-blue-600 text-white rounded-lg ml-4">Save</button>
-    </div>
-
-    <div class="card">
-      <h2>Live Attendance Feed</h2>
-      <img id="webcam-feed" src="http://localhost:5001/video_feed" alt="Live Feed">
-    </div>
-
-    <div class="card">
-      <h2>Attendance Table</h2>
-      <table id="attendance-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Class</th>
-            <th>Time</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+  <div class="card">
+    <h2>Set Class Time</h2>
+    <label>Class Start:
+      <input type="time" id="startTime" value="08:30">
+    </label>
+    <label style="margin-left:20px;">Late Cutoff:
+      <input type="time" id="cutoffTime" value="09:00">
+    </label>
+    <button id="saveTimes" class="px-4 py-2 bg-blue-600 text-white rounded-lg ml-4">Save</button>
   </div>
 
-  <!-- Firebase Script -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+  <div class="card">
+    <h2>Live Attendance Feed</h2>
+    <img id="webcam-feed" src="http://localhost:5001/video_feed" alt="Live Feed">
+  </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-      authDomain: "aimanzamani.firebaseapp.com",
-      projectId: "aimanzamani",
-      storageBucket: "aimanzamani.appspot.com",
-      messagingSenderId: "63348630728",
-      appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  <div class="card">
+    <h2>Attendance Table</h2>
+    <table id="attendance-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Class</th>
+          <th>Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
 
-    document.getElementById("saveTimes").addEventListener("click", async () => {
-      const start = document.getElementById("startTime").value;
-      const cutoff = document.getElementById("cutoffTime").value;
-      await setDoc(doc(db, "settings", "attendanceTimes"), {
-        startTime: start,
-        cutoffTime: cutoff,
-        active: true
-      });
-      alert("Times saved! Camera will start scanning now.");
-    });
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+import { getFirestore, doc, setDoc, collection, getDocs, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
-    async function fetchAttendance() {
-      const tbody = document.querySelector('#attendance-table tbody');
-      tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+const firebaseConfig = {
+  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+  authDomain: "aimanzamani.firebaseapp.com",
+  projectId: "aimanzamani",
+  storageBucket: "aimanzamani.appspot.com",
+  messagingSenderId: "63348630728",
+  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-      const q = query(collection(db, 'attendance'), orderBy('time','desc'), limit(50));
-      const snapshot = await getDocs(q);
-      tbody.innerHTML = '';
+document.getElementById("saveTimes").addEventListener("click", async () => {
+  const start = document.getElementById("startTime").value;
+  const cutoff = document.getElementById("cutoffTime").value;
+  await setDoc(doc(db, "settings", "attendanceTimes"), {
+    startTime: start,
+    cutoffTime: cutoff,
+    active: true
+  });
+  alert("Times saved! Camera will start scanning now.");
+});
 
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const timeString = data.time ? data.time.toDate().toLocaleString() : '';
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${data.name || ''}</td>
-          <td>${data.email || ''}</td>
-          <td>${data.class || ''}</td>
-          <td>${timeString}</td>
-        `;
-        tbody.appendChild(row);
-      });
+async function fetchAttendance() {
+  const tbody = document.querySelector('#attendance-table tbody');
+  tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+
+  // Get class time settings
+  const settingsSnap = await getDoc(doc(db, "settings", "attendanceTimes"));
+  let startTime = "08:30", cutoffTime = "09:00";
+  if(settingsSnap.exists()){
+    const data = settingsSnap.data();
+    startTime = data.startTime || startTime;
+    cutoffTime = data.cutoffTime || cutoffTime;
+  }
+
+  // Convert times to Date objects
+  const [startH, startM] = startTime.split(':').map(Number);
+  const [cutoffH, cutoffM] = cutoffTime.split(':').map(Number);
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate()+1);
+
+  // Get all students
+  const studentsSnapshot = await getDocs(collection(db, 'students'));
+  const students = [];
+  studentsSnapshot.forEach(doc => students.push({ id: doc.id, ...doc.data() }));
+
+  // Get today's attendance
+  const attendanceQuery = query(
+    collection(db, 'attendance'),
+    where('time', '>=', today),
+    where('time', '<', tomorrow)
+  );
+  const attendanceSnapshot = await getDocs(attendanceQuery);
+
+  const attendanceToday = {};
+  attendanceSnapshot.forEach(doc => {
+    attendanceToday[doc.data().email] = doc.data();
+  });
+
+  tbody.innerHTML = '';
+  students.forEach(student => {
+    const att = attendanceToday[student.email];
+    let status = 'Absent';
+    let timeString = '-';
+
+    if(att && att.time){
+      const attTime = att.time.toDate();
+      timeString = attTime.toLocaleTimeString();
+      const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), startH, startM);
+      const cutoffDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), cutoffH, cutoffM);
+
+      if(attTime <= startDate){
+        status = 'Present';
+      } else if(attTime <= cutoffDate){
+        status = 'Late';
+      } else {
+        status = 'Absent';
+      }
     }
 
-    fetchAttendance();
-    setInterval(fetchAttendance, 5000);
-  </script>
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${student.firstName || ''} ${student.lastName || ''}</td>
+      <td>${student.email || ''}</td>
+      <td>${student.studentClass || ''}</td>
+      <td>${timeString}</td>
+      <td class="status-${status}">${status}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
 
-  <!-- Sidebar toggle -->
-  <script>
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    menuToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-  </script>
+fetchAttendance();
+setInterval(fetchAttendance, 5000);
+</script>
+
+<script>
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+menuToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+</script>
 </body>
 </html>
