@@ -127,6 +127,9 @@ def login():
         return redirect(url_for("home"))
 
 # ------------------ Dashboards ------------------
+from datetime import datetime
+from flask import render_template, session, redirect, url_for
+
 @app.route("/student_dashboard")
 def student_dashboard():
     if session.get("role") != "student":
@@ -138,6 +141,7 @@ def student_dashboard():
 
     uid = user["uid"]
 
+    # Get student data
     student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
     student_data = None
     for doc in student_doc:
@@ -150,6 +154,7 @@ def student_dashboard():
         last = student_data.get("lastName", "")
         full_name = f"{first} {last}".strip() or "Student"
 
+    # Attendance stats
     attendance_docs = db.collection("attendance").where("student_id", "==", uid).stream()
     present = absent = late = streak = 0
     unexcused_absences = 0
@@ -171,12 +176,44 @@ def student_dashboard():
             temp_streak = 0
         streak = max(streak, temp_streak)
 
+    # Notifications
     if late >= 3:
         notification = "You have been late more than 3 times!"
     elif unexcused_absences >= 3:
         notification = "Your attendance rate is dropped due to 3 unexcused absences this month."
     else:
         notification = "No new notifications."
+
+    # Today's attendance
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_status = "Not Marked Yet"
+    today_note = ""
+
+    today_attendance_doc = db.collection("attendance") \
+                             .where("student_id", "==", uid) \
+                             .where("date", "==", today_str) \
+                             .limit(1) \
+                             .stream()
+
+    for doc in today_attendance_doc:
+        data = doc.to_dict()
+        today_status = data.get("status", "Not Marked Yet")
+        today_note = data.get("note", "")
+        break
+
+    # Determine color and icon for today's attendance
+    if today_status == "Present":
+        status_color = "#28a745"       # green
+        status_icon = "fas fa-check-circle"
+    elif today_status == "Late":
+        status_color = "#ffc107"       # yellow
+        status_icon = "fas fa-exclamation-triangle"
+    elif today_status == "Absent":
+        status_color = "#dc3545"       # red
+        status_icon = "fas fa-times-circle"
+    else:
+        status_color = "#6c757d"       # grey
+        status_icon = "fas fa-circle"
 
     return render_template(
         "student/S_Dashboard.html",
@@ -185,7 +222,11 @@ def student_dashboard():
         stats_absent=absent,
         stats_late=late,
         attendance_streak=streak,
-        notification_message=notification
+        notification_message=notification,
+        today_status=today_status,
+        today_note=today_note,
+        status_color=status_color,
+        status_icon=status_icon
     )
 
 @app.route("/teacher_dashboard")
@@ -250,28 +291,79 @@ def student_attendance():
         total=total,
         percentage=round(percentage, 2)
     )
-
+# ------------------ Student Absent Pages ------------------
 @app.route("/student/absentapp", methods=["GET", "POST"])
 def student_absentapp():
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
+    user = session.get("user")
+    if not user:
+        records = []
+        return render_template(
+            "student/S_AbsentApp.html",
+            records=records,
+            student=None,
+            full_name=None,
+            uid=None,
+            student_ID=None
+        )
+
+    uid = user.get("uid")
+
+    # Fetch full student data
+    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
+    student_data = None
+    for doc in student_doc:
+        student_data = doc.to_dict()
+        break
+
+    # Combine firstName + lastName
+    first_name = student_data.get("firstName") if student_data else ""
+    last_name = student_data.get("lastName") if student_data else ""
+    full_name = f"{first_name} {last_name}".strip()
+    student_ID = student_data.get("studentID") if student_data else ""
+
     if request.method == "POST":
-        studentID = session.get("studentID")
-        remarks = request.form.get("remarks")
+        reason = request.form.get("reason")
         duration = request.form.get("duration")
+        if not reason or not duration:
+            flash("Please fill in all fields.", "danger")
+            return redirect(url_for("student_absentapp"))
 
-        # Add record to Firestore
         db.collection("absenceRecords").add({
-            "remarks": remarks,
+            "student_id": uid,
+            "studentID": student_ID,
+            "full_name": full_name,  # Send combined name
+            "reason": reason,
             "duration": duration,
-            "status": "In Progress"
+            "status": "In Progress",
+            "submitted_at": firestore.SERVER_TIMESTAMP
         })
+        flash("Absence application submitted successfully!", "success")
+        return redirect(url_for("student_absentapp"))
 
-        return redirect(url_for("student_absences"))
+    # GET: fetch absence records
+    records = []
+    try:
+        records_ref = db.collection("absenceRecords").where("student_id", "==", uid)
+        for doc in records_ref.stream():
+            rec = doc.to_dict()
+            rec["id"] = doc.id
+            records.append(rec)
+    except Exception as e:
+        print("Error fetching records:", e)
 
-    # if GET, show the form
-    return render_template("student/S_AbsentApp.html")
+    return render_template(
+        "student/S_AbsentApp.html",
+        records=records,
+        student=student_data,
+        full_name=full_name,
+        uid=uid,
+        student_ID=student_ID
+    )
+
+
 
 # ------------------ Student Profile ------------------
 @app.route("/student/profile")
