@@ -10,452 +10,60 @@
     rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      height: 100%;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-      overflow-x: hidden;
-    }
-
-    /* Header */
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: #fff;
-      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
-      display: flex;
-      align-items: center;
-      padding-left: 20px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-      font-size: 26px;
-      color: #212529;
-      z-index: 1000;
-    }
-
-    #menu-toggle {
-      font-size: 28px;
-      margin-right: 15px;
-      cursor: pointer;
-    }
-
-    .header-content {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      padding: 0 20px;
-      border-radius: 8px;
-      transition: 0.2s;
-      cursor: pointer;
-    }
-
-    .user-info:hover {
-      background: #f0f0f0;
-    }
-
-    .user-info img {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .user-info span {
-      font-size: 16px;
-      font-weight: 600;
-      color: #444;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      position: fixed;
-      top: 60px;
-      left: 0;
-      width: 240px;
-      height: calc(100% - 60px);
-      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-      padding: 15px 0;
-      box-shadow: 2px 0 15px rgba(1, 41, 112, 0.08);
-      font-family: 'Poppins', sans-serif;
-      transition: width 0.3s ease, left 0.3s ease;
-      z-index: 999;
-      border-top-right-radius: 12px;
-      overflow: hidden;
-    }
-
-    .sidebar.collapsed {
-      width: 70px;
-    }
-
-    .sidebar-section {
-      margin-bottom: 25px;
-      padding: 0 15px;
-    }
-
-    .sidebar-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #5D5FEF;
-      margin-bottom: 10px;
-      padding-left: 10px;
-      transition: opacity 0.3s;
-    }
-
-    .sidebar.collapsed .sidebar-section-title {
-      opacity: 0;
-    }
-
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 15px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 500;
-      color: #1A237E;
-      text-decoration: none;
-      transition: all 0.25s ease;
-      white-space: nowrap;
-    }
-
-    .sidebar.collapsed .sidebar-link span {
-      display: none;
-    }
-
-    .sidebar-link i {
-      width: 18px;
-      text-align: center;
-    }
-
-    .sidebar-link:hover {
-      background: rgba(255, 255, 255, 0.5);
-      transform: translateX(4px);
-    }
-
-    .sidebar-link.active {
-      background: rgba(255, 255, 255, 0.7);
-      color: #4154F1;
-      font-weight: 600;
-      box-shadow: inset 0 0 0 1px rgba(181, 116, 28, 0.2);
-    }
-
-    /* Main content */
-    .main {
-      margin-left: 260px;
-      padding: 100px 30px 30px;
-      font-family: 'Nunito', sans-serif;
-      transition: margin-left 0.3s ease;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    .sidebar.collapsed~.main {
-      margin-left: 80px;
-    }
-
-    .page-title {
-      font-family: 'Poppins', sans-serif;
-      font-size: 28px;
-      font-weight: 500;
-      color: #444;
-      margin-bottom: 10px;
-    }
-
-    .breadcrumb {
-      font-family: 'Nunito', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 30px;
-    }
-
-    .breadcrumb .section {
-      color: #989797;
-    }
-
-    .breadcrumb .current {
-      color: #444;
-    }
-
-    /* Card & Table */
-    .card {
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-      position: relative;
-      max-width: 1111px;
-      margin-bottom: 30px;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
-    }
-
-    .card h2 {
-      margin-top: 0;
-      margin-bottom: 20px;
-      font-weight: 600;
-      font-size: 24px;
-      color: #012970;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-    }
-
-    .send-application-btn {
-      position: absolute;
-      top: -50px;
-      right: 2px;
-      background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%);
-      color: #fff;
-      font-size: 13px;
-      font-weight: 500;
-      padding: 8px 16px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
-      text-decoration: none;
-      transition: all 0.25s ease;
-    }
-
-    .send-application-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(0, 102, 255, 0.4);
-    }
-
-    .attendance-table-wrapper {
-      overflow-x: auto;
-    }
-
-    .attendance-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      min-width: 700px;
-    }
-
-    .attendance-table th {
-      background: #f9f9f9;
-      text-align: left;
-      padding: 12px;
-      font-weight: 500;
-    }
-
-    .attendance-table td {
-      padding: 12px;
-      border-top: 1px solid #eee;
-    }
-
-    .status {
-      display: inline-block;
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      color: #fff;
-    }
-
-    .status.in-progress {
-      background: #3b5bfd;
-    }
-
-    .status.approved {
-      background: #2cd4b4;
-    }
-
-    .status.rejected {
-      background: #ff4c4c;
-    }
-
-    .delete-btn {
-      background: #ff4c4c;
-      color: #fff;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-
-    .delete-btn:hover {
-      background: #e63c3c;
-    }
-
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 10000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      justify-content: center;
-      align-items: center;
-      transition: opacity 0.3s;
-    }
-
-    .modal.show {
-      display: flex;
-      opacity: 1;
-    }
-
-    .modal-content {
-      background: #fff;
-      margin: auto;
-      padding: 0;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 450px;
-      overflow: hidden;
-      transform: translateY(-50px);
-      transition: transform 0.3s;
-    }
-
-    .modal.show .modal-content {
-      transform: translateY(0);
-    }
-
-    .modal-header {
-      background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%);
-      padding: 15px;
-      color: #fff;
-      font-size: 20px;
-      font-weight: 600;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-body {
-      padding: 20px;
-    }
-
-    .modal label {
-      display: block;
-      margin: 10px 0 5px;
-      color: #012970;
-      font-weight: 600;
-    }
-
-    .modal input,
-    .modal select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
-
-    .modal-buttons {
-      text-align: right;
-      margin-top: 10px;
-    }
-
-    .modal button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 14px;
-      margin-left: 10px;
-    }
-
-    .modal .save-btn {
-      background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%);
-      color: #fff;
-    }
-
-    .modal .cancel-btn {
-      background: #ccc;
-      color: #000;
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #1e90ff;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.5s;
-      z-index: 9999;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* Mobile adjustments */
-    @media screen and (max-width: 768px) {
-      .sidebar {
-        left: -240px;
-      }
-
-      .sidebar.show {
-        left: 0;
-      }
-
-      .main {
-        margin-left: 0 !important;
-        padding: 80px 15px 15px;
-      }
-
-      header {
-        font-size: 20px;
-      }
-
-      .page-title {
-        font-size: 22px;
-      }
-
-      .card {
-        padding: 20px;
-      }
-
-      .send-application-btn {
-        top: 10px;
-        right: 10px;
-        font-size: 12px;
-        padding: 6px 12px;
-      }
-
-      .modal-content {
-        width: 95%;
-      }
-    }
-
+    /* Keep your existing CSS (unchanged) */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); overflow-x:hidden; }
+    header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1, 41, 112, 0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+    #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
+    .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
+    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; }
+    .user-info:hover { background:#f0f0f0; }
+    .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+    .user-info span { font-size:16px; font-weight:600; color:#444; }
+    .sidebar { position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif; transition:width 0.3s ease, left 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden; }
+    .sidebar.collapsed { width:70px; }
+    .sidebar-section { margin-bottom:25px; padding:0 15px; }
+    .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
+    .sidebar.collapsed .sidebar-section-title { opacity:0; }
+    .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
+    .sidebar.collapsed .sidebar-link span { display:none; }
+    .sidebar-link i { width:18px; text-align:center; }
+    .sidebar-link:hover { background: rgba(255,255,255,0.5); transform:translateX(4px); }
+    .sidebar-link.active { background: rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
+    .main { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
+    .sidebar.collapsed~.main { margin-left:80px; }
+    .page-title { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
+    .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
+    .breadcrumb .section { color:#989797; }
+    .breadcrumb .current { color:#444; }
+    .card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); position:relative; max-width:1111px; margin-bottom:30px; transition:transform 0.3s ease, box-shadow 0.3s ease; }
+    .card:hover { transform:translateY(-8px); box-shadow:0 12px 25px rgba(0,0,0,0.15); }
+    .card h2 { margin-top:0; margin-bottom:20px; font-weight:600; font-size:24px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
+    .send-application-btn { position:absolute; top:-50px; right:2px; background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); color:#fff; font-size:13px; font-weight:500; padding:8px 16px; border-radius:8px; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(0,102,255,0.3); text-decoration:none; transition: all 0.25s ease; }
+    .send-application-btn:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,102,255,0.4); }
+    .attendance-table-wrapper { overflow-x:auto; }
+    .attendance-table { width:100%; border-collapse:collapse; font-size:14px; min-width:700px; }
+    .attendance-table th { background:#f9f9f9; text-align:left; padding:12px; font-weight:500; }
+    .attendance-table td { padding:12px; border-top:1px solid #eee; }
+    .status { display:inline-block; padding:6px 14px; border-radius:6px; font-size:13px; font-weight:500; color:#fff; }
+    .status.in-progress { background:#3b5bfd; }
+    .status.approved { background:#2cd4b4; }
+    .status.rejected { background:#ff4c4c; }
+    .delete-btn { background:#ff4c4c; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; }
+    .delete-btn:hover { background:#e63c3c; }
+    .modal { display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; transition:opacity 0.3s; }
+    .modal.show { display:flex; opacity:1; }
+    .modal-content { background:#fff; margin:auto; padding:0; border-radius:12px; width:90%; max-width:450px; overflow:hidden; transform:translateY(-50px); transition: transform 0.3s; }
+    .modal.show .modal-content { transform:translateY(0); }
+    .modal-header { background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); padding:15px; color:#fff; font-size:20px; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
+    .modal-body { padding:20px; }
+    .modal label { display:block; margin:10px 0 5px; color:#012970; font-weight:600; }
+    .modal input, .modal select { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; margin-bottom:12px; }
+    .modal-buttons { text-align:right; margin-top:10px; }
+    .modal button { padding:10px 16px; border:none; border-radius:8px; cursor:pointer; font-weight:500; font-size:14px; margin-left:10px; }
+    .modal .save-btn { background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); color:#fff; }
+    .modal .cancel-btn { background:#ccc; color:#000; }
+    @media screen and (max-width:768px){ .sidebar{left:-240px;} .sidebar.show{left:0;} .main{margin-left:0!important;padding:80px 15px 15px;} header{font-size:20px;} .page-title{font-size:22px;} .card{padding:20px;} .send-application-btn{top:10px; right:10px; font-size:12px; padding:6px 12px;} .modal-content{width:95%;} }
   </style>
 </head>
 
@@ -504,15 +112,15 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>Absence reason</th>
-              <th>Absence for</th>
+              <th>Reason</th>
+              <th>Duration</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="recordsBody">
             <tr>
-              <td colspan="7">Loading...</td>
+              <td colspan="5">Loading...</td>
             </tr>
           </tbody>
         </table>
@@ -522,43 +130,34 @@
 
   <!-- Modal -->
   <div id="editModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span>Send Absence Application</span>
-      <span class="close">&times;</span> <!-- Close button -->
-    </div>
-    <div class="modal-body">
-    <label>Student Name</label>
-    <input type="text" id="modalStudentName" readonly value="{{ full_name }}">
-  
-    <label>Course Section</label>
-    <input type="text" id="modalCourse" readonly value="{{ course_section }}">
-
-    <label>Reason</label>
-    <input type="text" id="modalReason">
-    <label>Duration</label>
-    <select id="modalDuration">
-     <option value="1 day">1 day</option>
-     <option value="2 days">2 days</option>
-     <option value="3 days">3 days</option>
-     <option value="1 week">1 week</option>
-   </select>
-
-    <div class="modal-buttons">
-     <button class="save-btn" id="saveBtn">Send</button>
-     <button class="cancel-btn" id="cancelBtn">Cancel</button>
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Send Absence Application</span>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <label>Reason</label>
+        <input type="text" id="modalReason" placeholder="Enter reason">
+        <label>Duration</label>
+        <select id="modalDuration">
+          <option value="1 day">1 day</option>
+          <option value="2 days">2 days</option>
+          <option value="3 days">3 days</option>
+          <option value="1 week">1 week</option>
+        </select>
+        <div class="modal-buttons">
+          <button class="save-btn" id="saveBtn">Send</button>
+          <button class="cancel-btn" id="cancelBtn">Cancel</button>
+        </div>
+      </div>
     </div>
   </div>
-    </div>
-</div>
-
 
   <div id="toast" class="toast">Application sent successfully!</div>
 
-  <!-- Firebase + App Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
@@ -568,9 +167,9 @@
       messagingSenderId: "63348630728",
       appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
     };
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
 
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
@@ -583,11 +182,8 @@
     const toast = document.getElementById('toast');
 
     menuToggle.addEventListener('click', () => {
-      if (window.innerWidth <= 768) {
-        sidebar.classList.toggle('show');
-      } else {
-        sidebar.classList.toggle('collapsed');
-      }
+      if (window.innerWidth <= 768) { sidebar.classList.toggle('show'); }
+      else { sidebar.classList.toggle('collapsed'); }
     });
 
     function showToast(message) {
@@ -596,57 +192,84 @@
       setTimeout(() => toast.classList.remove('show'), 2000);
     }
 
+    const studentUID = "{{ uid }}";
+    const studentID = "{{ student_ID }}";
+
     async function renderRecords() {
-      const querySnapshot = await getDocs(collection(db, "absenceRecords"));
-      recordsBody.innerHTML = '';
-      let idx = 0;
-      querySnapshot.forEach(docSnap => {
-        const rec = docSnap.data();
-        idx++;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${idx}</td>
-          <td>${rec.reason}</td>
-          <td>${rec.duration}</td>
-          <td><span class="status ${rec.status.toLowerCase().replace(' ','-')}">${rec.status}</span></td>
-          <td><button class="delete-btn" data-id="${docSnap.id}">Delete</button></td>
-        `;
-        recordsBody.appendChild(tr);
-      });
-      document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async e => {
-        const id = e.target.getAttribute('data-id');
-        await deleteDoc(doc(db, "absenceRecords", id));
-        showToast('Record deleted successfully!');
-        renderRecords();
-      }));
+      if (!studentUID) {
+        recordsBody.innerHTML = '<tr><td colspan="5">No student information found.</td></tr>';
+        return;
+      }
+
+      try {
+        const q = query(collection(db, "absenceRecords"), where("uid", "==", studentUID));
+        const querySnapshot = await getDocs(q);
+
+        recordsBody.innerHTML = '';
+        if (querySnapshot.empty) {
+          recordsBody.innerHTML = '<tr><td colspan="5">No absence records found.</td></tr>';
+          return;
+        }
+
+        let idx = 0;
+        querySnapshot.forEach(docSnap => {
+          const rec = docSnap.data();
+          idx++;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${idx}</td>
+            <td>${rec.reason}</td>
+            <td>${rec.duration}</td>
+            <td><span class="status ${rec.status.toLowerCase().replace(' ','-')}">${rec.status}</span></td>
+            <td><button class="delete-btn" data-id="${docSnap.id}">Delete</button></td>
+          `;
+          recordsBody.appendChild(tr);
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async e => {
+          const id = e.target.dataset.id;
+          await deleteDoc(doc(db, "absenceRecords", id));
+          showToast('Record deleted successfully!');
+          renderRecords();
+        }));
+
+      } catch (error) {
+        console.error("Error fetching records:", error);
+        recordsBody.innerHTML = '<tr><td colspan="5">Error loading records.</td></tr>';
+      }
     }
 
     function openModal() {
       modal.classList.add('show');
-      // document.getElementById('modalStudentName').value = '';
-      // document.getElementById('modalCourse').value = '';
       document.getElementById('modalReason').value = '';
       document.getElementById('modalDuration').value = '1 day';
     }
 
     closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
-   
-    saveBtn.onclick = async () => {
+    openApplicationModal.onclick = openModal;
 
+    saveBtn.onclick = async () => {
       const reason = document.getElementById('modalReason').value.trim();
       const duration = document.getElementById('modalDuration').value;
-      if (!reason) {
-        alert('Please fill in all fields!');
-        return;
-      }
-      await addDoc(collection(db, "absenceRecords"), {reason, duration, status: 'In Progress' });
-      showToast('Application sent successfully!');
+      if (!reason) { alert('Please enter reason'); return; }
+
+      await addDoc(collection(db, 'absenceRecords'), {
+        uid: studentUID,
+        studentID: studentID,
+        full_name: "{{ full_name }}", 
+        reason: reason,
+        duration: duration,
+        status: 'In Progress',
+        timestamp: new Date()
+      });
+
       modal.classList.remove('show');
+      showToast('Application sent successfully!');
       renderRecords();
-    };
-    
-    openApplicationModal.onclick = openModal;
+    }
+
     renderRecords();
   </script>
 </body>
+
 </html>

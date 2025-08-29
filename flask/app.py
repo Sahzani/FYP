@@ -250,28 +250,79 @@ def student_attendance():
         total=total,
         percentage=round(percentage, 2)
     )
-
+# ------------------ Student Absent Pages ------------------
 @app.route("/student/absentapp", methods=["GET", "POST"])
 def student_absentapp():
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
+    user = session.get("user")
+    if not user:
+        records = []
+        return render_template(
+            "student/S_AbsentApp.html",
+            records=records,
+            student=None,
+            full_name=None,
+            uid=None,
+            student_ID=None
+        )
+
+    uid = user.get("uid")
+
+    # Fetch full student data
+    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
+    student_data = None
+    for doc in student_doc:
+        student_data = doc.to_dict()
+        break
+
+    # Combine firstName + lastName
+    first_name = student_data.get("firstName") if student_data else ""
+    last_name = student_data.get("lastName") if student_data else ""
+    full_name = f"{first_name} {last_name}".strip()
+    student_ID = student_data.get("studentID") if student_data else ""
+
     if request.method == "POST":
-        studentID = session.get("studentID")
-        remarks = request.form.get("remarks")
+        reason = request.form.get("reason")
         duration = request.form.get("duration")
+        if not reason or not duration:
+            flash("Please fill in all fields.", "danger")
+            return redirect(url_for("student_absentapp"))
 
-        # Add record to Firestore
         db.collection("absenceRecords").add({
-            "remarks": remarks,
+            "student_id": uid,
+            "studentID": student_ID,
+            "full_name": full_name,  # Send combined name
+            "reason": reason,
             "duration": duration,
-            "status": "In Progress"
+            "status": "In Progress",
+            "submitted_at": firestore.SERVER_TIMESTAMP
         })
+        flash("Absence application submitted successfully!", "success")
+        return redirect(url_for("student_absentapp"))
 
-        return redirect(url_for("student_absences"))
+    # GET: fetch absence records
+    records = []
+    try:
+        records_ref = db.collection("absenceRecords").where("student_id", "==", uid)
+        for doc in records_ref.stream():
+            rec = doc.to_dict()
+            rec["id"] = doc.id
+            records.append(rec)
+    except Exception as e:
+        print("Error fetching records:", e)
 
-    # if GET, show the form
-    return render_template("student/S_AbsentApp.html")
+    return render_template(
+        "student/S_AbsentApp.html",
+        records=records,
+        student=student_data,
+        full_name=full_name,
+        uid=uid,
+        student_ID=student_ID
+    )
+
+
 
 # ------------------ Student Profile ------------------
 @app.route("/student/profile")
