@@ -466,7 +466,7 @@
     <div class="header-content">
       <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
       <a href="{{ url_for('student_profile') }}" class="user-info">
-        <span>{{ session['user']['email'] if session.get('user') else 'Student' }}</span>
+        <span id="header-user-name">{{ full_name }}</span>
         <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile">
       </a>
     </div>
