@@ -216,11 +216,26 @@ def student_attendance():
         percentage=round(percentage, 2)
     )
 
-@app.route('/student/absentapp')
+@app.route("/student/absentapp", methods=["GET", "POST"])
 def student_absentapp():
-    if session.get("role") == "student":
-        return render_template('student/S_AbsentApp.html')
-    return redirect(url_for("home"))
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
+
+    if request.method == "POST":
+        studentID = session.get("studentID")
+        remarks = request.form.get("remarks")
+
+        new_absence = Absence(
+            studentID=studentID,
+            status="Absent",
+            remarks=remarks
+        )
+        db.session.add(new_absence)
+        db.session.commit()
+        return redirect(url_for("student_absences"))
+
+    # if GET, show the form
+    return render_template("student/S_AbsentApp.html")
 
 # ------------------ Student Profile ------------------
 @app.route("/student/profile")
