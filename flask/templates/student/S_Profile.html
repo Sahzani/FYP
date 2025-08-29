@@ -79,7 +79,11 @@
       <a href="{{ url_for('student_dashboard') }}" style="text-decoration: none; color: inherit;">iAttend</a>
       <a href="{{ url_for('student_profile') }}" class="user-info">
         <span>{{ profile.full_name }}</span>
-        <img id="user-profile-pic-header" src="{{ url_for('static', filename=profile.profile_pic) }}" alt="User Profile Picture">
+        <!-- header picture -->
+        {% set header_pic = profile.profile_pic.replace('\\','/') if profile.profile_pic else 'images/default-profile.png' %}
+        <img id="user-profile-pic-header" 
+             src="{{ url_for('static', filename=header_pic) }}" 
+             alt="User Profile Picture">
       </a>
     </div>
   </header>
@@ -95,7 +99,7 @@
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Request</div>
-      <a class="sidebar-link active" href="{{ url_for('student_absentapp') }}"><i class="fas fa-file-alt"></i><span>Absence Application</span></a>
+      <a class="sidebar-link" href="{{ url_for('student_absentapp') }}"><i class="fas fa-file-alt"></i><span>Absence Application</span></a>
       <a class="sidebar-link" href="{{ url_for('student_contact') }}"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
     </div>
     <div class="sidebar-section">
@@ -107,7 +111,10 @@
   <div class="main">
     <div class="profile-card">
       <div class="profile-pic-container">
-        <img id="profile-pic" src="{{ url_for('static', filename=profile.profile_pic) }}" alt="Profile Picture">
+        {% set main_pic = profile.profile_pic.replace('\\','/') if profile.profile_pic else 'images/default-profile.png' %}
+        <img id="profile-pic" 
+             src="{{ url_for('static', filename=main_pic) }}" 
+             alt="Profile Picture">
       </div>
       <div class="profile-name">{{ profile.full_name }}</div>
       <div class="profile-sub">{{ profile.course }} • Intake {{ profile.intake }}</div>

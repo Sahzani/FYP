@@ -47,11 +47,6 @@
 
         .profile-sections { display:flex; flex-direction:column; gap:30px; max-width:900px; margin:0 auto; }
 
-        .page-title { font-family:'Poppins', sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
-        .breadcrumb { font-family:'Nunito', sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
-        .breadcrumb .section { color:#989797; }
-        .breadcrumb .current { color:#444444; }
-
         .card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .card:hover { transform: translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
         .card h2 { margin-top:0; margin-bottom:20px; font-family:'Nunito',sans-serif; font-weight:600; font-size:24px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
@@ -97,69 +92,73 @@
     </style>
 </head>
 <body>
-    <header>
-        <span id="menu-toggle">&#9776;</span>
-        <div class="header-content">
-            <a href="{{ url_for('student_dashboard') }}" style="text-decoration: none; color: inherit;">iAttend</a>
-            <a href="{{ url_for('student_profile') }}" class="user-info">
-                <span>{{ profile.full_name }}</span>
-                <img id="user-profile-pic-header" src="{{ profile.profile_pic }}" alt="User Profile Picture">
-            </a>
-        </div>
-    </header>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-section">
-          <a class="sidebar-link" href="{{ url_for('student_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
-        </div>
-        <div class="sidebar-section">
-          <div class="sidebar-section-title">Analyse</div>
-          <a class="sidebar-link" href="{{ url_for('student_attendance') }}"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
-        </div>
-        <div class="sidebar-section">
-          <div class="sidebar-section-title">Request</div>
-          <a class="sidebar-link active" href="{{ url_for('student_absentapp') }}"><i class="fas fa-file-alt"></i><span>Absence Application</span></a>
-          <a class="sidebar-link" href="{{ url_for('student_contact') }}"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
-        </div>
-        <div class="sidebar-section">
-          <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
-        </div>
+<header>
+    <span id="menu-toggle">&#9776;</span>
+    <div class="header-content">
+        <a href="{{ url_for('student_dashboard') }}" style="text-decoration: none; color: inherit;">iAttend</a>
+        <a href="{{ url_for('student_profile') }}" class="user-info">
+            <span>{{ profile.full_name }}</span>
+            <img id="user-profile-pic-header"
+                 src="{% if profile.profile_pic and profile.profile_pic.startswith('http') %}{{ profile.profile_pic }}{% else %}{{ url_for('static', filename=profile.profile_pic|replace('\\','/')) }}{% endif %}"
+                 alt="User Profile Picture">
+        </a>
     </div>
+</header>
 
-    <div class="main">
-    <div class="profile-sections">
-        <div class="card user-profile-card">
-            <h2>Edit User Profile</h2>
-            <div class="profile-content">
-                <div class="profile-pic-container">
-                    <img id="user-profile-pic" src="{{ profile.profile_pic }}" alt="Profile Picture">
-                    <input type="file" name="profilePic" id="profile-pic-upload" form="profile-form" style="display:none;">
-                    <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
-                </div>
-                <form id="profile-form" class="profile-details" method="POST" action="{{ url_for('student_editprofile') }}" enctype="multipart/form-data">
-                    <div class="form-group"><label>First Name</label><input type="text" name="firstName" value="{{ profile.full_name.split(' ')[0] }}" disabled></div>
-                    <div class="form-group"><label>Last Name</label><input type="text" name="lastName" value="{{ profile.full_name.split(' ')[1] if profile.full_name.split(' ')|length>1 else '' }}" disabled></div>
-                    <div class="form-group"><label>Nickname</label><input type="text" name="nickname" value="{{ profile.nickname }}"></div>
-                    <div class="form-group"><label>Phone Number</label><input type="text" name="phone" value="{{ profile.phone }}"></div>
-                    <div class="form-group"><label>Role Type</label><input type="text" value="Student" disabled></div>
-                    <div class="form-group"><label>Course</label><input type="text" value="{{ profile.course }}" disabled></div>
-                    <div class="form-group"><label>Student ID</label><input type="text" value="{{ profile.student_id }}" disabled></div>
-                    <div class="form-group"><label>Class</label><input type="text" value="{{ profile.studentClass }}" disabled></div>
-                    <div class="form-group"><label>Intake</label><input type="text" value="{{ profile.intake }}" disabled></div>
-                    <div class="form-group"><label>Email</label><input type="email" value="{{ profile.email }}" disabled></div>
-                    <div class="card-actions">
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </div>
-                </form>
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="{{ url_for('student_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link" href="{{ url_for('student_attendance') }}"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Request</div>
+      <a class="sidebar-link active" href="{{ url_for('student_absentapp') }}"><i class="fas fa-file-alt"></i><span>Absence Application</span></a>
+      <a class="sidebar-link" href="{{ url_for('student_contact') }}"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
+    </div>
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+</div>
+
+<div class="main">
+<div class="profile-sections">
+    <div class="card user-profile-card">
+        <h2>Edit User Profile</h2>
+        <div class="profile-content">
+            <div class="profile-pic-container">
+                <img id="user-profile-pic"
+                     src="{% if profile.profile_pic and profile.profile_pic.startswith('http') %}{{ profile.profile_pic }}{% else %}{{ url_for('static', filename=profile.profile_pic|replace('\\','/')) }}{% endif %}"
+                     alt="Profile Picture">
+                <input type="file" name="profilePic" id="profile-pic-upload" form="profile-form" style="display:none;">
+                <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
             </div>
-        </div>
-
-        <div class="card password-change-card">
-            <h2>Password Change</h2>
-            <button id="changePasswordButton" class="btn btn-primary">Change Password</button>
+            <form id="profile-form" class="profile-details" method="POST" action="{{ url_for('student_editprofile') }}" enctype="multipart/form-data">
+                <div class="form-group"><label>First Name</label><input type="text" name="firstName" value="{{ profile.full_name.split(' ')[0] }}" disabled></div>
+                <div class="form-group"><label>Last Name</label><input type="text" name="lastName" value="{{ profile.full_name.split(' ')[1] if profile.full_name.split(' ')|length>1 else '' }}" disabled></div>
+                <div class="form-group"><label>Nickname</label><input type="text" name="nickname" value="{{ profile.nickname }}"></div>
+                <div class="form-group"><label>Phone Number</label><input type="text" name="phone" value="{{ profile.phone }}"></div>
+                <div class="form-group"><label>Role Type</label><input type="text" value="Student" disabled></div>
+                <div class="form-group"><label>Course</label><input type="text" value="{{ profile.course }}" disabled></div>
+                <div class="form-group"><label>Student ID</label><input type="text" value="{{ profile.student_id }}" disabled></div>
+                <div class="form-group"><label>Class</label><input type="text" value="{{ profile.studentClass }}" disabled></div>
+                <div class="form-group"><label>Intake</label><input type="text" value="{{ profile.intake }}" disabled></div>
+                <div class="form-group"><label>Email</label><input type="email" value="{{ profile.email }}" disabled></div>
+                <div class="card-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
+
+    <div class="card password-change-card">
+        <h2>Password Change</h2>
+        <button id="changePasswordButton" class="btn btn-primary">Change Password</button>
+    </div>
+</div>
 </div>
 
 <div id="passwordModal" class="modal">
@@ -183,7 +182,7 @@ const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 menuToggle.addEventListener('click', ()=> sidebar.classList.toggle('collapsed'));
 
-// Profile picture preview (also updates header pic)
+// Profile picture preview (updates card and header)
 const profilePicUpload = document.getElementById('profile-pic-upload');
 const userProfilePic = document.getElementById('user-profile-pic');
 const userProfileHeaderPic = document.getElementById('user-profile-pic-header');
