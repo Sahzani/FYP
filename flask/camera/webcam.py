@@ -35,16 +35,6 @@ for doc in students_ref.stream():
     if img is None:
         continue
     rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-    import numpy as np
-
-    print("rgb_img type:", type(rgb_img))
-    print("rgb_img shape:", getattr(rgb_img, "shape", None))
-    print("rgb_img dtype:", getattr(rgb_img, "dtype", None))
-
-    rgb_img = np.ascontiguousarray(rgb_img)   # 🔑 force proper memory layout
-
-
     encode = face_recognition.face_encodings(rgb_img)
     if encode:
         encodings.append(encode[0])
