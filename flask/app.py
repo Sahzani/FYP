@@ -8,6 +8,7 @@ import os
 import subprocess
 
 # For webcam page
+PYTHON_EXE = r"C:\Users\Acer\try\tuto-env\Scripts\python.exe"
 camera_process = None
 WEBCAM_PATH = r"C:\Users\Acer\Desktop\FYP\flask\camera\webcam.py"
 
@@ -203,15 +204,33 @@ def admin_dashboard():
 # ------------------ Camera Page ------------------
 @app.route("/camera")
 def camera_page():
-    return render_template("camera.html")  # This will be a new template
+    return render_template("camera.html")  # New template we'll create
 
 @app.route("/start-camera")
 def start_camera():
     global camera_process
     if camera_process is None:
-        camera_process = subprocess.Popen(
-            ["python", WEBCAM_PATH], shell=True
-        )
+        try:
+            camera_process = subprocess.Popen(
+                [PYTHON_EXE, WEBCAM_PATH],
+                shell=True
+            )
+            print("Camera started!")
+        except Exception as e:
+            print("Error starting camera:", e)
+    else:
+        print("Camera is already running.")
+    return redirect(url_for("camera_page"))
+
+@app.route("/stop-camera")
+def stop_camera():
+    global camera_process
+    if camera_process is not None:
+        camera_process.terminate()
+        camera_process = None
+        print("Camera stopped!")
+    else:
+        print("Camera is not running.")
     return redirect(url_for("camera_page"))
 
 # ------------------ Student Pages ------------------
