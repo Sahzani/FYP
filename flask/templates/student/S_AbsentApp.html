@@ -466,7 +466,7 @@
     <div class="header-content">
       <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
       <a href="{{ url_for('student_profile') }}" class="user-info">
-        <span>{{ session['user']['email'] if session.get('user') else 'Student' }}</span>
+        <span id="header-user-name">{{ full_name }}</span>
         <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile">
       </a>
     </div>
@@ -522,28 +522,36 @@
 
   <!-- Modal -->
   <div id="editModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <span>New Absence Application</span>
-        <span class="close">&times;</span>
-      </div>
-      <div class="modal-body">
-        <label>Reason</label>
-        <input type="text" id="modalReason">
-        <label>Duration</label>
-        <select id="modalDuration">
-          <option value="1 day">1 day</option>
-          <option value="2 days">2 days</option>
-          <option value="3 days">3 days</option>
-          <option value="1 week">1 week</option>
-        </select>
-        <div class="modal-buttons">
-          <button class="save-btn" id="saveBtn">Send</button>
-          <button class="cancel-btn" id="cancelBtn">Cancel</button>
-        </div>
-      </div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <span>Send Absence Application</span>
+      <span class="close">&times;</span> <!-- Close button -->
+    </div>
+    <div class="modal-body">
+    <label>Student Name</label>
+    <input type="text" id="modalStudentName" readonly value="{{ full_name }}">
+  
+    <label>Course Section</label>
+    <input type="text" id="modalCourse" readonly value="{{ course_section }}">
+
+    <label>Reason</label>
+    <input type="text" id="modalReason">
+    <label>Duration</label>
+    <select id="modalDuration">
+     <option value="1 day">1 day</option>
+     <option value="2 days">2 days</option>
+     <option value="3 days">3 days</option>
+     <option value="1 week">1 week</option>
+   </select>
+
+    <div class="modal-buttons">
+     <button class="save-btn" id="saveBtn">Send</button>
+     <button class="cancel-btn" id="cancelBtn">Cancel</button>
     </div>
   </div>
+    </div>
+</div>
+
 
   <div id="toast" class="toast">Application sent successfully!</div>
 
@@ -562,6 +570,7 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
@@ -614,30 +623,30 @@
 
     function openModal() {
       modal.classList.add('show');
-      document.getElementById('modalStudentName').value = '';
-      document.getElementById('modalCourse').value = '';
+      // document.getElementById('modalStudentName').value = '';
+      // document.getElementById('modalCourse').value = '';
       document.getElementById('modalReason').value = '';
       document.getElementById('modalDuration').value = '1 day';
     }
 
     closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
+   
     saveBtn.onclick = async () => {
-      const studentName = document.getElementById('modalStudentName').value.trim();
-      const course = document.getElementById('modalCourse').value.trim();
+
       const reason = document.getElementById('modalReason').value.trim();
       const duration = document.getElementById('modalDuration').value;
-      if (!studentName || !course || !reason) {
+      if (!reason) {
         alert('Please fill in all fields!');
         return;
       }
-      await addDoc(collection(db, "absenceRecords"), { studentName, course, reason, duration, status: 'In Progress' });
+      await addDoc(collection(db, "absenceRecords"), {reason, duration, status: 'In Progress' });
       showToast('Application sent successfully!');
       modal.classList.remove('show');
       renderRecords();
     };
+    
     openApplicationModal.onclick = openModal;
     renderRecords();
   </script>
 </body>
-
 </html>
