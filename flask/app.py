@@ -5,6 +5,11 @@ from datetime import timedelta
 from werkzeug.utils import secure_filename
 
 import os
+import subprocess
+
+# For webcam page
+camera_process = None
+WEBCAM_PATH = r"C:\Users\Acer\Desktop\FYP\flask\camera\webcam.py"
 
 # ------------------ Flask Setup ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -194,6 +199,20 @@ def admin_dashboard():
     if session.get("role") == "admin":
         return render_template("admin/A_Homepage.html")
     return redirect(url_for("home"))
+
+# ------------------ Camera Page ------------------
+@app.route("/camera")
+def camera_page():
+    return render_template("camera.html")  # This will be a new template
+
+@app.route("/start-camera")
+def start_camera():
+    global camera_process
+    if camera_process is None:
+        camera_process = subprocess.Popen(
+            ["python", WEBCAM_PATH], shell=True
+        )
+    return redirect(url_for("camera_page"))
 
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")
