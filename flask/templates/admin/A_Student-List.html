@@ -177,15 +177,6 @@ td { padding:12px; border-top:1px solid #ddd; }
        href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
   </div>
 
-  <!-- User Accounts -->
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">User Accounts</div>
-    <a class="sidebar-link {% if request.endpoint=='admin_roles' %}active{% endif %}" 
-       href="{{ url_for('admin_roles') }}"><i class="fas fa-users-cog"></i><span>Manage Roles</span></a>
-    <a class="sidebar-link {% if request.endpoint=='admin_email_setup' %}active{% endif %}" 
-       href="{{ url_for('admin_email_setup') }}"><i class="fas fa-envelope"></i><span>Email Setup</span></a>
-  </div>
-
   <!-- Attendance Section -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>

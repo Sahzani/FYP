@@ -1,175 +1,423 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Student Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); overflow:hidden; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Dashboard</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap"
+    rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito', sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
-  #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
-  .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
-  .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; }
-  .user-info:hover { background:#f0f0f0; }
-  .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-  .user-info span { font-size:16px; font-weight:600; color:#444; }
-  .breadcrumb { font-family:'Nunito', sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
-  .breadcrumb .section { color:#989797; }
-  .breadcrumb .current { color:#444444; }
+    html,
+    body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
+      overflow: hidden;
+    }
 
-  .sidebar { position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif; transition:width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden; }
-  .sidebar.collapsed { width:70px; }
-  .sidebar-section { margin-bottom:25px; padding:0 15px; }
-  .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
-  .sidebar.collapsed .sidebar-section-title { opacity:0; }
-  .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
-  .sidebar.collapsed .sidebar-link span { display:none; }
-  .sidebar-link i { width:18px; text-align:center; }
-  .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
-  .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 20px rgba(1, 41, 112, 0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: #212529;
+      z-index: 1000;
+    }
 
-  .main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
-  .sidebar.collapsed ~ .main-content { margin-left:80px; }
+    #menu-toggle {
+      font-size: 28px;
+      margin-right: 15px;
+      cursor: pointer;
+    }
 
-  h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
-  p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:20px; }
+    .header-content {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-  .grid-container { display:grid; gap:1.5rem; }
-  .card-spacing { margin-bottom:1.5rem; }
-  .card { background:#fff; padding:1.5rem; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; position:relative; }
-  .card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 0 20px;
+      border-radius: 8px;
+      transition: 0.2s;
+      cursor: pointer;
+    }
 
-  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:1.5rem; }
-  .stats-card { display:flex; flex-direction:column; align-items:center; text-align:center; }
-  .icon-circle { width:3rem; height:3rem; display:flex; align-items:center; justify-content:center; background-color:#4154F1; color:white; border-radius:50%; margin-bottom:0.75rem; }
+    .user-info:hover {
+      background: #f0f0f0;
+    }
 
-  .calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-top:30px; }
-  .calendar-day { padding:0.5rem; border-radius:9999px; text-align:center; cursor:pointer; transition: all 0.2s ease-in-out; }
-  .calendar-day.current-day { background-color:#4154F1; color:white; font-weight:700; }
+    .user-info img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
 
-  @media (min-width:1024px){ .grid-container-lg{grid-template-columns:3fr 2fr;} .grid-container-lg-2{grid-template-columns:repeat(2,1fr);} }
-</style>
+    .user-info span {
+      font-size: 16px;
+      font-weight: 600;
+      color: #444;
+    }
+
+    .breadcrumb {
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+
+    .breadcrumb .section {
+      color: #989797;
+    }
+
+    .breadcrumb .current {
+      color: #444444;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 240px;
+      height: calc(100% - 60px);
+      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
+      padding: 15px 0;
+      box-shadow: 2px 0 15px rgba(1, 41, 112, 0.08);
+      font-family: 'Poppins', sans-serif;
+      transition: width 0.3s ease;
+      z-index: 999;
+      border-top-right-radius: 12px;
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed {
+      width: 70px;
+    }
+
+    .sidebar-section {
+      margin-bottom: 25px;
+      padding: 0 15px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #5D5FEF;
+      margin-bottom: 10px;
+      padding-left: 10px;
+      transition: opacity 0.3s;
+    }
+
+    .sidebar.collapsed .sidebar-section-title {
+      opacity: 0;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 15px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #1A237E;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+
+    .sidebar.collapsed .sidebar-link span {
+      display: none;
+    }
+
+    .sidebar-link i {
+      width: 18px;
+      text-align: center;
+    }
+
+    .sidebar-link:hover {
+      background: rgba(255, 255, 255, 0.5);
+      transform: translateX(4px);
+    }
+
+    .sidebar-link.active {
+      background: rgba(255, 255, 255, 0.7);
+      color: #4154F1;
+      font-weight: 600;
+      box-shadow: inset 0 0 0 1px rgba(181, 116, 28, 0.2);
+    }
+
+    .main-content {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      font-family: 'Nunito', sans-serif;
+      transition: margin-left 0.3s ease;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar.collapsed~.main-content {
+      margin-left: 80px;
+    }
+
+    h2 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 28px;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .grid-container {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .card-spacing {
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .stats-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .icon-circle {
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #4154F1;
+      color: white;
+      border-radius: 50%;
+      margin-bottom: 0.75rem;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-top: 30px;
+    }
+
+    .calendar-day {
+      padding: 0.5rem;
+      border-radius: 9999px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .calendar-day.current-day {
+      background-color: #4154F1;
+      color: white;
+      font-weight: 700;
+    }
+
+    @media (min-width:1024px) {
+      .grid-container-lg {
+        grid-template-columns: 3fr 2fr;
+      }
+
+      .grid-container-lg-2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<header>
-  <span id="menu-toggle">&#9776;</span>
-  <div class="header-content">
-    <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
-    <a href="{{ url_for('student_profile') }}" class="user-info">
-      <span id="header-user-name">{{ full_name }}</span>
-      <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=P" alt="User Profile Picture">
-    </a>
-  </div>
-</header>
-
-<!-- Sidebar -->
-<div class="sidebar">
-  <div class="sidebar-section">
-    <a class="sidebar-link active" href="{{ url_for('student_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
-  </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Analyse</div>
-    <a class="sidebar-link" href="{{ url_for('student_attendance') }}"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
-  </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Request</div>
-    <a class="sidebar-link" href="{{ url_for('student_absentapp') }}"><i class="fas fa-file-alt"></i><span>Absence Application</span></a>
-    <a class="sidebar-link" href="{{ url_for('student_contact') }}"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
-  </div>
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
-  </div>
-</div>
-
-<div class="main-content">
-  <h2>Welcome, <span id="student-name">{{ full_name }}</span>!</h2>
-  <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Home</span></div>
-
-  <div class="grid-container-lg grid-container card-spacing">
-    <div class="stats-grid">
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-hourglass-half"></i></div>
-        <p>Days Late</p>
-        <span id="stats-late">{{ stats_late }}</span>
-      </div>
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-user-check"></i></div>
-        <p>Days Present</p>
-        <span id="stats-present">{{ stats_present }}</span>
-      </div>
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-user-times"></i></div>
-        <p>Days Absent</p>
-        <span id="stats-absent">{{ stats_absent }}</span>
-      </div>
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-fire"></i></div>
-        <p>Attendance Streak</p>
-        <span id="attendance-streak">{{ attendance_streak }}</span>
-      </div>
+  <header>
+    <span id="menu-toggle">&#9776;</span>
+    <div class="header-content">
+      <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
+      <a href="{{ url_for('student_profile') }}" class="user-info">
+        <span id="header-user-name">{{ full_name }}</span>
+        <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=P"
+          alt="User Profile Picture">
+      </a>
     </div>
+  </header>
 
-    <!-- Calendar Card -->
-    <div>
-      <div class="card">
-        <h3 style="margin-bottom:10px;">Calendar</h3>
-        <div id="calendar-header" style="position:absolute; top:15px; right:20px; font-weight:600;"></div>
-        <div id="calendar" class="calendar"></div>
-      </div>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <a class="sidebar-link active" href="{{ url_for('student_dashboard') }}"><i
+          class="fas fa-home"></i><span>Dashboard</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Analyse</div>
+      <a class="sidebar-link" href="{{ url_for('student_attendance') }}"><i
+          class="fas fa-chart-line"></i><span>Attendance</span></a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Request</div>
+      <a class="sidebar-link" href="{{ url_for('student_absentapp') }}"><i class="fas fa-file-alt"></i><span>Absence
+          Application</span></a>
+      <a class="sidebar-link" href="{{ url_for('student_contact') }}"><i class="fas fa-envelope"></i><span>Contact
+          Us</span></a>
+    </div>
+    <div class="sidebar-section">
+      <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
     </div>
   </div>
 
-  <div class="grid-container-lg-2 grid-container card-spacing">
-    <div class="card" style="display:flex;align-items:center;gap:1rem;">
-      <div class="icon-circle" id="today-icon"><i class="fas fa-check-circle" style="font-size:1.5rem;"></i></div>
+  <div class="main-content">
+    <h2>Welcome, <span id="student-name">{{ full_name }}</span>!</h2>
+    <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Home</span></div>
+
+    <div class="grid-container-lg grid-container card-spacing">
+      <div class="stats-grid">
+        <div class="card stats-card">
+          <div class="icon-circle"><i class="fas fa-hourglass-half"></i></div>
+          <p>Days Late</p>
+          <span id="stats-late">{{ stats_late }}</span>
+        </div>
+        <div class="card stats-card">
+          <div class="icon-circle"><i class="fas fa-user-check"></i></div>
+          <p>Days Present</p>
+          <span id="stats-present">{{ stats_present }}</span>
+        </div>
+        <div class="card stats-card">
+          <div class="icon-circle"><i class="fas fa-user-times"></i></div>
+          <p>Days Absent</p>
+          <span id="stats-absent">{{ stats_absent }}</span>
+        </div>
+        <div class="card stats-card">
+          <div class="icon-circle"><i class="fas fa-fire"></i></div>
+          <p>Attendance Streak</p>
+          <span id="attendance-streak">{{ attendance_streak }}</span>
+        </div>
+      </div>
+
+      <!-- Calendar Card -->
       <div>
-        <h3>Today's Attendance</h3>
-        <p id="today-status">N/A</p>
-        <p id="today-note"></p>
+        <div class="card">
+          <h3 style="margin-bottom:10px;">Calendar</h3>
+          <div id="calendar-header" style="position:absolute; top:15px; right:20px; font-weight:600;"></div>
+          <div id="calendar" class="calendar"></div>
+        </div>
       </div>
     </div>
-    <div class="card" style="background-color:#F6F8FE; display:flex;align-items:flex-start;gap:1rem;">
-      <div class="icon-circle" style="background-color:#4154F1;"><i class="fas fa-bell" style="font-size:1.5rem;"></i></div>
-      <div style="flex-grow:1;">
-        <h3>Notification</h3>
-        <p id="notification-message">{{ notification_message }}</p>
-      </div>
-      <span id="notification-timestamp"></span>
+
+<div class="grid-container-lg-2 grid-container card-spacing">
+
+ <!-- Today's Attendance Card -->
+<!-- Only the Today's Attendance part changes in the HTML -->
+<div class="card" style="display:flex;align-items:center;gap:1rem;">
+  <div class="icon-circle" style="background-color: {{ status_color }};">
+    <i class="{{ status_icon }}" style="font-size:1.5rem;"></i>
+  </div>
+  <div>
+    <h3>Today's Attendance</h3>
+    <p id="today-status">{{ today_status }}</p>
+    {% if today_note %}
+    <p id="today-note">{{ today_note }}</p>
+    {% endif %}
+  </div>
+</div>
+
+
+  <!-- Notification Card -->
+  <div class="card" style="background-color:#F6F8FE; display:flex; align-items:flex-start; gap:1rem;">
+    <div class="icon-circle" style="background-color:#4154F1;">
+      <i class="fas fa-bell" style="font-size:1.5rem;"></i>
     </div>
+
+    <div style="flex-grow:1;">
+      <h3>Notification</h3>
+      <p id="notification-message">{{ notification_message }}</p>
+    </div>
+
+    <span id="notification-timestamp"></span>
   </div>
 
 </div>
 
-<script>
-function generateCalendar(){
-  const calendarEl = document.getElementById('calendar');
-  const headerEl = document.getElementById('calendar-header');
-  const now = new Date();
-  const today = now.getDate();
-  const monthName = now.toLocaleString('default', { month: 'long' });
-  const year = now.getFullYear();
-  headerEl.textContent = `${monthName} ${year}`;
-  const daysInMonth = new Date(year, now.getMonth()+1, 0).getDate();
-  calendarEl.innerHTML = '';
-  for(let d=1; d<=daysInMonth; d++){
-    const dayEl = document.createElement('div');
-    dayEl.className = 'calendar-day';
-    if(d===today) dayEl.classList.add('current-day');
-    dayEl.textContent = d;
-    calendarEl.appendChild(dayEl);
-  }
-}
+  </div>
 
-generateCalendar();
-document.getElementById('menu-toggle').addEventListener('click', ()=>{
-  document.querySelector('.sidebar').classList.toggle('collapsed');
-});
-</script>
+  <script>
+    function generateCalendar() {
+      const calendarEl = document.getElementById('calendar');
+      const headerEl = document.getElementById('calendar-header');
+      const now = new Date();
+      const today = now.getDate();
+      const monthName = now.toLocaleString('default', { month: 'long' });
+      const year = now.getFullYear();
+      headerEl.textContent = `${monthName} ${year}`;
+      const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate();
+      calendarEl.innerHTML = '';
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        if (d === today) dayEl.classList.add('current-day');
+        dayEl.textContent = d;
+        calendarEl.appendChild(dayEl);
+      }
+    }
+
+    generateCalendar();
+    document.getElementById('menu-toggle').addEventListener('click', () => {
+      document.querySelector('.sidebar').classList.toggle('collapsed');
+    });
+  </script>
 
 </body>
+
 </html>

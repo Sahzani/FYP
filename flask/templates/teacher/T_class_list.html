@@ -30,7 +30,7 @@
 
     /* Sidebar */
     .sidebar {
-      position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px);
+      position: fixed; top:60px; left:0; width:267px; height:calc(100% - 60px);
       background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
       padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08);
       font-family:'Poppins',sans-serif; transition:width 0.3s ease; z-index:999;
@@ -96,28 +96,41 @@
 </header>
 
   <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Class</div>
-      <a class="sidebar-link active" href="{{ url_for('teacher_class_list') }}"><i class="fas fa-school"></i><span>View Class List</span></a>
-      <a class="sidebar-link" href="{{ url_for('teacher_daily_attend') }}"><i class="fas fa-clipboard-check"></i><span>Daily Attend</span></a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Reports</div>
-      <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
-    </div>
-    <div class="sidebar-section">
-      <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
-    </div>
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
+      <i class="fas fa-home"></i><span>Dashboard</span>
+    </a>
   </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Class</div>
+    <a class="sidebar-link active" href="{{ url_for('teacher_class_list') }}">
+      <i class="fas fa-file-signature"></i><span>Absent Application</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_daily_attend') }}">
+      <i class="fas fa-user-check"></i><span>Daily Attendance</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reports</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
+      <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
+  </div>
+</div>
 
   <!-- Main -->
   <div class="main">
-    <h1 class="page-title">Class List</h1>
-    <div class="breadcrumb"><span class="section">Class</span> / <span class="current">View Class List</span></div>
+    <h1 class="page-title">Absent Applications</h1>
+    <div class="breadcrumb"><span class="section">Class</span> / <span class="current">Absent Applications</span></div>
 
     <!-- Absent Applications Card -->
     <div class="card">
@@ -154,6 +167,7 @@
     const db = getFirestore(app);
 
     const applicationsBody = document.getElementById('applicationsBody');
+    const classListBody = document.getElementById('classListBody');
     const toast = document.getElementById('toast');
 
     function showToast(message) {
@@ -183,12 +197,50 @@
       });
     }
 
+    function renderClassList(snapshot) {
+      classListBody.innerHTML = '';
+      snapshot.forEach(docSnap => {
+        const classData = docSnap.data();
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${classData.className || ''}</td>
+          <td>${classData.subject || ''}</td>
+          <td>${classData.studentsCount || ''}</td>`;
+        classListBody.appendChild(tr);
+      });
+    }
+
     onSnapshot(collection(db, 'absent_applications'), renderApplications);
+    onSnapshot(collection(db, 'classes'), renderClassList);
 
     window.updateStatus = async (id, newStatus) => {
       await updateDoc(doc(db, 'absent_applications', id), { status: newStatus });
       showToast(`Application ${newStatus}!`);
     };
+  </script>
+
+  <script type="module">
+    import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+    const classTableBody = document.querySelector('.card table tbody');
+
+    function renderClasses(snapshot) {
+      classTableBody.innerHTML = '';
+      snapshot.forEach(docSnap => {
+        const classData = docSnap.data();
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => window.location.href = `class_attendance.html?classId=${docSnap.id}`;
+        tr.innerHTML = `
+          <td>${classData.className || ''}</td>
+          <td>${classData.subject || ''}</td>
+          <td>${classData.students || 0}</td>
+        `;
+        classTableBody.appendChild(tr);
+      });
+    }
+
+    onSnapshot(collection(db, 'classes'), renderClasses);
   </script>
 </body>
 </html>
