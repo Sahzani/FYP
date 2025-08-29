@@ -66,7 +66,7 @@
     <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="{{ url_for('student_profile') }}">
       <div class="user-info">
-        <span>{{ session['user']['email'] if session.get('user') else 'Student' }}</span>
+        <span id="header-user-name">{{ full_name }}</span>
         <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="Profile">
       </div>
     </a>
@@ -181,9 +181,9 @@ document.getElementById('menu-toggle').addEventListener('click', () => {
 
 // Fill dummy user info (for testing without login)
 // if want to use real user need to change this code to fetch from auth 
-document.getElementById('name').value = "Test User";
+// document.getElementById('name').value = "Test User";
 document.getElementById('email').value = "test@example.com";
-document.getElementById('header-user-name').textContent = "Test User";
+// document.getElementById('header-user-name').textContent = "Test User";
 
 // Handle contact form submission
 document.getElementById('contact-form').addEventListener('submit', async (e)=>{

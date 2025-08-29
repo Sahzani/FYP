@@ -5,6 +5,11 @@ from datetime import timedelta
 from werkzeug.utils import secure_filename
 
 import os
+import subprocess
+
+# For webcam page
+camera_process = None
+WEBCAM_PATH = r"C:\Users\Acer\Desktop\FYP\flask\camera\webcam.py"
 
 # ------------------ Flask Setup ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -39,6 +44,22 @@ def inject_teacher_profile():
                     }
                 }
     return {}
+
+# ------------------ Context Processor for Student Full Name ------------------
+@app.context_processor
+def inject_student_name():
+    if session.get("role") == "student":
+        user = session.get("user")
+        if user:
+            uid = user.get("uid")
+            student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
+            for doc in student_doc:
+                student_data = doc.to_dict()
+                full_name = f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip()
+                if full_name:
+                    return {"full_name": full_name}
+    return {"full_name": "Student"}
+
 
 # ------------------ Routes ------------------
 @app.route("/")
@@ -179,6 +200,20 @@ def admin_dashboard():
         return render_template("admin/A_Homepage.html")
     return redirect(url_for("home"))
 
+# ------------------ Camera Page ------------------
+@app.route("/camera")
+def camera_page():
+    return render_template("camera.html")  # This will be a new template
+
+@app.route("/start-camera")
+def start_camera():
+    global camera_process
+    if camera_process is None:
+        camera_process = subprocess.Popen(
+            ["python", WEBCAM_PATH], shell=True
+        )
+    return redirect(url_for("camera_page"))
+
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")
 def student_attendance():
@@ -216,11 +251,27 @@ def student_attendance():
         percentage=round(percentage, 2)
     )
 
-@app.route('/student/absentapp')
+@app.route("/student/absentapp", methods=["GET", "POST"])
 def student_absentapp():
-    if session.get("role") == "student":
-        return render_template('student/S_AbsentApp.html')
-    return redirect(url_for("home"))
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
+
+    if request.method == "POST":
+        studentID = session.get("studentID")
+        remarks = request.form.get("remarks")
+        duration = request.form.get("duration")
+
+        # Add record to Firestore
+        db.collection("absenceRecords").add({
+            "remarks": remarks,
+            "duration": duration,
+            "status": "In Progress"
+        })
+
+        return redirect(url_for("student_absences"))
+
+    # if GET, show the form
+    return render_template("student/S_AbsentApp.html")
 
 # ------------------ Student Profile ------------------
 @app.route("/student/profile")
@@ -234,6 +285,7 @@ def student_profile():
 
     uid = user.get("uid")
 
+    # Fetch student data from Firestore
     student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
     student_data = None
     for doc in student_doc:
@@ -244,6 +296,15 @@ def student_profile():
         flash("Student data not found.")
         return redirect(url_for("student_dashboard"))
 
+    # Handle profile picture path
+    profile_pic_path = student_data.get("profilePic", None)
+    if profile_pic_path and not profile_pic_path.startswith("http"):
+        # Convert backslashes to forward slashes
+        profile_pic_path = profile_pic_path.replace("\\", "/")
+    else:
+        profile_pic_path = "https://placehold.co/140x140/E9E9E9/333333?text=User"
+
+    # Build profile dictionary
     profile = {
         "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
         "student_id": student_data.get("studentID", "-"),
@@ -251,12 +312,14 @@ def student_profile():
         "studentClass": student_data.get("studentClass", "-"),  
         "phone": student_data.get("phone", "-"),
         "email": user.get("email", "-"),
-        "profile_pic": student_data.get("profilePic", "https://placehold.co/140x140/E9E9E9/333333?text=User"),
+        "profile_pic": profile_pic_path,
         "course": student_data.get("course", "-"),
         "intake": student_data.get("intake", "-")
     }
 
     return render_template("student/S_Profile.html", profile=profile)
+
+
 
 # ------------------ Student Edit Profile ------------------
 @app.route("/student/editprofile", methods=["GET", "POST"])
@@ -269,10 +332,9 @@ def student_editprofile():
         return redirect(url_for("home"))
 
     uid = user.get("uid")
-
-    # Fetch student info from Firestore
     student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
     student_data = None
+    student_ref = None
     for doc in student_doc:
         student_data = doc.to_dict()
         student_ref = doc.reference
@@ -285,30 +347,26 @@ def student_editprofile():
     if request.method == "POST":
         nickname = request.form.get("nickname")
         phone = request.form.get("phone")
-        profile_pic_file = request.files.get("profilePic")  # File from HTML
+        profile_pic_file = request.files.get("profilePic")
 
         update_data = {
             "nickname": nickname,
             "phone": phone
         }
 
-        # Handle profile picture upload locally
         if profile_pic_file and profile_pic_file.filename != "":
             filename = secure_filename(profile_pic_file.filename)
-            # Save to 'static/uploads/student_profiles/<uid>/'
-            upload_dir = os.path.join("static", "uploads", "student_profiles", uid)
+            # Automatically create folder
+            upload_dir = os.path.join(BASE_DIR, "static", "uploads", "student_profiles", uid)
             os.makedirs(upload_dir, exist_ok=True)
             file_path = os.path.join(upload_dir, filename)
             profile_pic_file.save(file_path)
-            # Store relative path from 'static/' in Firestore
             update_data["profilePic"] = f"uploads/student_profiles/{uid}/{filename}"
 
-        # Update Firestore
         student_ref.update(update_data)
         flash("Profile updated successfully!")
         return redirect(url_for("student_editprofile"))
 
-    # Prepare profile fields for GET
     profile = {
         "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
         "first_name": student_data.get("firstName", ""),
@@ -318,7 +376,7 @@ def student_editprofile():
         "studentClass": student_data.get("studentClass", "-"),
         "phone": student_data.get("phone", "-"),
         "email": user.get("email", "-"),
-        "profile_pic": student_data.get("profilePic", "uploads/default/user.png"),  # default relative path
+        "profile_pic": student_data.get("profilePic", "uploads/default/user.png"),
         "course": student_data.get("course", "-"),
         "intake": student_data.get("intake", "-")
     }
