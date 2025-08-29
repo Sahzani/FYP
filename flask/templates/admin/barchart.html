@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly Attendance Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <h2>Monthly Attendance</h2>
+  <canvas id="attendanceChart" width="600" height="400"></canvas>
+
+  <script>
+    // ===== Firebase Setup =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+      authDomain: "aimanzamani.firebaseapp.com",
+      projectId: "aimanzamani",
+      storageBucket: "aimanzamani.firebasestorage.app",
+      messagingSenderId: "63348630728",
+      appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ===== Helper: parse "27 August 2025 at 19:00" =====
+    function parseAttendanceTime(timeStr) {
+      try {
+        const cleaned = timeStr.replace(' at ', ' '); 
+        const parts = cleaned.split(' '); // ["27", "August", "2025", "19:00"]
+        const day = parseInt(parts[0]);
+        const month = parts[1];
+        const year = parseInt(parts[2]);
+        const time = parts[3] || "00:00";
+        const monthIndex = new Date(`${month} 1, 2000`).getMonth(); 
+        const [hours, minutes] = time.split(':').map(Number);
+        return new Date(year, monthIndex, day, hours, minutes);
+      } catch (e) {
+        console.error('Failed to parse date:', timeStr, e);
+        return new Date();
+      }
+    }
+
+    // ===== Fetch students and attendance =====
+    async function fetchAttendanceChart() {
+      // 1️⃣ Fetch all students
+      const studentsSnapshot = await db.collection('students').get();
+      const students = studentsSnapshot.docs.map(doc => doc.data());
+
+      // Map studentID -> student
+      const studentMap = {};
+      students.forEach(s => studentMap[s.studentID] = s);
+
+      // 2️⃣ Fetch attendance records
+      const attendanceSnapshot = await db.collection('attendance').get();
+      const monthlyData = {}; // month => Set of student_ids
+
+      attendanceSnapshot.forEach(doc => {
+        const record = doc.data();
+        if (!record.time || !record.student_id) return;
+
+        const date = parseAttendanceTime(record.time);
+        const month = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+
+        if (!monthlyData[month]) monthlyData[month] = new Set();
+        monthlyData[month].add(record.student_id);
+      });
+
+      console.log('Monthly data:', monthlyData); // debug
+
+      // 3️⃣ Prepare chart data
+      const labels = Object.keys(monthlyData).sort((a,b) => new Date(a) - new Date(b));
+      const presentCounts = labels.map(month => monthlyData[month].size);
+      const absentCounts = labels.map(month => students.length - monthlyData[month].size);
+
+      return { labels, presentCounts, absentCounts };
+    }
+
+    // ===== Render Chart =====
+    async function renderChart() {
+      const { labels, presentCounts, absentCounts } = await fetchAttendanceChart();
+      const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Present',
+              data: presentCounts,
+              backgroundColor: 'rgba(75, 192, 192, 0.7)'
+            },
+            {
+              label: 'Absent',
+              data: absentCounts,
+              backgroundColor: 'rgba(255, 99, 132, 0.7)'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+    }
+
+    renderChart();
+  </script>
+</body>
+</html>
