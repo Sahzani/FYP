@@ -10,6 +10,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
 <style>
+/* Original CSS retained */
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
 header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
@@ -35,7 +36,6 @@ header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shado
 .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-bottom:20px;}
 .card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.08);transition: transform 0.3s ease, box-shadow 0.3s ease;margin-bottom:20px;}
 .card:hover{transform: translateY(-3px); box-shadow:0 12px 26px rgba(0,0,0,0.12);}
-.card h2{margin-top:0;margin-bottom:16px;font-family:'Nunito',sans-serif;font-weight:600;font-size:22px;color:#012970;border-bottom:1px solid #eee;padding-bottom:10px;}
 .legend{font-size:14px;color:#555;display:flex;gap:14px;align-items:center;margin-bottom:6px;}
 .dot{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:6px;}
 .present{color:#1c7d1c;}
@@ -50,7 +50,7 @@ td{color:#333;border-bottom:1px solid #eee;}
 tr:hover td{background:#fafafa;}
 .status-present{color:#1c7d1c;font-weight:700;}
 .status-late{color:#d17b00;font-weight:700;}
-.status-absent{color:#c0392b;}
+.status-absent{color:#c0392b;font-weight:700;}
 @media(max-width:768px){.main{margin-left:0;padding:90px 15px;}.sidebar{position:fixed;z-index:1000;}}
 </style>
 </head>
@@ -90,7 +90,7 @@ tr:hover td{background:#fafafa;}
   <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Daily Attendance</span></div>
 
   <div class="card">
-    <div class="controls">
+    <div class="controls mb-4">
       <label>Class:
         <select id="classFilter" class="ml-2 rounded-md border border-slate-300 px-2 py-1"><option value="all">All Classes</option></select>
       </label>
@@ -103,7 +103,7 @@ tr:hover td{background:#fafafa;}
       <button id="refreshBtn" class="rounded-md bg-indigo-600 text-white px-3 py-1 text-sm hover:bg-indigo-700">Refresh</button>
     </div>
 
-    <div class="legend">
+    <div class="legend mb-2">
       <span><span class="dot present"></span> Present</span>
       <span><span class="dot late"></span> Late</span>
       <span><span class="dot absent"></span> Absent</span>
@@ -148,19 +148,18 @@ const refreshBtn  = document.getElementById('refreshBtn');
 const tableBody   = document.querySelector('#attendance-table tbody');
 
 function localYMD(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function formatTime(ts){if(!ts)return '-'; return `${String(ts.getHours()).padStart(2,'0')}:${String(ts.getMinutes()).padStart(2,'0')}:${String(ts.getSeconds()).padStart(2,'0')}`;}
+function formatTime(ts){if(!ts)return '-'; const d=new Date(ts); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
 
 let studentsByUid = {};
 let classesSet = new Set();
 
 async function loadStudents(){
-  studentsByUid={}; classesSet=new Set();
   const snap = await getDocs(collection(db,'students'));
   snap.forEach(doc=>{
-    const s=doc.data();
-    const uid=doc.id;
-    const fullName=[s.firstName||'',s.lastName||''].join(' ').trim();
-    studentsByUid[uid]={name:fullName||s.name||'',email:s.email||'',class:s.studentClass||''};
+    const s = doc.data();
+    const uid = doc.id;
+    const fullName = [s.firstName||'', s.lastName||''].join(' ').trim();
+    studentsByUid[uid] = { name: fullName||s.name||'', email: s.email||'', class: s.studentClass||'' };
     if(s.studentClass) classesSet.add(s.studentClass);
   });
   classFilter.innerHTML='<option value="all">All Classes</option>';
@@ -172,11 +171,10 @@ async function loadStudents(){
 
 function calculateStatus(attTime){
   if(!attTime) return "Absent";
-  const attLocal = new Date(attTime.toLocaleString("en-US",{timeZone:"Asia/Brunei"}));
-  const [cutH,cutM] = lateCutoff.value.split(":").map(Number);
-  const cutoffDt = new Date(attLocal);
-  cutoffDt.setHours(cutH,cutM,0,0);
-  return attLocal <= cutoffDt ? "Present" : "Late";
+  const [cutH, cutM] = lateCutoff.value.split(":").map(Number);
+  const cutoffDt = new Date(attTime); cutoffDt.setHours(cutH, cutM,0,0);
+  const attDate = new Date(attTime);
+  return attDate <= cutoffDt ? "Present" : "Late";
 }
 
 async function loadDailyAttendance(){
@@ -184,51 +182,33 @@ async function loadDailyAttendance(){
   const ymd = datePicker.value || localYMD(new Date());
   tableBody.innerHTML='<tr><td colspan="5">Loading...</td></tr>';
 
-  const startTs = Timestamp.fromDate(new Date(`${ymd}T00:00:00Z`));
-  const endTs   = Timestamp.fromDate(new Date(`${ymd}T23:59:59Z`));
-
-  const attQuery = query(collection(db,'attendance'),
-    where('time','>=',startTs),
-    where('time','<=',endTs)
-  );
-  const attSnap = await getDocs(attQuery);
-
-  const rows=[];
-  attSnap.forEach(doc=>{
-    const a=doc.data();
-    const uid=a.student_id||'';
-    const cls=a.class||'';
-    if(selectedClass!=='all' && cls!==selectedClass) return;
-
-    const attTime = a.time?.toDate();
-    const status = calculateStatus(attTime);
-
-    rows.push({
-      name: a.name || (studentsByUid[uid]?.name ?? ''),
-      email: a.email || (studentsByUid[uid]?.email ?? ''),
-      class: cls || (studentsByUid[uid]?.class ?? ''),
-      time: attTime ? new Date(attTime.toLocaleString("en-US",{timeZone:"Asia/Brunei"})) : null,
-      status
-    });
+  // load all students first
+  const filteredStudents = Object.values(studentsByUid).filter(s=> selectedClass==='all' || s.class===selectedClass);
+  const studentStatusMap = {};
+  filteredStudents.forEach(s=>{
+    studentStatusMap[s.email] = {...s, status:'Absent', time:null};
   });
 
-  rows.sort((a,b)=>a.time - b.time);
+  // get attendance logs for the day
+  const startTs = Timestamp.fromDate(new Date(`${ymd}T00:00:00+08:00`));
+  const endTs   = Timestamp.fromDate(new Date(`${ymd}T23:59:59+08:00`));
+  const attSnap = await getDocs(query(collection(db,'attendance'), where('time','>=',startTs), where('time','<=',endTs)));
+  
+  attSnap.forEach(doc=>{
+    const a = doc.data();
+    const email = a.email;
+    if(studentStatusMap[email]){
+      const attTime = a.time.toDate();
+      studentStatusMap[email].status = calculateStatus(attTime);
+      studentStatusMap[email].time = attTime;
+    }
+  });
 
+  // render table
   tableBody.innerHTML='';
-  if(rows.length===0){
-    tableBody.innerHTML=`<tr><td colspan="5">No attendance logs found${selectedClass!=='all'?' for class '+selectedClass:''}.</td></tr>`;
-    return;
-  }
-
-  rows.forEach(r=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${r.name}</td>
-      <td>${r.email}</td>
-      <td>${r.class}</td>
-      <td class="status-${r.status.toLowerCase()}">${r.status}</td>
-      <td>${r.time?formatTime(r.time):'-'}</td>
-    `;
+  Object.values(studentStatusMap).sort((a,b)=> (a.time||0)-(b.time||0)).forEach(s=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML=`<td>${s.name}</td><td>${s.email}</td><td>${s.class}</td><td class="status-${s.status.toLowerCase()}">${s.status}</td><td>${formatTime(s.time)}</td>`;
     tableBody.appendChild(tr);
   });
 }
@@ -241,7 +221,7 @@ lateCutoff.addEventListener('change',loadDailyAttendance);
 
 await loadStudents();
 await loadDailyAttendance();
-setInterval(loadDailyAttendance,5000); // live refresh every 5 seconds
+setInterval(loadDailyAttendance,5000);
 </script>
 
 <script>
