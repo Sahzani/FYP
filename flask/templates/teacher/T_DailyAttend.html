@@ -10,7 +10,6 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
 <style>
-/* Base & Layout */
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
 header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
@@ -34,10 +33,7 @@ header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shado
 .sidebar.collapsed ~ .main{margin-left:80px;}
 .page-title{font-family:'Poppins',sans-serif;font-size:28px;font-weight:500;color:#444;margin-bottom:10px;}
 .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-bottom:20px;}
-.breadcrumb .section{color:#989797;}
-.breadcrumb .current{color:#444444;}
-.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
-.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.08);transition: transform 0.3s ease, box-shadow 0.3s ease;}
+.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.08);transition: transform 0.3s ease, box-shadow 0.3s ease;margin-bottom:20px;}
 .card:hover{transform: translateY(-3px); box-shadow:0 12px 26px rgba(0,0,0,0.12);}
 .card h2{margin-top:0;margin-bottom:16px;font-family:'Nunito',sans-serif;font-weight:600;font-size:22px;color:#012970;border-bottom:1px solid #eee;padding-bottom:10px;}
 .legend{font-size:14px;color:#555;display:flex;gap:14px;align-items:center;margin-bottom:6px;}
@@ -71,7 +67,6 @@ tr:hover td{background:#fafafa;}
   </div>
 </header>
 
-<!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
@@ -90,7 +85,6 @@ tr:hover td{background:#fafafa;}
   </div>
 </div>
 
-<!-- Main Content -->
 <div class="main">
   <h1 class="page-title">Daily Attendance</h1>
   <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Daily Attendance</span></div>
@@ -154,12 +148,11 @@ const refreshBtn  = document.getElementById('refreshBtn');
 const tableBody   = document.querySelector('#attendance-table tbody');
 
 function localYMD(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function formatTime(ts){if(!ts)return '-'; const d = ts.toDate(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
+function formatTime(ts){if(!ts)return '-'; return `${String(ts.getHours()).padStart(2,'0')}:${String(ts.getMinutes()).padStart(2,'0')}:${String(ts.getSeconds()).padStart(2,'0')}`;}
 
 let studentsByUid = {};
 let classesSet = new Set();
 
-// Load students and classes
 async function loadStudents(){
   studentsByUid={}; classesSet=new Set();
   const snap = await getDocs(collection(db,'students'));
@@ -177,23 +170,18 @@ async function loadStudents(){
   });
 }
 
-// Calculate attendance status
 function calculateStatus(attTime){
   if(!attTime) return "Absent";
-  const attLocal = new Date(attTime); // UTC → local
-  const cutoffHMS = lateCutoff.value.split(":").map(Number);
+  const attLocal = new Date(attTime.toLocaleString("en-US",{timeZone:"Asia/Brunei"}));
+  const [cutH,cutM] = lateCutoff.value.split(":").map(Number);
   const cutoffDt = new Date(attLocal);
-  cutoffDt.setHours(cutoffHMS[0], cutoffHMS[1], 0, 0);
-
-  if(attLocal <= cutoffDt) return "Present";
-  return "Late";
+  cutoffDt.setHours(cutH,cutM,0,0);
+  return attLocal <= cutoffDt ? "Present" : "Late";
 }
 
-// Load daily attendance
 async function loadDailyAttendance(){
   const selectedClass = classFilter.value;
   const ymd = datePicker.value || localYMD(new Date());
-
   tableBody.innerHTML='<tr><td colspan="5">Loading...</td></tr>';
 
   const startTs = Timestamp.fromDate(new Date(`${ymd}T00:00:00Z`));
@@ -219,12 +207,12 @@ async function loadDailyAttendance(){
       name: a.name || (studentsByUid[uid]?.name ?? ''),
       email: a.email || (studentsByUid[uid]?.email ?? ''),
       class: cls || (studentsByUid[uid]?.class ?? ''),
-      time: formatTime(a.time),
+      time: attTime ? new Date(attTime.toLocaleString("en-US",{timeZone:"Asia/Brunei"})) : null,
       status
     });
   });
 
-  rows.sort((a,b)=>a.time.localeCompare(b.time));
+  rows.sort((a,b)=>a.time - b.time);
 
   tableBody.innerHTML='';
   if(rows.length===0){
@@ -239,23 +227,21 @@ async function loadDailyAttendance(){
       <td>${r.email}</td>
       <td>${r.class}</td>
       <td class="status-${r.status.toLowerCase()}">${r.status}</td>
-      <td>${r.time}</td>
+      <td>${r.time?formatTime(r.time):'-'}</td>
     `;
     tableBody.appendChild(tr);
   });
 }
 
-// Event listeners
 datePicker.value = localYMD(new Date());
 refreshBtn.addEventListener('click',loadDailyAttendance);
 classFilter.addEventListener('change',loadDailyAttendance);
 datePicker.addEventListener('change',loadDailyAttendance);
 lateCutoff.addEventListener('change',loadDailyAttendance);
 
-// Initial load
 await loadStudents();
 await loadDailyAttendance();
-setInterval(loadDailyAttendance,90000); // refresh every 90s
+setInterval(loadDailyAttendance,5000); // live refresh every 5 seconds
 </script>
 
 <script>
