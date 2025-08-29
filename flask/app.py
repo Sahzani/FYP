@@ -40,6 +40,22 @@ def inject_teacher_profile():
                 }
     return {}
 
+# ------------------ Context Processor for Student Full Name ------------------
+@app.context_processor
+def inject_student_name():
+    if session.get("role") == "student":
+        user = session.get("user")
+        if user:
+            uid = user.get("uid")
+            student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
+            for doc in student_doc:
+                student_data = doc.to_dict()
+                full_name = f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip()
+                if full_name:
+                    return {"full_name": full_name}
+    return {"full_name": "Student"}
+
+
 # ------------------ Routes ------------------
 @app.route("/")
 def home():
