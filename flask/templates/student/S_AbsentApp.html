@@ -632,15 +632,14 @@
     closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
    
     saveBtn.onclick = async () => {
-      const studentName = document.getElementById('modalStudentName').value.trim();
-      const course = document.getElementById('modalCourse').value.trim();
+
       const reason = document.getElementById('modalReason').value.trim();
       const duration = document.getElementById('modalDuration').value;
-      if (!studentName || !course || !reason) {
+      if (!reason) {
         alert('Please fill in all fields!');
         return;
       }
-      await addDoc(collection(db, "absenceRecords"), { studentName, course, reason, duration, status: 'In Progress' });
+      await addDoc(collection(db, "absenceRecords"), {reason, duration, status: 'In Progress' });
       showToast('Application sent successfully!');
       modal.classList.remove('show');
       renderRecords();

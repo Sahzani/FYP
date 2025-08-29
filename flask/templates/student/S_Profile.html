@@ -39,6 +39,7 @@
     .profile-card { max-width: 900px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; text-align: center;}
 
     /* Circular Profile Picture */
+<<<<<<< HEAD
     .profile-pic-container {
       width: 140px;
       height: 140px;
@@ -56,6 +57,10 @@
       border-radius: 50%;
     }
 
+=======
+    .profile-pic-container {width: 140px; height: 140px; margin: 0 auto 15px auto; border-radius: 50%; overflow: hidden; border: 4px solid #FFE5B4; flex-shrink: 0;}
+    .profile-pic-container img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%;}
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
     .profile-name { font-size: 26px; font-weight: 600; color: #012970; margin-bottom: 5px;}
     .profile-sub { font-size: 15px; color: #666; margin-bottom: 20px;}
     .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 30px; text-align: left;}
@@ -79,7 +84,15 @@
       <a href="{{ url_for('student_dashboard') }}" style="text-decoration: none; color: inherit;">iAttend</a>
       <a href="{{ url_for('student_profile') }}" class="user-info">
         <span>{{ profile.full_name }}</span>
+<<<<<<< HEAD
         <img id="user-profile-pic-header" src="{{ url_for('static', filename=profile.profile_pic) }}" alt="User Profile Picture">
+=======
+        <!-- header picture -->
+        {% set header_pic = profile.profile_pic.replace('\\','/') if profile.profile_pic else 'images/default-profile.png' %}
+        <img id="user-profile-pic-header" 
+             src="{{ url_for('static', filename=header_pic) }}" 
+             alt="User Profile Picture">
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
       </a>
     </div>
   </header>
@@ -107,7 +120,14 @@
   <div class="main">
     <div class="profile-card">
       <div class="profile-pic-container">
+<<<<<<< HEAD
         <img id="profile-pic" src="{{ url_for('static', filename=profile.profile_pic) }}" alt="Profile Picture">
+=======
+        {% set main_pic = profile.profile_pic.replace('\\','/') if profile.profile_pic else 'images/default-profile.png' %}
+        <img id="profile-pic" 
+             src="{{ url_for('static', filename=main_pic) }}" 
+             alt="Profile Picture">
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
       </div>
       <div class="profile-name">{{ profile.full_name }}</div>
       <div class="profile-sub">{{ profile.course }} • Intake {{ profile.intake }}</div>

@@ -2,18 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Camera Control</title>
+    <title>Camera Page</title>
 </head>
 <body>
-    <h1>Webcam Control Page</h1>
-    <p>Click the buttons to start or stop the camera.</p>
-
+    <h1>Webcam Attendance</h1>
     <form action="{{ url_for('start_camera') }}" method="get">
         <button type="submit">Start Camera</button>
     </form>
-
-    <form action="{{ url_for('stop_camera') }}" method="get">
-        <button type="submit">Stop Camera</button>
-    </form>
+    <p>Click the button to run webcam.py in the background. A separate window will open for the camera feed.</p>
 </body>
 </html>
