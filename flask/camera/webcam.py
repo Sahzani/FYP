@@ -1,6 +1,6 @@
 from flask import Flask, Response
 import cv2, threading, time, os, numpy as np
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 import face_recognition
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -161,6 +161,11 @@ def camera_loop():
         if ok:
             with frame_lock:
                 latest_frame = buf.tobytes()
+
+        # ==== Show outside browser (OpenCV Window) ====
+        cv2.imshow("Camera Feed", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to close
+            break
 
         time.sleep(0.01)
 
