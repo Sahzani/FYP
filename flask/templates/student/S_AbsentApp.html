@@ -521,7 +521,13 @@
   </div>
 
   <!-- Modal -->
-  <div class="modal-body">
+  <div id="editModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span>Send Absence Application</span>
+      <span class="close">&times;</span> <!-- Close button -->
+    </div>
+    <div class="modal-body">
     <label>Student Name</label>
     <input type="text" id="modalStudentName" readonly value="{{ full_name }}">
   
@@ -537,11 +543,14 @@
      <option value="3 days">3 days</option>
      <option value="1 week">1 week</option>
    </select>
+
     <div class="modal-buttons">
      <button class="save-btn" id="saveBtn">Send</button>
      <button class="cancel-btn" id="cancelBtn">Cancel</button>
     </div>
   </div>
+    </div>
+</div>
 
 
   <div id="toast" class="toast">Application sent successfully!</div>
@@ -621,6 +630,7 @@
     }
 
     closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
+   
     saveBtn.onclick = async () => {
       const studentName = document.getElementById('modalStudentName').value.trim();
       const course = document.getElementById('modalCourse').value.trim();
@@ -635,9 +645,9 @@
       modal.classList.remove('show');
       renderRecords();
     };
+    
     openApplicationModal.onclick = openModal;
     renderRecords();
   </script>
 </body>
-
 </html>
