@@ -216,34 +216,39 @@ const initApp = async () => {
   const app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
+
   await signInAnonymously(auth);
-  onAuthStateChanged(auth, async (user) => { if(user) fetchAdminStats(); });
+
+  onAuthStateChanged(auth, user => {
+    if (user) fetchAdminStats();
+  });
 };
 
 const fetchAdminStats = async () => {
-  // Students
-  onSnapshot(collection(db,'students'), snapshot => {
+  // --- Total Students ---
+  onSnapshot(collection(db, 'students'), snapshot => {
     document.getElementById('stats-students').textContent = snapshot.size;
   });
 
-  // Teachers
-  onSnapshot(collection(db,'teachers'), snapshot => {
+  // --- Total Teachers ---
+  onSnapshot(collection(db, 'teachers'), snapshot => {
     document.getElementById('stats-teachers').textContent = snapshot.size;
   });
 
-  // Attendance
-  onSnapshot(collection(db,'attendance'), snapshot => {
+  // --- Attendance Stats ---
+  onSnapshot(collection(db, 'attendance'), snapshot => {
     let present = 0, absent = 0;
     const today = new Date(); today.setHours(0,0,0,0);
 
     snapshot.forEach(doc => {
       const data = doc.data();
-      const attDate = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+      if (!data.timestamp) return;
+      const attDate = data.timestamp.toDate(); // Timestamp → JS Date
       attDate.setHours(0,0,0,0);
 
-      if(attDate.getTime() === today.getTime()) {
+      if(attDate.getTime() === today.getTime()){
         if(data.status === 'Present') present++;
-        else if(data.status === 'Absent') absent++;
+        else if(data.status === 'Absent' || data.status === 'Late') absent++;
       }
     });
 
@@ -273,18 +278,15 @@ const generateCalendar = () => {
   }
 };
 
-initApp();
-generateCalendar();
-
-/* Sidebar toggle */
+// --- Sidebar toggle ---
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 menuToggle.addEventListener('click', () => {
-  if (window.innerWidth <= 768) { sidebar.classList.toggle('active'); } 
-  else { sidebar.classList.toggle('collapsed'); }
+  if(window.innerWidth <= 768) sidebar.classList.toggle('active');
+  else sidebar.classList.toggle('collapsed');
 });
 
-/* Dropdown toggle */
+// --- Dropdown toggle ---
 document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
   toggle.addEventListener('click', e => {
     e.preventDefault();
@@ -292,17 +294,17 @@ document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
   });
 });
 
-// --- Chart.js CDN & render attendance chart ---
+// --- Chart.js ---
 const script = document.createElement('script');
 script.src = "https://cdn.jsdelivr.net/npm/chart.js";
 document.head.appendChild(script);
 
 script.onload = () => {
-  const attendanceChartCtx = document.getElementById('attendanceChart').getContext('2d');
-  let attendanceChart;
+  const ctx = document.getElementById('attendanceChart').getContext('2d');
+  let chart;
 
   const renderAttendanceChart = () => {
-    onSnapshot(collection(db,'attendance'), snapshot => {
+    onSnapshot(collection(db, 'attendance'), snapshot => {
       const monthlySummary = {};
       const now = new Date();
       const currentMonth = now.getMonth();
@@ -310,12 +312,13 @@ script.onload = () => {
 
       snapshot.forEach(doc => {
         const data = doc.data();
-        const attDate = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+        if(!data.timestamp) return;
+        const attDate = data.timestamp.toDate();
         if(attDate.getMonth() === currentMonth && attDate.getFullYear() === currentYear){
           const day = attDate.getDate();
           if(!monthlySummary[day]) monthlySummary[day] = { present:0, absent:0 };
-          if(data.status==='Present') monthlySummary[day].present++;
-          else if(data.status==='Absent') monthlySummary[day].absent++;
+          if(data.status === 'Present') monthlySummary[day].present++;
+          else if(data.status === 'Absent' || data.status === 'Late') monthlySummary[day].absent++;
         }
       });
 
@@ -323,9 +326,9 @@ script.onload = () => {
       const presentData = Object.values(monthlySummary).map(d => d.present);
       const absentData = Object.values(monthlySummary).map(d => d.absent);
 
-      if(attendanceChart) attendanceChart.destroy();
+      if(chart) chart.destroy();
 
-      attendanceChart = new Chart(attendanceChartCtx, {
+      chart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: labels,
@@ -335,9 +338,9 @@ script.onload = () => {
           ]
         },
         options: {
-          responsive:true,
-          plugins:{ legend:{ position:'top' } },
-          scales: { x:{ stacked:true }, y:{ stacked:true, beginAtZero:true } }
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
         }
       });
     });
@@ -345,7 +348,11 @@ script.onload = () => {
 
   renderAttendanceChart();
 };
+
+initApp();
+generateCalendar();
 </script>
+
 
 </body>
 </html>

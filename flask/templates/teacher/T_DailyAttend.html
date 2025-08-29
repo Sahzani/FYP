@@ -10,6 +10,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
 <style>
+/* Base & Layout */
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
 header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
@@ -158,6 +159,7 @@ function formatTime(ts){if(!ts)return '-'; const d = ts.toDate(); return `${Stri
 let studentsByUid = {};
 let classesSet = new Set();
 
+// Load students and classes
 async function loadStudents(){
   studentsByUid={}; classesSet=new Set();
   const snap = await getDocs(collection(db,'students'));
@@ -175,14 +177,27 @@ async function loadStudents(){
   });
 }
 
+// Calculate attendance status
+function calculateStatus(attTime){
+  if(!attTime) return "Absent";
+  const attLocal = new Date(attTime); // UTC → local
+  const cutoffHMS = lateCutoff.value.split(":").map(Number);
+  const cutoffDt = new Date(attLocal);
+  cutoffDt.setHours(cutoffHMS[0], cutoffHMS[1], 0, 0);
+
+  if(attLocal <= cutoffDt) return "Present";
+  return "Late";
+}
+
+// Load daily attendance
 async function loadDailyAttendance(){
   const selectedClass = classFilter.value;
   const ymd = datePicker.value || localYMD(new Date());
 
   tableBody.innerHTML='<tr><td colspan="5">Loading...</td></tr>';
 
-  const startTs = Timestamp.fromDate(new Date(`${ymd}T00:00:00`));
-  const endTs   = Timestamp.fromDate(new Date(`${ymd}T23:59:59`));
+  const startTs = Timestamp.fromDate(new Date(`${ymd}T00:00:00Z`));
+  const endTs   = Timestamp.fromDate(new Date(`${ymd}T23:59:59Z`));
 
   const attQuery = query(collection(db,'attendance'),
     where('time','>=',startTs),
@@ -197,12 +212,15 @@ async function loadDailyAttendance(){
     const cls=a.class||'';
     if(selectedClass!=='all' && cls!==selectedClass) return;
 
+    const attTime = a.time?.toDate();
+    const status = calculateStatus(attTime);
+
     rows.push({
       name: a.name || (studentsByUid[uid]?.name ?? ''),
       email: a.email || (studentsByUid[uid]?.email ?? ''),
       class: cls || (studentsByUid[uid]?.class ?? ''),
       time: formatTime(a.time),
-      status: a.status || 'Present'
+      status
     });
   });
 
@@ -227,18 +245,19 @@ async function loadDailyAttendance(){
   });
 }
 
+// Event listeners
 datePicker.value = localYMD(new Date());
 refreshBtn.addEventListener('click',loadDailyAttendance);
 classFilter.addEventListener('change',loadDailyAttendance);
 datePicker.addEventListener('change',loadDailyAttendance);
 lateCutoff.addEventListener('change',loadDailyAttendance);
 
+// Initial load
 await loadStudents();
 await loadDailyAttendance();
-setInterval(loadDailyAttendance,90000); // auto-refresh every 90s
+setInterval(loadDailyAttendance,90000); // refresh every 90s
 </script>
 
-<!-- Sidebar toggle -->
 <script>
 const menuToggle=document.getElementById('menu-toggle');
 const sidebar=document.querySelector('.sidebar');

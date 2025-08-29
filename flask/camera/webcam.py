@@ -1,7 +1,6 @@
 from flask import Flask, Response
-import cv2, os, threading, time
-import numpy as np
-from datetime import datetime
+import cv2, threading, time, os, numpy as np
+from datetime import datetime, timezone, timedelta
 import face_recognition
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -14,36 +13,27 @@ db = firestore.client()
 # ===== Flask App =====
 app = Flask(__name__)
 
-# ===== Load Students from Firestore =====
-STUDENTS = {}       # Firestore docID -> student info
-encodings = []      # face encodings
-classNames = []     # corresponding Firestore IDs
+# ===== Load Students =====
+STUDENTS = {}  # docID -> student data
+encodings = []
+classNames = []
 
 students_ref = db.collection("students")
-docs = students_ref.stream()
-
-print("[INFO] Loading students from Firestore...")
-
-for doc in docs:
+for doc in students_ref.stream():
     data = doc.to_dict()
     student_id = doc.id
     STUDENTS[student_id] = data
 
     photo_filename = data.get("photo")
     if not photo_filename:
-        print(f"[WARN] Student {student_id} has no photo, skipping")
         continue
-
     photo_path = os.path.join("student_pics", photo_filename)
     if not os.path.exists(photo_path):
-        print(f"[WARN] Photo {photo_filename} not found locally, skipping")
         continue
 
     img = cv2.imread(photo_path)
     if img is None:
-        print(f"[WARN] Cannot read {photo_filename}, skipping")
         continue
-
     rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     import numpy as np
@@ -59,55 +49,56 @@ for doc in docs:
     if encode:
         encodings.append(encode[0])
         classNames.append(student_id)
-        print(f"[OK] Loaded encoding for {student_id} ({photo_filename})")
-    else:
-        print(f"[WARN] No face found in {photo_filename}")
 
-print(f"[INFO] Total students with encodings: {len(encodings)}")
+print(f"[INFO] Loaded {len(encodings)} student face encodings.")
 
 # ===== Attendance Tracking =====
-attended_students = {}  # Firestore ID -> status written
+attended_today = {}  # student_id -> date string
 
-# ===== Camera Thread =====
+# ===== Camera Setup =====
 camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 latest_frame = None
 frame_lock = threading.Lock()
 
+# ===== Helper: Load Attendance Times =====
+def get_attendance_times():
+    doc_snap = db.collection("settings").document("attendanceTimes").get()
+    data = doc_snap.to_dict() or {}
+    start_time_str = data.get("startTime", "08:30")
+    cutoff_time_str = data.get("cutoffTime", "09:00")
+    active = data.get("active", False)
+    start_time = datetime.strptime(start_time_str, "%H:%M").time()
+    cutoff_time = datetime.strptime(cutoff_time_str, "%H:%M").time()
+    return start_time, cutoff_time, active
+
+# ===== Camera Loop =====
 def camera_loop():
-    global latest_frame
+    global latest_frame, attended_today
     frame_count = 0
+    last_times = None  # Keep track of last start/cutoff to reset attendance
+
     while True:
         ok, frame = camera.read()
         if not ok:
             time.sleep(0.1)
             continue
 
-        # Fetch class times
-        settings_doc = db.collection("settings").document("attendanceTimes").get()
-        settings = settings_doc.to_dict() or {}
-        if not settings.get("active", False):
+        # Poll latest attendance times
+        start_time, cutoff_time, active = get_attendance_times()
+        if not active:
             time.sleep(1)
             continue
 
-        # Safe handling for time strings
-        start_time_str = settings.get("startTime") or "08:30"
-        cutoff_time_str = settings.get("cutoffTime") or "09:00"
-
-        try:
-            start_time = datetime.strptime(start_time_str, "%H:%M").time()
-        except ValueError:
-            print(f"[WARN] Invalid startTime '{start_time_str}', using default 08:30")
-            start_time = datetime.strptime("08:30", "%H:%M").time()
-
-        try:
-            cutoff_time = datetime.strptime(cutoff_time_str, "%H:%M").time()
-        except ValueError:
-            print(f"[WARN] Invalid cutoffTime '{cutoff_time_str}', using default 09:00")
-            cutoff_time = datetime.strptime("09:00", "%H:%M").time()
+        # Reset attended_today if times changed
+        current_times = (start_time, cutoff_time)
+        if last_times != current_times:
+            attended_today = {}
+            last_times = current_times
 
         frame_count += 1
         recognized_faces = []
 
+        # Run face detection every 5 frames
         if frame_count % 5 == 0:
             small = cv2.resize(frame, (0,0), fx=0.25, fy=0.25)
             rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
@@ -122,8 +113,9 @@ def camera_loop():
                         best_idx = np.argmax(matches)
                         student_id = classNames[best_idx]
 
-                        if student_id not in attended_students:
-                            # Determine Present / Late / Absent
+                        today_str = datetime.now().strftime("%Y-%m-%d")
+                        if attended_today.get(student_id) != today_str:
+                            # Determine status
                             now_time = datetime.now().time()
                             if now_time <= start_time:
                                 status = "Present"
@@ -132,28 +124,28 @@ def camera_loop():
                             else:
                                 status = "Absent"
 
-                            attended_students[student_id] = status
+                            attended_today[student_id] = today_str
 
                             student_data = STUDENTS.get(student_id, {})
                             name = f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip()
                             email = student_data.get("email","")
                             student_class = student_data.get("studentClass","")
 
-                            # Save to Firestore
+                            # Save to Firestore with server timestamp
                             db.collection("attendance").add({
                                 "student_id": student_id,
                                 "name": name,
                                 "email": email,
                                 "class": student_class,
                                 "status": status,
-                                "time": firestore.SERVER_TIMESTAMP
+                                "timestamp": firestore.SERVER_TIMESTAMP
                             })
 
-                            print(f"[INFO] {name} detected at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} as {status}")
+                            print(f"[INFO] {name} marked {status} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
                 recognized_faces.append((student_id, left, top, right, bottom))
 
-        # Draw rectangles and labels
+        # Draw boxes
         for student_id, x1, y1, x2, y2 in recognized_faces:
             x1, y1, x2, y2 = [v*4 for v in (x1, y1, x2, y2)]
             if student_id:
@@ -164,17 +156,22 @@ def camera_loop():
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0,0,255), 2)
                 cv2.putText(frame, "Unknown", (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
 
+        # Update latest frame for Flask feed
         ok, buf = cv2.imencode(".jpg", frame)
         if ok:
             with frame_lock:
                 latest_frame = buf.tobytes()
+
         time.sleep(0.01)
 
+    camera.release()
+    cv2.destroyAllWindows()
+
+# ===== Flask Video Feed =====
 def get_latest_frame():
     with frame_lock:
         return latest_frame
 
-# ===== Flask Routes =====
 @app.route('/video_feed')
 def video_feed():
     def gen_frames():
@@ -191,4 +188,3 @@ if __name__ == "__main__":
     t = threading.Thread(target=camera_loop, daemon=True)
     t.start()
     app.run(host='0.0.0.0', port=5001, debug=False)
-    camera.release()

@@ -11,11 +11,7 @@
 
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { 
-      height:100%; 
-      font-family:'Poppins',sans-serif; 
-      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-    }
+    html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
     header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
     #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
     .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
@@ -24,56 +20,32 @@
     .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
     .user-info span { font-size:16px; font-weight:600; color:#444; }
 
-    .sidebar {
-      position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px);
-      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-      padding-top:15px; box-shadow:2px 0 15px rgba(1,41,112,0.08);
-      transition: width 0.3s ease; overflow:hidden; border-top-right-radius:12px; z-index:1001;
-      font-family:'Poppins',sans-serif;
-    }
+    .sidebar { position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding-top:15px; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; overflow:hidden; border-top-right-radius:12px; z-index:1001; font-family:'Poppins',sans-serif; }
     .sidebar.collapsed { width:70px; }
     .sidebar-section { margin-bottom:25px; padding:0 15px; }
-    .sidebar-section-title { 
-      font-family:'Nunito',sans-serif;
-      font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; 
-      margin-bottom:10px; padding-left:10px; transition: opacity 0.3s; 
-    }
+    .sidebar-section-title { font-family:'Nunito',sans-serif; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition: opacity 0.3s; }
     .sidebar.collapsed .sidebar-section-title { opacity:0; }
-    .sidebar-link { 
-      display:flex; align-items:center; gap:10px; 
-      padding:12px 15px; margin-bottom:8px; 
-      border-radius:8px; font-size:15px; font-weight:500; 
-      color:#1A237E; text-decoration:none; 
-      transition:all 0.25s ease; white-space:nowrap; 
-    }
+    .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
     .sidebar.collapsed .sidebar-link span { display:none; }
     .sidebar-link i { width:18px; text-align:center; }
     .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
     .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
 
-    .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease; }
+    .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease; font-family:'Nunito',sans-serif; height:100vh; overflow-y:auto; }
     .sidebar.collapsed ~ .main { margin-left:80px; }
 
-    .card { 
-      background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:30px; 
-      font-family:'Poppins',sans-serif; 
-    }
+    .card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:30px; font-family:'Poppins',sans-serif; }
     .card h2 { font-family:'Poppins',sans-serif; margin-bottom:15px; }
 
     table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; }
     th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
     th { font-weight:600; text-transform:uppercase; font-size:13px; }
 
-    /* Main */
-    .main { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito', sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
-    .sidebar.collapsed ~ .main { margin-left:80px; }
-
     .page-title { font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
     .breadcrumb { font-size:14px; font-weight:600; margin-bottom:30px; }
     .breadcrumb .section { color:#989797; }
     .breadcrumb .current { color:#444; }
 
-    /* Optional: color-coded status */
     td.status-Present { color: green; font-weight:600; }
     td.status-Late { color: orange; font-weight:600; }
     td.status-Absent { color: red; font-weight:600; }
@@ -111,8 +83,8 @@
 </div>
 
 <div class="main">
-    <h1 class="page-title">Attendance Report</h1>
-    <div class="breadcrumb"><span class="section">Reports</span> / <span class="current">Attendance Report</span></div>
+  <h1 class="page-title">Attendance Report</h1>
+  <div class="breadcrumb"><span class="section">Reports</span> / <span class="current">Attendance Report</span></div>
 
   <div class="card">
     <h2>Set Class Time</h2>
@@ -162,6 +134,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Save class times
 document.getElementById("saveTimes").addEventListener("click", async () => {
   const start = document.getElementById("startTime").value;
   const cutoff = document.getElementById("cutoffTime").value;
@@ -186,31 +159,32 @@ async function fetchAttendance() {
     cutoffTime = data.cutoffTime || cutoffTime;
   }
 
-  // Convert times to Date objects
   const [startH, startM] = startTime.split(':').map(Number);
   const [cutoffH, cutoffM] = cutoffTime.split(':').map(Number);
 
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate()+1);
+  const now = new Date();
+  const todayBrunei = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Brunei" }));
+  todayBrunei.setHours(0,0,0,0);
+  const tomorrowBrunei = new Date(todayBrunei);
+  tomorrowBrunei.setDate(todayBrunei.getDate()+1);
 
   // Get all students
   const studentsSnapshot = await getDocs(collection(db, 'students'));
   const students = [];
   studentsSnapshot.forEach(doc => students.push({ id: doc.id, ...doc.data() }));
 
-  // Get today's attendance
+  // Query attendance for today
   const attendanceQuery = query(
     collection(db, 'attendance'),
-    where('time', '>=', today),
-    where('time', '<', tomorrow)
+    where('timestamp', '>=', todayBrunei),
+    where('timestamp', '<', tomorrowBrunei)
   );
   const attendanceSnapshot = await getDocs(attendanceQuery);
 
   const attendanceToday = {};
   attendanceSnapshot.forEach(doc => {
-    attendanceToday[doc.data().email] = doc.data();
+    const data = doc.data();
+    if(data.email) attendanceToday[data.email] = data;
   });
 
   tbody.innerHTML = '';
@@ -219,11 +193,14 @@ async function fetchAttendance() {
     let status = 'Absent';
     let timeString = '-';
 
-    if(att && att.time){
-      const attTime = att.time.toDate();
-      timeString = attTime.toLocaleTimeString();
-      const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), startH, startM);
-      const cutoffDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), cutoffH, cutoffM);
+    if(att && att.timestamp){
+      const attTime = att.timestamp.toDate();
+      timeString = attTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Brunei' });
+
+      const startDate = new Date(attTime);
+      startDate.setHours(startH, startM, 0, 0);
+      const cutoffDate = new Date(attTime);
+      cutoffDate.setHours(cutoffH, cutoffM, 0, 0);
 
       if(attTime <= startDate){
         status = 'Present';
@@ -246,6 +223,7 @@ async function fetchAttendance() {
   });
 }
 
+// Initial fetch & refresh every 5 seconds
 fetchAttendance();
 setInterval(fetchAttendance, 5000);
 </script>
