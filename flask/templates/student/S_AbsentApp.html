@@ -521,29 +521,28 @@
   </div>
 
   <!-- Modal -->
-  <div id="editModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <span>New Absence Application</span>
-        <span class="close">&times;</span>
-      </div>
-      <div class="modal-body">
-        <label>Reason</label>
-        <input type="text" id="modalReason">
-        <label>Duration</label>
-        <select id="modalDuration">
-          <option value="1 day">1 day</option>
-          <option value="2 days">2 days</option>
-          <option value="3 days">3 days</option>
-          <option value="1 week">1 week</option>
-        </select>
-        <div class="modal-buttons">
-          <button class="save-btn" id="saveBtn">Send</button>
-          <button class="cancel-btn" id="cancelBtn">Cancel</button>
-        </div>
-      </div>
+  <div class="modal-body">
+    <label>Student Name</label>
+    <input type="text" id="modalStudentName" readonly value="{{ full_name }}">
+  
+    <label>Course Section</label>
+    <input type="text" id="modalCourse" readonly value="{{ course_section }}">
+
+    <label>Reason</label>
+    <input type="text" id="modalReason">
+    <label>Duration</label>
+    <select id="modalDuration">
+     <option value="1 day">1 day</option>
+     <option value="2 days">2 days</option>
+     <option value="3 days">3 days</option>
+     <option value="1 week">1 week</option>
+   </select>
+    <div class="modal-buttons">
+     <button class="save-btn" id="saveBtn">Send</button>
+     <button class="cancel-btn" id="cancelBtn">Cancel</button>
     </div>
   </div>
+
 
   <div id="toast" class="toast">Application sent successfully!</div>
 
@@ -615,8 +614,8 @@
 
     function openModal() {
       modal.classList.add('show');
-      document.getElementById('modalStudentName').value = '';
-      document.getElementById('modalCourse').value = '';
+      // document.getElementById('modalStudentName').value = '';
+      // document.getElementById('modalCourse').value = '';
       document.getElementById('modalReason').value = '';
       document.getElementById('modalDuration').value = '1 day';
     }
