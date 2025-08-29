@@ -124,13 +124,8 @@
       <h2>Classes</h2>
       <table>
         <thead><tr><th>Class Name</th><th>Subject</th><th>Students</th></tr></thead>
-        <tbody>
-          <tr onclick="window.location.href='class_attendance.html?classId=1'" style="cursor: pointer;">
-            <td>Class A</td><td>Math</td><td>30</td>
-          </tr>
-          <tr onclick="window.location.href='class_attendance.html?classId=2'" style="cursor: pointer;">
-            <td>Class B</td><td>Science</td><td>28</td>
-          </tr>
+        <tbody id="classListBody">
+          <!-- Dynamic content will be rendered here -->
         </tbody>
       </table>
     </div>
@@ -170,6 +165,7 @@
     const db = getFirestore(app);
 
     const applicationsBody = document.getElementById('applicationsBody');
+    const classListBody = document.getElementById('classListBody');
     const toast = document.getElementById('toast');
 
     function showToast(message) {
@@ -199,12 +195,50 @@
       });
     }
 
+    function renderClassList(snapshot) {
+      classListBody.innerHTML = '';
+      snapshot.forEach(docSnap => {
+        const classData = docSnap.data();
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${classData.className || ''}</td>
+          <td>${classData.subject || ''}</td>
+          <td>${classData.studentsCount || ''}</td>`;
+        classListBody.appendChild(tr);
+      });
+    }
+
     onSnapshot(collection(db, 'absent_applications'), renderApplications);
+    onSnapshot(collection(db, 'classes'), renderClassList);
 
     window.updateStatus = async (id, newStatus) => {
       await updateDoc(doc(db, 'absent_applications', id), { status: newStatus });
       showToast(`Application ${newStatus}!`);
     };
+  </script>
+
+  <script type="module">
+    import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+    const classTableBody = document.querySelector('.card table tbody');
+
+    function renderClasses(snapshot) {
+      classTableBody.innerHTML = '';
+      snapshot.forEach(docSnap => {
+        const classData = docSnap.data();
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => window.location.href = `class_attendance.html?classId=${docSnap.id}`;
+        tr.innerHTML = `
+          <td>${classData.className || ''}</td>
+          <td>${classData.subject || ''}</td>
+          <td>${classData.students || 0}</td>
+        `;
+        classTableBody.appendChild(tr);
+      });
+    }
+
+    onSnapshot(collection(db, 'classes'), renderClasses);
   </script>
 </body>
 </html>
