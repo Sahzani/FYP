@@ -10,7 +10,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
 <style>
-/* Original CSS retained */
+/* Original CSS from your template */
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
 header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
@@ -36,6 +36,7 @@ header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shado
 .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-bottom:20px;}
 .card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.08);transition: transform 0.3s ease, box-shadow 0.3s ease;margin-bottom:20px;}
 .card:hover{transform: translateY(-3px); box-shadow:0 12px 26px rgba(0,0,0,0.12);}
+.card h2{margin-top:0;margin-bottom:16px;font-family:'Nunito',sans-serif;font-weight:600;font-size:22px;color:#012970;border-bottom:1px solid #eee;padding-bottom:10px;}
 .legend{font-size:14px;color:#555;display:flex;gap:14px;align-items:center;margin-bottom:6px;}
 .dot{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:6px;}
 .present{color:#1c7d1c;}
@@ -50,7 +51,7 @@ td{color:#333;border-bottom:1px solid #eee;}
 tr:hover td{background:#fafafa;}
 .status-present{color:#1c7d1c;font-weight:700;}
 .status-late{color:#d17b00;font-weight:700;}
-.status-absent{color:#c0392b;font-weight:700;}
+.status-absent{color:#c0392b;}
 @media(max-width:768px){.main{margin-left:0;padding:90px 15px;}.sidebar{position:fixed;z-index:1000;}}
 </style>
 </head>
@@ -130,6 +131,7 @@ tr:hover td{background:#fafafa;}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
 import { getFirestore, collection, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
+// ===== Firebase Config =====
 const firebaseConfig = {
   apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
   authDomain: "aimanzamani.firebaseapp.com",
@@ -147,70 +149,87 @@ const lateCutoff  = document.getElementById('lateCutoff');
 const refreshBtn  = document.getElementById('refreshBtn');
 const tableBody   = document.querySelector('#attendance-table tbody');
 
-function localYMD(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function formatTime(ts){if(!ts)return '-'; const d=new Date(ts); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
-
-let studentsByUid = {};
+let students = [];
 let classesSet = new Set();
 
+function localYMD(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function formatTime(d){if(!d)return '-'; return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
+
+// Load students
 async function loadStudents(){
+  students = [];
+  classesSet.clear();
   const snap = await getDocs(collection(db,'students'));
   snap.forEach(doc=>{
     const s = doc.data();
-    const uid = doc.id;
-    const fullName = [s.firstName||'', s.lastName||''].join(' ').trim();
-    studentsByUid[uid] = { name: fullName||s.name||'', email: s.email||'', class: s.studentClass||'' };
+    s.id = doc.id;
+    students.push(s);
     if(s.studentClass) classesSet.add(s.studentClass);
   });
   classFilter.innerHTML='<option value="all">All Classes</option>';
   [...classesSet].sort().forEach(cls=>{
-    const opt=document.createElement('option'); opt.value=cls; opt.textContent=cls;
+    const opt = document.createElement('option'); opt.value=cls; opt.textContent=cls;
     classFilter.appendChild(opt);
   });
 }
 
-function calculateStatus(attTime){
-  if(!attTime) return "Absent";
-  const [cutH, cutM] = lateCutoff.value.split(":").map(Number);
-  const cutoffDt = new Date(attTime); cutoffDt.setHours(cutH, cutM,0,0);
-  const attDate = new Date(attTime);
-  return attDate <= cutoffDt ? "Present" : "Late";
-}
-
+// Load daily attendance
 async function loadDailyAttendance(){
   const selectedClass = classFilter.value;
   const ymd = datePicker.value || localYMD(new Date());
-  tableBody.innerHTML='<tr><td colspan="5">Loading...</td></tr>';
 
-  // load all students first
-  const filteredStudents = Object.values(studentsByUid).filter(s=> selectedClass==='all' || s.class===selectedClass);
-  const studentStatusMap = {};
-  filteredStudents.forEach(s=>{
-    studentStatusMap[s.email] = {...s, status:'Absent', time:null};
-  });
+  // Firestore timestamps for start/end of day
+  const startTs = Timestamp.fromDate(new Date(`${ymd}T00:00:00Z`));
+  const endTs   = Timestamp.fromDate(new Date(`${ymd}T23:59:59Z`));
 
-  // get attendance logs for the day
-  const startTs = Timestamp.fromDate(new Date(`${ymd}T00:00:00+08:00`));
-  const endTs   = Timestamp.fromDate(new Date(`${ymd}T23:59:59+08:00`));
-  const attSnap = await getDocs(query(collection(db,'attendance'), where('time','>=',startTs), where('time','<=',endTs)));
-  
+  const attSnap = await getDocs(query(collection(db,'attendance'),
+    where('time','>=',startTs),
+    where('time','<=',endTs)
+  ));
+
+  const logs = {};
   attSnap.forEach(doc=>{
     const a = doc.data();
-    const email = a.email;
-    if(studentStatusMap[email]){
-      const attTime = a.time.toDate();
-      studentStatusMap[email].status = calculateStatus(attTime);
-      studentStatusMap[email].time = attTime;
-    }
+    logs[a.student_id] = logs[a.student_id] || [];
+    logs[a.student_id].push(a);
   });
 
-  // render table
+  // Build table rows
   tableBody.innerHTML='';
-  Object.values(studentStatusMap).sort((a,b)=> (a.time||0)-(b.time||0)).forEach(s=>{
+  const cutoffH = Number(lateCutoff.value.split(':')[0]);
+  const cutoffM = Number(lateCutoff.value.split(':')[1]);
+
+  let hasData = false;
+
+  students.forEach(s=>{
+    if(selectedClass!=='all' && s.studentClass!==selectedClass) return;
+
+    const entries = logs[s.id] || [];
+    let latest = null;
+    if(entries.length>0) latest = entries.reduce((a,b)=>a.time.seconds > b.time.seconds ? a:b);
+
+    let status='Absent';
+    let timeStr='-';
+    if(latest){
+      const t = latest.time.toDate();
+      const localT = new Date(t.toLocaleString("en-US",{timeZone:"Asia/Brunei"}));
+      timeStr = formatTime(localT);
+      status = (localT.getHours()<cutoffH || (localT.getHours()===cutoffH && localT.getMinutes()<=cutoffM)) ? 'Present':'Late';
+    }
+
+    hasData = true;
     const tr = document.createElement('tr');
-    tr.innerHTML=`<td>${s.name}</td><td>${s.email}</td><td>${s.class}</td><td class="status-${s.status.toLowerCase()}">${s.status}</td><td>${formatTime(s.time)}</td>`;
+    tr.innerHTML=`
+      <td>${s.firstName||''} ${s.lastName||''}</td>
+      <td>${s.email||''}</td>
+      <td>${s.studentClass||''}</td>
+      <td class="status-${status.toLowerCase()}">${status}</td>
+      <td>${timeStr}</td>
+    `;
     tableBody.appendChild(tr);
   });
+
+  if(!hasData) tableBody.innerHTML='<tr><td colspan="5">No attendance records found.</td></tr>';
 }
 
 datePicker.value = localYMD(new Date());
@@ -221,7 +240,7 @@ lateCutoff.addEventListener('change',loadDailyAttendance);
 
 await loadStudents();
 await loadDailyAttendance();
-setInterval(loadDailyAttendance,5000);
+setInterval(loadDailyAttendance,5000); // live refresh every 5 seconds
 </script>
 
 <script>
