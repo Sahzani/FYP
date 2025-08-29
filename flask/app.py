@@ -8,7 +8,10 @@ import os
 import subprocess
 
 # For webcam page
+<<<<<<< HEAD
 PYTHON_EXE = r"C:\Users\Acer\try\tuto-env\Scripts\python.exe"
+=======
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
 camera_process = None
 WEBCAM_PATH = r"C:\Users\Acer\Desktop\FYP\flask\camera\webcam.py"
 
@@ -204,12 +207,17 @@ def admin_dashboard():
 # ------------------ Camera Page ------------------
 @app.route("/camera")
 def camera_page():
+<<<<<<< HEAD
     return render_template("camera.html")  # New template we'll create
+=======
+    return render_template("camera.html")  # This will be a new template
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
 
 @app.route("/start-camera")
 def start_camera():
     global camera_process
     if camera_process is None:
+<<<<<<< HEAD
         try:
             camera_process = subprocess.Popen(
                 [PYTHON_EXE, WEBCAM_PATH],
@@ -231,6 +239,11 @@ def stop_camera():
         print("Camera stopped!")
     else:
         print("Camera is not running.")
+=======
+        camera_process = subprocess.Popen(
+            ["python", WEBCAM_PATH], shell=True
+        )
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
     return redirect(url_for("camera_page"))
 
 # ------------------ Student Pages ------------------
@@ -304,6 +317,10 @@ def student_profile():
 
     uid = user.get("uid")
 
+<<<<<<< HEAD
+=======
+    # Fetch student data from Firestore
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
     student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
     student_data = None
     for doc in student_doc:
@@ -314,6 +331,18 @@ def student_profile():
         flash("Student data not found.")
         return redirect(url_for("student_dashboard"))
 
+<<<<<<< HEAD
+=======
+    # Handle profile picture path
+    profile_pic_path = student_data.get("profilePic", None)
+    if profile_pic_path and not profile_pic_path.startswith("http"):
+        # Convert backslashes to forward slashes
+        profile_pic_path = profile_pic_path.replace("\\", "/")
+    else:
+        profile_pic_path = "https://placehold.co/140x140/E9E9E9/333333?text=User"
+
+    # Build profile dictionary
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
     profile = {
         "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
         "student_id": student_data.get("studentID", "-"),
@@ -321,13 +350,22 @@ def student_profile():
         "studentClass": student_data.get("studentClass", "-"),  
         "phone": student_data.get("phone", "-"),
         "email": user.get("email", "-"),
+<<<<<<< HEAD
         "profile_pic": student_data.get("profilePic", "https://placehold.co/140x140/E9E9E9/333333?text=User"),
+=======
+        "profile_pic": profile_pic_path,
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
         "course": student_data.get("course", "-"),
         "intake": student_data.get("intake", "-")
     }
 
     return render_template("student/S_Profile.html", profile=profile)
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
 # ------------------ Student Edit Profile ------------------
 @app.route("/student/editprofile", methods=["GET", "POST"])
 def student_editprofile():
@@ -339,10 +377,16 @@ def student_editprofile():
         return redirect(url_for("home"))
 
     uid = user.get("uid")
+<<<<<<< HEAD
 
     # Fetch student info from Firestore
     student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
     student_data = None
+=======
+    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
+    student_data = None
+    student_ref = None
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
     for doc in student_doc:
         student_data = doc.to_dict()
         student_ref = doc.reference
@@ -355,13 +399,18 @@ def student_editprofile():
     if request.method == "POST":
         nickname = request.form.get("nickname")
         phone = request.form.get("phone")
+<<<<<<< HEAD
         profile_pic_file = request.files.get("profilePic")  # File from HTML
+=======
+        profile_pic_file = request.files.get("profilePic")
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
 
         update_data = {
             "nickname": nickname,
             "phone": phone
         }
 
+<<<<<<< HEAD
         # Handle profile picture upload locally
         if profile_pic_file and profile_pic_file.filename != "":
             filename = secure_filename(profile_pic_file.filename)
@@ -374,11 +423,25 @@ def student_editprofile():
             update_data["profilePic"] = f"uploads/student_profiles/{uid}/{filename}"
 
         # Update Firestore
+=======
+        if profile_pic_file and profile_pic_file.filename != "":
+            filename = secure_filename(profile_pic_file.filename)
+            # Automatically create folder
+            upload_dir = os.path.join(BASE_DIR, "static", "uploads", "student_profiles", uid)
+            os.makedirs(upload_dir, exist_ok=True)
+            file_path = os.path.join(upload_dir, filename)
+            profile_pic_file.save(file_path)
+            update_data["profilePic"] = f"uploads/student_profiles/{uid}/{filename}"
+
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
         student_ref.update(update_data)
         flash("Profile updated successfully!")
         return redirect(url_for("student_editprofile"))
 
+<<<<<<< HEAD
     # Prepare profile fields for GET
+=======
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
     profile = {
         "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
         "first_name": student_data.get("firstName", ""),
@@ -388,7 +451,11 @@ def student_editprofile():
         "studentClass": student_data.get("studentClass", "-"),
         "phone": student_data.get("phone", "-"),
         "email": user.get("email", "-"),
+<<<<<<< HEAD
         "profile_pic": student_data.get("profilePic", "uploads/default/user.png"),  # default relative path
+=======
+        "profile_pic": student_data.get("profilePic", "uploads/default/user.png"),
+>>>>>>> c36665446d52cc817a0a8c58e345e68c368fa0b4
         "course": student_data.get("course", "-"),
         "intake": student_data.get("intake", "-")
     }
