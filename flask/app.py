@@ -224,14 +224,15 @@ def student_absentapp():
     if request.method == "POST":
         studentID = session.get("studentID")
         remarks = request.form.get("remarks")
+        duration = request.form.get("duration")
 
-        new_absence = Absence(
-            studentID=studentID,
-            status="Absent",
-            remarks=remarks
-        )
-        db.session.add(new_absence)
-        db.session.commit()
+        # Add record to Firestore
+        db.collection("absenceRecords").add({
+            "remarks": remarks,
+            "duration": duration,
+            "status": "In Progress"
+        })
+
         return redirect(url_for("student_absences"))
 
     # if GET, show the form
