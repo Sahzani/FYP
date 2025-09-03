@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Camera Control</title>
+</head>
+<body>
+  <h1>Face Recognition Attendance</h1>
+  <button onclick="window.location.href='/start_camera'">Start Camera</button>
+  <button onclick="window.location.href='/stop_camera'">Stop Camera</button>
+
+  <h2>Live Feed:</h2>
+  <img src="{{ url_for('video_feed') }}" width="640" height="480">
+</body>
+</html>
