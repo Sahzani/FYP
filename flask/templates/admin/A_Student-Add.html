@@ -58,29 +58,67 @@ input, select { width:100%; padding:10px; border-radius:6px; border:1px solid #c
   iAttend Admin
 </header>
 
+
 <!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
+  <!-- Dashboard -->
   <div class="sidebar-section">
     <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
+
+  <!-- Management -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
+    <!-- Students -->
     <div class="sidebar-dropdown">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
       </a>
       <div class="dropdown-menu">
         <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
-        <a class="sidebar-link" href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+        <a class="sidebar-link " href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
         <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
       </div>
     </div>
+    <!-- Teachers -->
+    <div class="sidebar-dropdown">
+      <a href="#" class="sidebar-link dropdown-toggle">
+        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
+      </a>
+      <div class="dropdown-menu">
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- System -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">System</div>
+    <a class="sidebar-link" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
+  </div>
+
+  <!-- Logs -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Logs</div>
+    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
+  </div>
+
+
+  <!-- Attendance -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Attendance</div>
+    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
+    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
-<!-- Main Content -->
+
 <div class="main-content">
   <h1 class="page-title">Add Student</h1>
   <h2 class="breadcrumb">
@@ -92,42 +130,15 @@ input, select { width:100%; padding:10px; border-radius:6px; border:1px solid #c
   <div class="card">
     <h3>Add Single Student</h3>
     <form id="studentForm">
-      <div class="form-group">
-        <label>First Name</label>
-        <input type="text" id="first-name-input" placeholder="Enter first name" required>
-      </div>
-      <div class="form-group">
-        <label>Last Name</label>
-        <input type="text" id="last-name-input" placeholder="Enter last name" required>
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="email-input" placeholder="Enter student's email" required>
-      </div>
-      <div class="form-group">
-        <label>Course</label>
-        <input type="text" id="course-input" placeholder="Enter course" required>
-      </div>
-      <div class="form-group">
-        <label>Intake</label>
-        <input type="text" id="intake-input" placeholder="Enter intake" required>
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="studentPassword" placeholder="Set password" required>
-      </div>
-      <div class="form-group">
-        <label>Class</label>
-        <input type="text" id="class-input" placeholder="Enter class" required>
-      </div>
-      <div class="form-group">
-        <label>Student ID</label>
-        <input type="text" id="student-id-input" placeholder="Enter student ID" required>
-      </div>
-      <div class="form-group">
-        <label>Photo Filename</label>
-        <input type="text" id="photo-input" placeholder="e.g., Alex.jpg" required>
-      </div>
+      <div class="form-group"><label>First Name</label><input type="text" id="first-name-input" placeholder="Enter first name" required></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="last-name-input" placeholder="Enter last name" required></div>
+      <div class="form-group"><label>Email</label><input type="email" id="email-input" placeholder="Enter student's email" required></div>
+      <div class="form-group"><label>Course</label><input type="text" id="course-input" placeholder="Enter course" required></div>
+      <div class="form-group"><label>Intake</label><input type="text" id="intake-input" placeholder="Enter intake" required></div>
+      <div class="form-group"><label>Password</label><input type="password" id="studentPassword" placeholder="Set password" required></div>
+      <div class="form-group"><label>Class</label><input type="text" id="class-input" placeholder="Enter class" required></div>
+      <div class="form-group"><label>Student ID</label><input type="text" id="student-id-input" placeholder="Enter student ID" required></div>
+      <div class="form-group"><label>Photo Filename</label><input type="text" id="photo-input" placeholder="e.g., Alex.jpg" required></div>
       <button type="submit" class="submit-btn">Add Student</button>
     </form>
   </div>
@@ -139,7 +150,7 @@ input, select { width:100%; padding:10px; border-radius:6px; border:1px solid #c
       <div class="form-group">
         <label>CSV File</label>
         <input type="file" id="csv-input" accept=".csv" required>
-        <small>CSV columns: firstName,lastName,email,course,intake,password,studentClass,studentID,photoFilename</small>
+        <small>CSV columns: firstName,lastName,email,password,studentClass,studentID,photoFilename,roleType,intake,course</small>
       </div>
       <button type="submit" class="submit-btn">Upload CSV</button>
     </form>
@@ -182,8 +193,16 @@ studentForm.addEventListener('submit', async e => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db,"students",userCredential.user.uid), {
-      uid:userCredential.user.uid, firstName, lastName, email,
-      course,intake,studentClass,studentID,photo:photoFilename, roleType:"student"
+      uid:userCredential.user.uid,
+      firstName,
+      lastName,
+      email,
+      course,
+      intake,
+      studentClass,
+      studentID,
+      photo: photoFilename,
+      roleType:"student"
     });
     alert("✅ Student added successfully!");
     studentForm.reset();
@@ -207,14 +226,27 @@ csvForm.addEventListener('submit', async (e) => {
       for (const row of results.data) {
         try {
           const { firstName, lastName, email, course, intake, password, studentClass, studentID, photoFilename } = row;
+
+          // 1. Create Auth user
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+          // 2. Add to Firestore
           await setDoc(doc(db,"students",userCredential.user.uid), {
-            uid:userCredential.user.uid, firstName, lastName, email,
-            course,intake,studentClass,studentID,photo:photoFilename, roleType:"student"
+            uid:userCredential.user.uid,
+            firstName,
+            lastName,
+            email,
+            course: course || "",
+            intake: intake || "",
+            studentClass,
+            studentID,
+            photo: photoFilename || "",
+            roleType: "student"
           });
-          console.log(`Added: ${email}`);
+
+          console.log(`✅ Added: ${email}`);
         } catch(error) {
-          console.error(`Failed to add ${row.email}: `, error.message);
+          console.error(`❌ Failed to add ${row.email}: `, error.message);
         }
       }
       alert("✅ CSV Upload Finished!");
