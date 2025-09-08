@@ -117,71 +117,62 @@ td { padding:12px; border-top:1px solid #ddd; }
   </div>
 </header>
 
-<!-- Sidebar -->
-<!-- Sidebar -->
+
+<!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
   <!-- Dashboard -->
   <div class="sidebar-section">
-    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" 
-       href="{{ url_for('admin_dashboard') }}">
+    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
 
-  <!-- Management Section -->
+  <!-- Management -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
-
-    <!-- Students Dropdown -->
-    <div class="sidebar-dropdown {% if request.endpoint in ['admin_student_list', 'admin_student_add'] %}active{% endif %}">
-      <a href="#" class="sidebar-link dropdown-toggle active">
+    <!-- Students -->
+    <div class="sidebar-dropdown">
+      <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
       </a>
       <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint=='admin_student_list' %}active{% endif %} active 
-           href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
-        <a class="sidebar-link {% if request.endpoint=='admin_student_add' %}active{% endif %}" 
-           href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
+        <a class="sidebar-link " href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
       </div>
     </div>
-
-    <!-- Teachers Dropdown -->
-    <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_list', 'admin_teacher_add'] %}active{% endif %}">
+    <!-- Teachers -->
+    <div class="sidebar-dropdown">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
       </a>
       <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint=='admin_teacher_list' %}active{% endif %}" 
-           href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
-        <a class="sidebar-link {% if request.endpoint=='admin_teacher_add' %}active{% endif %}" 
-           href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
       </div>
     </div>
   </div>
 
-  <!-- System Management -->
+  <!-- System -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">System</div>
-    <a class="sidebar-link {% if request.endpoint=='admin_rooms' %}active{% endif %}" 
-       href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
-    <a class="sidebar-link {% if request.endpoint=='admin_schedule_upload' %}active{% endif %}" 
-       href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
   </div>
 
   <!-- Logs -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Logs</div>
-    <a class="sidebar-link {% if request.endpoint=='admin_attendance_logs' %}active{% endif %}" 
-       href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
-    <a class="sidebar-link {% if request.endpoint=='admin_change_logs' %}active{% endif %}" 
-       href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
   </div>
 
-  <!-- Attendance Section -->
+
+  <!-- Attendance -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>
-    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" 
-       href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
     <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
