@@ -3,17 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Add Student</title>
+<title>iAttend Admin - Add Student</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff;
-box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center;
-padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700;
-font-size:26px; color:#212529; z-index:1002; }
-#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
+/* RESET & BASE */
+* {margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
+header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
+#menu-toggle{font-size:28px;margin-right:15px;cursor:pointer;}
+.header-content{width:100%;display:flex;justify-content:space-between;align-items:center;}
+.user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;cursor:pointer;}
+.user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
+.user-info span{font-size:16px;font-weight:600;color:#444;}
 
 .sidebar { position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
 padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
@@ -36,18 +38,31 @@ transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-rig
 .main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
 .sidebar.collapsed ~ .main-content { margin-left:80px; }
 
-.card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); max-width:700px; margin-bottom:30px; }
-.form-group { margin-bottom:20px; }
-label { display:block; margin-bottom:6px; font-weight:600; color:#012970; }
-input, select { width:100%; padding:10px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
-.submit-btn { background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); color:white; font-family:'Poppins',sans-serif; font-size:14px; font-weight:500; padding:10px 20px; border:none; border-radius:8px; cursor:pointer; transition:all 0.25s ease; }
-.submit-btn:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,102,255,0.4); }
+.main-content{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s ease;min-height:100vh;}
+.sidebar.collapsed ~ .main-content{margin-left:80px;}
+.page-title{margin-bottom:20px;font-size:28px;font-weight:700;color:#012970;}
 
-@media(max-width:768px){ 
-  #menu-toggle{display:block;} 
-  .sidebar{left:-260px;} 
-  .sidebar.show{left:0;} 
-  .main-content{margin-left:0;padding:80px 20px 20px;} 
+/* MAIN CONTENT */
+.main-content{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s ease;min-height:100vh;}
+.sidebar.collapsed ~ .main-content{margin-left:80px;}
+.page-title{margin-bottom:20px;font-size:28px;font-weight:700;color:#012970;}
+
+/* CARDS & FORMS */
+.card{background:#fff;border-radius:10px;box-shadow:0px 0px 30px rgba(1,41,112,0.1);padding:30px;max-width:800px;margin-bottom:30px;}
+.form-group{margin-bottom:15px;}
+label{display:block;margin-bottom:6px;font-weight:600;color:#012970;}
+input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
+.submit-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-size:14px;font-weight:500;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;}
+.submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,102,255,0.4);}
+
+/* STUDENT FIELDS */
+.student-fields{display:block;margin-top:10px;}
+
+/* MOBILE */
+@media(max-width:768px){
+  .sidebar{left:-260px;width:240px;position:fixed;top:0;height:100%;overflow-y:auto;z-index:1001;transition:left 0.3s ease;}
+  .sidebar.active{left:0;}
+  .main-content{margin-left:0 !important;}
 }
 </style>
 </head>
@@ -55,9 +70,14 @@ input, select { width:100%; padding:10px; border-radius:6px; border:1px solid #c
 
 <header>
   <span id="menu-toggle">&#9776;</span>
-  iAttend Admin
+  <div class="header-content">
+    <span>iAttend Admin</span>
+    <div class="user-info">
+      <span>Admin</span>
+      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin Profile">
+    </div>
+  </div>
 </header>
-
 
 <!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
@@ -121,49 +141,40 @@ input, select { width:100%; padding:10px; border-radius:6px; border:1px solid #c
 
 <div class="main-content">
   <h1 class="page-title">Add Student</h1>
-  <h2 class="breadcrumb">
-    <span class="section">Student</span> / 
-    <span class="current">Add Student</span>
-  </h2>
 
-  <!-- Manual Add Student Form -->
   <div class="card">
-    <h3>Add Single Student</h3>
+    <h3>Student Details</h3>
     <form id="studentForm">
-      <div class="form-group"><label>First Name</label><input type="text" id="first-name-input" placeholder="Enter first name" required></div>
-      <div class="form-group"><label>Last Name</label><input type="text" id="last-name-input" placeholder="Enter last name" required></div>
-      <div class="form-group"><label>Email</label><input type="email" id="email-input" placeholder="Enter student's email" required></div>
-      <div class="form-group"><label>Course</label><input type="text" id="course-input" placeholder="Enter course" required></div>
-      <div class="form-group"><label>Intake</label><input type="text" id="intake-input" placeholder="Enter intake" required></div>
-      <div class="form-group"><label>Password</label><input type="password" id="studentPassword" placeholder="Set password" required></div>
-      <div class="form-group"><label>Class</label><input type="text" id="class-input" placeholder="Enter class" required></div>
-      <div class="form-group"><label>Student ID</label><input type="text" id="student-id-input" placeholder="Enter student ID" required></div>
-      <div class="form-group"><label>Photo Filename</label><input type="text" id="photo-input" placeholder="e.g., Alex.jpg" required></div>
-      <button type="submit" class="submit-btn">Add Student</button>
-    </form>
-  </div>
+      <!-- Hidden role -->
+      <input type="hidden" id="userRole" value="1">
 
-  <!-- Bulk Upload CSV -->
-  <div class="card">
-    <h3>Upload CSV for Bulk Students</h3>
-    <form id="csvForm">
+      <div class="form-group"><label>Name</label><input type="text" id="userName" required></div>
+      <div class="form-group"><label>Email</label><input type="email" id="userEmail" required></div>
+      <div class="form-group"><label>Password</label><input type="password" id="userPassword" required></div>
+      <div class="form-group"><label>Photo Name</label><input type="text" id="userPhotoName" placeholder="example.jpg"></div>
       <div class="form-group">
-        <label>CSV File</label>
-        <input type="file" id="csv-input" accept=".csv" required>
-        <small>CSV columns: firstName,lastName,email,password,studentClass,studentID,photoFilename,roleType,intake,course</small>
+        <label>Active</label>
+        <select id="userActive"><option value="true" selected>Yes</option><option value="false">No</option></select>
       </div>
-      <button type="submit" class="submit-btn">Upload CSV</button>
+
+      <!-- Student Fields -->
+      <div class="student-fields">
+        <div class="form-group"><label>Student ID</label><input type="text" id="studentID"></div>
+        <div class="form-group"><label>Class</label><input type="text" id="studentClass"></div>
+        <div class="form-group"><label>Intake</label><input type="text" id="studentIntake"></div>
+        <div class="form-group"><label>Course</label><input type="text" id="studentCourse"></div>
+      </div>
+
+      <button type="submit" class="submit-btn">Add Student</button>
     </form>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
   authDomain: "aimanzamani.firebaseapp.com",
@@ -173,88 +184,40 @@ const firebaseConfig = {
   appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
 };
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-// Manual Add Student
-const studentForm = document.getElementById('studentForm');
-studentForm.addEventListener('submit', async e => {
+// Auto-student role is already set in hidden field
+async function emailExists(email){ try{ return (await fetchSignInMethodsForEmail(auth,email)).length>0;} catch{return false;}}
+document.getElementById('studentForm').addEventListener('submit', async e=>{
   e.preventDefault();
-  const firstName = document.getElementById('first-name-input').value.trim();
-  const lastName = document.getElementById('last-name-input').value.trim();
-  const email = document.getElementById('email-input').value.trim();
-  const course = document.getElementById('course-input').value.trim();
-  const intake = document.getElementById('intake-input').value.trim();
-  const password = document.getElementById('studentPassword').value.trim();
-  const studentClass = document.getElementById('class-input').value.trim();
-  const studentID = document.getElementById('student-id-input').value.trim();
-  const photoFilename = document.getElementById('photo-input').value.trim();
-
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db,"students",userCredential.user.uid), {
-      uid:userCredential.user.uid,
-      firstName,
-      lastName,
+  const email = document.getElementById('userEmail').value.trim();
+  if(!email.includes('@')) return alert("❌ Invalid email");
+  if(await emailExists(email)) return alert("❌ Email already exists");
+  try{
+    const cred = await createUserWithEmailAndPassword(auth,email,document.getElementById('userPassword').value.trim());
+    const uid = cred.user.uid;
+    await setDoc(doc(db,"users",uid),{
+      user_id:uid,
+      name:document.getElementById('userName').value.trim(),
       email,
-      course,
-      intake,
-      studentClass,
-      studentID,
-      photo: photoFilename,
-      roleType:"student"
+      role_type:1,
+      active:document.getElementById('userActive').value==="true",
+      photo_name:document.getElementById('userPhotoName').value.trim()||""
+    });
+    await setDoc(doc(collection(db,"users",uid,"roles"),"student"),{
+      studentID:document.getElementById('studentID').value,
+      studentClass:document.getElementById('studentClass').value,
+      intake:document.getElementById('studentIntake').value,
+      course:document.getElementById('studentCourse').value
     });
     alert("✅ Student added successfully!");
-    studentForm.reset();
-  } catch(error) {
-    console.error(error);
-    alert("❌ Failed: "+error.message);
-  }
+    document.getElementById('studentForm').reset();
+  }catch(err){alert("❌ Failed: "+err.message);}
 });
+</script>
 
-// CSV Bulk Upload
-const csvForm = document.getElementById('csvForm');
-csvForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const file = document.getElementById('csv-input').files[0];
-  if (!file) return alert("Please select a CSV file!");
-
-  Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
-    complete: async function(results) {
-      for (const row of results.data) {
-        try {
-          const { firstName, lastName, email, course, intake, password, studentClass, studentID, photoFilename } = row;
-
-          // 1. Create Auth user
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-          // 2. Add to Firestore
-          await setDoc(doc(db,"students",userCredential.user.uid), {
-            uid:userCredential.user.uid,
-            firstName,
-            lastName,
-            email,
-            course: course || "",
-            intake: intake || "",
-            studentClass,
-            studentID,
-            photo: photoFilename || "",
-            roleType: "student"
-          });
-
-          console.log(`✅ Added: ${email}`);
-        } catch(error) {
-          console.error(`❌ Failed to add ${row.email}: `, error.message);
-        }
-      }
-      alert("✅ CSV Upload Finished!");
-      csvForm.reset();
-    }
-  });
-});
-
+<script>
 // Sidebar toggle
 document.getElementById('menu-toggle').addEventListener('click', ()=>{
   document.querySelector('.sidebar').classList.toggle('collapsed');
@@ -268,5 +231,6 @@ document.querySelectorAll('.dropdown-toggle').forEach(drop => {
   });
 });
 </script>
+
 </body>
 </html>
