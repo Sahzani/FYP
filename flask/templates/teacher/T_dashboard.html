@@ -64,7 +64,7 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
   <div class="header-content">
     <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="{{ url_for('teacher_profile') }}" class="user-info">
-      <span>{{ profile.name }}</span>
+      <span>{{ session['user']['email'] if session.get('user') else 'Teacher' }}</span>
       <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
     </a>
   </div>
@@ -73,18 +73,8 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link active" href="{{ url_for('teacher_dashboard') }}">
+    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
-    </a>
-  </div>
-
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Class</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_class_list') }}">
-      <i class="fas fa-file-signature"></i><span>Absent Application</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_daily_attend') }}">
-      <i class="fas fa-user-check"></i><span>Daily Attendance</span>
     </a>
   </div>
 
@@ -104,10 +94,7 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
       <i class="fas fa-users"></i><span>Student Attendance</span>
     </a>
     <a class="sidebar-link">
-      <i class="fas fa-calendar-alt"></i><span>Assigned Room Schedules</span>
-    </a>
-    <a class="sidebar-link">
-      <i class="fas fa-history"></i><span>My Change Log</span>
+      <i class="fas fa-calendar-alt"></i><span>Submit Absent Application</span>
     </a>
   </div>
 
@@ -118,8 +105,15 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
   </div>
 </div>
 
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
+  </div>
+</div>
+
 <div class="main">
-  <h2>Welcome, <span id="-name">{{ profile.name }}</span>!</h2>
+  <h2>Welcome, <span id="teacher-name">{{ profile.name }}</span>!</h2>
    <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Home</span></div>
 
   <div class="grid-container-lg grid-container card-spacing">
