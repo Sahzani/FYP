@@ -87,16 +87,16 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_schedule') }}">
+    <a class="sidebar-link active" href="{{ url_for('teacher_schedule') }}">
       <i class="fas fa-calendar"></i><span>Class Schedule</span>
     </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
+    <a class="sidebar-link">
       <i class="fas fa-book"></i><span>My Modules & Rooms</span>
     </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_student_attendance') }}">
+    <a class="sidebar-link">
       <i class="fas fa-users"></i><span>Student Attendance</span>
     </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_absent_application') }}">
+    <a class="sidebar-link">
       <i class="fas fa-calendar-alt"></i><span>Submit Absent Application</span>
     </a>
   </div>
