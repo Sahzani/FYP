@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <style>
-/* RESET & BASE */
 * {margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
 header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
@@ -16,10 +15,7 @@ header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shado
 .user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;cursor:pointer;}
 .user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
 .user-info span{font-size:16px;font-weight:600;color:#444;}
-
-.sidebar { position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
-transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px; }
+.sidebar { position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif; transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px; }
 .sidebar.collapsed { width:70px; overflow:hidden; }
 .sidebar-section { margin-bottom:25px; padding:0 15px; }
 .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
@@ -28,42 +24,22 @@ transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-rig
 .sidebar-link i { width:18px; text-align:center; }
 .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
 .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
-
 .sidebar-dropdown { display:flex; flex-direction:column; }
 .dropdown-menu { display:none; flex-direction:column; padding-left:20px; }
 .sidebar-dropdown.active .dropdown-menu { display:flex; }
 .sidebar-dropdown .dropdown-toggle i { margin-left:auto; transition: transform 0.3s; }
 .sidebar-dropdown.active .dropdown-toggle i { transform: rotate(180deg); }
-
 .main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
 .sidebar.collapsed ~ .main-content { margin-left:80px; }
-
-.main-content{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s ease;min-height:100vh;}
-.sidebar.collapsed ~ .main-content{margin-left:80px;}
 .page-title{margin-bottom:20px;font-size:28px;font-weight:700;color:#012970;}
-
-/* MAIN CONTENT */
-.main-content{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s ease;min-height:100vh;}
-.sidebar.collapsed ~ .main-content{margin-left:80px;}
-.page-title{margin-bottom:20px;font-size:28px;font-weight:700;color:#012970;}
-
-/* CARDS & FORMS */
 .card{background:#fff;border-radius:10px;box-shadow:0px 0px 30px rgba(1,41,112,0.1);padding:30px;max-width:800px;margin-bottom:30px;}
 .form-group{margin-bottom:15px;}
 label{display:block;margin-bottom:6px;font-weight:600;color:#012970;}
 input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
 .submit-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-size:14px;font-weight:500;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;}
 .submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,102,255,0.4);}
-
-/* STUDENT FIELDS */
 .student-fields{display:block;margin-top:10px;}
-
-/* MOBILE */
-@media(max-width:768px){
-  .sidebar{left:-260px;width:240px;position:fixed;top:0;height:100%;overflow-y:auto;z-index:1001;transition:left 0.3s ease;}
-  .sidebar.active{left:0;}
-  .main-content{margin-left:0 !important;}
-}
+@media(max-width:768px){.sidebar{left:-260px;width:240px;position:fixed;top:0;height:100%;overflow-y:auto;z-index:1001;transition:left 0.3s ease;}.sidebar.active{left:0;}.main-content{margin-left:0 !important;}}
 </style>
 </head>
 <body>
@@ -81,17 +57,14 @@ input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;fon
 
 <!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
-  <!-- Dashboard -->
   <div class="sidebar-section">
     <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
 
-  <!-- Management -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
-    <!-- Students -->
     <div class="sidebar-dropdown">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
@@ -102,7 +75,6 @@ input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;fon
         <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
       </div>
     </div>
-    <!-- Teachers -->
     <div class="sidebar-dropdown">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
@@ -115,22 +87,18 @@ input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;fon
     </div>
   </div>
 
-  <!-- System -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">System</div>
     <a class="sidebar-link" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
     <a class="sidebar-link" href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
   </div>
 
-  <!-- Logs -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Logs</div>
     <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
     <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
   </div>
 
-
-  <!-- Attendance -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>
     <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
@@ -139,41 +107,43 @@ input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;fon
 </div>
 
 
+
 <div class="main-content">
   <h1 class="page-title">Add Student</h1>
 
+  <!-- Manual Entry -->
   <div class="card">
-    <h3>Student Details</h3>
+    <h3>Manual Student Entry</h3>
     <form id="studentForm">
-      <!-- Hidden role -->
       <input type="hidden" id="userRole" value="1">
-
       <div class="form-group"><label>Name</label><input type="text" id="userName" required></div>
       <div class="form-group"><label>Email</label><input type="email" id="userEmail" required></div>
       <div class="form-group"><label>Password</label><input type="password" id="userPassword" required></div>
       <div class="form-group"><label>Photo Name</label><input type="text" id="userPhotoName" placeholder="example.jpg"></div>
-      <div class="form-group">
-        <label>Active</label>
+      <div class="form-group"><label>Active</label>
         <select id="userActive"><option value="true" selected>Yes</option><option value="false">No</option></select>
       </div>
-
-      <!-- Student Fields -->
       <div class="student-fields">
         <div class="form-group"><label>Student ID</label><input type="text" id="studentID"></div>
         <div class="form-group"><label>Class</label><input type="text" id="studentClass"></div>
-        <div class="form-group"><label>Intake</label><input type="text" id="studentIntake"></div>
-        <div class="form-group"><label>Course</label><input type="text" id="studentCourse"></div>
+        <div class="form-group"><label>Group Code</label>
+          <select id="fkGroupCode"><option value="">Select Group</option></select>
+        </div>
       </div>
-
       <button type="submit" class="submit-btn">Add Student</button>
     </form>
+
+    <!-- CSV Upload -->
+    <h3 style="margin-top:30px;">Upload Students CSV</h3>
+    <div class="form-group"><input type="file" id="studentCsvFile" accept=".csv" /></div>
+    <button id="uploadStudentBtn" class="submit-btn">Upload Students CSV</button>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, collection } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
@@ -187,16 +157,36 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Auto-student role is already set in hidden field
-async function emailExists(email){ try{ return (await fetchSignInMethodsForEmail(auth,email)).length>0;} catch{return false;}}
+// Load Groups dynamically
+async function loadGroups() {
+  const groupSelect = document.getElementById('fkGroupCode');
+  const snapshot = await getDocs(collection(db, "groups"));
+  snapshot.forEach(docSnap => {
+    const opt = document.createElement('option');
+    opt.value = docSnap.id; // store group code as FK
+    opt.textContent = docSnap.data().group_code;
+    groupSelect.appendChild(opt);
+  });
+}
+loadGroups();
+
+// Check email exists
+async function emailExists(email){ 
+  try{ return (await fetchSignInMethodsForEmail(auth,email)).length>0;} 
+  catch{return false;}
+}
+
+// Manual student submit
 document.getElementById('studentForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const email = document.getElementById('userEmail').value.trim();
   if(!email.includes('@')) return alert("❌ Invalid email");
   if(await emailExists(email)) return alert("❌ Email already exists");
+
   try{
     const cred = await createUserWithEmailAndPassword(auth,email,document.getElementById('userPassword').value.trim());
     const uid = cred.user.uid;
+
     await setDoc(doc(db,"users",uid),{
       user_id:uid,
       name:document.getElementById('userName').value.trim(),
@@ -205,15 +195,51 @@ document.getElementById('studentForm').addEventListener('submit', async e=>{
       active:document.getElementById('userActive').value==="true",
       photo_name:document.getElementById('userPhotoName').value.trim()||""
     });
+
     await setDoc(doc(collection(db,"users",uid,"roles"),"student"),{
       studentID:document.getElementById('studentID').value,
       studentClass:document.getElementById('studentClass').value,
-      intake:document.getElementById('studentIntake').value,
-      course:document.getElementById('studentCourse').value
+      fk_groupcode:document.getElementById('fkGroupCode').value
     });
+
     alert("✅ Student added successfully!");
     document.getElementById('studentForm').reset();
-  }catch(err){alert("❌ Failed: "+err.message);}
+  } catch(err){
+    alert("❌ Failed: "+err.message);
+  }
+});
+
+// CSV Upload
+document.getElementById('uploadStudentBtn').addEventListener('click', async ()=>{
+  const fileInput = document.getElementById('studentCsvFile');
+  if(!fileInput.files.length) return alert("❌ Select a CSV file");
+  const file = fileInput.files[0];
+  const text = await file.text();
+  const lines = text.split(/\r?\n/).filter(l=>l.trim());
+  for(const line of lines){
+    const [name,email,password,photo,studentID,studentClass,groupCode] = line.split(',');
+    if(!email || !name) continue;
+    if(await emailExists(email)) continue;
+    try{
+      const cred = await createUserWithEmailAndPassword(auth,email,password||"password123");
+      const uid = cred.user.uid;
+      await setDoc(doc(db,"users",uid),{
+        user_id:uid,
+        name,
+        email,
+        role_type:1,
+        active:true,
+        photo_name:photo||""
+      });
+      await setDoc(doc(collection(db,"users",uid,"roles"),"student"),{
+        studentID,
+        studentClass,
+        fk_groupcode:groupCode
+      });
+    } catch(err){ console.error(err); }
+  }
+  alert("✅ CSV upload completed!");
+  fileInput.value="";
 });
 </script>
 
