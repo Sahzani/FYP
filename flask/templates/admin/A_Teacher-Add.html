@@ -3,30 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Add Teacher</title>
-
-<!-- Fonts & Icons -->
+<title>iAttend Admin - Add Teacher</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <style>
-/* RESET */
-*{margin:0;padding:0;box-sizing:border-box;}
+* {margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
-
-/* HEADER */
 header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
 #menu-toggle{font-size:28px;margin-right:15px;cursor:pointer;}
 .header-content{width:100%;display:flex;justify-content:space-between;align-items:center;}
 .user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;cursor:pointer;}
 .user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
 .user-info span{font-size:16px;font-weight:600;color:#444;}
-/* Sidebar */
-.sidebar {
-  position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-  padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
-  transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px;
-}
+.sidebar { position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif; transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px; }
 .sidebar.collapsed { width:70px; overflow:hidden; }
 .sidebar-section { margin-bottom:25px; padding:0 15px; }
 .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
@@ -35,81 +24,58 @@ header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shado
 .sidebar-link i { width:18px; text-align:center; }
 .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
 .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
-
-/* Dropdown */
 .sidebar-dropdown { display:flex; flex-direction:column; }
 .dropdown-menu { display:none; flex-direction:column; padding-left:20px; }
 .sidebar-dropdown.active .dropdown-menu { display:flex; }
 .sidebar-dropdown .dropdown-toggle i { margin-left:auto; transition: transform 0.3s; }
 .sidebar-dropdown.active .dropdown-toggle i { transform: rotate(180deg); }
-/* Main Content */
-.main-content{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s ease;min-height:100vh;}
-.sidebar.collapsed ~ .main-content{margin-left:80px;}
-
-/* MAIN CONTENT */
-.main-content{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s ease;min-height:100vh;}
-.sidebar.collapsed ~ .main-content{margin-left:80px;}
-
-.page-title{font-family:'Poppins',sans-serif;font-size:28px;font-weight:500;color:#444;margin-bottom:8px;}
-.breadcrumb{font-size:14px;font-weight:600;margin-bottom:30px;}
-.breadcrumb .section{color:#989797;}
-.breadcrumb .current{color:#444;}
-.breadcrumb a.section{text-decoration:none;color:#989797;}
-
-/* CARD */
-.card{background:#fff;border-radius:10px;box-shadow:0px 0px 30px rgba(1,41,112,0.1);padding:30px;max-width:600px;}
-.form-group{margin-bottom:20px;}
+.main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
+.sidebar.collapsed ~ .main-content { margin-left:80px; }
+.page-title{margin-bottom:20px;font-size:28px;font-weight:700;color:#012970;}
+.card{background:#fff;border-radius:10px;box-shadow:0px 0px 30px rgba(1,41,112,0.1);padding:30px;max-width:800px;margin-bottom:30px;}
+.form-group{margin-bottom:15px;}
 label{display:block;margin-bottom:6px;font-weight:600;color:#012970;}
 input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
 .submit-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-size:14px;font-weight:500;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;}
-.submit-btn:hover{transform:translateY(-1px);box-shadow:0px 6px 16px rgba(0,102,255,0.4);}
-
-/* MOBILE */
-@media(max-width:768px){
-  .sidebar{left:-260px;width:240px;position:fixed;top:0;transition:left 0.3s ease;}
-  .sidebar.active{left:0;}
-  .main-content{margin-left:0 !important;}
-}
+.submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,102,255,0.4);}
+.teacher-fields{display:block;margin-top:10px;}
+@media(max-width:768px){.sidebar{left:-260px;width:240px;position:fixed;top:0;height:100%;overflow-y:auto;z-index:1001;transition:left 0.3s ease;}.sidebar.active{left:0;}.main-content{margin-left:0 !important;}}
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <span>iAttend</span>
+    <span>iAttend Admin</span>
     <div class="user-info">
       <span>Admin</span>
-      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin">
+      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin Profile">
     </div>
   </div>
 </header>
 
-<!-- Sidebar -->
+
+<!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
-  <!-- Dashboard -->
   <div class="sidebar-section">
     <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
 
-  <!-- Management -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
-    <!-- Students -->
     <div class="sidebar-dropdown">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
       </a>
       <div class="dropdown-menu">
         <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
-        <a class="sidebar-link" href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+        <a class="sidebar-link " href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
         <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
       </div>
     </div>
-    <!-- Teachers -->
     <div class="sidebar-dropdown">
       <a href="#" class="sidebar-link dropdown-toggle">
         <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
@@ -122,22 +88,18 @@ input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;fon
     </div>
   </div>
 
-  <!-- System -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">System</div>
     <a class="sidebar-link" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
     <a class="sidebar-link" href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
   </div>
 
-  <!-- Logs -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Logs</div>
     <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
     <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
   </div>
 
-
-  <!-- Attendance -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>
     <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
@@ -145,48 +107,42 @@ input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;fon
   </div>
 </div>
 
-<!-- Main Content -->
+
 <div class="main-content">
   <h1 class="page-title">Add Teacher</h1>
-  <h2 class="breadcrumb"><span class="section">Teachers</span> / <span class="current">Add Teacher</span></h2>
 
+  <!-- Manual Entry -->
   <div class="card">
+    <h3>Manual Teacher Entry</h3>
     <form id="teacherForm">
-      <div class="form-group">
-        <label for="teacherFirstName">First Name</label>
-        <input type="text" id="teacherFirstName" placeholder="Enter teacher's first name" required>
+      <input type="hidden" id="userRole" value="2">
+      <div class="form-group"><label>Name</label><input type="text" id="userName" required></div>
+      <div class="form-group"><label>Email</label><input type="email" id="userEmail" required></div>
+      <div class="form-group"><label>Password</label><input type="password" id="userPassword" required></div>
+      <div class="form-group"><label>Photo Name</label><input type="text" id="userPhotoName" placeholder="example.jpg"></div>
+      <div class="form-group"><label>Active</label>
+        <select id="userActive"><option value="true" selected>Yes</option><option value="false">No</option></select>
       </div>
-      <div class="form-group">
-        <label for="teacherLastName">Last Name</label>
-        <input type="text" id="teacherLastName" placeholder="Enter teacher's last name" required>
-      </div>
-      <div class="form-group">
-        <label for="teacherEmail">Email</label>
-        <input type="email" id="teacherEmail" placeholder="Enter teacher's email" required>
-      </div>
-      <div class="form-group">
-        <label for="teacherPassword">Password</label>
-        <input type="password" id="teacherPassword" placeholder="Set password" required>
-      </div>
-      <div class="form-group">
-        <label for="teacherDepartment">Department</label>
-        <input type="text" id="teacherDepartment" placeholder="Enter teacher's department" required>
-      </div>
-      <div class="form-group">
-        <label for="teacherID">Teacher ID</label>
-        <input type="text" id="teacherID" placeholder="Enter teacher ID" required>
+      <div class="teacher-fields">
+        <div class="form-group"><label>Group/Module</label>
+          <select id="fkGroupCode"><option value="">Select Group</option></select>
+        </div>
       </div>
       <button type="submit" class="submit-btn">Add Teacher</button>
     </form>
+
+    <!-- CSV Upload -->
+    <h3 style="margin-top:30px;">Upload Teachers CSV</h3>
+    <div class="form-group"><input type="file" id="teacherCsvFile" accept=".csv" /></div>
+    <button id="uploadTeacherBtn" class="submit-btn">Upload Teachers CSV</button>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
   authDomain: "aimanzamani.firebaseapp.com",
@@ -195,49 +151,100 @@ const firebaseConfig = {
   messagingSenderId: "63348630728",
   appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
 };
-
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-const teacherForm = document.getElementById('teacherForm');
-teacherForm.addEventListener('submit', async (e)=>{
+// Load groups dynamically
+async function loadGroups() {
+  const groupSelect = document.getElementById('fkGroupCode');
+  const snapshot = await getDocs(collection(db, "groups"));
+  snapshot.forEach(docSnap => {
+    const opt = document.createElement('option');
+    opt.value = docSnap.id; 
+    opt.textContent = docSnap.data().group_code;
+    groupSelect.appendChild(opt);
+  });
+}
+loadGroups();
+
+// Check email exists
+async function emailExists(email){ 
+  try{ return (await fetchSignInMethodsForEmail(auth,email)).length>0;} 
+  catch{return false;}
+}
+
+// Manual teacher submit
+document.getElementById('teacherForm').addEventListener('submit', async e=>{
   e.preventDefault();
+  const email = document.getElementById('userEmail').value.trim();
+  if(!email.includes('@')) return alert("❌ Invalid email");
+  if(await emailExists(email)) return alert("❌ Email already exists");
 
-  const firstName = document.getElementById('teacherFirstName').value.trim();
-  const lastName = document.getElementById('teacherLastName').value.trim();
-  const email = document.getElementById('teacherEmail').value.trim();
-  const password = document.getElementById('teacherPassword').value.trim();
-  const department = document.getElementById('teacherDepartment').value.trim();
-  const teacherID = document.getElementById('teacherID').value.trim();
+  try{
+    const cred = await createUserWithEmailAndPassword(auth,email,document.getElementById('userPassword').value.trim());
+    const uid = cred.user.uid;
 
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth,email,password);
-    await addDoc(collection(db,"teachers"),{
-      uid:userCredential.user.uid,
-      firstName,lastName,email,department,teacherID,role:"teacher"
+    await setDoc(doc(db,"users",uid),{
+      user_id:uid,
+      name:document.getElementById('userName').value.trim(),
+      email,
+      role_type:2,
+      active:document.getElementById('userActive').value==="true",
+      photo_name:document.getElementById('userPhotoName').value.trim()||""
     });
+
+    await setDoc(doc(collection(db,"users",uid,"roles"),"teacher"),{
+      fk_groupcode:document.getElementById('fkGroupCode').value
+    });
+
     alert("✅ Teacher added successfully!");
-    teacherForm.reset();
-  } catch(error){
-    console.error("Error:", error);
-    alert("❌ Failed: " + error.message);
+    document.getElementById('teacherForm').reset();
+  } catch(err){
+    alert("❌ Failed: "+err.message);
   }
 });
 
-// Sidebar toggle
-const menuToggle = document.getElementById('menu-toggle');
-const sidebar = document.querySelector('.sidebar');
-menuToggle.addEventListener('click',()=>{
-  if(window.innerWidth<=768){ sidebar.classList.toggle('active'); } 
-  else{ sidebar.classList.toggle('collapsed'); }
+// CSV Upload
+document.getElementById('uploadTeacherBtn').addEventListener('click', async ()=>{
+  const fileInput = document.getElementById('teacherCsvFile');
+  if(!fileInput.files.length) return alert("❌ Select a CSV file");
+  const file = fileInput.files[0];
+  const text = await file.text();
+  const lines = text.split(/\r?\n/).filter(l=>l.trim());
+  for(const line of lines){
+    const [name,email,password,photo,groupCode] = line.split(',');
+    if(!email || !name) continue;
+    if(await emailExists(email)) continue;
+    try{
+      const cred = await createUserWithEmailAndPassword(auth,email,password||"password123");
+      const uid = cred.user.uid;
+      await setDoc(doc(db,"users",uid),{
+        user_id:uid,
+        name,
+        email,
+        role_type:2,
+        active:true,
+        photo_name:photo||""
+      });
+      await setDoc(doc(collection(db,"users",uid,"roles"),"teacher"),{
+        fk_groupcode:groupCode
+      });
+    } catch(err){ console.error(err); }
+  }
+  alert("✅ CSV upload completed!");
+  fileInput.value="";
 });
+</script>
 
-// Dropdown toggle
-document.querySelectorAll('.dropdown-toggle').forEach(toggle=>{
-  toggle.addEventListener('click', e=>{
+<script>
+document.getElementById('menu-toggle').addEventListener('click', ()=>{
+  document.querySelector('.sidebar').classList.toggle('collapsed');
+});
+document.querySelectorAll('.dropdown-toggle').forEach(drop => {
+  drop.addEventListener('click', e => {
     e.preventDefault();
-    toggle.parentElement.classList.toggle('active');
+    drop.parentElement.classList.toggle('active');
   });
 });
 </script>
