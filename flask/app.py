@@ -703,6 +703,53 @@ def admin_summary():
         return render_template("admin/A_Summary.html")
     return redirect(url_for("home"))
 
+# Admin Modules Page
+@app.route("/admin/modules")
+def admin_modules():
+    if session.get("role") == "admin":
+        modules_ref = db.collection("modules")
+        docs = modules_ref.stream()
+        modules = []
+        for doc in docs:
+            data = doc.to_dict()
+            data["moduleId"] = doc.id
+            modules.append(data)
+        return render_template("admin/modules.html", modules=modules)
+    return redirect(url_for("home"))
+
+# Add / Edit Module
+@app.route("/admin/module/save", methods=["POST"])
+def admin_module_save():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    module_id = request.form.get("moduleId")
+    module_name = request.form.get("moduleName")
+    module_code = request.form.get("moduleCode")
+    status = int(request.form.get("status"))
+
+    module_data = {
+        "moduleName": module_name,
+        "moduleCode": module_code,
+        "status": status
+    }
+
+    if module_id:  # Edit existing module
+        db.collection("modules").document(module_id).set(module_data)
+    else:  # Add new module
+        db.collection("modules").add(module_data)
+
+    return redirect(url_for("admin_modules"))
+
+# Delete Module
+@app.route("/delete_module/<module_id>", methods=["POST"])
+def delete_module(module_id):
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    db.collection("modules").document(module_id).delete()
+    return redirect(url_for("admin_modules"))
+
 # ------------------ Logout / Signup ------------------
 @app.route("/logout")
 def logout():
