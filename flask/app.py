@@ -572,9 +572,12 @@ def teacher_schedule():
 
     uid = user.get("uid")
 
+    # Fetch teacher profile from Firestore
+    profile_doc = db.collection("users").document(uid).get()
+    profile = profile_doc.to_dict() if profile_doc.exists else {}
+
     # Fetch teacher's schedule from Firestore
     schedule_docs = db.collection("schedules").where("teacher_id", "==", uid).stream()
-
     schedule = []
     for doc in schedule_docs:
         data = doc.to_dict()
@@ -587,7 +590,7 @@ def teacher_schedule():
             "room": data.get("room", "")
         })
 
-    return render_template("teacher/T_schedule.html", schedule=schedule)
+    return render_template("teacher/T_schedule.html", schedule=schedule, profile=profile)
 
 # ------------------ Teacher Profile ------------------
 @app.route("/teacher/profile")
