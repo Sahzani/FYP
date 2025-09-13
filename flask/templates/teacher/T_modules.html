@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iAttend - My Modules & Rooms</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+
+  header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+  #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
+  .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
+  .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; text-decoration: none; }
+  .user-info:hover { background:#f0f0f0; }
+  .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+  .user-info span { font-size:16px; font-weight:600; color:#444; }
+  .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:20px; }
+  .breadcrumb .section { color:#989797; }
+  .breadcrumb .current { color:#444444; }
+
+  /* Sidebar */
+  .sidebar { position: fixed; top:60px; left:0; width:267px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden;}
+  .sidebar.collapsed { width:70px; }
+  .sidebar-section { margin-bottom:25px; padding:0 15px; }
+  .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
+  .sidebar.collapsed .sidebar-section-title { opacity:0; }
+  .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
+  .sidebar.collapsed .sidebar-link span { display:none; }
+  .sidebar-link i { width:18px; text-align:center; }
+  .sidebar-link:hover { background: rgba(255,255,255,0.5); transform: translateX(4px);}
+  .sidebar-link.active { background: rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
+
+  /* Main */
+  .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease;}
+  .sidebar.collapsed ~ .main { margin-left:80px; }
+
+  /* Cards */
+  .card { background:#fff; padding:15px 20px; border-radius:16px; box-shadow:0 8px 25px rgba(0,0,0,0.08); margin-bottom:16px; transition:transform 0.3s, box-shadow 0.3s; cursor:pointer; }
+  .card:hover { transform: translateY(-5px); box-shadow:0 12px 30px rgba(0,0,0,0.15); }
+  td, th { padding:6px 10px; font-size:13px; text-align:left; }
+  td.status-Present { color: green; font-weight: 600; }
+  td.status-Absent { color: red; font-weight: 600; }
+  td.status-Late { color: orange; font-weight: 600; }
+  .edit-btn { cursor:pointer; font-size:13px; padding:4px 8px; border-radius:6px; transition:0.2s; }
+  .edit-btn:hover { transform:scale(1.05); }
+  h2.module-title { font-size:16px; font-weight:600; margin-bottom:8px; }
+  table { width:100%; border-collapse:collapse; }
+  table thead tr { background:#f1f3f6; }
+  table th, table td { border-radius:4px; }
+
+  /* Modal */
+  .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:10000; }
+  .modal-content { background:#fff; padding:20px 25px; border-radius:12px; width:300px; text-align:center; transform:translateY(-50px); transition:transform 0.3s ease; }
+  .modal.show { display:flex; }
+  .modal-content.show { transform:translateY(0); }
+  .modal button { margin:5px; padding:6px 12px; border:none; border-radius:6px; font-weight:600; cursor:pointer; }
+  .btn-save { background:#4154F1; color:#fff; }
+  .btn-cancel { background:#ccc; color:#000; }
+</style>
+</head>
+<body>
+
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="#" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="#" class="user-info">
+      <span>{{ profile.name }}</span>
+      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
+    </a>
+  </div>
+</header>
+
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="#"><i class="fas fa-home"></i><span>Dashboard</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reports</div>
+    <a class="sidebar-link" href="#"><i class="fas fa-chart-bar"></i><span>Attendance Report</span></a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Manage</div>
+    <a class="sidebar-link active"><i class="fas fa-book"></i><span>My Modules & Rooms</span></a>
+    <a class="sidebar-link"><i class="fas fa-users"></i><span>Student Attendance</span></a>
+    <a class="sidebar-link"><i class="fas fa-calendar-alt"></i><span>Submit Absent Application</span></a>
+  </div>
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="#"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  </div>
+</div>
+
+<div class="main">
+  <h1 class="text-2xl font-bold mb-4">My Modules</h1>
+  <div class="breadcrumb"><span class="section">Manage</span> / <span class="current">My Modules & Rooms</span></div>
+
+  <div id="modulesContainer"></div>
+
+  <div id="moduleDetails" class="hidden">
+    <button id="backBtn" class="mb-4 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400">← Back</button>
+    <h2 id="moduleTitle" class="module-title mb-2"></h2>
+    <div id="groupsContainer"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3>Edit Attendance</h3>
+    <p id="modalStudent"></p>
+    <select id="statusSelect" class="mb-4 w-full border border-gray-300 rounded px-2 py-1">
+      <option value="Present">Present</option>
+      <option value="Absent">Absent</option>
+      <option value="Late">Late</option>
+    </select>
+    <div>
+      <button class="btn-save">Save</button>
+      <button class="btn-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Data
+const modulesData = [
+  { moduleName: "Web Development", groups: ["G001","G002","G003"] },
+  { moduleName: "Database Systems", groups: ["G004"] },
+  { moduleName: "Networking", groups: ["G005","G006"] }
+];
+const groupsData = {
+  "G001": { groupName:"Group 1", day:"Mon", time:"08:00-10:00", room:"A101", students:[{name:"Hani",status:"Present"},{name:"Ali",status:"Absent"}]},
+  "G002": { groupName:"Group 2", day:"Mon", time:"10:00-12:00", room:"B202", students:[{name:"Sara",status:"Present"},{name:"John",status:"Present"}]},
+  "G003": { groupName:"Group 3", day:"Tue", time:"08:00-10:00", room:"C303", students:[{name:"Nurul",status:"Present"},{name:"Fadhil",status:"Absent"}]},
+  "G004": { groupName:"DB 1", day:"Wed", time:"09:00-11:00", room:"D404", students:[{name:"Amira",status:"Present"},{name:"Hakim",status:"Late"}]},
+  "G005": { groupName:"Net 1", day:"Thu", time:"08:00-10:00", room:"E505", students:[{name:"Faizal",status:"Present"},{name:"Lina",status:"Absent"}]},
+  "G006": { groupName:"Net 2", day:"Fri", time:"10:00-12:00", room:"F606", students:[{name:"Zahra",status:"Present"},{name:"Adam",status:"Present"}]}
+};
+
+// DOM
+const modulesContainer = document.getElementById('modulesContainer');
+const moduleDetailsDiv = document.getElementById('moduleDetails');
+const moduleTitle = document.getElementById('moduleTitle');
+const groupsContainer = document.getElementById('groupsContainer');
+const backBtn = document.getElementById('backBtn');
+
+const modal = document.getElementById('editModal');
+const modalStudent = document.getElementById('modalStudent');
+const statusSelect = document.getElementById('statusSelect');
+let currentEdit = { groupCode:null, student:null };
+
+// Render Modules
+function renderModules(){
+  modulesContainer.innerHTML='';
+  modulesData.forEach(m=>{
+    const card=document.createElement('div');
+    card.className='card';
+    card.innerHTML=`<h2 class="module-title"><i class="fas fa-book mr-2"></i>${m.moduleName}</h2>`;
+    card.addEventListener('click',()=>showModuleDetails(m));
+    modulesContainer.appendChild(card);
+  });
+}
+
+// Show Module Details
+function showModuleDetails(module){
+  modulesContainer.classList.add('hidden');
+  moduleDetailsDiv.classList.remove('hidden');
+  moduleTitle.innerHTML=`<i class="fas fa-book mr-2"></i>${module.moduleName}`;
+  groupsContainer.innerHTML='';
+  module.groups.forEach(code=>{
+    const g=groupsData[code];
+    if(!g) return;
+    const groupCard=document.createElement('div');
+    groupCard.className='card';
+    groupCard.innerHTML=`
+      <h3 class="font-semibold mb-1">${g.groupName} - ${g.day} ${g.time} (${g.room})</h3>
+      <table>
+        <thead><tr><th>Name</th><th>Status</th><th>Room</th><th>Action</th></tr></thead>
+        <tbody>
+          ${g.students.map(s=>`
+            <tr>
+              <td>${s.name}</td>
+              <td class="status-${s.status}">${s.status}</td>
+              <td>${g.room}</td>
+              <td><button class="edit-btn bg-blue-500 text-white hover:bg-blue-600" data-group="${code}" data-student="${s.name}">Edit</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+    groupsContainer.appendChild(groupCard);
+  });
+}
+
+// Back Button
+backBtn.addEventListener('click',()=>{ moduleDetailsDiv.classList.add('hidden'); modulesContainer.classList.remove('hidden'); });
+
+// Edit Button (Modal)
+document.addEventListener('click',e=>{
+  if(e.target.classList.contains('edit-btn')){
+    const groupCode=e.target.dataset.group;
+    const studentName=e.target.dataset.student;
+    currentEdit={groupCode,student:studentName};
+    modalStudent.textContent=`${studentName}`;
+    statusSelect.value=groupsData[groupCode].students.find(s=>s.name===studentName).status;
+    modal.classList.add('show');
+    document.querySelector('.modal-content').classList.add('show');
+  }
+});
+
+// Modal Buttons
+document.querySelector('.btn-cancel').addEventListener('click',()=>{
+  modal.classList.remove('show');
+  document.querySelector('.modal-content').classList.remove('show');
+});
+document.querySelector('.btn-save').addEventListener('click',()=>{
+  const {groupCode,student} = currentEdit;
+  const newStatus = statusSelect.value;
+  const s = groupsData[groupCode].students.find(st=>st.name===student);
+  s.status=newStatus;
+  showModuleDetails(modulesData.find(m=>m.groups.includes(groupCode)));
+  modal.classList.remove('show');
+  document.querySelector('.modal-content').classList.remove('show');
+});
+
+// Sidebar toggle
+document.getElementById('menu-toggle').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('collapsed'));
+
+renderModules();
+</script>
+
+</body>
+</html>
