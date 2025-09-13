@@ -60,10 +60,10 @@
     </div>
   </header>
 
-  <!-- Sidebar -->
+<!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
+    <a class="sidebar-link active" href="{{ url_for('teacher_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
@@ -77,6 +77,9 @@
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_schedule') }}">
+      <i class="fas fa-calendar"></i><span>Class Schedule</span>
+    </a>
     <a class="sidebar-link">
       <i class="fas fa-book"></i><span>My Modules & Rooms</span>
     </a>
