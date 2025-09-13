@@ -31,19 +31,21 @@ def inject_teacher_profile():
         user = session.get("user")
         if user:
             uid = user.get("uid")
-            teacher_doc = db.collection("teachers").where("uid", "==", uid).limit(1).stream()
-            teacher_data = None
-            for doc in teacher_doc:
-                teacher_data = doc.to_dict()
-                break
-            if teacher_data:
-                return {
-                    "profile": {
-                        "name": teacher_data.get("name", "Teacher"),
-                        "profile_pic": teacher_data.get("profilePic", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+            user_doc = db.collection("users").document(uid).get()
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                if user_data.get("role_type") == 2:  # Ensure it's a teacher
+                    return {
+                        "profile": {
+                            "name": user_data.get("name", "Teacher"),
+                            "profile_pic": user_data.get(
+                                "photo_name",
+                                "https://placehold.co/140x140/E9E9E9/333333?text=T"
+                            )
+                        }
                     }
-                }
     return {}
+
 
 # ------------------ Context Processor for Student Full Name ------------------
 @app.context_processor
@@ -52,14 +54,31 @@ def inject_student_name():
         user = session.get("user")
         if user:
             uid = user.get("uid")
-            student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
-            for doc in student_doc:
-                student_data = doc.to_dict()
-                full_name = f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip()
-                if full_name:
-                    return {"full_name": full_name}
-    return {"full_name": "Student"}
-
+            
+            # Fetch user document
+            user_doc = db.collection("users").document(uid).get()
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                
+                # Make sure the user is a student
+                if user_data.get("role_type") == 1:
+                    full_name = user_data.get("name", "").strip()
+                    
+                    # Fetch student-specific info from roles/student subcollection
+                    student_doc_ref = db.collection("users").document(uid).collection("roles").document("student")
+                    student_doc = student_doc_ref.get()
+                    student_info = student_doc.to_dict() if student_doc.exists else {}
+                    
+                    student_class = student_info.get("studentClass", "")
+                    group_code = student_info.get("fk_groupcode", "")
+                    
+                    return {
+                        "full_name": full_name or "Student",
+                        "student_class": student_class,
+                        "group_code": group_code
+                    }
+    # Default fallback
+    return {"full_name": "Student", "student_class": "", "group_code": ""}
 
 # ------------------ Routes ------------------
 @app.route("/")
@@ -89,41 +108,44 @@ def login():
                 flash("Invalid admin credentials.")
                 return redirect(url_for("home"))
 
-        # ---------- Student / Teacher ----------
-        user = auth.get_user_by_email(email)   # Firebase lookup
+       # ---------- Student / Teacher Login ----------
+        user = auth.get_user_by_email(email)  # Firebase Auth lookup
         uid = user.uid
 
-        collections = {"student": "students", "teacher": "teachers"}
-        role = None
-        user_doc = None
+        # Fetch user document from users collection
+        user_doc_ref = db.collection("users").document(uid)
+        user_doc = user_doc_ref.get()
 
-        for role_name, collection_name in collections.items():
-            docs = db.collection(collection_name).where("uid", "==", uid).stream()
-            for doc in docs:
-                user_doc = doc.to_dict()
-                role = role_name
-                break
-            if role:
-                break
-
-        if not user_doc:
+        if not user_doc.exists:
             flash("User not found in Firestore.")
             return redirect(url_for("home"))
 
-        session["user"] = {"uid": uid, "email": email}
-        session["role"] = role
-        session.permanent = True if remember == "on" else False
+        user_data = user_doc.to_dict()
+        role_type = user_data.get("role_type")
 
-        if role == "student":
-            return redirect(url_for("student_dashboard"))
-        elif role == "teacher":
-            return redirect(url_for("teacher_dashboard"))
+        if role_type == 1:
+            role = "student"
+            redirect_url = "student_dashboard"
+        elif role_type == 2:
+            role = "teacher"
+            redirect_url = "teacher_dashboard"
         else:
             flash("Role not assigned. Contact admin.")
             return redirect(url_for("home"))
 
+        # Store session
+        session["user"] = {"uid": uid, "email": email}
+        session["role"] = role
+        session.permanent = True if remember == "on" else False
+
+        return redirect(url_for(redirect_url))
+
     except auth.UserNotFoundError:
         flash("Invalid email or password")
+        return redirect(url_for("home"))
+
+    except Exception as e:
+        flash(f"Login error: {str(e)}")
         return redirect(url_for("home"))
 
 # ------------------ Dashboards ------------------

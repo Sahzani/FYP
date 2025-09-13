@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iAttend Admin - Master Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);color:#333;}
+header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.08);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:24px;color:#212529;z-index:1002;}
+#menu-toggle{font-size:28px;margin-right:15px;cursor:pointer;}
+.sidebar{position:fixed;top:0;left:0;width:240px;height:100%;background:#FFEED3;padding-top:60px;box-shadow:2px 0 15px rgba(1,41,112,0.08);transition:width 0.3s,left 0.3s;z-index:1001;overflow-y:auto;border-top-right-radius:12px;}
+.sidebar.collapsed{width:70px;overflow:hidden;}
+.sidebar-section{margin-bottom:25px;padding:0 15px;}
+.sidebar-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#5D5FEF;margin-bottom:10px;padding-left:10px;}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:12px 15px;margin-bottom:8px;border-radius:8px;font-size:15px;font-weight:500;color:#1A237E;text-decoration:none;transition:0.25s;white-space:nowrap;}
+.sidebar-link i{width:18px;text-align:center;}
+.sidebar-link:hover{background:rgba(255,255,255,0.5);transform:translateX(4px);}
+.sidebar-link.active{background:rgba(255,255,255,0.7);color:#4154F1;font-weight:600;}
+.main-content{margin-left:260px;padding:100px 40px 40px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s;height:100vh;overflow-y:auto;}
+.sidebar.collapsed~.main-content{margin-left:80px;}
+.breadcrumb{font-size:12px;color:#777;margin-bottom:16px;}
+.tabs{display:flex;gap:8px;margin-bottom:20px;}
+.tab-btn{cursor:pointer;padding:10px 20px;border-radius:8px 8px 0 0;border:1px solid #cbd5e1;background:#f9fafb;font-weight:600;transition:0.3s;}
+.tab-btn:hover{background:#eef2f7;}
+.tab-active{background:#fff;border-bottom:2px solid #06b6d4;color:#06b6d4;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;background:#fff;border:1px solid #cbd5e1;border-radius:0 0 12px 12px;padding:20px;box-shadow:0 4px 15px rgba(0,0,0,0.05);}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{border:1px solid #e2e8f0;padding:10px;text-align:left;font-size:14px;}
+thead{background:#f1f5f9;font-weight:600;}
+tr:hover{background:#f9fafb;transition:0.2s;}
+button{cursor:pointer;border:none;transition:0.3s;border-radius:6px;font-weight:600;}
+button.bg-teal-500{background:#06b6d4;color:#fff;padding:8px 14px;margin-bottom:10px;}
+button.bg-teal-500:hover{background:#0ea5e9;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);justify-content:center;align-items:center;z-index:2000;}
+.modal-content{background:#fff;border-radius:10px;padding:20px;min-width:300px;max-width:500px;box-shadow:0 4px 20px rgba(0,0,0,0.1);}
+.modal-content h3{margin-bottom:15px;font-weight:600;}
+.modal-content input,.modal-content select{width:100%;padding:8px;margin-bottom:12px;border-radius:6px;border:1px solid #ccc;}
+</style>
+</head>
+<body>
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <span>iAttend Admin</span>
+</header>
+
+<!-- ========== SIDEBAR ========== -->
+<div class="sidebar">
+  <!-- Dashboard -->
+  <div class="sidebar-section">
+    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+      <i class="fas fa-home"></i><span>Dashboard</span>
+    </a>
+  </div>
+
+  <!-- Management -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Management</div>
+    <!-- Students -->
+    <div class="sidebar-dropdown">
+      <a href="#" class="sidebar-link dropdown-toggle">
+        <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
+      </a>
+      <div class="dropdown-menu">
+        <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
+        <a class="sidebar-link " href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
+      </div>
+    </div>
+    <!-- Teachers -->
+    <div class="sidebar-dropdown">
+      <a href="#" class="sidebar-link dropdown-toggle">
+        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
+      </a>
+      <div class="dropdown-menu">
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- System -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">System</div>
+    <a class="sidebar-link" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
+  </div>
+
+  <!-- Logs -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Logs</div>
+    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
+  </div>
+
+
+  <!-- Attendance -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Attendance</div>
+    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
+    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="breadcrumb">Home / Admin / Master Admin</div>
+  <div class="tabs">
+    <button data-tab="teachers" class="tab-btn tab-active">Teachers</button>
+    <button data-tab="students" class="tab-btn">Students</button>
+    <button data-tab="rooms" class="tab-btn">Rooms</button>
+    <button data-tab="schedule" class="tab-btn">Schedule</button>
+  </div>
+
+  <!-- Teachers Tab -->
+  <div id="panel-teachers" class="tab-panel active">
+    <input type="file" id="teachersCsvInput" accept=".csv">
+    <button id="uploadTeachersCsv" class="bg-teal-500">Upload CSV</button>
+    <button id="addTeacherBtn" class="bg-teal-500">Add Teacher</button>
+    <table>
+      <thead><tr>
+        <th>First Name</th><th>Last Name</th><th>Email</th><th>Password</th>
+        <th>Department</th><th>Course</th><th>Group Code</th><th>Teacher ID</th>
+        <th>Class</th><th>Subject</th><th>Room</th><th>Actions</th>
+      </tr></thead>
+      <tbody id="teachersTable"></tbody>
+    </table>
+  </div>
+
+  <!-- Students Tab -->
+  <div id="panel-students" class="tab-panel">
+    <input type="file" id="studentsCsvInput" accept=".csv">
+    <button id="uploadStudentsCsv" class="bg-teal-500">Upload Students CSV</button>
+    <button id="addStudentBtn" class="bg-teal-500">Add Student</button>
+    <table>
+      <thead><tr>
+        <th>First Name</th><th>Last Name</th><th>Email</th><th>Password</th>
+        <th>Class</th><th>Student ID</th><th>Course</th><th>Department</th><th>Group Code</th><th>Photo</th><th>Actions</th>
+      </tr></thead>
+      <tbody id="studentsTable"></tbody>
+    </table>
+  </div>
+
+  <!-- Rooms Tab -->
+  <div id="panel-rooms" class="tab-panel">
+    <input type="file" id="roomsCsvInput" accept=".csv">
+    <button id="uploadRoomsCsv" class="bg-teal-500">Upload CSV</button>
+    <button id="addRoomBtn" class="bg-teal-500">Add Room</button>
+    <table>
+      <thead><tr><th>Room Name</th><th>Camera ID</th><th>Actions</th></tr></thead>
+      <tbody id="roomsTable"></tbody>
+    </table>
+  </div>
+
+  <!-- Schedule Tab -->
+  <div id="panel-schedule" class="tab-panel">
+    <input type="file" id="scheduleCsvInput" accept=".csv">
+    <button id="uploadScheduleCsv" class="bg-teal-500">Upload CSV</button>
+    <button id="addScheduleBtn" class="bg-teal-500">Add Schedule</button>
+    <table>
+      <thead><tr><th>Day</th><th>Time</th><th>Class</th><th>Room</th><th>Teacher</th><th>Actions</th></tr></thead>
+      <tbody id="scheduleTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modals for Add Teacher / Student / Room / Schedule -->
+<div class="modal" id="modalAddStudent">
+  <div class="modal-content">
+    <h3>Add Student</h3>
+    <input type="text" id="studentFirstName" placeholder="First Name">
+    <input type="text" id="studentLastName" placeholder="Last Name">
+    <input type="text" id="studentEmail" placeholder="Email">
+    <input type="text" id="studentPassword" placeholder="Password">
+    <input type="text" id="studentClass" placeholder="Class">
+    <input type="text" id="studentID" placeholder="Student ID">
+    <input type="text" id="studentPhoto" placeholder="Photo Filename">
+    <button id="saveStudentBtn" class="bg-teal-500">Save Student</button>
+  </div>
+</div>
+
+<!-- Firebase & JS logic -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+  authDomain: "aimanzamani.firebaseapp.com",
+  projectId: "aimanzamani",
+  storageBucket: "aimanzamani.appspot.com",
+  messagingSenderId: "63348630728",
+  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ==================== Helpers ====================
+async function fetchTeachers(){ const t=document.getElementById('teachersTable'); t.innerHTML=''; const snap=await getDocs(collection(db,'teachers')); snap.forEach(docSnap=>{ const d=docSnap.data(); const tr=document.createElement('tr'); tr.innerHTML=`<td>${d.firstName}</td><td>${d.lastName}</td><td>${d.email||''}</td><td>${d.password||''}</td><td>${d.department||''}</td><td>${d.course||''}</td><td>${d.groupCode||''}</td><td>${d.teacherID||''}</td><td>${d.class||''}</td><td>${d.subject||''}</td><td>${d.room||''}</td><td><button onclick="deleteItem('teachers','${docSnap.id}')">Delete</button></td>`; t.appendChild(tr); }); }
+async function fetchStudents(){ const t=document.getElementById('studentsTable'); t.innerHTML=''; const snap=await getDocs(collection(db,'students')); snap.forEach(docSnap=>{ const d=docSnap.data(); const tr=document.createElement('tr'); tr.innerHTML=`<td>${d.firstName}</td><td>${d.lastName}</td><td>${d.email||''}</td><td>${d.password||''}</td><td>${d.studentClass||''}</td><td>${d.studentID||''}</td><td>${d.course||''}</td><td>${d.department||''}</td><td>${d.groupCode||''}</td><td>${d.photoFilename||''}</td><td><button onclick="deleteItem('students','${docSnap.id}')">Delete</button></td>`; t.appendChild(tr); }); }
+async function fetchRooms(){ const t=document.getElementById('roomsTable'); t.innerHTML=''; const snap=await getDocs(collection(db,'rooms')); snap.forEach(docSnap=>{ const d=docSnap.data(); const tr=document.createElement('tr'); tr.innerHTML=`<td>${d.name}</td><td>${d.camera}</td><td><button onclick="deleteItem('rooms','${docSnap.id}')">Delete</button></td>`; t.appendChild(tr); }); }
+async function fetchSchedule(){ const t=document.getElementById('scheduleTable'); t.innerHTML=''; const snap=await getDocs(collection(db,'schedule')); snap.forEach(docSnap=>{ const d=docSnap.data(); const tr=document.createElement('tr'); tr.innerHTML=`<td>${d.day}</td><td>${d.time}</td><td>${d.class}</td><td>${d.room}</td><td>${d.teacher}</td><td><button onclick="deleteItem('schedule','${docSnap.id}')">Delete</button></td>`; t.appendChild(tr); }); }
+
+window.deleteItem=async(coll,id)=>{ if(confirm('Delete?')){ await deleteDoc(doc(db,coll,id)); if(coll==='teachers') fetchTeachers(); if(coll==='students') fetchStudents(); if(coll==='rooms') fetchRooms(); if(coll==='schedule') fetchSchedule(); }};
+
+// ==================== CSV Uploads ====================
+document.getElementById('uploadStudentsCsv').onclick=async()=>{
+  const file=document.getElementById('studentsCsvInput').files[0]; if(!file)return alert('Select CSV');
+  try{
+    const text=await file.text(); const lines=text.trim().split(/\r?\n/);
+    const sep=lines[0].includes('\t')?'\t':','; const headers=lines[0].split(sep).map(h=>h.trim());
+    const studentsData=lines.slice(1).map(line=>{ const values=line.split(sep).map(v=>v.trim()); return headers.reduce((o,h,i)=>(o[h]=values[i]||'',o),{}); });
+
+    const teacherSnap=await getDocs(collection(db,'teachers')); const teacherMap={}; teacherSnap.forEach(d=>{ const t=d.data(); if(t.class)teacherMap[t.class]=t; });
+
+    for(const s of studentsData){ if(s.firstName && s.lastName && s.studentClass){ const t=teacherMap[s.studentClass]; if(t){ await addDoc(collection(db,'students'),{firstName:s.firstName,lastName:s.lastName,email:s.email||'',password:s.password||'',studentClass:s.studentClass,studentID:s.studentID||'',photoFilename:s.photoFilename||'',course:t.course||'',department:t.department||'',groupCode:t.groupCode||''}); } } }
+    fetchStudents();
+  }catch(e){console.error(e);alert('Error');}
+};
+
+// ==================== Tabs & Sidebar ====================
+document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('tab-active')); btn.classList.add('tab-active'); document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active')); document.getElementById('panel-'+btn.dataset.tab).classList.add('active'); }));
+document.getElementById('menu-toggle').onclick=()=>document.querySelector('.sidebar').classList.toggle('collapsed');
+
+// ==================== Initial Fetch ====================
+fetchTeachers(); fetchStudents(); fetchRooms(); fetchSchedule();
+
+</script>
+</body>
+</html>
