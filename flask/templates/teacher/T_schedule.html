@@ -144,16 +144,37 @@ const db = getFirestore(app);
 
 async function fetchSchedule() {
   const tbody = document.querySelector('#schedule-table tbody');
+  
+  // Show loading state
   tbody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
 
-  const snapshot = await getDocs(collection(db, 'schedules'));
+  // 1️⃣ Fetch all groups and create a map
+  const groupSnapshot = await getDocs(collection(db, 'groups'));
+  const groupMap = {};
+  groupSnapshot.forEach(doc => {
+    groupMap[doc.id] = doc.data().name; // Map: group ID → group name
+  });
 
+  // 2️⃣ Fetch all schedules
+  const scheduleSnapshot = await getDocs(collection(db, 'schedules'));
+
+  // Clear tbody
   tbody.innerHTML = '';
-  snapshot.forEach(doc => {
-    const data = doc.data();
+
+  // Check if there are schedules
+  if (scheduleSnapshot.empty) {
+    tbody.innerHTML = '<tr><td colspan="6">No schedules found.</td></tr>';
+    return;
+  }
+
+  // Populate table
+  scheduleSnapshot.forEach(docItem => {
+    const data = docItem.data();
+    const groupName = groupMap[data.group] || 'No group found';
+
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${data.group || ''}</td>
+      <td>${groupName}</td>
       <td>${data.module || ''}</td>
       <td>${data.day || ''}</td>
       <td>${data.startTime || ''}</td>
