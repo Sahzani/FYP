@@ -87,13 +87,16 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
-    <a class="sidebar-link">
+    <a class="sidebar-link" href="{{ url_for('teacher_schedule') }}">
+      <i class="fas fa-calendar"></i><span>Class Schedule</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
       <i class="fas fa-book"></i><span>My Modules & Rooms</span>
     </a>
-    <a class="sidebar-link">
+    <a class="sidebar-link" href="{{ url_for('teacher_student_attendance') }}">
       <i class="fas fa-users"></i><span>Student Attendance</span>
     </a>
-    <a class="sidebar-link">
+    <a class="sidebar-link" href="{{ url_for('teacher_absent_application') }}">
       <i class="fas fa-calendar-alt"></i><span>Submit Absent Application</span>
     </a>
   </div>
@@ -105,12 +108,7 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
   </div>
 </div>
 
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
-      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-    </a>
-  </div>
-</div>
+
 
 <div class="main">
   <h2>Welcome, <span id="teacher-name">{{ profile.name }}</span>!</h2>
