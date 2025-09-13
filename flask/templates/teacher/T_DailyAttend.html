@@ -68,21 +68,41 @@ tr:hover td{background:#fafafa;}
   </div>
 </header>
 
+<!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
+      <i class="fas fa-home"></i><span>Dashboard</span>
+    </a>
   </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Class</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_class_list') }}"><i class="fas fa-school"></i><span>View Class List</span></a>
-    <a class="sidebar-link {% if request.path == url_for('teacher_daily_attend') %}active{% endif %}" href="{{ url_for('teacher_daily_attend') }}"><i class="fas fa-clipboard-check"></i><span>Daily Attendance</span></a>
-  </div>
+
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}"><i class="fas fa-file-alt"></i><span>Attendance Report</span></a>
+    <a class="sidebar-link active" href="{{ url_for('teacher_attendance') }}">
+      <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
+    </a>
   </div>
+
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    <div class="sidebar-section-title">Manage</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_schedule') }}">
+      <i class="fas fa-calendar"></i><span>Class Schedule</span>
+    </a>
+    <a class="sidebar-link">
+      <i class="fas fa-book"></i><span>My Modules & Rooms</span>
+    </a>
+    <a class="sidebar-link">
+      <i class="fas fa-users"></i><span>Student Attendance</span>
+    </a>
+    <a class="sidebar-link">
+      <i class="fas fa-calendar-alt"></i><span>Submit Absent Application</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
   </div>
 </div>
 

@@ -75,13 +75,16 @@
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
+    <a class="sidebar-link active" href="{{ url_for('teacher_attendance') }}">
       <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
     </a>
   </div>
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_schedule') }}">
+      <i class="fas fa-calendar"></i><span>Class Schedule</span>
+    </a>
     <a class="sidebar-link">
       <i class="fas fa-book"></i><span>My Modules & Rooms</span>
     </a>
