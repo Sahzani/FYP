@@ -560,6 +560,35 @@ def teacher_logout():
     session.clear()
     return redirect(url_for("home"))
 
+# ------------------ Teacher Class Schedule ------------------
+@app.route("/teacher/schedule")
+def teacher_schedule():
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+    
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("home"))
+
+    uid = user.get("uid")
+
+    # Fetch teacher's schedule from Firestore
+    schedule_docs = db.collection("schedules").where("teacher_id", "==", uid).stream()
+
+    schedule = []
+    for doc in schedule_docs:
+        data = doc.to_dict()
+        schedule.append({
+            "group": data.get("group", ""),
+            "module": data.get("module", ""),
+            "day": data.get("day", ""),
+            "start_time": data.get("start_time", ""),
+            "end_time": data.get("end_time", ""),
+            "room": data.get("room", "")
+        })
+
+    return render_template("teacher/T_schedule.html", schedule=schedule)
+
 # ------------------ Teacher Profile ------------------
 @app.route("/teacher/profile")
 def teacher_profile():
