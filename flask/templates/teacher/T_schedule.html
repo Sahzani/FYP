@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>iAttend Teacher Dashboard</title>
+<title>iAttend - Teacher Schedule</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
 <style>
 body { margin: 0; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+
 /* Header */
 header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
 #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
@@ -16,6 +18,7 @@ header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; 
 .user-info:hover { background:#f0f0f0; }
 .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
 .user-info span { font-size:16px; font-weight:600; color:#444; }
+
 .breadcrumb { font-family:'Nunito', sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
 .breadcrumb .section { color:#989797; }
 .breadcrumb .current { color:#444444; }
@@ -36,14 +39,21 @@ header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; 
 .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease;}
 .sidebar.collapsed ~ .main { margin-left:80px; }
 
-/* Notifications */
-.card p { font-size:14px; font-weight:500; }
+/* Card & Table */
+.card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:30px; font-family:'Poppins',sans-serif; }
+.card h2 { margin-bottom:15px; }
+
+table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; }
+th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
+th { font-weight:600; text-transform:uppercase; font-size:13px; }
+
+.page-title { font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
 
 @media(max-width:768px){ .main { margin-left:0; padding:90px 15px; } }
 </style>
 </head>
-<body>
 
+<body>
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
@@ -90,13 +100,75 @@ header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; 
   </div>
 </div>
 
+<!-- Main Content -->
+<div class="main">
+  <h1 class="page-title">Class Schedule</h1>
+  <div class="breadcrumb"><span class="section">Manage</span> / <span class="current">Class Schedule</span></div>
+
+  <div class="card">
+    <h2>Schedule Table</h2>
+    <table id="schedule-table">
+      <thead>
+        <tr>
+          <th>Group</th>
+          <th>Module</th>
+          <th>Day</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+          <th>Room</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+  authDomain: "aimanzamani.firebaseapp.com",
+  projectId: "aimanzamani",
+  storageBucket: "aimanzamani.appspot.com",
+  messagingSenderId: "63348630728",
+  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+async function fetchSchedule() {
+  const tbody = document.querySelector('#schedule-table tbody');
+  tbody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
+
+  const snapshot = await getDocs(collection(db, 'schedules'));
+
+  tbody.innerHTML = '';
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${data.group || ''}</td>
+      <td>${data.module || ''}</td>
+      <td>${data.day || ''}</td>
+      <td>${data.startTime || ''}</td>
+      <td>${data.endTime || ''}</td>
+      <td>${data.room || ''}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+// Load schedule once page loads
+fetchSchedule();
+</script>
+
 <script>
 // Sidebar toggle
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 menuToggle.addEventListener('click',()=>{ sidebar.classList.toggle('collapsed'); });
-
 </script>
-
 </body>
 </html>
