@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>iAttend - Modules</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+
+    /* Header */
+    header {
+      position: fixed; top:0; left:0; right:0; height:60px; background:#fff;
+      box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center;
+      padding:0 20px; font-family:'Nunito', sans-serif; font-weight:700;
+      font-size:26px; color:#212529; z-index:1002;
+    }
+    #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; display:block; }
+    .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
+    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; }
+    .user-info:hover { background:#f0f0f0; }
+    .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+    .user-info span { font-size:16px; font-weight:600; color:#444; }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed; top:0; left:0; width:240px; height:100%;
+      background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
+      padding-top:60px; font-family:'Poppins',sans-serif; transition: width 0.4s ease; z-index:1001; overflow-y:auto;
+      box-shadow:2px 0 15px rgba(1,41,112,0.08); border-radius:0 16px 16px 0;
+    }
+    .sidebar.collapsed { width:70px; }
+    .sidebar-section { margin-bottom:25px; }
+    .sidebar-section-title {
+      font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF;
+      margin:10px 0 8px 15px; transition: opacity 0.3s ease;
+    }
+    .sidebar-link {
+      display:flex; align-items:center; gap:12px; padding:12px 20px; margin-bottom:5px; border-radius:8px;
+      font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s; white-space:nowrap;
+    }
+    .sidebar-link i { width:20px; text-align:center; }
+    .sidebar-link span { transition: opacity 0.3s ease, transform 0.3s ease; }
+    .sidebar-link:hover { background: rgba(255,255,255,0.5); transform:translateX(4px); }
+    .sidebar-link.active { background: rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow: inset 0 0 0 1px rgba(181,116,28,0.2); }
+
+    .sidebar-dropdown { display:flex; flex-direction:column; }
+    .dropdown-toggle { display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+    .dropdown-menu { display:none; flex-direction:column; padding-left:20px; transition: opacity 0.3s ease; }
+    .sidebar-dropdown.active .dropdown-menu { display:flex; opacity:1; }
+    .sidebar-dropdown .dropdown-toggle i { transition: transform 0.3s; }
+    .sidebar-dropdown.active .dropdown-toggle i { transform: rotate(180deg); }
+
+    /* Collapse behavior */
+    .sidebar.collapsed .sidebar-link span,
+    .sidebar.collapsed .sidebar-section-title,
+    .sidebar.collapsed .sidebar-dropdown .dropdown-menu {
+      opacity: 0;
+      transform: translateX(-10px);
+      pointer-events: none;
+      height: 0;
+    }
+
+    /* Main content */
+    .main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.4s ease; height:100vh; overflow-y:auto; }
+    .sidebar.collapsed ~ .main-content { margin-left:80px; }
+
+    /* Table card */
+    .card { background:#fff; padding:1.5rem; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s, box-shadow 0.3s; margin-bottom:20px; }
+    .card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
+    table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; font-size:14px; }
+    th { background-color:#f8f7ff; text-align:left; padding:12px; font-weight:500; }
+    td { padding:12px; border-top:1px solid #ddd; }
+    .action-btn { padding:5px 10px; border:none; border-radius:5px; cursor:pointer; margin-right:5px; color:white; }
+    .edit-btn { background:#1e90ff; }
+    .delete-btn { background:#ff4c4c; }
+
+    /* Modals (unchanged) */
+    .modal { display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center; transition:opacity 0.3s; }
+    .modal.show { display:flex; opacity:1; }
+    .modal-content { background:#fff; margin:auto; padding:0; border-radius:12px; width:90%; max-width:450px; position:relative; overflow:hidden; transform:translateY(-50px); transition:transform 0.3s; }
+    .modal.show .modal-content { transform:translateY(0); }
+    .modal-header { background: linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); padding:15px; color:white; font-family:'Poppins',sans-serif; font-size:20px; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
+    .modal-body { padding:20px; }
+    .modal label { display:block; margin:10px 0 5px; color:#012970; font-weight:600; }
+    .modal input, .modal select { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; margin-bottom:12px; background:linear-gradient(180deg,#fff 0%,#f9f9f9 100%); }
+    .modal-buttons { text-align:right; margin-top:10px; }
+    .modal button { padding:10px 16px; border:none; border-radius:8px; cursor:pointer; font-family:'Poppins',sans-serif; font-weight:500; font-size:14px; margin-left:10px; transition:all 0.2s; }
+    .modal .save-btn { background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); color:white; box-shadow:0 4px 12px rgba(0,102,255,0.3); }
+    .modal .cancel-btn { background:#ccc; color:#000; }
+    .close { font-size:26px; font-weight:bold; cursor:pointer; }
+    .toast { position:fixed; bottom:20px; right:20px; background:#1e90ff; color:white; padding:12px 20px; border-radius:8px; font-family:'Poppins',sans-serif; font-size:14px; box-shadow:0 4px 12px rgba(0,102,255,0.3); opacity:0; transform:translateY(20px); transition:all 0.5s; z-index:9999; }
+    .toast.show { opacity:1; transform:translateY(0); }
+
+    @media(max-width:768px){
+      .sidebar{left:-260px;}
+      .sidebar.show{left:0;}
+      .main-content{margin-left:0;padding:80px 15px 20px;}
+      table{display:block;overflow-x:auto;white-space:nowrap;}
+      .modal-content{width:95%; max-width:none;}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="#" style="text-decoration:none;color:inherit;">iAttend Admin</a>
+    <a href="#" class="user-info">
+      <span id="header-user-name">Admin</span>
+      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin Profile Picture">
+    </a>
+  </div>
+</header>
+
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Management</div>
+    <a class="sidebar-link active" href="{{ url_for('admin_modules') }}"><i class="fas fa-book"></i><span>Modules</span></a>
+
+    <div class="sidebar-dropdown">
+      <a class="sidebar-link dropdown-toggle"><i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i></a>
+      <div class="dropdown-menu">
+        <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
+      </div>
+    </div>
+
+    <div class="sidebar-dropdown">
+      <a class="sidebar-link dropdown-toggle"><i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i></a>
+      <div class="dropdown-menu">
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">System</div>
+    <a class="sidebar-link" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Logs</div>
+    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Attendance</div>
+    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
+    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  </div>
+</div>
+
+<div class="main-content">
+  <h2>Modules</h2>
+  <div class="breadcrumb"><span class="section">Management</span> / <span class="current">Modules</span></div>
+
+  <div class="card">
+    <button class="action-btn edit-btn" onclick="openAddModal()">+ Add Module</button>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Module ID</th>
+          <th>Module Name</th>
+          <th>Code</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for module in modules %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ module.moduleId }}</td>
+          <td>{{ module.moduleName }}</td>
+          <td>{{ module.moduleCode }}</td>
+          <td>{{ 'Active' if module.status == 1 else 'Inactive' }}</td>
+          <td>
+            <button class="action-btn edit-btn" onclick="openEditModal('{{ module.moduleId }}','{{ module.moduleName }}','{{ module.moduleCode }}','{{ module.status }}')">Edit</button>
+            <button class="action-btn delete-btn" onclick="openDeleteModal('{{ module.moduleId }}')">Delete</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modals (unchanged) -->
+<div id="moduleModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><span id="modalTitle">Add Module</span><span class="close" onclick="closeModal()">&times;</span></div>
+    <div class="modal-body">
+      <form id="moduleForm" method="POST" action="{{ url_for('admin_module_save') }}">
+        <input type="hidden" name="moduleId" id="formModuleId">
+        <label>Module Name</label><input type="text" name="moduleName" id="formModuleName" required>
+        <label>Module Code</label><input type="text" name="moduleCode" id="formModuleCode" required>
+        <label>Status</label>
+        <select name="status" id="formStatus">
+          <option value="1">Active</option>
+          <option value="0">Inactive</option>
+        </select>
+        <div class="modal-buttons">
+          <button type="submit" class="save-btn">Save</button>
+          <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="deleteModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><span>Confirm Delete</span><span class="close" onclick="closeDeleteModal()">&times;</span></div>
+    <div class="modal-body" id="deleteModalBody"></div>
+    <div class="modal-buttons">
+      <form id="deleteForm" method="POST" action="">
+        <button type="submit" class="save-btn">Delete</button>
+        <button type="button" class="cancel-btn" onclick="closeDeleteModal()">Cancel</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  // Sidebar dropdown
+  document.querySelectorAll('.dropdown-toggle').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      const parent = item.parentElement;
+      parent.classList.toggle('active');
+      document.querySelectorAll('.sidebar-dropdown').forEach(drop => { if(drop !== parent) drop.classList.remove('active'); });
+    });
+  });
+
+  // Hamburger menu toggle
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+  });
+
+  // Modals
+  function openAddModal(){
+    document.getElementById('modalTitle').innerText = "Add Module";
+    document.getElementById('formModuleId').value = "";
+    document.getElementById('formModuleName').value = "";
+    document.getElementById('formModuleCode').value = "";
+    document.getElementById('formStatus').value = "1";
+    document.getElementById('moduleModal').classList.add('show');
+  }
+  function openEditModal(id,name,code,status){
+    document.getElementById('modalTitle').innerText = "Edit Module";
+    document.getElementById('formModuleId').value = id;
+    document.getElementById('formModuleName').value = name;
+    document.getElementById('formModuleCode').value = code;
+    document.getElementById('formStatus').value = status;
+    document.getElementById('moduleModal').classList.add('show');
+  }
+  function closeModal(){ document.getElementById('moduleModal').classList.remove('show'); }
+  function openDeleteModal(id){
+    document.getElementById('deleteModalBody').innerText = "Are you sure you want to delete module " + id + "?";
+    document.getElementById('deleteForm').action = "/delete_module/" + id;
+    document.getElementById('deleteModal').classList.add('show');
+  }
+  function closeDeleteModal(){ document.getElementById('deleteModal').classList.remove('show'); }
+</script>
+
+</body>
+</html>
