@@ -148,34 +148,44 @@ async function fetchSchedule() {
   // Show loading state
   tbody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
 
-  // 1️⃣ Fetch all groups and create a map
+  // 1️⃣ Fetch all groups
   const groupSnapshot = await getDocs(collection(db, 'groups'));
   const groupMap = {};
   groupSnapshot.forEach(doc => {
     groupMap[doc.id] = doc.data().name; // Map: group ID → group name
   });
 
-  // 2️⃣ Fetch all schedules
+  // 2️⃣ Fetch all modules
+  const moduleSnapshot = await getDocs(collection(db, 'modules'));
+  const moduleMap = {};
+  moduleSnapshot.forEach(doc => {
+    // moduleCode → moduleName
+    moduleMap[doc.data().moduleCode] = doc.data().moduleName;
+  });
+
+  // 3️⃣ Fetch all schedules
   const scheduleSnapshot = await getDocs(collection(db, 'schedules'));
 
   // Clear tbody
   tbody.innerHTML = '';
 
-  // Check if there are schedules
+  // If no schedules exist
   if (scheduleSnapshot.empty) {
     tbody.innerHTML = '<tr><td colspan="6">No schedules found.</td></tr>';
     return;
   }
 
-  // Populate table
+  // 4️⃣ Populate schedule table
   scheduleSnapshot.forEach(docItem => {
     const data = docItem.data();
+    
     const groupName = groupMap[data.group] || 'No group found';
+    const moduleName = moduleMap[data.module] || 'No module found';
 
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${groupName}</td>
-      <td>${data.module || ''}</td>
+      <td>${moduleName} (${data.module})</td>
       <td>${data.day || ''}</td>
       <td>${data.startTime || ''}</td>
       <td>${data.endTime || ''}</td>
