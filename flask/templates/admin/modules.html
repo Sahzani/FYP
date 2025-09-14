@@ -166,33 +166,31 @@
   </div>
 
   <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Module ID</th>
-          <th>Module Name</th>
-          <th>Code</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for module in modules %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td>{{ module.moduleId }}</td>
-          <td>{{ module.moduleName }}</td>
-          <td>{{ module.moduleCode }}</td>
-          <td>{{ 'Active' if module.status == 1 else 'Inactive' }}</td>
-          <td>
-            <button class="action-btn edit-btn" onclick="openEditModal('{{ module.moduleId }}','{{ module.moduleName }}','{{ module.moduleCode }}','{{ module.status }}')">Edit</button>
-            <button class="action-btn delete-btn" onclick="openDeleteModal('{{ module.moduleId }}')">Delete</button>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Module Name</th>
+      <th>Code</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for module in modules %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ module.moduleName }}</td>
+      <td>{{ module.moduleCode }}</td>
+      <td>{{ 'Active' if module.status == 1 else 'Inactive' }}</td>
+      <td>
+        <button class="action-btn edit-btn" onclick="openEditModal('{{ module.docId }}','{{ module.moduleName }}','{{ module.moduleCode }}','{{ module.status }}')">Edit</button>
+        <button class="action-btn delete-btn" onclick="openDeleteModal('{{ module.docId }}')">Delete</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
   </div>
 </div>
 
