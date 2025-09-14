@@ -718,10 +718,12 @@ def admin_modules():
         modules = []
         for doc in docs:
             data = doc.to_dict()
-            data["moduleId"] = doc.id
+            # Use your actual module_id field
+            data["moduleId"] = data.get("module_id")  
             modules.append(data)
         return render_template("admin/modules.html", modules=modules)
     return redirect(url_for("home"))
+
 
 # Add / Edit Module
 @app.route("/admin/module/save", methods=["POST"])
