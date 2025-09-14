@@ -47,6 +47,7 @@
   td.status-Present { color: green; font-weight: 600; }
   td.status-Absent { color: red; font-weight: 600; }
   td.status-Late { color: orange; font-weight: 600; }
+  td.status-NotMarked { color: gray; font-weight: 600; }
   .edit-btn { cursor:pointer; font-size:13px; padding:4px 8px; border-radius:6px; transition:0.2s; }
   .edit-btn:hover { transform:scale(1.05); }
   h2.module-title { font-size:16px; font-weight:600; margin-bottom:8px; }
@@ -62,6 +63,7 @@
   .modal button { margin:5px; padding:6px 12px; border:none; border-radius:6px; font-weight:600; cursor:pointer; }
   .btn-save { background:#4154F1; color:#fff; }
   .btn-cancel { background:#ccc; color:#000; }
+  .btn-reset { background:#f87171; color:#fff; }
 </style>
 </head>
 <body>
@@ -138,6 +140,7 @@
     </select>
     <div>
       <button class="btn-save">Save</button>
+      <button class="btn-reset">Reset</button>
       <button class="btn-cancel">Cancel</button>
     </div>
   </div>
@@ -202,7 +205,7 @@ function showModuleDetails(module){
           ${g.students.map(s=>`
             <tr>
               <td>${s.name}</td>
-              <td class="status-${s.status}">${s.status}</td>
+              <td class="status-${s.status.replace(' ','')}">${s.status}</td>
               <td>${g.room}</td>
               <td><button class="edit-btn bg-blue-500 text-white hover:bg-blue-600" data-group="${code}" data-student="${s.name}">Edit</button></td>
             </tr>`).join('')}
@@ -242,6 +245,16 @@ document.querySelector('.btn-save').addEventListener('click',()=>{
   showModuleDetails(modulesData.find(m=>m.groups.includes(groupCode)));
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
+});
+document.querySelector('.btn-reset').addEventListener('click',()=>{
+  if(confirm("Are you sure you want to reset this student's attendance?")){
+    const {groupCode,student} = currentEdit;
+    const s = groupsData[groupCode].students.find(st=>st.name===student);
+    s.status="Not Marked";
+    showModuleDetails(modulesData.find(m=>m.groups.includes(groupCode)));
+    modal.classList.remove('show');
+    document.querySelector('.modal-content').classList.remove('show');
+  }
 });
 
 // Sidebar toggle
