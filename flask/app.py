@@ -539,6 +539,12 @@ def teacher_class_list():
         return redirect(url_for("home"))
     return render_template("teacher/T_class_list.html")
 
+@app.route("/teacher_modules")
+def teacher_modules():
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+    return render_template("teacher/T_modules.html")
+
 @app.route("/teacher/attendance")
 def teacher_attendance():
     if session.get("role") != "teacher":
