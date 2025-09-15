@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iAttend Admin - Add Schedule</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+<style>
+* {margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
+header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
+#menu-toggle{font-size:28px;margin-right:15px;cursor:pointer;}
+.header-content{width:100%;display:flex;justify-content:space-between;align-items:center;}
+.user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;cursor:pointer;}
+.user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
+.user-info span{font-size:16px;font-weight:600;color:#444;}
+.sidebar { position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif; transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px; }
+.sidebar.collapsed { width:70px; overflow:hidden; }
+.sidebar-section { margin-bottom:25px; padding:0 15px; }
+.sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
+.sidebar.collapsed .sidebar-section-title { opacity:0; }
+.sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
+.sidebar-link i { width:18px; text-align:center; }
+.sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
+.sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
+
+.main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
+.sidebar.collapsed ~ .main-content { margin-left:80px; }
+
+.page-title{margin-bottom:20px;font-size:28px;font-weight:700;color:#012970;}
+.card{background:#fff;border-radius:10px;box-shadow:0px 0px 30px rgba(1,41,112,0.1);padding:30px;max-width:900px;margin-bottom:30px;}
+.form-group{margin-bottom:15px;}
+label{display:block;margin-bottom:6px;font-weight:600;color:#012970;}
+input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
+.submit-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-size:14px;font-weight:500;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;}
+.submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,102,255,0.4);}
+table{width:100%;border-collapse:collapse;margin-top:20px;}
+th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left;}
+th{background:#1A237E;color:white;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <span>iAttend Admin</span>
+    <div class="user-info">
+      <span>Admin</span>
+      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin Profile">
+    </div>
+  </div>
+</header>
+
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}">
+      <i class="fas fa-home"></i><span>Dashboard</span>
+    </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Management</div>
+    <a class="sidebar-link active" href="{{ url_for('admin_schedule_upload') }}">
+      <i class="fas fa-calendar"></i><span>Add Schedule</span>
+    </a>
+  </div>
+</div>
+
+<div class="main-content">
+  <h1 class="page-title">Add Class Schedule</h1>
+
+  <div class="card">
+    <h3>Single Schedule</h3>
+    <form id="scheduleForm">
+      <div class="form-group">
+        <label>Group</label>
+        <select id="groupSelect" required>
+          <option value="">Select Group</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Module</label>
+        <select id="moduleSelect" required>
+          <option value="">Select Module</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Day</label><input type="text" id="day" placeholder="e.g. Monday" required></div>
+      <div class="form-group"><label>Start Time</label><input type="time" id="startTime" required></div>
+      <div class="form-group"><label>End Time</label><input type="time" id="endTime" required></div>
+      <div class="form-group"><label>Room</label><input type="text" id="room" placeholder="e.g. Room 101" required></div>
+      <button type="submit" class="submit-btn">Add Schedule</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Upload CSV</h3>
+    <input type="file" id="csvFile" accept=".csv" />
+    <button id="uploadCsvBtn" class="submit-btn mt-3">Upload CSV</button>
+    <table id="csvPreview">
+      <thead>
+        <tr>
+          <th>Group</th><th>Module</th><th>Day</th><th>Start Time</th><th>End Time</th><th>Room</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+  authDomain: "aimanzamani.firebaseapp.com",
+  projectId: "aimanzamani",
+  storageBucket: "aimanzamani.appspot.com",
+  messagingSenderId: "63348630728",
+  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const groupSelect = document.getElementById('groupSelect');
+const moduleSelect = document.getElementById('moduleSelect');
+
+// Load groups
+async function loadGroups() {
+  const snapshot = await getDocs(collection(db,'groups'));
+  snapshot.forEach(doc=>{
+    const opt = document.createElement('option');
+    opt.value = doc.id;
+    opt.textContent = doc.data().group_code; // display group code
+    groupSelect.appendChild(opt);
+  });
+}
+
+// Load modules
+async function loadModules() {
+  const snapshot = await getDocs(collection(db,'modules'));
+  snapshot.forEach(doc=>{
+    const opt = document.createElement('option');
+    opt.value = doc.data().moduleCode;
+    opt.textContent = `${doc.data().moduleCode} - ${doc.data().moduleName}`;
+    moduleSelect.appendChild(opt);
+  });
+}
+
+loadGroups();
+loadModules();
+
+// Add single schedule
+document.getElementById('scheduleForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const data = {
+    group: groupSelect.value,
+    module: moduleSelect.value,
+    day: document.getElementById('day').value,
+    startTime: document.getElementById('startTime').value,
+    endTime: document.getElementById('endTime').value,
+    room: document.getElementById('room').value
+  };
+  try{
+    await addDoc(collection(db,'schedules'),data);
+    alert("✅ Schedule added successfully!");
+    e.target.reset();
+  }catch(err){ alert("❌ Failed: "+err.message);}
+});
+
+// CSV upload
+document.getElementById('uploadCsvBtn').addEventListener('click', ()=>{
+  const file = document.getElementById('csvFile').files[0];
+  if(!file) return alert("Select a CSV file first!");
+  const reader = new FileReader();
+  reader.onload = async e=>{
+    const lines = e.target.result.split(/\r?\n/).filter(l=>l.trim());
+    const tbody = document.querySelector('#csvPreview tbody');
+    tbody.innerHTML='';
+    for(const line of lines){
+      const [group,module,day,startTime,endTime,room]=line.split(',');
+      const row=document.createElement('tr');
+      row.innerHTML=`<td>${group}</td><td>${module}</td><td>${day}</td><td>${startTime}</td><td>${endTime}</td><td>${room}</td>`;
+      tbody.appendChild(row);
+      // save to firestore
+      await addDoc(collection(db,'schedules'),{group,module,day,startTime,endTime,room});
+    }
+    alert("✅ CSV uploaded successfully!");
+  };
+  reader.readAsText(file);
+});
+</script>
+
+<script>
+document.getElementById('menu-toggle').addEventListener('click', ()=>{ document.querySelector('.sidebar').classList.toggle('collapsed'); });
+</script>
+
+</body>
+</html>
