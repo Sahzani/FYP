@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>iAttend - My Modules & Rooms</title>
+<title>iAttend - My Modules & Groups</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
@@ -20,7 +20,7 @@
   .user-info:hover { background:#f0f0f0; }
   .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
   .user-info span { font-size:16px; font-weight:600; color:#444; }
-  .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:20px; }
+  .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-top:4px; }
   .breadcrumb .section { color:#989797; }
   .breadcrumb .current { color:#444444; }
 
@@ -40,27 +40,33 @@
   .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease;}
   .sidebar.collapsed ~ .main { margin-left:80px; }
 
-  /* Cards */
-  .card { background:#fff; padding:15px 20px; border-radius:16px; box-shadow:0 8px 25px rgba(0,0,0,0.08); margin-bottom:16px; transition:transform 0.3s, box-shadow 0.3s; cursor:pointer; }
-  .card:hover { transform: translateY(-5px); box-shadow:0 12px 30px rgba(0,0,0,0.15); }
-  td, th { padding:6px 10px; font-size:13px; text-align:left; }
+  /* Table compact styles */
+  table { width:100%; border-collapse:collapse; }
+  thead { position: sticky; top:0; background:#f1f3f6; z-index:10; }
+  table th, table td { padding:8px 12px; font-size:14px; border-radius:4px; text-align:left; }
+  tr:hover { background:#f9f9f9; }
   td.status-Present { color: green; font-weight: 600; }
   td.status-Absent { color: red; font-weight: 600; }
   td.status-Late { color: orange; font-weight: 600; }
   td.status-NotMarked { color: gray; font-weight: 600; }
-  .edit-btn { cursor:pointer; font-size:13px; padding:4px 8px; border-radius:6px; transition:0.2s; }
+  .edit-btn { cursor:pointer; font-size:12px; padding:4px 8px; border-radius:6px; transition:0.2s; }
   .edit-btn:hover { transform:scale(1.05); }
-  h2.module-title { font-size:16px; font-weight:600; margin-bottom:8px; }
-  table { width:100%; border-collapse:collapse; }
-  table thead tr { background:#f1f3f6; }
-  table th, table td { border-radius:4px; }
+  h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
+
+  /* Scrollable table container */
+  .table-scroll { overflow-x:auto; }
+
+  /* Attendance summary cards */
+  .summary-card { background:#fff; p-4 rounded-2xl shadow flex flex-col items-center justify-center; }
+  .summary-card i { font-size:1.25rem; }
+  .summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem; }
 
   /* Modal */
   .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:10000; }
-  .modal-content { background:#fff; padding:20px 25px; border-radius:12px; width:300px; text-align:center; transform:translateY(-50px); transition:transform 0.3s ease; }
+  .modal-content { background:#fff; padding:20px 25px; border-radius:12px; width:320px; text-align:center; transform:translateY(-50px); transition:transform 0.3s ease; }
   .modal.show { display:flex; }
   .modal-content.show { transform:translateY(0); }
-  .modal button { margin:5px; padding:6px 12px; border:none; border-radius:6px; font-weight:600; cursor:pointer; }
+  .modal button { margin:5px; padding:6px 12px; border:none; border-radius:8px; font-weight:600; cursor:pointer; }
   .btn-save { background:#4154F1; color:#fff; }
   .btn-cancel { background:#ccc; color:#000; }
   .btn-reset { background:#f87171; color:#fff; }
@@ -79,7 +85,6 @@
   </div>
 </header>
 
-<!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
@@ -99,7 +104,7 @@
     <a class="sidebar-link" href="{{ url_for('teacher_schedule') }}">
       <i class="fas fa-calendar"></i><span>Class Schedule</span>
     </a>
-    <a class="sidebar-link active" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Rooms</span></a>
+    <a class="sidebar-link active" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Groups</span></a>
     <a class="sidebar-link">
       <i class="fas fa-users"></i><span>Student Attendance</span>
     </a>
@@ -116,19 +121,22 @@
 </div>
 
 <div class="main">
-  <h1 class="text-2xl font-bold mb-4">My Modules</h1>
-  <div class="breadcrumb"><span class="section">Manage</span> / <span class="current">My Modules & Rooms</span></div>
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-bold">My Modules</h1>
+      <div class="breadcrumb"><span class="section">Manage</span> / <span class="current">My Modules & Groups</span></div>
+    </div>
+  </div>
 
-  <div id="modulesContainer"></div>
+  <div id="modulesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
   <div id="moduleDetails" class="hidden">
     <button id="backBtn" class="mb-4 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400">← Back</button>
-    <h2 id="moduleTitle" class="module-title mb-2"></h2>
-    <div id="groupsContainer"></div>
+    <h2 id="moduleTitle" class="module-title mb-4"></h2>
+    <div id="groupsContainer" class="flex flex-col gap-6"></div>
   </div>
 </div>
 
-<!-- Modal -->
 <div id="editModal" class="modal">
   <div class="modal-content">
     <h3>Edit Attendance</h3>
@@ -147,22 +155,20 @@
 </div>
 
 <script>
-// Data
 const modulesData = [
   { moduleName: "Web Development", groups: ["G001","G002","G003"] },
   { moduleName: "Database Systems", groups: ["G004"] },
   { moduleName: "Networking", groups: ["G005","G006"] }
 ];
 const groupsData = {
-  "G001": { groupName:"Group 1", day:"Mon", time:"08:00-10:00", room:"A101", students:[{name:"Hani",status:"Present"},{name:"Ali",status:"Absent"}]},
-  "G002": { groupName:"Group 2", day:"Mon", time:"10:00-12:00", room:"B202", students:[{name:"Sara",status:"Present"},{name:"John",status:"Present"}]},
-  "G003": { groupName:"Group 3", day:"Tue", time:"08:00-10:00", room:"C303", students:[{name:"Nurul",status:"Present"},{name:"Fadhil",status:"Absent"}]},
-  "G004": { groupName:"DB 1", day:"Wed", time:"09:00-11:00", room:"D404", students:[{name:"Amira",status:"Present"},{name:"Hakim",status:"Late"}]},
-  "G005": { groupName:"Net 1", day:"Thu", time:"08:00-10:00", room:"E505", students:[{name:"Faizal",status:"Present"},{name:"Lina",status:"Absent"}]},
-  "G006": { groupName:"Net 2", day:"Fri", time:"10:00-12:00", room:"F606", students:[{name:"Zahra",status:"Present"},{name:"Adam",status:"Present"}]}
+  "G001": { groupName:"Group 1", day:"Mon", time:"08:00-10:00", room:"A101", students:[{name:"Hani",status:"Present", date:"15-09-2025"},{name:"Ali",status:"Absent", date:"15-09-2025"}]},
+  "G002": { groupName:"Group 2", day:"Mon", time:"10:00-12:00", room:"B202", students:[{name:"Sara",status:"Present", date:"15-09-2025"},{name:"John",status:"Present", date:"15-09-2025"}]},
+  "G003": { groupName:"Group 3", day:"Tue", time:"08:00-10:00", room:"C303", students:[{name:"Nurul",status:"Present", date:"16-09-2025"},{name:"Fadhil",status:"Absent", date:"16-09-2025"}]},
+  "G004": { groupName:"DB 1", day:"Wed", time:"09:00-11:00", room:"D404", students:[{name:"Amira",status:"Present", date:"17-09-2025"},{name:"Hakim",status:"Late", date:"17-09-2025"}]},
+  "G005": { groupName:"Net 1", day:"Thu", time:"08:00-10:00", room:"E505", students:[{name:"Faizal",status:"Present", date:"18-09-2025"},{name:"Lina",status:"Absent", date:"18-09-2025"}]},
+  "G006": { groupName:"Net 2", day:"Fri", time:"10:00-12:00", room:"F606", students:[{name:"Zahra",status:"Present", date:"19-09-2025"},{name:"Adam",status:"Present", date:"19-09-2025"}]}
 };
 
-// DOM
 const modulesContainer = document.getElementById('modulesContainer');
 const moduleDetailsDiv = document.getElementById('moduleDetails');
 const moduleTitle = document.getElementById('moduleTitle');
@@ -174,65 +180,174 @@ const modalStudent = document.getElementById('modalStudent');
 const statusSelect = document.getElementById('statusSelect');
 let currentEdit = { groupCode:null, student:null };
 
-// Render Modules
 function renderModules(){
   modulesContainer.innerHTML='';
   modulesData.forEach(m=>{
     const card=document.createElement('div');
-    card.className='card';
-    card.innerHTML=`<h2 class="module-title"><i class="fas fa-book mr-2"></i>${m.moduleName}</h2>`;
+    card.className='bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
+    card.innerHTML=`
+      <div class="flex items-center mb-3">
+        <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mr-3">
+          <i class="fas fa-book text-xl"></i>
+        </div>
+        <h2 class="text-lg font-semibold">${m.moduleName}</h2>
+      </div>
+      <p class="text-sm text-gray-500">${m.groups.length} group(s)</p>
+    `;
     card.addEventListener('click',()=>showModuleDetails(m));
     modulesContainer.appendChild(card);
   });
 }
 
-// Show Module Details
 function showModuleDetails(module){
   modulesContainer.classList.add('hidden');
   moduleDetailsDiv.classList.remove('hidden');
-  moduleTitle.innerHTML=`<i class="fas fa-book mr-2"></i>${module.moduleName}`;
+  moduleTitle.textContent = module.moduleName;
   groupsContainer.innerHTML='';
+
   module.groups.forEach(code=>{
-    const g=groupsData[code];
+    const g = groupsData[code];
     if(!g) return;
-    const groupCard=document.createElement('div');
-    groupCard.className='card';
-    groupCard.innerHTML=`
-      <h3 class="font-semibold mb-1">${g.groupName} - ${g.day} ${g.time} (${g.room})</h3>
-      <table>
-        <thead><tr><th>Name</th><th>Status</th><th>Room</th><th>Action</th></tr></thead>
-        <tbody>
-          ${g.students.map(s=>`
-            <tr>
-              <td>${s.name}</td>
-              <td class="status-${s.status.replace(' ','')}">${s.status}</td>
-              <td>${g.room}</td>
-              <td><button class="edit-btn bg-blue-500 text-white hover:bg-blue-600" data-group="${code}" data-student="${s.name}">Edit</button></td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-    `;
+
+    // Count today's attendance (dd-mm-yyyy)
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2,'0');
+    const mm = String(today.getMonth()+1).padStart(2,'0');
+    const yyyy = today.getFullYear();
+    const todayStr = `${dd}-${mm}-${yyyy}`;
+
+    const presentCount = g.students.filter(s=>s.status==="Present" && s.date===todayStr).length;
+    const absentCount = g.students.filter(s=>s.status==="Absent" && s.date===todayStr).length;
+    const lateCount = g.students.filter(s=>s.status==="Late" && s.date===todayStr).length;
+
+    const icons = { Present:'fa-check-circle', Absent:'fa-times-circle', Late:'fa-clock' };
+
+const groupCard = document.createElement('div');
+groupCard.className='bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
+groupCard.innerHTML=`
+  <div class="flex items-center mb-2">
+    <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mr-3">
+      <i class="fas fa-users text-xl"></i>
+    </div>
+    <div>
+      <h3 class="text-lg font-semibold">${g.groupName}</h3>
+      <p class="text-sm text-gray-500">${g.day} ${g.time} | Room: ${g.room}</p>
+      <div class="flex items-center gap-3 mt-1 text-sm">
+        <span class="flex items-center gap-1">
+          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+            <i class="fas ${icons['Present']}"></i>
+          </div> ${presentCount}
+        </span>
+        <span class="flex items-center gap-1">
+          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+            <i class="fas ${icons['Absent']}"></i>
+          </div> ${absentCount}
+        </span>
+        <span class="flex items-center gap-1">
+          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+            <i class="fas ${icons['Late']}"></i>
+          </div> ${lateCount}
+        </span>
+      </div>
+    </div>
+  </div>
+  <p class="text-sm text-gray-500">${g.students.length} student(s)</p>
+`;
+
+    groupCard.addEventListener('click',()=>showStudentAttendance(code));
     groupsContainer.appendChild(groupCard);
   });
 }
 
-// Back Button
-backBtn.addEventListener('click',()=>{ moduleDetailsDiv.classList.add('hidden'); modulesContainer.classList.remove('hidden'); });
+function showStudentAttendance(groupCode){
+  modulesContainer.classList.add('hidden');
+  groupsContainer.innerHTML = '';
+  const g = groupsData[groupCode];
+  moduleTitle.textContent = `${g.groupName} - ${g.day} ${g.time} (${g.room})`;
 
-// Edit Button (Modal)
+  // Today's date in dd-mm-yyyy
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2,'0');
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const yyyy = today.getFullYear();
+  const todayStr = `${dd}-${mm}-${yyyy}`;
+
+  // Count statuses for today
+  const statusCounts = { Present:0, Absent:0, Late:0 };
+  g.students.forEach(s=>{
+    if(s.date===todayStr && statusCounts[s.status]!==undefined){
+      statusCounts[s.status]++;
+    }
+  });
+
+  // Attendance summary cards
+  const summaryDiv = document.createElement('div');
+  summaryDiv.className='summary-grid';
+  const icons = { Present:'fa-check-circle', Absent:'fa-times-circle', Late:'fa-clock' };
+  Object.keys(statusCounts).forEach(status=>{
+    const card = document.createElement('div');
+    card.className='summary-card p-4 rounded-2xl shadow flex flex-col items-center justify-center';
+    card.innerHTML=`
+      <div class="w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-2">
+        <i class="fas ${icons[status]}"></i>
+      </div>
+      <p class="text-sm text-gray-500">${status} (Today)</p>
+      <p class="text-lg font-bold">${statusCounts[status]}</p>
+    `;
+    summaryDiv.appendChild(card);
+  });
+  groupsContainer.appendChild(summaryDiv);
+
+  // Student table
+  const tableWrapper = document.createElement('div');
+  tableWrapper.className='bg-white p-4 rounded-2xl shadow overflow-x-auto table-scroll w-full';
+  tableWrapper.innerHTML = `
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-gray-100">
+          <th>Name</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Room</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${g.students.map(s=>`
+          <tr class="border-b hover:bg-gray-50">
+            <td>${s.name}</td>
+            <td class="status-${s.status.replace(' ','')}">${s.status}</td>
+            <td>${s.date || 'N/A'}</td>
+            <td>${g.time}</td>
+            <td>${g.room}</td>
+            <td>
+              <button class="edit-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600" data-group="${groupCode}" data-student="${s.name}">Edit</button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+  groupsContainer.appendChild(tableWrapper);
+}
+
+backBtn.addEventListener('click',()=>{
+  moduleDetailsDiv.classList.add('hidden'); 
+  modulesContainer.classList.remove('hidden');
+});
+
 document.addEventListener('click',e=>{
   if(e.target.classList.contains('edit-btn')){
     const groupCode=e.target.dataset.group;
     const studentName=e.target.dataset.student;
     currentEdit={groupCode,student:studentName};
-    modalStudent.textContent=`${studentName}`;
+    modalStudent.textContent=studentName;
     statusSelect.value=groupsData[groupCode].students.find(s=>s.name===studentName).status;
     modal.classList.add('show');
     document.querySelector('.modal-content').classList.add('show');
   }
 });
 
-// Modal Buttons
 document.querySelector('.btn-cancel').addEventListener('click',()=>{
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
@@ -242,7 +357,7 @@ document.querySelector('.btn-save').addEventListener('click',()=>{
   const newStatus = statusSelect.value;
   const s = groupsData[groupCode].students.find(st=>st.name===student);
   s.status=newStatus;
-  showModuleDetails(modulesData.find(m=>m.groups.includes(groupCode)));
+  showStudentAttendance(groupCode);
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
 });
@@ -251,13 +366,12 @@ document.querySelector('.btn-reset').addEventListener('click',()=>{
     const {groupCode,student} = currentEdit;
     const s = groupsData[groupCode].students.find(st=>st.name===student);
     s.status="Not Marked";
-    showModuleDetails(modulesData.find(m=>m.groups.includes(groupCode)));
+    showStudentAttendance(groupCode);
     modal.classList.remove('show');
     document.querySelector('.modal-content').classList.remove('show');
   }
 });
 
-// Sidebar toggle
 document.getElementById('menu-toggle').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('collapsed'));
 
 renderModules();
