@@ -1,28 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teacher List - iAttend Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iAttend Admin - Teacher List</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-html, body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
-header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
+* {margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
+header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding:0 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
 #menu-toggle{font-size:28px;margin-right:15px;cursor:pointer;}
 .header-content{width:100%;display:flex;justify-content:space-between;align-items:center;}
-.user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;cursor:pointer;}
+.user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;cursor:pointer;transition:0.2s;}
+.user-info:hover{background:#f0f0f0;}
 .user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
 .user-info span{font-size:16px;font-weight:600;color:#444;}
-
-/* Sidebar */
-.sidebar {
-  position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-  padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
-  transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px;
-}
+.sidebar { position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif; transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px; }
 .sidebar.collapsed { width:70px; overflow:hidden; }
 .sidebar-section { margin-bottom:25px; padding:0 15px; }
 .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
@@ -31,46 +25,47 @@ header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shado
 .sidebar-link i { width:18px; text-align:center; }
 .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
 .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
-
-/* Dropdown */
 .sidebar-dropdown { display:flex; flex-direction:column; }
 .dropdown-menu { display:none; flex-direction:column; padding-left:20px; }
 .sidebar-dropdown.active .dropdown-menu { display:flex; }
 .sidebar-dropdown .dropdown-toggle i { margin-left:auto; transition: transform 0.3s; }
 .sidebar-dropdown.active .dropdown-toggle i { transform: rotate(180deg); }
-/* Main Content */
-.main-content{margin-left:260px;padding:100px 30px 30px;font-family:'Nunito',sans-serif;transition:margin-left 0.3s ease;min-height:100vh;}
-.sidebar.collapsed ~ .main-content{margin-left:80px;}
-
-/* Table */
-.card{background:#fff;border-radius:10px;box-shadow:0 0 30px rgba(1,41,112,0.1);padding:20px;margin-bottom:30px;}
+.main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
+.sidebar.collapsed ~ .main-content { margin-left:80px; }
+.page-title{margin-bottom:20px;font-size:28px;font-weight:700;color:#012970;}
+.card{background:#fff;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.08);padding:1.5rem;margin-bottom:20px;transition: transform 0.3s, box-shadow 0.3s;}
+.card:hover{transform:translateY(-5px);box-shadow:0 15px 30px rgba(0,0,0,0.15);}
 table{width:100%;border-collapse:collapse;font-family:'Poppins',sans-serif;font-size:14px;}
-th{background-color:#f8f7ff;text-align:left;padding:12px;font-weight:500;}
-td{padding:12px;border-top:1px solid #ddd;vertical-align:middle;}
-.profile-pic{width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;}
-.action-btn{padding:5px 10px;border:none;border-radius:5px;cursor:pointer;margin-right:5px;color:white;display:flex;align-items:center;gap:5px;}
-.edit-btn{background:#1e90ff;}
-.delete-btn{background:#ff4c4c;}
+th{background-color:#f8f7ff;text-align:left;padding:12px;font-weight:500;border-radius:4px;}
+td{padding:12px;border-top:1px solid #ddd;}
+tr:hover{background:#f1f1f1;}
+button.action-btn{padding:5px 10px;border:none;border-radius:6px;cursor:pointer;color:white;margin-right:5px;}
+button.edit-btn{background:#1e90ff;}
+button.delete-btn{background:#ff4c4c;}
+/* Modals */
+.modal { display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center; transition:opacity 0.3s; }
+.modal.show { display:flex; opacity:1; }
+.modal-content { background:#fff; margin:auto; padding:0; border-radius:12px; width:90%; max-width:450px; position:relative; overflow:hidden; transform:translateY(-50px); transition:transform 0.3s; }
+.modal.show .modal-content { transform:translateY(0); }
+.modal-header { background: linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); padding:15px; color:white; font-family:'Poppins',sans-serif; font-size:20px; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
+.modal-body { padding:20px; }
+.modal label { display:block; margin:10px 0 5px; color:#012970; font-weight:600; }
+.modal input, .modal select { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; margin-bottom:12px; background:linear-gradient(180deg,#fff 0%,#f9f9f9 100%); }
+.modal-buttons { text-align:right; margin-top:10px; }
+.modal button { padding:10px 16px; border:none; border-radius:8px; cursor:pointer; font-family:'Poppins',sans-serif; font-weight:500; font-size:14px; margin-left:10px; transition:all 0.2s; }
+.modal .save-btn { background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); color:white; box-shadow:0 4px 12px rgba(0,102,255,0.3); }
+.modal .cancel-btn { background:#ccc; color:#000; }
+.close { font-size:26px; font-weight:bold; cursor:pointer; }
+.toast { position:fixed; bottom:20px; right:20px; background:#1e90ff; color:white; padding:12px 20px; border-radius:8px; font-family:'Poppins',sans-serif; font-size:14px; box-shadow:0 4px 12px rgba(0,102,255,0.3); opacity:0; transform:translateY(20px); transition:all 0.5s; z-index:9999; }
+.toast.show { opacity:1; transform:translateY(0); }
 
-/* Modals & Toast */
-.modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,0.5);justify-content:center;align-items:center;transition:opacity 0.3s;}
-.modal.show{display:flex;opacity:1;}
-.modal-content{background:#fff;margin:auto;padding:0;border-radius:12px;width:90%;max-width:450px;position:relative;overflow:hidden;transform:translateY(-50px);transition:transform 0.3s;}
-.modal.show .modal-content{transform:translateY(0);}
-.modal-header{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);padding:15px;color:white;font-family:'Poppins',sans-serif;font-size:20px;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
-.modal-body{padding:20px;}
-.modal label{display:block;margin:10px 0 5px;color:#012970;font-weight:600;}
-.modal input{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px;margin-bottom:12px;background:linear-gradient(180deg,#fff 0%,#f9f9f9 100%);}
-.modal-buttons{text-align:right;margin-top:10px;}
-.modal button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500;font-size:14px;margin-left:10px;transition:all 0.2s;}
-.modal .save-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;box-shadow:0 4px 12px rgba(0,102,255,0.3);}
-.modal .cancel-btn{background:#ccc;color:#000;}
-.close{font-size:26px;font-weight:bold;cursor:pointer;}
-.toast{position:fixed;bottom:20px;right:20px;background:#1e90ff;color:white;padding:12px 20px;border-radius:8px;font-family:'Poppins',sans-serif;font-size:14px;box-shadow:0 4px 12px rgba(0,102,255,0.3);opacity:0;transform:translateY(20px);transition:all 0.5s;z-index:9999;}
-.toast.show{opacity:1;transform:translateY(0);}
-
-/* Mobile */
-@media(max-width:768px){.sidebar{left:-260px;}.sidebar.active{left:0;}.main-content{margin-left:0 !important;}}
+@media(max-width:768px){
+  .sidebar{left:-260px;}
+  .sidebar.show{left:0;}
+  .main-content{margin-left:0;padding:80px 15px 20px;}
+  table{display:block;overflow-x:auto;white-space:nowrap;}
+  .modal-content{width:95%; max-width:none;}
+}
 </style>
 </head>
 <body>
@@ -78,41 +73,35 @@ td{padding:12px;border-top:1px solid #ddd;vertical-align:middle;}
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <span>iAttend</span>
+    <span>iAttend Admin</span>
     <div class="user-info">
       <span>Admin</span>
-      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin">
+      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin Profile">
     </div>
   </div>
 </header>
 
+<!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
-  <!-- Dashboard -->
   <div class="sidebar-section">
-    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
-      <i class="fas fa-home"></i><span>Dashboard</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
 
-  <!-- Management -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
-    <!-- Students -->
+    <a class="sidebar-link active" href="{{ url_for('admin_modules') }}"><i class="fas fa-book"></i><span>Modules</span></a>
+
     <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-link dropdown-toggle">
-        <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
-      </a>
+      <a class="sidebar-link dropdown-toggle"><i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i></a>
       <div class="dropdown-menu">
         <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
-        <a class="sidebar-link active" href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+        <a class="sidebar-link" href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
         <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
       </div>
     </div>
-    <!-- Teachers -->
+
     <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-link dropdown-toggle">
-        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
-      </a>
+      <a class="sidebar-link dropdown-toggle"><i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i></a>
       <div class="dropdown-menu">
         <a class="sidebar-link" href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
         <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
@@ -121,21 +110,18 @@ td{padding:12px;border-top:1px solid #ddd;vertical-align:middle;}
     </div>
   </div>
 
-  <!-- System -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">System</div>
     <a class="sidebar-link" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
     <a class="sidebar-link" href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
   </div>
 
-  <!-- User Accounts -->
   <div class="sidebar-section">
-    <div class="sidebar-section-title">User Accounts</div>
-    <a class="sidebar-link" href="{{ url_for('admin_roles') }}"><i class="fas fa-users-cog"></i><span>Manage Roles</span></a>
-    <a class="sidebar-link" href="{{ url_for('admin_email_setup') }}"><i class="fas fa-envelope"></i><span>Email Setup</span></a>
+    <div class="sidebar-section-title">Logs</div>
+    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
   </div>
 
-  <!-- Attendance -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>
     <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
@@ -143,32 +129,27 @@ td{padding:12px;border-top:1px solid #ddd;vertical-align:middle;}
   </div>
 </div>
 
-<!-- Main Content -->
 <div class="main-content">
-  <h2>Teacher List</h2>
+  <h1 class="page-title">Teacher List</h1>
   <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Profile</th>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>Email</th>
-          <th>Department</th>
-          <th>Course</th>
-          <th>Teacher ID</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="teachersBody"></tbody>
-    </table>
-  </div>
-</div>
-
+    <!-- Updated table header -->
+<table id="teacherTable">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Program</th>
+      <th>Group Code</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Teachers loaded dynamically -->
+  </tbody>
+</table>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
@@ -181,49 +162,87 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const teachersBody = document.getElementById('teachersBody');
+async function loadTeachers() {
+  const tbody = document.querySelector('#teacherTable tbody');
+  tbody.innerHTML = '';
 
-onSnapshot(collection(db,"teachers"), snapshot=>{
-  teachersBody.innerHTML='';
-  let idx=1;
-  snapshot.forEach(docSnap=>{
-    const t = docSnap.data();
-    const photo = t.photoURL || 'https://placehold.co/40x40/899BBD/ffffff?text=T';
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${idx}</td>
-      <td><img src="${photo}" class="profile-pic"></td>
-      <td>${t.firstName||'-'}</td>
-      <td>${t.lastName||'-'}</td>
-      <td>${t.email||'-'}</td>
-      <td>${t.department||'-'}</td>
-      <td>${t.course||'-'}</td>
-      <td>${t.teacherID||'-'}</td>
-      <td>
-        <button class="action-btn edit-btn"><i class="fas fa-pen"></i>Edit</button>
-        <button class="action-btn delete-btn"><i class="fas fa-trash"></i>Delete</button>
-      </td>
-    `;
-    teachersBody.appendChild(tr);
-    idx++;
+  const usersSnapshot = await getDocs(collection(db, "users"));
+  for (const userDoc of usersSnapshot.docs) {
+    const userData = userDoc.data();
+
+    // Only teachers
+    if (userData.role_type === 2) {
+
+      // Get teacher role info
+      const roleSnapshot = await getDocs(collection(db, "users", userDoc.id, "roles"));
+      let groupId = '';
+      roleSnapshot.forEach(role => {
+        if (role.id === 'teacher') {
+          groupId = role.data().fk_groupcode || '';
+        }
+      });
+
+      let programName = '';
+      let groupCode = '';
+
+      if (groupId) {
+        const groupDoc = await getDoc(doc(db, "groups", groupId));
+        if (groupDoc.exists()) {
+          const groupData = groupDoc.data();
+          programName = groupData.fk_program || '';
+          groupCode = groupData.group_code || '';
+        }
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${userData.name}</td>
+        <td>${userData.email}</td>
+        <td>${programName}</td>
+        <td>${groupCode}</td>
+        <td>
+          <button class="action-btn edit-btn">Edit</button>
+          <button class="action-btn delete-btn" data-id="${userDoc.id}">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  // Delete button
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm("Are you sure you want to delete this teacher?")) {
+        try {
+          await deleteDoc(doc(db, "users", btn.dataset.id));
+          alert("✅ Teacher deleted successfully!");
+          loadTeachers();
+        } catch (err) {
+          alert("❌ Error deleting teacher: " + err.message);
+        }
+      }
+    });
   });
-});
+}
 
-// Sidebar toggle
-const menuToggle = document.getElementById('menu-toggle');
-const sidebar = document.querySelector('.sidebar');
-menuToggle.addEventListener('click',()=>{
-  if(window.innerWidth<=768){ sidebar.classList.toggle('active'); } 
-  else{ sidebar.classList.toggle('collapsed'); }
-});
+// Load teachers on page load
+loadTeachers();
+</script>
 
-// Dropdown toggle
-document.querySelectorAll('.dropdown-toggle').forEach(toggle=>{
-  toggle.addEventListener('click', e=>{
+
+
+
+<script>
+document.getElementById('menu-toggle').addEventListener('click', ()=>{
+  document.querySelector('.sidebar').classList.toggle('collapsed');
+});
+document.querySelectorAll('.dropdown-toggle').forEach(drop => {
+  drop.addEventListener('click', e => {
     e.preventDefault();
-    toggle.parentElement.classList.toggle('active');
+    drop.parentElement.classList.toggle('active');
   });
 });
 </script>
+
 </body>
 </html>
