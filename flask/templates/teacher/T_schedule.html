@@ -154,7 +154,7 @@ async function fetchSchedule() {
   });
 
   // 2️⃣ Fetch all modules
-  const moduleSnapshot = await getDocs(collection(db, 'modules'));
+  const moduleSnapshot = await getDocs(collection(db, 'mlmodule'));
   const moduleMap = {};
   moduleSnapshot.forEach(doc => {
     // moduleCode → moduleName
