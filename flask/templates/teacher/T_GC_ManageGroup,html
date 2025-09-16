@@ -169,7 +169,7 @@
           <label for="group-name">Group Name:</label>
           <input type="text" id="group-name" name="group_name" placeholder="e.g., 'Project Alpha'" required />
 
-          <label for="student-select">Select Students (Hold Ctrl/Cmd to select multiple):</label>
+          <label for="student-select">Select Students:</label>
           <!-- CHANGED: Converted to a multi-select dropdown and added name attribute -->
           <select id="student-select" name="students" multiple required>
             <!-- This part will be populated by the backend -->
