@@ -12,7 +12,6 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-
   header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
   #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
   .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
@@ -70,6 +69,46 @@
   .btn-save { background:#4154F1; color:#fff; }
   .btn-cancel { background:#ccc; color:#000; }
   .btn-reset { background:#f87171; color:#fff; }
+
+  /* Attendance notifications */
+  .notification { background:#fff3cd; color:#856404; padding:10px 15px; border:1px solid #ffeeba; border-radius:8px; margin-bottom:10px; font-size:14px; }
+  .filter-container {
+  margin-bottom: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end; /* align search & filter to right */
+}
+
+.input-group {
+  position: relative;
+}
+
+.input-group i {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  pointer-events: none; /* so icon doesn’t block typing */
+}
+
+.filter-container input,
+.filter-container select {
+  padding: 8px 12px;
+  padding-left: 32px; /* space for icon */
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.filter-container input:focus,
+.filter-container select:focus {
+  border-color: #5D5FEF;
+  box-shadow: 0 0 0 2px rgba(93, 95, 239, 0.2);
+}
+
 </style>
 </head>
 <body>
@@ -155,18 +194,40 @@
 </div>
 
 <script>
+// Existing data (modules & groups)
 const modulesData = [
   { moduleName: "Web Development", groups: ["G001","G002","G003"] },
   { moduleName: "Database Systems", groups: ["G004"] },
   { moduleName: "Networking", groups: ["G005","G006"] }
 ];
+
 const groupsData = {
-  "G001": { groupName:"Group 1", day:"Mon", time:"08:00-10:00", room:"A101", students:[{name:"Hani",status:"Present", date:"15-09-2025"},{name:"Ali",status:"Absent", date:"15-09-2025"}]},
-  "G002": { groupName:"Group 2", day:"Mon", time:"10:00-12:00", room:"B202", students:[{name:"Sara",status:"Present", date:"15-09-2025"},{name:"John",status:"Present", date:"15-09-2025"}]},
-  "G003": { groupName:"Group 3", day:"Tue", time:"08:00-10:00", room:"C303", students:[{name:"Nurul",status:"Present", date:"16-09-2025"},{name:"Fadhil",status:"Absent", date:"16-09-2025"}]},
-  "G004": { groupName:"DB 1", day:"Wed", time:"09:00-11:00", room:"D404", students:[{name:"Amira",status:"Present", date:"17-09-2025"},{name:"Hakim",status:"Late", date:"17-09-2025"}]},
-  "G005": { groupName:"Net 1", day:"Thu", time:"08:00-10:00", room:"E505", students:[{name:"Faizal",status:"Present", date:"18-09-2025"},{name:"Lina",status:"Absent", date:"18-09-2025"}]},
-  "G006": { groupName:"Net 2", day:"Fri", time:"10:00-12:00", room:"F606", students:[{name:"Zahra",status:"Present", date:"19-09-2025"},{name:"Adam",status:"Present", date:"19-09-2025"}]}
+  G001: { groupName:"Group 1", day:"Mon", time:"08:00-10:00", room:"A101", students:[
+    {name:"Hani",status:"Present", date:"15-09-2025"},
+    {name:"Ali",status:"Absent", date:"15-09-2025"},
+    {name:"Ali",status:"Absent", date:"10-09-2025"},
+    {name:"Ali",status:"Absent", date:"05-09-2025"}
+  ]},
+  G002: { groupName:"Group 2", day:"Mon", time:"10:00-12:00", room:"B202", students:[
+    {name:"Sara",status:"Present", date:"15-09-2025"},
+    {name:"John",status:"Present", date:"15-09-2025"}
+  ]},
+  G003: { groupName:"Group 3", day:"Tue", time:"08:00-10:00", room:"C303", students:[
+    {name:"Nurul",status:"Present", date:"16-09-2025"},
+    {name:"Fadhil",status:"Absent", date:"16-09-2025"}
+  ]},
+  G004: { groupName:"DB 1", day:"Wed", time:"09:00-11:00", room:"D404", students:[
+    {name:"Amira",status:"Present", date:"17-09-2025"},
+    {name:"Hakim",status:"Late", date:"17-09-2025"}
+  ]},
+  G005: { groupName:"Net 1", day:"Thu", time:"08:00-10:00", room:"E505", students:[
+    {name:"Faizal",status:"Present", date:"18-09-2025"},
+    {name:"Lina",status:"Absent", date:"18-09-2025"}
+  ]},
+  G006: { groupName:"Net 2", day:"Fri", time:"10:00-12:00", room:"F606", students:[
+    {name:"Zahra",status:"Present", date:"19-09-2025"},
+    {name:"Adam",status:"Present", date:"19-09-2025"}
+  ]}
 };
 
 const modulesContainer = document.getElementById('modulesContainer');
@@ -209,7 +270,6 @@ function showModuleDetails(module){
     const g = groupsData[code];
     if(!g) return;
 
-    // Count today's attendance (dd-mm-yyyy)
     const today = new Date();
     const dd = String(today.getDate()).padStart(2,'0');
     const mm = String(today.getMonth()+1).padStart(2,'0');
@@ -222,37 +282,37 @@ function showModuleDetails(module){
 
     const icons = { Present:'fa-check-circle', Absent:'fa-times-circle', Late:'fa-clock' };
 
-const groupCard = document.createElement('div');
-groupCard.className='bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
-groupCard.innerHTML=`
-  <div class="flex items-center mb-2">
-    <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mr-3">
-      <i class="fas fa-users text-xl"></i>
-    </div>
-    <div>
-      <h3 class="text-lg font-semibold">${g.groupName}</h3>
-      <p class="text-sm text-gray-500">${g.day} ${g.time} | Room: ${g.room}</p>
-      <div class="flex items-center gap-3 mt-1 text-sm">
-        <span class="flex items-center gap-1">
-          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-            <i class="fas ${icons['Present']}"></i>
-          </div> ${presentCount}
-        </span>
-        <span class="flex items-center gap-1">
-          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-            <i class="fas ${icons['Absent']}"></i>
-          </div> ${absentCount}
-        </span>
-        <span class="flex items-center gap-1">
-          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-            <i class="fas ${icons['Late']}"></i>
-          </div> ${lateCount}
-        </span>
+    const groupCard = document.createElement('div');
+    groupCard.className='bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
+    groupCard.innerHTML=`
+      <div class="flex items-center mb-2">
+        <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mr-3">
+          <i class="fas fa-users text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold">${g.groupName}</h3>
+          <p class="text-sm text-gray-500">${g.day} ${g.time} | Room: ${g.room}</p>
+          <div class="flex items-center gap-3 mt-1 text-sm">
+            <span class="flex items-center gap-1">
+              <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                <i class="fas ${icons['Present']}"></i>
+              </div> ${presentCount}
+            </span>
+            <span class="flex items-center gap-1">
+              <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                <i class="fas ${icons['Absent']}"></i>
+              </div> ${absentCount}
+            </span>
+            <span class="flex items-center gap-1">
+              <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                <i class="fas ${icons['Late']}"></i>
+              </div> ${lateCount}
+            </span>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-  <p class="text-sm text-gray-500">${g.students.length} student(s)</p>
-`;
+      <p class="text-sm text-gray-500">${g.students.length} student(s)</p>
+    `;
 
     groupCard.addEventListener('click',()=>showStudentAttendance(code));
     groupsContainer.appendChild(groupCard);
@@ -265,14 +325,12 @@ function showStudentAttendance(groupCode){
   const g = groupsData[groupCode];
   moduleTitle.textContent = `${g.groupName} - ${g.day} ${g.time} (${g.room})`;
 
-  // Today's date in dd-mm-yyyy
   const today = new Date();
   const dd = String(today.getDate()).padStart(2,'0');
   const mm = String(today.getMonth()+1).padStart(2,'0');
   const yyyy = today.getFullYear();
   const todayStr = `${dd}-${mm}-${yyyy}`;
 
-  // Count statuses for today
   const statusCounts = { Present:0, Absent:0, Late:0 };
   g.students.forEach(s=>{
     if(s.date===todayStr && statusCounts[s.status]!==undefined){
@@ -297,12 +355,58 @@ function showStudentAttendance(groupCode){
     summaryDiv.appendChild(card);
   });
   groupsContainer.appendChild(summaryDiv);
+const filterDiv = document.createElement('div');
+filterDiv.className = 'filter-container flex items-center gap-4 justify-end mb-4';
+
+filterDiv.innerHTML = `
+  <div class="input-group relative">
+    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+    <input 
+      id="searchInput" 
+      type="text" 
+      placeholder="Search student by name..." 
+      class="pl-12 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition w-64"
+    />
+  </div>
+  <div class="input-group relative">
+    <i class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+    <select 
+      id="statusFilter" 
+      class="pl-12 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
+    >
+      <option value="">All Status</option>
+      <option value="Present">Present</option>
+      <option value="Absent">Absent</option>
+      <option value="Late">Late</option>
+      <option value="Not Marked">Not Marked</option>
+    </select>
+  </div>
+`;
+
+
+  groupsContainer.appendChild(filterDiv);
+
+  // Notifications for frequent absentees
+  const absentCounts = {};
+  g.students.forEach(s=>{
+    if(s.status==="Absent"){
+      absentCounts[s.name]=(absentCounts[s.name]||0)+1;
+    }
+  });
+  Object.keys(absentCounts).forEach(name=>{
+    if(absentCounts[name]>=3){
+      const notif=document.createElement('div');
+      notif.className="notification";
+      notif.textContent=`⚠️ ${name} has been absent ${absentCounts[name]} times.`;
+      groupsContainer.appendChild(notif);
+    }
+  });
 
   // Student table
   const tableWrapper = document.createElement('div');
   tableWrapper.className='bg-white p-4 rounded-2xl shadow overflow-x-auto table-scroll w-full';
   tableWrapper.innerHTML = `
-    <table class="w-full text-sm">
+    <table id="studentTable" class="w-full text-sm">
       <thead>
         <tr class="bg-gray-100">
           <th>Name</th>
@@ -329,6 +433,24 @@ function showStudentAttendance(groupCode){
     </table>
   `;
   groupsContainer.appendChild(tableWrapper);
+
+  // Filter logic
+  const searchInput = document.getElementById("searchInput");
+  const statusFilter = document.getElementById("statusFilter");
+  function filterTable(){
+    const filterText = searchInput.value.toLowerCase();
+    const statusValue = statusFilter.value;
+    const rows = document.querySelectorAll("#studentTable tbody tr");
+    rows.forEach(r=>{
+      const name = r.querySelector("td").textContent.toLowerCase();
+      const status = r.querySelector("td:nth-child(2)").textContent;
+      const matchText = name.includes(filterText);
+      const matchStatus = statusValue === "" || status === statusValue;
+      r.style.display = matchText && matchStatus ? "" : "none";
+    });
+  }
+  searchInput.addEventListener("keyup", filterTable);
+  statusFilter.addEventListener("change", filterTable);
 }
 
 backBtn.addEventListener('click',()=>{
@@ -371,9 +493,13 @@ document.querySelector('.btn-reset').addEventListener('click',()=>{
     document.querySelector('.modal-content').classList.remove('show');
   }
 });
+</script>
 
+<script>
 document.getElementById('menu-toggle').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('collapsed'));
+</script>
 
+<script>
 renderModules();
 </script>
 
