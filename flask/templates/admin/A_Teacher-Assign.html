@@ -96,23 +96,29 @@ async function loadTeachers() {
   for(const userDoc of usersSnap.docs){
     const userData = userDoc.data();
     if(userData.role_type === 2){ // teacher
-      let groupId='', programName='', groupCode='';
+      let groupId='', programId='', programName='', groupCode='';
+      
       const rolesSnap = await getDocs(collection(db,'users',userDoc.id,'roles'));
       rolesSnap.forEach(r => { if(r.id==='teacher'){ groupId = r.data().fk_groupcode || ''; } });
+
       if(groupId){
         const groupDoc = await getDoc(doc(db,'groups',groupId));
         if(groupDoc.exists()){
-          programName = groupDoc.data().fk_program || '';
+          programId = groupDoc.data().fk_program || '';
           groupCode = groupDoc.data().group_code || '';
+          if(programId){
+            const programDoc = await getDoc(doc(db,'programs',programId));
+            if(programDoc.exists()) programName = programDoc.data().programName;
+          }
         }
       }
 
-      // Fetch modules for the teacher's program
+      // Fetch modules for this program
       let moduleOptions = '';
       const modulesSnap = await getDocs(collection(db,'modules'));
       modulesSnap.forEach(mod => {
         const m = mod.data();
-        if(m.fk_program === programName){ // only modules in same program
+        if(m.fk_program === programId){
           moduleOptions += `<option value="${mod.id}">${m.moduleName} (${m.moduleCode})</option>`;
         }
       });
@@ -124,7 +130,9 @@ async function loadTeachers() {
         <td>${programName}</td>
         <td>${groupCode}</td>
         <td>
-          <select class="module-select">${moduleOptions}</select>
+          <select class="module-select">
+            ${moduleOptions}
+          </select>
         </td>
         <td>
           <button class="action-btn save-btn">Save</button>
@@ -132,15 +140,16 @@ async function loadTeachers() {
       `;
       tbody.appendChild(tr);
 
-      // Save button
+      // Save button event
       tr.querySelector('.save-btn').addEventListener('click', async () => {
         const moduleId = tr.querySelector('.module-select').value;
         if(!moduleId) return alert('Select a module first!');
-        try{
+        try {
           await setDoc(doc(db,'teacher_modules',userDoc.id),{
             teacherId: userDoc.id,
             moduleId: moduleId,
-            groupId: groupId
+            groupId: groupId,
+            fk_program: programId
           });
           alert('✅ Module assigned successfully!');
         } catch(err){

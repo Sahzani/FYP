@@ -800,17 +800,28 @@ def admin_summary():
 # Admin Modules Page
 @app.route("/admin/modules")
 def admin_modules():
-    if session.get("role") == "admin":
-        modules_ref = db.collection("modules")
-        docs = modules_ref.stream()
-        modules = []
-        for doc in docs:
-            data = doc.to_dict()
-            # Use your actual module_id field
-            data["moduleId"] = data.get("module_id")  
-            modules.append(data)
-        return render_template("admin/modules.html", modules=modules)
+    # Fetch modules
+    modules_ref = db.collection("modules")
+    modules_docs = modules_ref.stream()
+    modules = []
+    for doc in modules_docs:
+        m = doc.to_dict()
+        m["docId"] = doc.id
+        modules.append(m)
+    
+    # Fetch programs
+    programs_ref = db.collection("programs")  # adjust collection name if different
+    programs_docs = programs_ref.stream()
+    programs = []
+    for doc in programs_docs:
+        p = doc.to_dict()
+        p["docId"] = doc.id
+        programs.append(p)
+    
+    return render_template("modules.html", modules=modules, programs=programs)
+    
     return redirect(url_for("home"))
+
 
 
 # Add / Edit Module
