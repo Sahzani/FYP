@@ -96,12 +96,12 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
 <!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    <a class="sidebar-link active" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
-    <a class="sidebar-link active" href="{{ url_for('admin_modules') }}"><i class="fas fa-book"></i><span>Modules</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_modules') }}"><i class="fas fa-book"></i><span>Modules</span></a>
 
     <div class="sidebar-dropdown">
       <a class="sidebar-link dropdown-toggle"><i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i></a>
