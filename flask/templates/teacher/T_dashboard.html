@@ -72,12 +72,14 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
 
 <!-- Sidebar -->
 <div class="sidebar">
+  <!-- Dashboard -->
   <div class="sidebar-section">
     <a class="sidebar-link active" href="{{ url_for('teacher_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
 
+  <!-- Reports -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
     <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
@@ -85,12 +87,15 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
     </a>
   </div>
 
+  <!-- Manage -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
     <a class="sidebar-link" href="{{ url_for('teacher_schedule') }}">
       <i class="fas fa-calendar"></i><span>Class Schedule</span>
     </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Rooms</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
+      <i class="fas fa-book"></i><span>My Modules & Rooms</span>
+    </a>
     <a class="sidebar-link">
       <i class="fas fa-users"></i><span>Student Attendance</span>
     </a>
@@ -99,23 +104,26 @@ h2 { font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#4
     </a>
   </div>
 
-  <div class="sidebar-section" id="gc-section" style="display:none;">
-  <div class="sidebar-section-title">Group Coordinator</div>
-  <a class="sidebar-link" href="{{ url_for('gc_manage_groups') }}">
-    <i class="fas fa-users-cog"></i><span>Manage Groups</span>
-  </a>
-  <a class="sidebar-link" href="{{ url_for('gc_group_reports') }}">
-    <i class="fas fa-file-alt"></i><span>Group Reports</span>
-  </a>
-</div>
+  <!-- Group Coordinator (conditional) -->
+  {% if profile.is_gc %}
+  <div class="sidebar-section" id="gc-section">
+    <div class="sidebar-section-title">Group Coordinator</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_manage_groups') }}">
+      <i class="fas fa-users-cog"></i><span>Manage Groups</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_group_reports') }}">
+      <i class="fas fa-file-alt"></i><span>Group Reports</span>
+    </a>
+  </div>
+  {% endif %}
 
+  <!-- Logout -->
   <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
       <i class="fas fa-sign-out-alt"></i><span>Logout</span>
     </a>
   </div>
 </div>
-
 
 
 <div class="main">
