@@ -115,7 +115,7 @@ async function loadTeachers() {
 
       // Fetch modules for this program
       let moduleOptions = '';
-      const modulesSnap = await getDocs(collection(db,'modules'));
+      const modulesSnap = await getDocs(collection(db,'programs'));
       modulesSnap.forEach(mod => {
         const m = mod.data();
         if(m.fk_program === programId){
