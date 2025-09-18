@@ -566,6 +566,12 @@ def teacher_logout():
     session.clear()
     return redirect(url_for("home"))
 
+@app.route("/teacher/manage_groups")
+def teacher_manage_groups():
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+    return render_template("teacher/T_GC_ManageGroup.html")
+
 # ------------------ Teacher Class Schedule ------------------
 @app.route("/teacher/schedule")
 def teacher_schedule():
