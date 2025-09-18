@@ -818,7 +818,7 @@ def admin_modules():
         p["docId"] = doc.id
         programs.append(p)
     
-    return render_template("modules.html", modules=modules, programs=programs)
+    return render_template("admin/modules.html", modules=modules, programs=programs)
     
     return redirect(url_for("home"))
 
