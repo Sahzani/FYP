@@ -566,12 +566,6 @@ def teacher_logout():
     session.clear()
     return redirect(url_for("home"))
 
-@app.route("/teacher/manage_groups")
-def teacher_manage_groups():
-    if session.get("role") != "teacher":
-        return redirect(url_for("home"))
-    return render_template("teacher/T_GC_ManageGroup.html")
-
 # ------------------ Teacher Class Schedule ------------------
 @app.route("/teacher/schedule")
 def teacher_schedule():
@@ -603,6 +597,94 @@ def teacher_schedule():
         })
 
     return render_template("teacher/T_schedule.html", schedule=schedule, profile=profile)
+
+# ------------------ Teacher Manage Groups ------------------
+@app.route("/teacher/manage_groups", methods=["GET", "POST"])
+def teacher_manage_groups():
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+
+    # Fetch teacher profile
+    profile = db.collection("users").document(session.get("uid")).get().to_dict()
+
+    if request.method == "POST":
+        # Create a new group
+        group_name = request.form.get("group_name")
+        student_ids = request.form.getlist("students")  # multiple select
+        if group_name and student_ids:
+            new_group_ref = db.collection("groups").document()  # auto ID
+            new_group_ref.set({
+                "name": group_name,
+                "members": student_ids
+            })
+            return redirect(url_for("teacher_manage_groups"))
+
+    # GET request
+    # Fetch existing groups
+    groups_docs = db.collection("groups").stream()
+    groups = []
+    for doc in groups_docs:
+        data = doc.to_dict()
+        members = []
+        for sid in data.get("members", []):
+            student_doc = db.collection("users").document(sid).get()
+            if student_doc.exists:
+                members.append({"id": sid, "name": student_doc.to_dict().get("name")})
+        groups.append({"id": doc.id, "name": data.get("name"), "members": members})
+
+    # Fetch unassigned students (students not in any group)
+    all_students_docs = db.collection("users").where("role", "==", "student").stream()
+    unassigned_students = []
+    assigned_ids = [m["id"] for g in groups for m in g["members"]]
+    for student_doc in all_students_docs:
+        student_data = student_doc.to_dict()
+        if student_doc.id not in assigned_ids:
+            unassigned_students.append({"id": student_doc.id, "name": student_data.get("name")})
+
+    return render_template(
+        "teacher/T_GC_ManageGroup.html",
+        profile=profile,
+        groups=groups,
+        unassigned_students=unassigned_students
+    )
+
+
+# ------------------ Delete a Group ------------------
+@app.route("/teacher/delete_group/<group_id>", methods=["POST"])
+def teacher_delete_group(group_id):
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+
+    # Delete group document
+    db.collection("groups").document(group_id).delete()
+    return redirect(url_for("teacher_manage_groups"))
+
+
+# ------------------ Teacher Group Reports ------------------
+@app.route("/teacher/group_reports")
+def teacher_group_reports():
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+
+    profile = db.collection("users").document(session.get("uid")).get().to_dict()
+    
+    # Fetch all groups with members
+    groups_docs = db.collection("groups").stream()
+    groups = []
+    for doc in groups_docs:
+        data = doc.to_dict()
+        members = []
+        for sid in data.get("members", []):
+            student_doc = db.collection("users").document(sid).get()
+            if student_doc.exists:
+                members.append({"id": sid, "name": student_doc.to_dict().get("name")})
+        groups.append({"id": doc.id, "name": data.get("name"), "members": members})
+
+    return render_template(
+        "teacher/T_GC_GroupReports.html",
+        profile=profile,
+        groups=groups
+    )
 
 # ------------------ Teacher Profile ------------------
 @app.route("/teacher/profile")
