@@ -145,7 +145,7 @@ button:hover { opacity:0.9; transform: translateY(-1px); }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
@@ -158,25 +158,28 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Create program if not exists
+// ✅ Ensure program exists (use program name as ID)
 async function ensureProgram(name){
-  const q = query(collection(db,"programs"), where("program_name","==",name));
-  const snapshot = await getDocs(q);
-  if(snapshot.empty){
-    const docRef = await addDoc(collection(db,"programs"), {program_name:name});
-    return docRef.id;
-  } else {
-    return snapshot.docs[0].id;
+  const cleanName = name.trim().toLowerCase();
+  const programRef = doc(db, "programs", cleanName);
+  const snapshot = await getDoc(programRef);
+
+  if (!snapshot.exists()) {
+    await setDoc(programRef, { program_name: cleanName });
   }
+
+  return programRef.id;
 }
 
-// Add Group manually
+// ✅ Add Group manually
 document.getElementById('groupForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const groupCode = document.getElementById('groupCode').value.trim();
   const programName = document.getElementById('programName').value.trim();
   const intake = document.getElementById('intake').value.trim();
+
   if(!groupCode || !programName || !intake) return alert("Please fill all fields");
+
   try{
     const programId = await ensureProgram(programName);
     await addDoc(collection(db,"groups"),{
@@ -191,20 +194,21 @@ document.getElementById('groupForm').addEventListener('submit', async e=>{
   }
 });
 
-// CSV upload
+// ✅ CSV upload
 document.getElementById('groupCsv').addEventListener('change', async e=>{
   const file = e.target.files[0];
   if(!file) return;
   const text = await file.text();
   const rows = text.split('\n').filter(r=>r.trim());
+
   for(const row of rows){
     const [groupCode, programName, intake] = row.split(',');
     if(groupCode && programName && intake){
-      const programId = await ensureProgram(programName.trim());
+      const programId = await ensureProgram(programName);
       await addDoc(collection(db,"groups"),{
-        group_code:groupCode.trim(),
-        fk_program:programId,
-        intake:intake.trim()
+        group_code: groupCode.trim(),
+        fk_program: programId,
+        intake: intake.trim()
       });
     }
   }
