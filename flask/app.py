@@ -4,7 +4,7 @@ from firebase_admin import credentials, auth, firestore
 from datetime import timedelta
 from werkzeug.utils import secure_filename
 from firebase_admin import auth, exceptions
-
+import firebase_admin, random
 import os
 import subprocess
 
@@ -764,11 +764,21 @@ def teacher_profile():
     return render_template("teacher/T_Profile.html", profile=profile)
 
 
-# ------------------ Admin student Pages ------------------
+
+# Helper to generate a unique studentID
+def generate_student_id():
+    return "STU" + str(random.randint(1000, 9999))  # simple random ID
+
+# ------------------ Admin Student Add Page ------------------
 @app.route("/admin/student_add")
 def admin_student_add():
-    if session.get("role") != "admin":
-        return redirect(url_for("home"))
+    # Fetch all programs
+    programs_docs = db.collection("programs").stream()
+    programs = []
+    for doc in programs_docs:
+        p = doc.to_dict()
+        p["docId"] = doc.id
+        programs.append(p)
 
     # Fetch all groups
     groups_docs = db.collection("groups").stream()
@@ -778,31 +788,75 @@ def admin_student_add():
         g["docId"] = doc.id
         groups.append(g)
 
-    # Fetch all programs (optional, for a program dropdown if needed)
-    programs_docs = db.collection("programs").stream()
-    programs = []
-    for doc in programs_docs:
-        p = doc.to_dict()
-        p["docId"] = doc.id
-        programs.append(p)
+    # Fetch all students
+    students_docs = db.collection("users").where("role_type", "==", 1).stream()
+    students = []
 
-    # Pass to template
-    return render_template("admin/A_Student-Add.html", groups=groups, programs=programs)
+    for doc in students_docs:
+        s = doc.to_dict()
+        s["uid"] = doc.id
 
+        # Fetch student role info
+        role_doc = db.collection("users").document(s["uid"]).collection("roles").document("student").get()
+        if role_doc.exists:
+            role = role_doc.to_dict()
+            s["studentID"] = role.get("studentID", "")
+            s["fk_groupcode"] = role.get("fk_groupcode", "")
+            s["program"] = role.get("program", "")
+        else:
+            s["studentID"] = ""
+            s["fk_groupcode"] = ""
+            s["program"] = ""
+
+        # Group name
+        if s["fk_groupcode"]:
+            group_doc = db.collection("groups").document(s["fk_groupcode"]).get()
+            s["groupName"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
+        else:
+            s["groupName"] = ""
+
+        # Program name
+        program_name = ""
+        if s.get("program"):
+            program_doc = db.collection("programs").document(s["program"]).get()
+            if program_doc.exists:
+                program_name = program_doc.to_dict().get("programName", "")
+        s["programName"] = program_name
+
+        # Include photo
+        s["photo_name"] = s.get("photo_name", "")
+
+        students.append(s)
+
+    return render_template(
+        "admin/A_Student-Add.html",
+        programs=programs,
+        groups=groups,
+        students=students
+    )
 
 # ------------------ Save (Add/Edit) Student ------------------
 @app.route('/admin/student/save', methods=['POST'])
 def admin_student_save():
-    student_id = request.form.get('userId')  # Firestore UID if editing
+    student_id = request.form.get('userId')
     name = request.form['name']
     email = request.form['email']
     password = request.form.get('password')
-    studentID = request.form['studentID']
-    studentClass = request.form['studentClass']
-    groupCode = request.form.get('fk_groupcode', '')
+    program = request.form['program']  # selected program
+
+    # Auto-generate studentID
+    import random, string
+    studentID = ''.join(random.choices(string.digits, k=6))
+
+    # Auto-assign first group of the program
+    group_docs = db.collection('groups').where('program', '==', program).limit(1).stream()
+    fk_groupcode = ""
+    for g in group_docs:
+        fk_groupcode = g.id
+        break
 
     if student_id:
-        # -------- Update existing user --------
+        # Update existing student
         try:
             if password:
                 auth.update_user(student_id, email=email, display_name=name, password=password)
@@ -812,7 +866,6 @@ def admin_student_save():
             flash(f"Error updating Auth user: {str(e)}", "error")
             return redirect(url_for("admin_student_add"))
 
-        # Update main Firestore doc
         db.collection('users').document(student_id).update({
             'name': name,
             'email': email,
@@ -821,25 +874,23 @@ def admin_student_save():
             'photo_name': ''
         })
 
-        # Update roles subcollection
         db.collection('users').document(student_id).collection('roles').document('student').set({
             'studentID': studentID,
-            'studentClass': studentClass,
-            'fk_groupcode': groupCode
+            'fk_groupcode': fk_groupcode,
+            'program': program
         })
 
     else:
-        # -------- Add new student --------
+        # Add new student
         try:
             user = auth.create_user(email=email, password=password or "password123", display_name=name)
-            user_id = user.uid
+            student_id = user.uid
         except exceptions.FirebaseError as e:
             flash(f"Error creating Auth user: {str(e)}", "error")
             return redirect(url_for("admin_student_add"))
 
-        # Create main Firestore doc
-        db.collection('users').document(user_id).set({
-            'user_id': user_id,
+        db.collection('users').document(student_id).set({
+            'user_id': student_id,
             'name': name,
             'email': email,
             'active': True,
@@ -847,11 +898,10 @@ def admin_student_save():
             'photo_name': ''
         })
 
-        # Create roles subcollection
-        db.collection('users').document(user_id).collection('roles').document('student').set({
+        db.collection('users').document(student_id).collection('roles').document('student').set({
             'studentID': studentID,
-            'studentClass': studentClass,
-            'fk_groupcode': groupCode
+            'fk_groupcode': fk_groupcode,
+            'program': program
         })
 
     return redirect(url_for('admin_student_add'))
@@ -872,7 +922,7 @@ def admin_student_upload():
         flash("No file selected", "error")
         return redirect(url_for("admin_student_add"))
 
-    import csv, io
+    import csv, io, random, string
     stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
     reader = csv.DictReader(stream)
 
@@ -880,23 +930,31 @@ def admin_student_upload():
         name = row.get("name")
         email = row.get("email")
         password = row.get("password") or "password123"
-        studentID = row.get("studentID")
-        studentClass = row.get("studentClass")
-        groupCode = row.get("groupCode", "")
+        program = row.get("program")
 
-        if not name or not email or not studentID:
+        if not name or not email or not program:
             continue
+
+        # Auto-generate studentID
+        studentID = ''.join(random.choices(string.digits, k=6))
+
+        # Auto-assign first group of the program
+        group_docs = db.collection('groups').where('program', '==', program).limit(1).stream()
+        fk_groupcode = ""
+        for g in group_docs:
+            fk_groupcode = g.id
+            break
 
         # Create Auth user
         try:
             user = auth.create_user(email=email, password=password, display_name=name)
-            user_id = user.uid
+            student_id = user.uid
         except exceptions.FirebaseError:
-            continue  # skip duplicates
+            continue
 
-        # Create main Firestore doc
-        db.collection('users').document(user_id).set({
-            'user_id': user_id,
+        # Create Firestore doc
+        db.collection('users').document(student_id).set({
+            'user_id': student_id,
             'name': name,
             'email': email,
             'active': True,
@@ -904,16 +962,42 @@ def admin_student_upload():
             'photo_name': ''
         })
 
-        # Create roles subcollection
-        db.collection('users').document(user_id).collection('roles').document('student').set({
+        db.collection('users').document(student_id).collection('roles').document('student').set({
             'studentID': studentID,
-            'studentClass': studentClass,
-            'fk_groupcode': groupCode
+            'fk_groupcode': fk_groupcode,
+            'program': program
         })
 
     flash("CSV uploaded successfully", "success")
     return redirect(url_for("admin_student_add"))
 
+
+# ------------------ API to get student data for edit ------------------
+@app.route("/api/student/<uid>")
+def api_student(uid):
+    s_doc = db.collection("users").document(uid).get()
+    if not s_doc.exists:
+        return jsonify({}), 404
+    s = s_doc.to_dict()
+    role_doc = db.collection("users").document(uid).collection("roles").document("student").get()
+    if role_doc.exists:
+        role = role_doc.to_dict()
+        s["studentID"] = role.get("studentID", "")
+        s["program"] = role.get("program", "")
+        s["fk_groupcode"] = role.get("fk_groupcode", "")
+    return jsonify(s)
+# ------------------ Delete Student ------------------
+@app.route("/admin/student/delete/<uid>", methods=["POST"])
+def admin_student_delete(uid):
+    try:
+        # Delete Firestore documents
+        db.collection("users").document(uid).delete()
+        # Delete Auth user
+        auth.delete_user(uid)
+        flash("Student deleted successfully", "success")
+    except Exception as e:
+        flash(f"Error deleting student: {str(e)}", "error")
+    return redirect(url_for("admin_student_add"))
 
 #--------------------student list -----------------------
 @app.route("/admin/student_list")

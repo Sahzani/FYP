@@ -1,99 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>iAttend - Students</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-
-    /* Header */
-    header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff;
-      box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center;
-      padding:0 20px; font-family:'Nunito', sans-serif; font-weight:700;
-      font-size:26px; color:#212529; z-index:1002;
-    }
-    #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; display:block; }
-    .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
-    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; }
-    .user-info:hover { background:#f0f0f0; }
-    .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-    .user-info span { font-size:16px; font-weight:600; color:#444; }
-    .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
-    .breadcrumb .section { color:#989797; }
-    .breadcrumb .current { color:#444444; }
-
-    /* Sidebar */
-    .sidebar { position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding-top:60px; font-family:'Poppins',sans-serif; transition: width 0.4s ease; z-index:1001; overflow-y:auto; box-shadow:2px 0 15px rgba(1,41,112,0.08); border-radius:0 16px 16px 0; }
-    .sidebar.collapsed { width:70px; }
-    .sidebar-section { margin-bottom:25px; }
-    .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin:10px 0 8px 15px; }
-    .sidebar-link { display:flex; align-items:center; gap:12px; padding:12px 20px; margin-bottom:5px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s; white-space:nowrap; }
-    .sidebar-link i { width:20px; text-align:center; }
-    .sidebar-link:hover { background: rgba(255,255,255,0.5); transform:translateX(4px); }
-    .sidebar-link.active { background: rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
-
-    /* Main content */
-    .main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.4s ease; height:100vh; overflow-y:auto; }
-    .sidebar.collapsed ~ .main-content { margin-left:80px; }
-
-    /* Table card */
-    .card { background:#fff; padding:1.5rem; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:20px; }
-    table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; font-size:14px; }
-    th { background-color:#f8f7ff; text-align:left; padding:12px; font-weight:500; }
-    td { padding:12px; border-top:1px solid #ddd; }
-    .action-btn { padding:5px 10px; border:none; border-radius:5px; cursor:pointer; margin-right:5px; color:white; }
-    .edit-btn { background:#1e90ff; }
-    .delete-btn { background:#ff4c4c; }
-    .upload-btn { background:#28a745; }
-
-    /* Modals */
-    .modal { display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center; }
-    .modal.show { display:flex; }
-    .modal-content { background:#fff; margin:auto; border-radius:12px; width:90%; max-width:450px; overflow:hidden; }
-    .modal-header { background: linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); padding:15px; color:white; font-family:'Poppins',sans-serif; font-size:20px; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
-    .modal-body { padding:20px; }
-    .modal label { display:block; margin:10px 0 5px; color:#012970; font-weight:600; }
-    .modal input, .modal select { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; margin-bottom:12px; }
-    .modal-buttons { text-align:right; margin-top:10px; }
-    .modal button { padding:10px 16px; border:none; border-radius:8px; cursor:pointer; font-family:'Poppins',sans-serif; font-weight:500; font-size:14px; margin-left:10px; }
-    .modal .save-btn { background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); color:white; }
-    .modal .cancel-btn { background:#ccc; color:#000; }
-  </style>
+<meta charset="UTF-8">
+<title>iAttend - Students</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
+  header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding:0 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
+  #menu-toggle{font-size:28px;margin-right:15px;cursor:pointer;}
+  .header-content{width:100%;display:flex;justify-content:space-between;align-items:center;}
+  .user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;cursor:pointer;}
+  .user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
+  .user-info span{font-size:16px;font-weight:600;color:#444;}
+  .sidebar{position:fixed;top:0;left:0;width:240px;height:100%;background:linear-gradient(180deg,#FFEED3 0%,#FFEED3 100%);padding-top:60px;transition: width 0.4s;overflow-y:auto;box-shadow:2px 0 15px rgba(1,41,112,0.08);border-radius:0 16px 16px 0;}
+  .sidebar.collapsed{width:70px;}
+  .sidebar-section{margin-bottom:25px;}
+  .sidebar-link{display:flex;align-items:center;gap:12px;padding:12px 20px;margin-bottom:5px;border-radius:8px;font-size:15px;font-weight:500;color:#1A237E;text-decoration:none;white-space:nowrap;}
+  .sidebar-link.active{background:rgba(255,255,255,0.7);color:#4154F1;font-weight:600;}
+  .main-content{margin-left:260px;padding:100px 30px 30px;height:100vh;overflow-y:auto;transition:margin-left 0.4s;}
+  .sidebar.collapsed ~ .main-content{margin-left:80px;}
+  .card{background:#fff;padding:1.5rem;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.08);margin-bottom:20px;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{background-color:#f8f7ff;text-align:left;padding:12px;font-weight:500;}
+  td{padding:12px;border-top:1px solid #ddd;}
+  button.action-btn{padding:5px 10px;border:none;border-radius:5px;cursor:pointer;margin-right:5px;color:white;}
+  .edit-btn{background:#1e90ff;}
+  .delete-btn{background:#ff4c4c;}
+  .upload-btn{background:#28a745;}
+  .modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,0.5);justify-content:center;align-items:center;}
+  .modal.show{display:flex;}
+  .modal-content{background:#fff;margin:auto;border-radius:12px;width:90%;max-width:500px;overflow:hidden;}
+  .modal-header{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);padding:15px;color:white;font-size:20px;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+  .modal-body{padding:20px;}
+  .modal label{display:block;margin:10px 0 5px;color:#012970;font-weight:600;}
+  .modal input,.modal select{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px;margin-bottom:12px;}
+  .modal select[multiple]{height:120px;}
+  .modal-buttons{text-align:right;margin-top:10px;}
+  .modal button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:500;font-size:14px;margin-left:10px;}
+  .modal .save-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;}
+  .modal .cancel-btn{background:#ccc;color:#000;}
+</style>
 </head>
 <body>
 
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <a href="#" style="text-decoration:none;color:inherit;">iAttend Admin</a>
-    <a href="#" class="user-info"><span id="header-user-name">Admin</span><img src="https://placehold.co/36x36/899BBD/ffffff?text=A"></a>
+    <span>iAttend Admin</span>
+    <div class="user-info"><span>Admin</span><img src="https://placehold.co/36x36/899BBD/ffffff?text=A"></div>
   </div>
 </header>
 
-<!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    <a class="sidebar-link" href="#"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
   <div class="sidebar-section">
-    <div class="sidebar-section-title">Management</div>
-    <a class="sidebar-link active" href="{{ url_for('admin_student_add') }}"><i class="fas fa-user-graduate"></i><span>Students</span></a>
-    <a class="sidebar-link" href="{{ url_for('admin_modules') }}"><i class="fas fa-book"></i><span>Modules</span></a>
-    <a class="sidebar-link" href="{{ url_for('admin_groups') }}"><i class="fas fa-users"></i><span>Groups</span></a>
+    <a class="sidebar-link active" href="#"><i class="fas fa-user-graduate"></i><span>Students</span></a>
   </div>
 </div>
 
-<!-- Main content -->
 <div class="main-content">
   <h2>Students</h2>
-  <div class="breadcrumb"><span class="section">Management</span> / <span class="current">Students</span></div>
-
   <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:15px;">
-    <button class="action-btn edit-btn" style="padding:10px 18px; font-size:16px;" onclick="openAddModal()"><i class="fas fa-plus"></i> Add Student</button>
-    <button class="action-btn upload-btn" style="padding:10px 18px; font-size:16px;" onclick="openUploadModal()"><i class="fas fa-file-csv"></i> Upload CSV</button>
+    <button class="action-btn edit-btn" onclick="openAddModal()"><i class="fas fa-plus"></i> Add Student</button>
+    <button class="action-btn upload-btn" onclick="document.getElementById('uploadFile').click()"><i class="fas fa-file-csv"></i> Upload CSV</button>
   </div>
 
   <div class="card">
@@ -104,8 +77,7 @@
           <th>Name</th>
           <th>Email</th>
           <th>Student ID</th>
-          <th>Class</th>
-          <th>Group</th>
+          <th>Program</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -116,11 +88,10 @@
           <td>{{ student.name }}</td>
           <td>{{ student.email }}</td>
           <td>{{ student.studentID }}</td>
-          <td>{{ student.studentClass }}</td>
-          <td>{{ student.fk_groupcode }}</td>
+          <td>{{ student.programName }}</td>
           <td>
-            <button class="action-btn edit-btn" onclick="openEditModal('{{ student.uid }}','{{ student.name }}','{{ student.email }}','{{ student.studentID }}','{{ student.studentClass }}','{{ student.fk_groupcode }}')">Edit</button>
-            <button class="action-btn delete-btn" onclick="openDeleteModal('{{ student.uid }}')">Delete</button>
+            <button class="action-btn edit-btn" onclick="openEditModal('{{ student.uid }}')">Edit</button>
+            <button class="action-btn delete-btn" onclick="deleteStudent('{{ student.uid }}')">Delete</button>
           </td>
         </tr>
         {% endfor %}
@@ -138,114 +109,83 @@
     </div>
     <div class="modal-body">
       <form id="studentForm" method="POST" action="{{ url_for('admin_student_save') }}">
-        <input type="hidden" name="userId" id="formStudentId">
-        <label>Full Name</label>
-        <input type="text" name="name" id="formName" required>
-        <label>Email</label>
-        <input type="email" name="email" id="formEmail" required>
-        <label>Password</label>
-        <input type="password" name="password" id="formPassword">
-        <label>Student ID</label>
-        <input type="text" name="studentID" id="formStudentID" required>
-        <label>Class</label>
-        <input type="text" name="studentClass" id="formStudentClass" required>
-        <label>Group</label>
-        <select name="fk_groupcode" id="formGroupCode" required>
-          <option value="">-- Select Group --</option>
-          {% for group in groups %}
-            <option value="{{ group.docId }}">{{ group.groupCode }} ({{ group.intake }})</option>
+        <input type="hidden" id="formStudentId" name="userId">
+        <input type="hidden" id="formGroupCode" name="fk_groupcode">
+
+        <label for="formName">Name:</label>
+        <input type="text" id="formName" name="name" required>
+
+        <label for="formEmail">Email:</label>
+        <input type="email" id="formEmail" name="email" required>
+
+        <label for="formPassword">Password:</label>
+        <input type="password" id="formPassword" name="password" placeholder="Leave empty to keep current">
+
+        <label for="formProgram">Program:</label>
+        <select id="formProgram" name="program" required>
+          <option value="">-- Select Program --</option>
+          {% for p in programs %}
+            <option value="{{ p['docId'] }}">{{ p['programName'] }}</option>
           {% endfor %}
         </select>
+
         <div class="modal-buttons">
-          <button type="submit" class="save-btn">Save</button>
           <button type="button" class="cancel-btn" onclick="closeStudentModal()">Cancel</button>
+          <button type="submit" class="save-btn">Save</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- Delete Student Modal -->
-<div id="deleteModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span>Delete Student</span>
-      <span class="close" onclick="closeDeleteModal()">&times;</span>
-    </div>
-    <div class="modal-body" id="deleteModalBody"></div>
-    <div class="modal-buttons">
-      <form id="deleteForm" method="POST">
-        <button type="submit" class="save-btn">Delete</button>
-        <button type="button" class="cancel-btn" onclick="closeDeleteModal()">Cancel</button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Upload CSV Modal -->
-<div id="uploadModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span>Upload Students CSV</span>
-      <span class="close" onclick="closeUploadModal()">&times;</span>
-    </div>
-    <div class="modal-body">
-      <form id="uploadForm" method="POST" action="{{ url_for('admin_student_upload') }}" enctype="multipart/form-data">
-        <label>Select CSV File</label>
-        <input type="file" name="csv_file" accept=".csv" required>
-        <div class="modal-buttons">
-          <button type="submit" class="save-btn">Upload</button>
-          <button type="button" class="cancel-btn" onclick="closeUploadModal()">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+<!-- CSV Upload Form -->
+<form id="uploadForm" method="POST" action="{{ url_for('admin_student_upload') }}" enctype="multipart/form-data" style="display:none;">
+  <input type="file" id="uploadFile" name="csv_file" onchange="this.form.submit()">
+</form>
 
 <script>
-  // Sidebar toggle
   const menuToggle = document.getElementById('menu-toggle');
   const sidebar = document.querySelector('.sidebar');
-  menuToggle.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
+  menuToggle.addEventListener('click', ()=>{ sidebar.classList.toggle('collapsed'); });
 
-  // Add/Edit Modal
-  function openAddModal() {
+  function openAddModal(){
     document.getElementById('modalTitle').innerText = "Add Student";
     document.getElementById('formStudentId').value = "";
     document.getElementById('formName').value = "";
     document.getElementById('formEmail').value = "";
     document.getElementById('formPassword').value = "";
-    document.getElementById('formStudentID').value = "";
-    document.getElementById('formStudentClass').value = "";
-    document.getElementById('formGroupCode').value = "";
+    document.getElementById('formProgram').selectedIndex = 0;
     document.getElementById('studentModal').classList.add('show');
   }
 
-  function openEditModal(id,name,email,studentID,studentClass,groupCode){
-    document.getElementById('modalTitle').innerText = "Edit Student";
-    document.getElementById('formStudentId').value = id;
-    document.getElementById('formName').value = name;
-    document.getElementById('formEmail').value = email;
-    document.getElementById('formPassword').value = "";
-    document.getElementById('formStudentID').value = studentID;
-    document.getElementById('formStudentClass').value = studentClass;
-    document.getElementById('formGroupCode').value = groupCode;
-    document.getElementById('studentModal').classList.add('show');
+  function openEditModal(uid){
+    fetch(`/api/student/${uid}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('modalTitle').innerText = "Edit Student";
+        document.getElementById('formStudentId').value = uid;
+        document.getElementById('formName').value = data.name;
+        document.getElementById('formEmail').value = data.email;
+        document.getElementById('formPassword').value = "";
+        document.getElementById('formProgram').value = data.program;
+        document.getElementById('formGroupCode').value = data.fk_groupcode;
+        document.getElementById('studentModal').classList.add('show');
+      });
   }
 
   function closeStudentModal(){ document.getElementById('studentModal').classList.remove('show'); }
 
-  // Delete Modal
-  function openDeleteModal(id){
-    document.getElementById('deleteModalBody').innerText = "Are you sure you want to delete this student?";
-    document.getElementById('deleteForm').action = "/admin/student/delete/" + id;
-    document.getElementById('deleteModal').classList.add('show');
-  }
-  function closeDeleteModal(){ document.getElementById('deleteModal').classList.remove('show'); }
+  // Auto set group code based on program
+  document.getElementById('formProgram').addEventListener('change', function(){
+    document.getElementById('formGroupCode').value = this.value; // backend will assign group
+  });
 
-  // Upload CSV Modal
-  function openUploadModal(){ document.getElementById('uploadModal').classList.add('show'); }
-  function closeUploadModal(){ document.getElementById('uploadModal').classList.remove('show'); }
+  function deleteStudent(uid){
+    if(confirm("Are you sure you want to delete this student?")){
+      fetch(`/admin/student/delete/${uid}`, { method: "POST" })
+        .then(()=> location.reload());
+    }
+  }
 </script>
 
 </body>
