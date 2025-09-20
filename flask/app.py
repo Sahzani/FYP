@@ -325,9 +325,10 @@ def student_schedule():
     user_id = user.get("uid")
 
     # Fetch student document from Firestore
-    student_doc = db.collection("students").where("uid", "==", user_id).limit(1).stream()
+    student_ref = db.collection("roles").document(user_id).collection("student")
+    student_docs = student_ref.stream()
     student_data = None
-    for doc in student_doc:
+    for doc in student_docs:
         student_data = doc.to_dict()
         break
 
@@ -335,7 +336,7 @@ def student_schedule():
         flash("Student data not found.")
         return redirect(url_for("student_dashboard"))
 
-    group_code = student_data.get("groupCode")
+    group_code = student_data.get("fk_groupcode")   
 
     # Query schedules filtered by group
     schedules_ref = db.collection("schedules").where("group", "==", group_code).stream()
