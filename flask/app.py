@@ -1144,11 +1144,109 @@ def admin_teacher_assign():
         return render_template("admin/A_TeacherAssign.html")
     return redirect(url_for("home"))
 
+#------------------ Admin Schedule page ------------------
+@app.route("/admin/schedules")
+def admin_schedules():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    # Fetch programs
+    programs_docs = db.collection("programs").stream()
+    programs = []
+    for doc in programs_docs:
+        p = doc.to_dict()
+        p["docId"] = doc.id
+        programs.append(p)
+
+    # Fetch groups
+    groups_docs = db.collection("groups").stream()
+    groups = []
+    for doc in groups_docs:
+        g = doc.to_dict()
+        g["docId"] = doc.id
+        groups.append(g)
+
+    # Fetch modules
+    modules_docs = db.collection("modules").stream()
+    modules = []
+    for doc in modules_docs:
+        m = doc.to_dict()
+        m["docId"] = doc.id
+        modules.append(m)
+
+    # Fetch schedules
+    schedules_docs = db.collection("schedules").stream()
+    schedules = []
+    for doc in schedules_docs:
+        s = doc.to_dict()
+        s["docId"] = doc.id
+        schedules.append(s)
+
+    return render_template("admin/A_Schedule-Upload.html",
+                           programs=programs,
+                           groups=groups,
+                           modules=modules,
+                           schedules=schedules)
+#------------------ Admin Schedule Upload page ------------------
 @app.route("/admin/schedule_upload")
 def admin_schedule_upload():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Schedule-Upload.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    # Fetch programs, groups, modules for dropdowns
+    programs = [ {**p.to_dict(), "docId": p.id} for p in db.collection("programs").stream() ]
+    groups = [ {**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream() ]
+    modules = [ {**m.to_dict(), "docId": m.id} for m in db.collection("modules").stream() ]
+
+    return render_template("admin/A_Schedule-Upload.html",
+                           programs=programs,
+                           groups=groups,
+                           modules=modules)
+
+#------------------ Save (Add/Edit) Schedule ------------------
+@app.route("/admin/schedule/save", methods=["POST"])
+def admin_schedule_save():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    schedule_id = request.form.get("scheduleId")
+    program_id = request.form.get("fk_program")
+    group_id = request.form.get("fk_group")
+    module_id = request.form.get("fk_module")
+    day = request.form.get("day")
+    start_time = request.form.get("start_time")
+    end_time = request.form.get("end_time")
+    room = request.form.get("room")
+
+    schedule_data = {
+        "fk_program": program_id,
+        "fk_group": group_id,
+        "fk_module": module_id,
+        "day": day,
+        "start_time": start_time,
+        "end_time": end_time,
+        "room": room
+    }
+
+    if schedule_id:
+        db.collection("schedules").document(schedule_id).set(schedule_data, merge=True)
+    else:
+        db.collection("schedules").add(schedule_data)
+
+    flash("Schedule saved successfully!", "success")
+    return redirect(url_for("admin_schedules"))
+
+#------------------ Delete Schedule ------------------
+
+@app.route("/admin/schedule/delete/<schedule_id>", methods=["POST"])
+def admin_schedule_delete(schedule_id):
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    db.collection("schedules").document(schedule_id).delete()
+    flash("Schedule deleted successfully!", "success")
+    return redirect(url_for("admin_schedules"))
+# ------------------ Other Admin Pages ------------------
 
 @app.route("/admin/attendance_logs")
 def admin_attendance_logs():
