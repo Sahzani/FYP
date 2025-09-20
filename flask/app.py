@@ -318,32 +318,44 @@ def student_attendance():
 # ------------------ Student Schedule Page ------------------
 @app.route("/student/schedule")
 def student_schedule():
+    # Check if user is logged in
     user = session.get("user")
-    if not user:
+    role = session.get("role")
+    if not user or role != "student":
         return redirect(url_for("home"))
 
-    user_id = user.get("uid")
+    uid = user.get("uid")
 
-    # Fetch student data
-    student_doc = db.collection("students").where("uid", "==", user_id).limit(1).stream()
-    student_data = None
-    for doc in student_doc:
-        student_data = doc.to_dict()
-        break
-
-    if not student_data:
+    # Fetch student info from users/{uid}/roles/student
+    student_doc_ref = db.collection("users").document(uid).collection("roles").document("student")
+    student_doc = student_doc_ref.get()
+    if not student_doc.exists:
         flash("Student data not found.")
         return redirect(url_for("student_dashboard"))
 
-    group_code = student_data.get("fk_groupcode", "")
+    student_info = student_doc.to_dict()
+    group_code = student_info.get("fk_groupcode", "")
+    student_class = student_info.get("studentClass", "")
 
     # Fetch schedules for this group
     schedules_ref = db.collection("schedules").where("group", "==", group_code).stream()
     schedules = [doc.to_dict() for doc in schedules_ref]
 
-    full_name = f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip()
+    # Fetch full name from users/{uid} document
+    user_doc = db.collection("users").document(uid).get()
+    if user_doc.exists:
+        user_data = user_doc.to_dict()
+        full_name = user_data.get("name", "Student").strip()
+    else:
+        full_name = "Student"
 
-    return render_template("student/S_Schedule.html", schedules=schedules, full_name=full_name)
+    return render_template(
+        "student/S_Schedule.html",
+        schedules=schedules,
+        full_name=full_name,
+        student_class=student_class,
+        group_code=group_code
+    )
 
 # ------------------ Student Absent Pages ------------------
 @app.route("/student/absentapp", methods=["GET", "POST"])
