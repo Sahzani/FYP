@@ -103,29 +103,51 @@
   <!-- Attendance Summary -->
 <div class="card">
   <h2>Timetable</h2>
-  <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
- <div style="overflow-x:auto; width:100%;">
-      <table>
-        <thead>
-          <tr>
-            <th>Day</th>
-            <th>Module</th>
-            <th>Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for s in schedules %}
-          <tr>
-            <td>{{ s.day }}</td>
-            <td>{{ s.moduleName }}</td>
-            <td>{{ s.startTime }} - {{ s.endTime }}</td>
-          </tr>
+  <div style="overflow-x:auto; width:100%;">
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Monday</th>
+          <th>Tuesday</th>
+          <th>Wednesday</th>
+          <th>Thursday</th>
+          <th>Saturday</th>
+        </tr>
+      </thead>
+      <tbody>
+        {# --- Collect all unique start times --- #}
+        {% set slots = [] %}
+        {% for s in schedules %}
+          {% if s.startTime not in slots %}
+            {% set _ = slots.append(s.startTime) %}
+          {% endif %}
+        {% endfor %}
+
+        {# --- Sort slots (assumes format HH:MM) --- #}
+        {% for slot in slots|sort %}
+        <tr>
+          <td>{{ slot }}</td>
+          {% for day in ["Monday","Tuesday","Wednesday","Thursday","Saturday"] %}
+            <td>
+              {% set entry = schedules 
+                            | selectattr("day","equalto",day) 
+                            | selectattr("startTime","equalto",slot) 
+                            | list %}
+              {% if entry %}
+                {{ entry[0].moduleName }} <br>
+                {{ entry[0].startTime }} - {{ entry[0].endTime }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-</div>
+</div
 
 <script>
   const menuToggle = document.getElementById('menu-toggle');
