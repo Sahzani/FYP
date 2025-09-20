@@ -3,6 +3,7 @@ import firebase_admin
 from firebase_admin import credentials, auth, firestore
 from datetime import timedelta
 from werkzeug.utils import secure_filename
+from firebase_admin import auth, exceptions
 
 import os
 import subprocess
@@ -754,13 +755,159 @@ def teacher_profile():
 
     return render_template("teacher/T_Profile.html", profile=profile)
 
-# ------------------ Admin Pages ------------------
+
+# ------------------ Admin student Pages ------------------
 @app.route("/admin/student_add")
 def admin_student_add():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Student-Add.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
 
+    # Fetch all groups
+    groups_docs = db.collection("groups").stream()
+    groups = []
+    for doc in groups_docs:
+        g = doc.to_dict()
+        g["docId"] = doc.id
+        groups.append(g)
+
+    # Fetch all programs (optional, for a program dropdown if needed)
+    programs_docs = db.collection("programs").stream()
+    programs = []
+    for doc in programs_docs:
+        p = doc.to_dict()
+        p["docId"] = doc.id
+        programs.append(p)
+
+    # Pass to template
+    return render_template("admin/A_Student-Add.html", groups=groups, programs=programs)
+
+
+# ------------------ Save (Add/Edit) Student ------------------
+@app.route('/admin/student/save', methods=['POST'])
+def admin_student_save():
+    student_id = request.form.get('userId')  # Firestore UID if editing
+    name = request.form['name']
+    email = request.form['email']
+    password = request.form.get('password')
+    studentID = request.form['studentID']
+    studentClass = request.form['studentClass']
+    groupCode = request.form.get('fk_groupcode', '')
+
+    if student_id:
+        # -------- Update existing user --------
+        try:
+            if password:
+                auth.update_user(student_id, email=email, display_name=name, password=password)
+            else:
+                auth.update_user(student_id, email=email, display_name=name)
+        except exceptions.FirebaseError as e:
+            flash(f"Error updating Auth user: {str(e)}", "error")
+            return redirect(url_for("admin_student_add"))
+
+        # Update main Firestore doc
+        db.collection('users').document(student_id).update({
+            'name': name,
+            'email': email,
+            'active': True,
+            'role_type': 1,
+            'photo_name': ''
+        })
+
+        # Update roles subcollection
+        db.collection('users').document(student_id).collection('roles').document('student').set({
+            'studentID': studentID,
+            'studentClass': studentClass,
+            'fk_groupcode': groupCode
+        })
+
+    else:
+        # -------- Add new student --------
+        try:
+            user = auth.create_user(email=email, password=password or "password123", display_name=name)
+            user_id = user.uid
+        except exceptions.FirebaseError as e:
+            flash(f"Error creating Auth user: {str(e)}", "error")
+            return redirect(url_for("admin_student_add"))
+
+        # Create main Firestore doc
+        db.collection('users').document(user_id).set({
+            'user_id': user_id,
+            'name': name,
+            'email': email,
+            'active': True,
+            'role_type': 1,
+            'photo_name': ''
+        })
+
+        # Create roles subcollection
+        db.collection('users').document(user_id).collection('roles').document('student').set({
+            'studentID': studentID,
+            'studentClass': studentClass,
+            'fk_groupcode': groupCode
+        })
+
+    return redirect(url_for('admin_student_add'))
+
+
+# ------------------ Upload Students via CSV ------------------
+@app.route("/admin/student_upload", methods=["POST"])
+def admin_student_upload():
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_dashboard"))
+
+    if "csv_file" not in request.files:
+        flash("No file selected", "error")
+        return redirect(url_for("admin_student_add"))
+
+    file = request.files["csv_file"]
+    if file.filename == "":
+        flash("No file selected", "error")
+        return redirect(url_for("admin_student_add"))
+
+    import csv, io
+    stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+    reader = csv.DictReader(stream)
+
+    for row in reader:
+        name = row.get("name")
+        email = row.get("email")
+        password = row.get("password") or "password123"
+        studentID = row.get("studentID")
+        studentClass = row.get("studentClass")
+        groupCode = row.get("groupCode", "")
+
+        if not name or not email or not studentID:
+            continue
+
+        # Create Auth user
+        try:
+            user = auth.create_user(email=email, password=password, display_name=name)
+            user_id = user.uid
+        except exceptions.FirebaseError:
+            continue  # skip duplicates
+
+        # Create main Firestore doc
+        db.collection('users').document(user_id).set({
+            'user_id': user_id,
+            'name': name,
+            'email': email,
+            'active': True,
+            'role_type': 1,
+            'photo_name': ''
+        })
+
+        # Create roles subcollection
+        db.collection('users').document(user_id).collection('roles').document('student').set({
+            'studentID': studentID,
+            'studentClass': studentClass,
+            'fk_groupcode': groupCode
+        })
+
+    flash("CSV uploaded successfully", "success")
+    return redirect(url_for("admin_student_add"))
+
+
+#--------------------student list -----------------------
 @app.route("/admin/student_list")
 def admin_student_list():
     if session.get("role") == "admin":
@@ -773,11 +920,186 @@ def admin_student_assign():
         return render_template("admin/A_Student-Assign.html")
     return redirect(url_for("home"))
 
+# ------------------ Admin teacher add ------------------
 @app.route("/admin/teacher_add")
 def admin_teacher_add():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Teacher-Add.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    # Fetch all programs
+    programs_docs = db.collection("programs").stream()
+    programs = []
+    for doc in programs_docs:
+        p = doc.to_dict()
+        p["docId"] = doc.id
+        programs.append(p)
+
+    # Fetch all modules
+    modules_docs = db.collection("modules").stream()
+    modules = []
+    for doc in modules_docs:
+        m = doc.to_dict()
+        m["docId"] = doc.id
+        modules.append(m)
+
+    # Fetch all teachers (optional, for table)
+    teachers_docs = db.collection("users").where("role_type", "==", 2).stream()
+    teachers = []
+    for doc in teachers_docs:
+        t = doc.to_dict()
+        t["uid"] = doc.id
+
+        # Fetch module & program info from roles subcollection
+        role_doc = db.collection("users").document(t["uid"]).collection("roles").document("teacher").get()
+        if role_doc.exists:
+            role = role_doc.to_dict()
+            t["program"] = role.get("program", "")
+            t["module"] = role.get("module", "")
+            t["teacherID"] = role.get("teacherID", "")
+        else:
+            t["program"] = ""
+            t["module"] = ""
+            t["teacherID"] = ""
+
+        # Optional: Fetch module info for display
+        if t["module"]:
+            mod_doc = db.collection("modules").document(t["module"]).get()
+            t["modules"] = [mod_doc.to_dict()] if mod_doc.exists else []
+        else:
+            t["modules"] = []
+
+        teachers.append(t)
+
+    return render_template(
+        "admin/A_Teacher-Add.html",
+        programs=programs,
+        modules=modules,
+        teachers=teachers
+    )
+
+
+    return render_template("admin/A_Teacher-Add.html", modules=modules, programs=programs)  
+
+
+# ------------------ Save (Add/Edit) Teacher ------------------
+@app.route('/admin/teacher/save', methods=['POST'])
+def admin_teacher_save():
+    teacher_id = request.form.get('userId')  # Firestore UID if editing
+    name = request.form['name']
+    email = request.form['email']
+    password = request.form.get('password')
+    program = request.form['program']   # ✅ use program instead of course
+    module = request.form['module']
+    teacherID = request.form['teacherID']
+
+    if teacher_id:
+        # -------- Update existing user --------
+        try:
+            if password:
+                auth.update_user(teacher_id, email=email, display_name=name, password=password)
+            else:
+                auth.update_user(teacher_id, email=email, display_name=name)
+        except exceptions.FirebaseError as e:
+            flash(f"Error updating Auth user: {str(e)}", "error")
+            return redirect(url_for("admin_teacher_add"))
+
+        db.collection('users').document(teacher_id).update({
+            'name': name,
+            'email': email,
+            'active': True,
+            'role_type': 2,
+            'photo_name': ''
+        })
+
+        db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
+            'program': program,   # ✅ changed key
+            'module': module,
+            'teacherID': teacherID
+        })
+
+    else:
+        # -------- Add new teacher --------
+        try:
+            user = auth.create_user(email=email, password=password or "password123", display_name=name)
+            teacher_id = user.uid
+        except exceptions.FirebaseError as e:
+            flash(f"Error creating Auth user: {str(e)}", "error")
+            return redirect(url_for("admin_teacher_add"))
+
+        db.collection('users').document(teacher_id).set({
+            'user_id': teacher_id,
+            'name': name,
+            'email': email,
+            'active': True,
+            'role_type': 2,
+            'photo_name': ''
+        })
+
+        db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
+            'program': program,   # ✅ changed key
+            'module': module,
+            'teacherID': teacherID
+        })
+
+    return redirect(url_for('admin_teacher_add'))
+
+# ------------------ Upload Teachers via CSV ------------------
+@app.route("/admin/teacher_upload", methods=["POST"])
+def admin_teacher_upload():
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_dashboard"))
+
+    if "csv_file" not in request.files:
+        flash("No file selected", "error")
+        return redirect(url_for("admin_teacher_add"))
+
+    file = request.files["csv_file"]
+    if file.filename == "":
+        flash("No file selected", "error")
+        return redirect(url_for("admin_teacher_add"))
+
+    import csv, io
+    stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+    reader = csv.DictReader(stream)
+
+    for row in reader:
+        name = row.get("name")
+        email = row.get("email")
+        password = row.get("password") or "password123"
+        program = row.get("program")     # ✅ changed from course → program
+        module = row.get("module")
+        teacherID = row.get("teacherID")
+
+        if not name or not email or not teacherID:
+            continue
+
+        # Create Auth user
+        try:
+            user = auth.create_user(email=email, password=password, display_name=name)
+            teacher_id = user.uid
+        except exceptions.FirebaseError:
+            continue  # skip duplicates
+
+        # Create main Firestore doc
+        db.collection('users').document(teacher_id).set({
+            'user_id': teacher_id,
+            'name': name,
+            'email': email,
+            'active': True,
+            'role_type': 2,  # teacher role
+            'photo_name': ''
+        })
+
+        # Create roles subcollection
+        db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
+            'program': program,   # ✅ store program, not course
+            'module': module,
+            'teacherID': teacherID
+        })
+
+    flash("CSV uploaded successfully", "success")
+    return redirect(url_for("admin_teacher_add"))
+#--------------------teacher list -----------------------
 
 @app.route("/admin/teacher_list")
 def admin_teacher_list():
@@ -785,16 +1107,33 @@ def admin_teacher_list():
         return render_template("admin/A_Teacher-List.html")
     return redirect(url_for("home"))
 
-@app.route("/admin/teacher_assign")
-def admin_teacher_assign():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Teacher-Assign.html")
-    return redirect(url_for("home"))
+@app.route("/admin/module/assign", methods=["POST"])
+def assign_module():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
 
+    teacher_id = request.form.get("teacher_id")
+    module_id = request.form.get("module_id")
+
+    # Store the assignment in `ml_module`
+    db.collection("ml_module").add({
+        "teacher": teacher_id,
+        "module": module_id
+    })
+
+    return redirect(url_for("admin_modules"))
+# ------------------ Admin page ------------------
 @app.route("/admin/rooms")
 def admin_rooms():
     if session.get("role") == "admin":
         return render_template("admin/A_Rooms.html")
+    return redirect(url_for("home"))
+
+
+@app.route("/admin/teacher_assign")
+def admin_teacher_assign():
+    if session.get("role") == "admin":
+        return render_template("admin/A_TeacherAssign.html")
     return redirect(url_for("home"))
 
 @app.route("/admin/schedule_upload")
@@ -833,9 +1172,14 @@ def admin_summary():
         return render_template("admin/A_Summary.html")
     return redirect(url_for("home"))
 
+# ------------------ Admin Modules page ------------------
+
 # Admin Modules Page
 @app.route("/admin/modules")
 def admin_modules():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
     # Fetch modules
     modules_ref = db.collection("modules")
     modules_docs = modules_ref.stream()
@@ -855,9 +1199,6 @@ def admin_modules():
         programs.append(p)
     
     return render_template("admin/modules.html", modules=modules, programs=programs)
-    
-    return redirect(url_for("home"))
-
 
 
 # Add / Edit Module
@@ -869,20 +1210,23 @@ def admin_module_save():
     module_id = request.form.get("moduleId")
     module_name = request.form.get("moduleName")
     module_code = request.form.get("moduleCode")
+    fk_program = request.form.get("fk_program")   # <-- ADD THIS
     status = int(request.form.get("status"))
 
     module_data = {
         "moduleName": module_name,
         "moduleCode": module_code,
+        "fk_program": fk_program,   # <-- SAVE PROGRAM REFERENCE
         "status": status
     }
 
     if module_id:  # Edit existing module
-        db.collection("modules").document(module_id).set(module_data)
+        db.collection("modules").document(module_id).set(module_data, merge=True)
     else:  # Add new module
         db.collection("modules").add(module_data)
 
     return redirect(url_for("admin_modules"))
+
 
 # Delete Module
 @app.route("/delete_module/<module_id>", methods=["POST"])
@@ -892,6 +1236,190 @@ def delete_module(module_id):
 
     db.collection("modules").document(module_id).delete()
     return redirect(url_for("admin_modules"))
+
+
+# ------------------ Admin Groups Page ------------------
+@app.route("/admin/groups")
+def admin_groups():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    # Fetch all groups
+    groups_docs = db.collection("groups").stream()
+    groups = []
+    for doc in groups_docs:
+        g = doc.to_dict()
+        g["docId"] = doc.id
+        groups.append(g)
+
+    # Fetch all programs
+    programs_docs = db.collection("programs").stream()
+    programs = []
+    for doc in programs_docs:
+        p = doc.to_dict()
+        p["docId"] = doc.id
+        programs.append(p)
+
+    return render_template("admin/A_Group.html", groups=groups, programs=programs)
+
+
+# ------------------ Save (Add/Edit) Group ------------------
+@app.route("/admin/group/save", methods=["POST"])
+def admin_group_save():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    group_id = request.form.get("groupId")
+    group_code = request.form.get("groupCode")
+    program_id = request.form.get("fk_program")
+    intake = request.form.get("intake")
+
+    # Validate program exists
+    program_doc = db.collection("programs").document(program_id).get()
+    if not program_doc.exists:
+        flash("Selected program does not exist!", "danger")
+        return redirect(url_for("admin_groups"))
+
+    # Data to save
+    group_data = {
+        "groupCode": group_code,
+        "fk_program": program_id,  # store the program's Firestore ID
+        "intake": intake
+    }
+
+    if group_id:  # Edit existing group
+        db.collection("groups").document(group_id).set(group_data, merge=True)
+    else:  # Add new group
+        write_time, group_ref = db.collection("groups").add(group_data)  # correct unpacking
+        group_id = group_ref.id  # now safe to access
+
+    flash("Group saved successfully!", "success")
+    return redirect(url_for("admin_groups"))
+
+
+# ------------------ Delete Group ------------------
+@app.route("/admin/group/delete/<group_id>", methods=["POST"])
+def admin_group_delete(group_id):
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    db.collection("groups").document(group_id).delete()
+    flash("Group deleted successfully!", "success")
+    return redirect(url_for("admin_groups"))
+
+
+# ------------------ Upload Groups via CSV ------------------
+@app.route("/admin/group/upload", methods=["POST"])
+def admin_group_upload_route():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    csv_file = request.files.get("csv_file")
+    if not csv_file:
+        flash("No CSV file selected!", "danger")
+        return redirect(url_for("admin_groups"))
+
+    import csv, io
+    stream = io.StringIO(csv_file.stream.read().decode("UTF8"), newline=None)
+    reader = csv.DictReader(stream)
+
+    for row in reader:
+        # Lookup program by name
+        program_name = row.get("program_name")
+        program_query = db.collection("programs").where("programName", "==", program_name).limit(1).get()
+        if not program_query:
+            flash(f"Program '{program_name}' not found. Skipping row.", "warning")
+            continue
+
+        program_id = program_query[0].id
+
+        group_data = {
+            "groupName": row.get("groupName"),
+            "groupCode": row.get("groupCode"),
+            "fk_program": program_id,
+            "intake": row.get("intake")
+        }
+        db.collection("groups").add(group_data)
+
+    flash("CSV uploaded successfully!", "success")
+    return redirect(url_for("admin_groups"))
+
+# ------------------ Admin Programs Page ------------------
+@app.route("/admin/programs")
+def admin_programs():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    programs_docs = db.collection("programs").stream()
+    programs = []
+    for doc in programs_docs:
+        p = doc.to_dict()
+        p["docId"] = doc.id
+        programs.append(p)
+
+    return render_template("admin/A_Program.html", programs=programs)
+
+
+# ------------------ Save (Add/Edit) Program ------------------
+@app.route("/admin/program/save", methods=["POST"])
+def admin_program_save():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    program_id = request.form.get("programId")
+    program_name = request.form.get("programName")
+
+    if not program_name:
+        flash("Program name cannot be empty!", "danger")
+        return redirect(url_for("admin_programs"))
+
+    program_data = {
+        "programName": program_name
+    }
+
+    if program_id:  # Edit
+        db.collection("programs").document(program_id).set(program_data, merge=True)
+    else:  # Add new
+        db.collection("programs").add(program_data)
+
+    flash("Program saved successfully!", "success")
+    return redirect(url_for("admin_programs"))
+
+
+# ------------------ Delete Program ------------------
+@app.route("/admin/program/delete/<program_id>", methods=["POST"])
+def admin_program_delete(program_id):
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    db.collection("programs").document(program_id).delete()
+    flash("Program deleted successfully!", "success")
+    return redirect(url_for("admin_programs"))
+
+
+# ------------------ Upload Programs via CSV ------------------
+@app.route("/admin/program/upload", methods=["POST"])
+def admin_program_upload():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    csv_file = request.files.get("csv_file")
+    if not csv_file:
+        flash("No CSV file selected!", "danger")
+        return redirect(url_for("admin_programs"))
+
+    import csv, io
+    stream = io.StringIO(csv_file.stream.read().decode("UTF8"), newline=None)
+    reader = csv.DictReader(stream)
+
+    for row in reader:
+        program_name = row.get("program_name")
+        if not program_name:
+            continue
+        db.collection("programs").add({"programName": program_name})
+
+    flash("CSV uploaded successfully!", "success")
+    return redirect(url_for("admin_programs"))
 
 # ------------------ Logout / Signup ------------------
 @app.route("/logout")

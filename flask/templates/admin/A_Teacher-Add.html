@@ -1,45 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>iAttend Admin - Add Teacher</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<meta charset="UTF-8">
+<title>iAttend - Teachers</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-* {margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
-header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
-#menu-toggle{font-size:28px;margin-right:15px;cursor:pointer;}
-.header-content{width:100%;display:flex;justify-content:space-between;align-items:center;}
-.user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;cursor:pointer;}
-.user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
-.user-info span{font-size:16px;font-weight:600;color:#444;}
-.sidebar { position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif; transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px; }
-.sidebar.collapsed { width:70px; overflow:hidden; }
-.sidebar-section { margin-bottom:25px; padding:0 15px; }
-.sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
-.sidebar.collapsed .sidebar-section-title { opacity:0; }
-.sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
-.sidebar-link i { width:18px; text-align:center; }
-.sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
-.sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
-.sidebar-dropdown { display:flex; flex-direction:column; }
-.dropdown-menu { display:none; flex-direction:column; padding-left:20px; }
-.sidebar-dropdown.active .dropdown-menu { display:flex; }
-.sidebar-dropdown .dropdown-toggle i { margin-left:auto; transition: transform 0.3s; }
-.sidebar-dropdown.active .dropdown-toggle i { transform: rotate(180deg); }
-.main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
-.sidebar.collapsed ~ .main-content { margin-left:80px; }
-.page-title{margin-bottom:20px;font-size:28px;font-weight:700;color:#012970;}
-.card{background:#fff;border-radius:10px;box-shadow:0px 0px 30px rgba(1,41,112,0.1);padding:30px;max-width:800px;margin-bottom:30px;}
-.form-group{margin-bottom:15px;}
-label{display:block;margin-bottom:6px;font-weight:600;color:#012970;}
-input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
-.submit-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;font-size:14px;font-weight:500;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;transition:all 0.25s ease;}
-.submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,102,255,0.4);}
-.teacher-fields{display:block;margin-top:10px;}
-@media(max-width:768px){.sidebar{left:-260px;width:240px;position:fixed;top:0;height:100%;overflow-y:auto;z-index:1001;transition:left 0.3s ease;}.sidebar.active{left:0;}.main-content{margin-left:0 !important;}}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
+  header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding:0 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
+  #menu-toggle{font-size:28px;margin-right:15px;cursor:pointer;}
+  .header-content{width:100%;display:flex;justify-content:space-between;align-items:center;}
+  .user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;cursor:pointer;}
+  .user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
+  .user-info span{font-size:16px;font-weight:600;color:#444;}
+  .sidebar{position:fixed;top:0;left:0;width:240px;height:100%;background:linear-gradient(180deg,#FFEED3 0%,#FFEED3 100%);padding-top:60px;transition: width 0.4s;overflow-y:auto;box-shadow:2px 0 15px rgba(1,41,112,0.08);border-radius:0 16px 16px 0;}
+  .sidebar.collapsed{width:70px;}
+  .sidebar-section{margin-bottom:25px;}
+  .sidebar-link{display:flex;align-items:center;gap:12px;padding:12px 20px;margin-bottom:5px;border-radius:8px;font-size:15px;font-weight:500;color:#1A237E;text-decoration:none;white-space:nowrap;}
+  .sidebar-link.active{background:rgba(255,255,255,0.7);color:#4154F1;font-weight:600;}
+  .main-content{margin-left:260px;padding:100px 30px 30px;height:100vh;overflow-y:auto;transition:margin-left 0.4s;}
+  .sidebar.collapsed ~ .main-content{margin-left:80px;}
+  .card{background:#fff;padding:1.5rem;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.08);margin-bottom:20px;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{background-color:#f8f7ff;text-align:left;padding:12px;font-weight:500;}
+  td{padding:12px;border-top:1px solid #ddd;}
+  .tag{display:inline-block;background:#1e90ff;color:white;padding:3px 8px;border-radius:12px;font-size:12px;margin:2px;}
+  button.action-btn{padding:5px 10px;border:none;border-radius:5px;cursor:pointer;margin-right:5px;color:white;}
+  .edit-btn{background:#1e90ff;}
+  .delete-btn{background:#ff4c4c;}
+  .upload-btn{background:#28a745;}
+  .modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,0.5);justify-content:center;align-items:center;}
+  .modal.show{display:flex;}
+  .modal-content{background:#fff;margin:auto;border-radius:12px;width:90%;max-width:500px;overflow:hidden;}
+  .modal-header{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);padding:15px;color:white;font-size:20px;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+  .modal-body{padding:20px;}
+  .modal label{display:block;margin:10px 0 5px;color:#012970;font-weight:600;}
+  .modal input,.modal select{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px;margin-bottom:12px;}
+  .modal select[multiple]{height:120px;}
+  .modal-buttons{text-align:right;margin-top:10px;}
+  .modal button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:500;font-size:14px;margin-left:10px;}
+  .modal .save-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;}
+  .modal .cancel-btn{background:#ccc;color:#000;}
 </style>
 </head>
 <body>
@@ -48,205 +50,178 @@ input,select{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;fon
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
     <span>iAttend Admin</span>
-    <div class="user-info">
-      <span>Admin</span>
-      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin Profile">
-    </div>
+    <div class="user-info"><span>Admin</span><img src="https://placehold.co/36x36/899BBD/ffffff?text=A"></div>
   </div>
 </header>
 
-
-<!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link {% if request.endpoint=='admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
-      <i class="fas fa-home"></i><span>Dashboard</span>
-    </a>
+    <a class="sidebar-link" href="#"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
-
   <div class="sidebar-section">
-    <div class="sidebar-section-title">Management</div>
-    <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-link dropdown-toggle">
-        <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
-      </a>
-      <div class="dropdown-menu">
-        <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
-        <a class="sidebar-link " href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
-        <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
-      </div>
-    </div>
-    <div class="sidebar-dropdown">
-      <a href="#" class="sidebar-link dropdown-toggle">
-        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
-      </a>
-      <div class="dropdown-menu">
-        <a class="sidebar-link" href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
-        <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
-        <a class="sidebar-link" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
-      </div>
-    </div>
-  </div>
-
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">System</div>
-    <a class="sidebar-link" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
-    <a class="sidebar-link" href="{{ url_for('admin_schedule_upload') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
-  </div>
-
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Logs</div>
-    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
-    <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
-  </div>
-
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Attendance</div>
-    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
-    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    <a class="sidebar-link active" href="#"><i class="fas fa-chalkboard-teacher"></i><span>Teachers</span></a>
   </div>
 </div>
-
 
 <div class="main-content">
-  <h1 class="page-title">Add Teacher</h1>
+  <h2>Teachers</h2>
+  <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:15px;">
+    <button class="action-btn edit-btn" onclick="openAddModal()"><i class="fas fa-plus"></i> Add Teacher</button>
+    <button class="action-btn upload-btn" onclick="openUploadModal()"><i class="fas fa-file-csv"></i> Upload CSV</button>
+  </div>
 
-  <!-- Manual Entry -->
   <div class="card">
-    <h3>Manual Teacher Entry</h3>
-    <form id="teacherForm">
-      <input type="hidden" id="userRole" value="2">
-      <div class="form-group"><label>Name</label><input type="text" id="userName" required></div>
-      <div class="form-group"><label>Email</label><input type="email" id="userEmail" required></div>
-      <div class="form-group"><label>Password</label><input type="password" id="userPassword" required></div>
-      <div class="form-group"><label>Photo Name</label><input type="text" id="userPhotoName" placeholder="example.jpg"></div>
-      <div class="form-group"><label>Active</label>
-        <select id="userActive"><option value="true" selected>Yes</option><option value="false">No</option></select>
-      </div>
-      <div class="teacher-fields">
-        <div class="form-group"><label>Group/Module</label>
-          <select id="fkGroupCode"><option value="">Select Group</option></select>
-        </div>
-      </div>
-      <button type="submit" class="submit-btn">Add Teacher</button>
-    </form>
-
-    <!-- CSV Upload -->
-    <h3 style="margin-top:30px;">Upload Teachers CSV</h3>
-    <div class="form-group"><input type="file" id="teacherCsvFile" accept=".csv" /></div>
-    <button id="uploadTeacherBtn" class="submit-btn">Upload Teachers CSV</button>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Modules</th>
+          <th>Teacher ID</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for teacher in teachers %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ teacher.name }}</td>
+          <td>{{ teacher.email }}</td>
+          <td>
+            {% for mod in teacher.modules %}
+              <span class="tag">{{ mod.moduleName }} ({{ mod.moduleCode }})</span>
+            {% endfor %}
+          </td>
+          <td>{{ teacher.teacherID }}</td>
+          <td>
+            <button class="action-btn edit-btn" onclick="openEditModal('{{ teacher.uid }}')">Edit</button>
+            <button class="action-btn delete-btn" onclick="openDeleteModal('{{ teacher.uid }}')">Delete</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+<!-- Add/Edit Teacher Modal -->
+<div id="teacherModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span id="modalTitle">Add/Edit Teacher</span>
+      <span class="close" onclick="closeTeacherModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="teacherForm" method="POST" action="{{ url_for('admin_teacher_save') }}">
+        <input type="hidden" id="formTeacherId" name="userId">
+        <label for="formName">Name:</label>
+        <input type="text" id="formName" name="name" required>
+        <label for="formEmail">Email:</label>
+        <input type="email" id="formEmail" name="email" required>
+        <label for="formPassword">Password:</label>
+        <input type="password" id="formPassword" name="password">
+        <label for="formTeacherID">Teacher ID:</label>
+        <input type="text" id="formTeacherID" name="teacherID" required>
+        <label for="formProgram">Program:</label>
+        <select id="formProgram" name="program" required>
+          <option value="">-- Select Program --</option>
+          {% for p in programs %}
+            <option value="{{ p['docId'] }}">{{ p['programName'] }}</option>
+          {% endfor %}
+        </select>
+        <label for="formModules">Module:</label>
+        <select id="formModules" name="module">
+          <option value="">-- Select Module --</option>
+          {% for m in modules %}
+            <option value="{{ m['docId'] }}" data-fk-program="{{ m['fk_program'] }}">{{ m['moduleName'] }} ({{ m['moduleCode'] }})</option>
+          {% endfor %}
+        </select>
+        <div class="modal-buttons">
+          <button type="button" class="cancel-btn" onclick="closeTeacherModal()">Cancel</button>
+          <button type="submit" class="save-btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-  authDomain: "aimanzamani.firebaseapp.com",
-  projectId: "aimanzamani",
-  storageBucket: "aimanzamani.appspot.com",
-  messagingSenderId: "63348630728",
-  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// Load groups dynamically
-async function loadGroups() {
-  const groupSelect = document.getElementById('fkGroupCode');
-  const snapshot = await getDocs(collection(db, "groups"));
-  snapshot.forEach(docSnap => {
-    const opt = document.createElement('option');
-    opt.value = docSnap.id; 
-    opt.textContent = docSnap.data().group_code;
-    groupSelect.appendChild(opt);
-  });
-}
-loadGroups();
-
-// Check email exists
-async function emailExists(email){ 
-  try{ return (await fetchSignInMethodsForEmail(auth,email)).length>0;} 
-  catch{return false;}
-}
-
-// Manual teacher submit
-document.getElementById('teacherForm').addEventListener('submit', async e=>{
-  e.preventDefault();
-  const email = document.getElementById('userEmail').value.trim();
-  if(!email.includes('@')) return alert("❌ Invalid email");
-  if(await emailExists(email)) return alert("❌ Email already exists");
-
-  try{
-    const cred = await createUserWithEmailAndPassword(auth,email,document.getElementById('userPassword').value.trim());
-    const uid = cred.user.uid;
-
-    await setDoc(doc(db,"users",uid),{
-      user_id:uid,
-      name:document.getElementById('userName').value.trim(),
-      email,
-      role_type:2,
-      active:document.getElementById('userActive').value==="true",
-      photo_name:document.getElementById('userPhotoName').value.trim()||""
-    });
-
-    await setDoc(doc(collection(db,"users",uid,"roles"),"teacher"),{
-      fk_groupcode:document.getElementById('fkGroupCode').value
-    });
-
-    alert("✅ Teacher added successfully!");
-    document.getElementById('teacherForm').reset();
-  } catch(err){
-    alert("❌ Failed: "+err.message);
-  }
-});
-
-// CSV Upload
-document.getElementById('uploadTeacherBtn').addEventListener('click', async ()=>{
-  const fileInput = document.getElementById('teacherCsvFile');
-  if(!fileInput.files.length) return alert("❌ Select a CSV file");
-  const file = fileInput.files[0];
-  const text = await file.text();
-  const lines = text.split(/\r?\n/).filter(l=>l.trim());
-  for(const line of lines){
-    const [name,email,password,photo,groupCode] = line.split(',');
-    if(!email || !name) continue;
-    if(await emailExists(email)) continue;
-    try{
-      const cred = await createUserWithEmailAndPassword(auth,email,password||"password123");
-      const uid = cred.user.uid;
-      await setDoc(doc(db,"users",uid),{
-        user_id:uid,
-        name,
-        email,
-        role_type:2,
-        active:true,
-        photo_name:photo||""
-      });
-      await setDoc(doc(collection(db,"users",uid,"roles"),"teacher"),{
-        fk_groupcode:groupCode
-      });
-    } catch(err){ console.error(err); }
-  }
-  alert("✅ CSV upload completed!");
-  fileInput.value="";
-});
-</script>
+<!-- Upload CSV Modal -->
+<div id="uploadModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span>Upload Teachers CSV</span>
+      <span class="close" onclick="closeUploadModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form method="POST" action="{{ url_for('admin_teacher_upload') }}" enctype="multipart/form-data">
+        <label for="csvFile">Select CSV File:</label>
+        <input type="file" id="csvFile" name="csv_file" accept=".csv" required>
+        <button type="submit" class="upload-btn">Upload</button>
+      </form>
+    </div>
+  </div>
+</div>
 
 <script>
-document.getElementById('menu-toggle').addEventListener('click', ()=>{
-  document.querySelector('.sidebar').classList.toggle('collapsed');
-});
-document.querySelectorAll('.dropdown-toggle').forEach(drop => {
-  drop.addEventListener('click', e => {
-    e.preventDefault();
-    drop.parentElement.classList.toggle('active');
-  });
-});
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+menuToggle.addEventListener('click', ()=>{ sidebar.classList.toggle('collapsed'); });
+
+// Open Add Teacher modal
+function openAddModal(){
+  document.getElementById('modalTitle').innerText = "Add Teacher";
+  document.getElementById('formTeacherId').value = "";
+  document.getElementById('formName').value = "";
+  document.getElementById('formEmail').value = "";
+  document.getElementById('formPassword').value = "";
+  document.getElementById('formTeacherID').value = "";
+  document.getElementById('formProgram').selectedIndex = 0;
+  filterModules();
+  document.getElementById('formModules').selectedIndex = 0;
+  document.getElementById('teacherModal').classList.add('show');
+}
+
+// Open Edit Teacher modal
+function openEditModal(uid){
+  fetch(`/api/teacher/${uid}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('modalTitle').innerText = "Edit Teacher";
+      document.getElementById('formTeacherId').value = uid;
+      document.getElementById('formName').value = data.name;
+      document.getElementById('formEmail').value = data.email;
+      document.getElementById('formPassword').value = "";
+      document.getElementById('formTeacherID').value = data.teacherID;
+      document.getElementById('formProgram').value = data.program;
+      filterModules();
+      document.getElementById('formModules').value = data.module;
+      document.getElementById('teacherModal').classList.add('show');
+    });
+}
+
+// Close Teacher modal
+function closeTeacherModal(){ document.getElementById('teacherModal').classList.remove('show'); }
+
+// Open/Close Upload CSV modal
+function openUploadModal(){ document.getElementById('uploadModal').classList.add('show'); }
+function closeUploadModal(){ document.getElementById('uploadModal').classList.remove('show'); }
+
+// Filter modules based on program
+function filterModules(){
+  const programId = document.getElementById('formProgram').value;
+  const moduleSelect = document.getElementById('formModules');
+  moduleSelect.selectedIndex = 0;
+  for (let opt of moduleSelect.options){
+    if(opt.value === "") continue;
+    opt.style.display = (opt.dataset.fkProgram === programId || programId === "") ? "block" : "none";
+  }
+}
+
+document.getElementById('formProgram').addEventListener('change', filterModules);
+
+// Placeholder for delete modal
+function openDeleteModal(uid){ alert('Delete teacher: ' + uid); }
 </script>
 
 </body>

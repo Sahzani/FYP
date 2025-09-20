@@ -107,6 +107,7 @@
   </div>
 </header>
 
+<div class="sidebar">
 <!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
   <div class="sidebar-section">
@@ -144,8 +145,10 @@
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Logs</div>
-    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
-    <a class="sidebar-link" href="{{ url_for('admin_change_logs') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}">
+  <i class="fas fa-history"></i><span>Attendance Logs</span>
+</a>
+
   </div>
 
   <div class="sidebar-section">
@@ -206,15 +209,23 @@
   </div>
 </div>
 
-<!-- Modals -->
+<!-- Module Modal -->
 <div id="moduleModal" class="modal">
   <div class="modal-content">
-    <div class="modal-header"><span id="modalTitle">Add Module</span><span class="close" onclick="closeModal()">&times;</span></div>
+    <div class="modal-header">
+      <span id="modalTitle">Add Module</span>
+      <span class="close" onclick="closeModal()">&times;</span>
+    </div>
     <div class="modal-body">
       <form id="moduleForm" method="POST" action="{{ url_for('admin_module_save') }}">
         <input type="hidden" name="moduleId" id="formModuleId">
-        <label>Module Name</label><input type="text" name="moduleName" id="formModuleName" required>
-        <label>Module Code</label><input type="text" name="moduleCode" id="formModuleCode" required>
+
+        <label>Module Name</label>
+        <input type="text" name="moduleName" id="formModuleName" required>
+
+        <label>Module Code</label>
+        <input type="text" name="moduleCode" id="formModuleCode" required>
+
         <label>Program</label>
         <select name="fk_program" id="formProgram" required>
           <option value="">-- Select Program --</option>
@@ -222,11 +233,13 @@
             <option value="{{ program.docId }}">{{ program.programName }}</option>
           {% endfor %}
         </select>
+
         <label>Status</label>
         <select name="status" id="formStatus">
           <option value="1">Active</option>
           <option value="0">Inactive</option>
         </select>
+
         <div class="modal-buttons">
           <button type="submit" class="save-btn">Save</button>
           <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
@@ -236,20 +249,6 @@
   </div>
 </div>
 
-<div id="deleteModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header"><span>Confirm Delete</span><span class="close" onclick="closeDeleteModal()">&times;</span></div>
-    <div class="modal-body" id="deleteModalBody"></div>
-    <div class="modal-buttons">
-      <form id="deleteForm" method="POST" action="">
-        <button type="submit" class="save-btn">Delete</button>
-        <button type="button" class="cancel-btn" onclick="closeDeleteModal()">Cancel</button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<div id="toast" class="toast"></div>
 
 <script>
   // Sidebar dropdown
@@ -268,31 +267,44 @@
   menuToggle.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
 
   // Modals
-  function openAddModal(){
-    document.getElementById('modalTitle').innerText = "Add Module";
-    document.getElementById('formModuleId').value = "";
-    document.getElementById('formModuleName').value = "";
-    document.getElementById('formModuleCode').value = "";
-    document.getElementById('formStatus').value = "1";
-    document.getElementById('formProgram').value = "";
-    document.getElementById('moduleModal').classList.add('show');
-  }
-  function openEditModal(id,name,code,status,fk_program){
-    document.getElementById('modalTitle').innerText = "Edit Module";
-    document.getElementById('formModuleId').value = id;
-    document.getElementById('formModuleName').value = name;
-    document.getElementById('formModuleCode').value = code;
-    document.getElementById('formStatus').value = status;
-    document.getElementById('formProgram').value = fk_program;
-    document.getElementById('moduleModal').classList.add('show');
-  }
-  function closeModal(){ document.getElementById('moduleModal').classList.remove('show'); }
-  function openDeleteModal(id){
-    document.getElementById('deleteModalBody').innerText = "Are you sure you want to delete module " + id + "?";
-    document.getElementById('deleteForm').action = "/delete_module/" + id;
-    document.getElementById('deleteModal').classList.add('show');
-  }
-  function closeDeleteModal(){ document.getElementById('deleteModal').classList.remove('show'); }
+ // Open Add Module Modal
+function openAddModal() {
+  document.getElementById('modalTitle').innerText = "Add Module";
+  document.getElementById('formModuleId').value = "";
+  document.getElementById('formModuleName').value = "";
+  document.getElementById('formModuleCode').value = "";
+  document.getElementById('formStatus').value = "1";
+  document.getElementById('formProgram').value = ""; // reset program select
+  document.getElementById('moduleModal').classList.add('show');
+}
+
+// Open Edit Module Modal
+function openEditModal(id, name, code, status, fk_program) {
+  document.getElementById('modalTitle').innerText = "Edit Module";
+  document.getElementById('formModuleId').value = id;
+  document.getElementById('formModuleName').value = name;
+  document.getElementById('formModuleCode').value = code;
+  document.getElementById('formStatus').value = status;
+  document.getElementById('formProgram').value = fk_program; // pre-select program
+  document.getElementById('moduleModal').classList.add('show');
+}
+
+// Close Module Modal
+function closeModal() {
+  document.getElementById('moduleModal').classList.remove('show');
+}
+
+// Delete Modal
+function openDeleteModal(id) {
+  document.getElementById('deleteModalBody').innerText = "Are you sure you want to delete module " + id + "?";
+  document.getElementById('deleteForm').action = "/delete_module/" + id;
+  document.getElementById('deleteModal').classList.add('show');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('show');
+}
+
 </script>
 
 </body>

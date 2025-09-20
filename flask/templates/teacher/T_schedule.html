@@ -109,74 +109,27 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
           <th>Room</th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        {% if schedules %}
+          {% for s in schedules %}
+            <tr>
+              <td>{{ s.group }}</td>
+              <td>{{ s.module }}</td>
+              <td>{{ s.day }}</td>
+              <td>{{ s.startTime }}</td>
+              <td>{{ s.endTime }}</td>
+              <td>{{ s.room }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="6" class="text-center">No schedules found.</td>
+          </tr>
+        {% endif %}
+      </tbody>
     </table>
   </div>
 </div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-  authDomain: "aimanzamani.firebaseapp.com",
-  projectId: "aimanzamani",
-  storageBucket: "aimanzamani.appspot.com",
-  messagingSenderId: "63348630728",
-  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-async function fetchSchedule() {
-  const tbody = document.querySelector('#schedule-table tbody');
-  tbody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
-
-  // Fetch all groups
-  const groupSnapshot = await getDocs(collection(db, 'groups'));
-  const groupMap = {};
-  groupSnapshot.forEach(doc => {
-    groupMap[doc.id] = doc.data().group_code; // Map by doc ID
-  });
-
-  // Fetch all modules
-  const moduleSnapshot = await getDocs(collection(db, 'mlmodule'));
-  const moduleMap = {};
-  moduleSnapshot.forEach(doc => {
-    moduleMap[doc.id] = { name: doc.data().moduleName, code: doc.data().moduleCode };
-  });
-
-  // Fetch all schedules
-  const scheduleSnapshot = await getDocs(collection(db, 'schedules'));
-  tbody.innerHTML = '';
-
-  if(scheduleSnapshot.empty){
-    tbody.innerHTML = '<tr><td colspan="6">No schedules found.</td></tr>';
-    return;
-  }
-
-  scheduleSnapshot.forEach(docItem => {
-    const data = docItem.data();
-    const groupName = groupMap[data.group] || `❌ ${data.group}`;
-    const module = moduleMap[data.module];
-    const moduleName = module ? `${module.name} (${module.code})` : `❌ ${data.module}`;
-
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${groupName}</td>
-      <td>${moduleName}</td>
-      <td>${data.day || ''}</td>
-      <td>${data.startTime || ''}</td>
-      <td>${data.endTime || ''}</td>
-      <td>${data.room || ''}</td>
-    `;
-    tbody.appendChild(row);
-  });
-}
-
-fetchSchedule();
-</script>
 
 <script>
 const menuToggle = document.getElementById('menu-toggle');
