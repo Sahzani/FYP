@@ -313,6 +313,40 @@ def student_attendance():
         total=total,
         percentage=round(percentage, 2)
     )
+
+# ------------------ Student Schedule Page ------------------
+@app.route("/student/schedule")
+def student_schedule():
+    # Get the logged-in user from session
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("home"))
+
+    user_id = user.get("uid")
+
+    # Fetch student document from Firestore
+    student_doc = db.collection("students").where("uid", "==", user_id).limit(1).stream()
+    student_data = None
+    for doc in student_doc:
+        student_data = doc.to_dict()
+        break
+
+    if not student_data:
+        flash("Student data not found.")
+        return redirect(url_for("student_dashboard"))
+
+    group_code = student_data.get("groupCode")
+
+    # Query schedules filtered by group
+    schedules_ref = db.collection("schedules").where("group", "==", group_code).stream()
+    schedules = [doc.to_dict() for doc in schedules_ref]
+
+    return render_template(
+        "student/S_Schedule.html",  # updated template name
+        schedules=schedules,
+        full_name=student_data.get("fullName")
+    )
+
 # ------------------ Student Absent Pages ------------------
 @app.route("/student/absentapp", methods=["GET", "POST"])
 def student_absentapp():
@@ -531,6 +565,7 @@ def student_contact():
     if session.get("role") == "student":
         return render_template("student/S_ContactUs.html")
     return redirect(url_for("home"))
+
 
 # ------------------ Teacher Pages ------------------
 @app.route("/teacher/class_list")

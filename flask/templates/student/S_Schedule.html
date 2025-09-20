@@ -104,7 +104,26 @@
 <div class="card">
   <h2>Timetable</h2>
   <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
-    <!-- timetable content will go here -->
+ <div style="overflow-x:auto; width:100%;">
+      <table>
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Module</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in schedules %}
+          <tr>
+            <td>{{ s.day }}</td>
+            <td>{{ s.moduleName }}</td>
+            <td>{{ s.startTime }} - {{ s.endTime }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
