@@ -5,6 +5,8 @@ from datetime import timedelta
 from werkzeug.utils import secure_filename
 from firebase_admin import auth, exceptions
 import firebase_admin, random
+from flask import Flask, Response, render_template, redirect, url_for, send_from_directory
+
 import os
 import subprocess
 
@@ -836,13 +838,20 @@ def admin_student_add():
     )
 
 # ------------------ Save (Add/Edit) Student ------------------
+UPLOAD_FOLDER = "student_pics"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/admin/student/save', methods=['POST'])
 def admin_student_save():
     student_id = request.form.get('userId')
     name = request.form['name']
     email = request.form['email']
     password = request.form.get('password')
-    program = request.form['program']  # selected program
+    program = request.form['program']
 
     # Auto-generate studentID
     import random, string
@@ -855,6 +864,12 @@ def admin_student_save():
         fk_groupcode = g.id
         break
 
+    # Handle photo upload
+    photo_file = request.files.get("photo")
+    photo_name = None
+    if photo_file and allowed_file(photo_file.filename):
+        ext = photo_file.filename.rsplit(".", 1)[1].lower()
+
     if student_id:
         # Update existing student
         try:
@@ -866,14 +881,19 @@ def admin_student_save():
             flash(f"Error updating Auth user: {str(e)}", "error")
             return redirect(url_for("admin_student_add"))
 
-        db.collection('users').document(student_id).update({
+        student_data = {
             'name': name,
             'email': email,
             'active': True,
-            'role_type': 1,
-            'photo_name': ''
-        })
+            'role_type': 1
+        }
 
+        if photo_file and allowed_file(photo_file.filename):
+            photo_name = f"{student_id}.{ext}"
+            photo_file.save(os.path.join(UPLOAD_FOLDER, photo_name))
+            student_data['photo_name'] = photo_name
+
+        db.collection('users').document(student_id).update(student_data)
         db.collection('users').document(student_id).collection('roles').document('student').set({
             'studentID': studentID,
             'fk_groupcode': fk_groupcode,
@@ -889,15 +909,22 @@ def admin_student_save():
             flash(f"Error creating Auth user: {str(e)}", "error")
             return redirect(url_for("admin_student_add"))
 
-        db.collection('users').document(student_id).set({
+        student_data = {
             'user_id': student_id,
             'name': name,
             'email': email,
             'active': True,
-            'role_type': 1,
-            'photo_name': ''
-        })
+            'role_type': 1
+        }
 
+        if photo_file and allowed_file(photo_file.filename):
+            photo_name = f"{student_id}.{ext}"
+            photo_file.save(os.path.join(UPLOAD_FOLDER, photo_name))
+            student_data['photo_name'] = photo_name
+        else:
+            student_data['photo_name'] = ''
+
+        db.collection('users').document(student_id).set(student_data)
         db.collection('users').document(student_id).collection('roles').document('student').set({
             'studentID': studentID,
             'fk_groupcode': fk_groupcode,
@@ -905,6 +932,12 @@ def admin_student_save():
         })
 
     return redirect(url_for('admin_student_add'))
+
+
+
+@app.route('/student_pics/<filename>')
+def student_photo(filename):
+    return send_from_directory('student_pics', filename)
 
 
 # ------------------ Upload Students via CSV ------------------
@@ -998,7 +1031,6 @@ def admin_student_delete(uid):
     except Exception as e:
         flash(f"Error deleting student: {str(e)}", "error")
     return redirect(url_for("admin_student_add"))
-
 #--------------------student list -----------------------
 @app.route("/admin/student_list")
 def admin_student_list():

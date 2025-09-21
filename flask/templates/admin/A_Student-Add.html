@@ -61,7 +61,6 @@
     <a class="sidebar-link active" href="#"><i class="fas fa-user-graduate"></i><span>Students</span></a>
   </div>
 </div>
-
 <div class="main-content">
   <h2>Students</h2>
   <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:15px;">
@@ -74,6 +73,7 @@
       <thead>
         <tr>
           <th>#</th>
+          <th>Photo</th>
           <th>Name</th>
           <th>Email</th>
           <th>Student ID</th>
@@ -85,6 +85,14 @@
         {% for student in students %}
         <tr>
           <td>{{ loop.index }}</td>
+          <td>
+            {% if student.photo_name %}
+  <img src="{{ url_for('student_photo', filename=student.photo_name) }}" width="50" height="50" style="border-radius:50%">
+{% else %}
+  -
+{% endif %}
+
+          </td>
           <td>{{ student.name }}</td>
           <td>{{ student.email }}</td>
           <td>{{ student.studentID }}</td>
@@ -108,7 +116,7 @@
       <span class="close" onclick="closeStudentModal()">&times;</span>
     </div>
     <div class="modal-body">
-      <form id="studentForm" method="POST" action="{{ url_for('admin_student_save') }}">
+      <form id="studentForm" method="POST" action="{{ url_for('admin_student_save') }}" enctype="multipart/form-data">
         <input type="hidden" id="formStudentId" name="userId">
         <input type="hidden" id="formGroupCode" name="fk_groupcode">
 
@@ -129,6 +137,9 @@
           {% endfor %}
         </select>
 
+        <label for="formPhoto">Photo:</label>
+        <input type="file" id="formPhoto" name="photo" accept="image/*">
+
         <div class="modal-buttons">
           <button type="button" class="cancel-btn" onclick="closeStudentModal()">Cancel</button>
           <button type="submit" class="save-btn">Save</button>
@@ -137,6 +148,7 @@
     </div>
   </div>
 </div>
+
 
 <!-- CSV Upload Form -->
 <form id="uploadForm" method="POST" action="{{ url_for('admin_student_upload') }}" enctype="multipart/form-data" style="display:none;">
