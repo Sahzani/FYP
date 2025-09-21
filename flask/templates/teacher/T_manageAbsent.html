@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iAttend - Manage Absences</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
+  header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding-left:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1000;}
+  #menu-toggle{font-size:28px;margin-right:15px;cursor:pointer;}
+  .header-content{width:100%;display:flex;justify-content:space-between;align-items:center;}
+  .user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;transition:0.2s;cursor:pointer;text-decoration:none;}
+  .user-info:hover{background:#f0f0f0;}
+  .user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
+  .user-info span{font-size:16px;font-weight:600;color:#444;}
+  .breadcrumb{font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;margin-bottom:20px;}
+  .breadcrumb .section{color:#989797;}
+  .breadcrumb .current{color:#444444;}
+  .sidebar{position:fixed;top:60px;left:0;width:267px;height:calc(100% - 60px);background:linear-gradient(180deg,#FFEED3 0%,#FFEED3 100%);padding:15px 0;box-shadow:2px 0 15px rgba(1,41,112,0.08);transition:width 0.3s ease;z-index:999;border-top-right-radius:12px;overflow:hidden;}
+  .sidebar.collapsed{width:70px;}
+  .sidebar-section{margin-bottom:25px;padding:0 15px;}
+  .sidebar-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#5D5FEF;margin-bottom:10px;padding-left:10px;transition:opacity 0.3s;}
+  .sidebar.collapsed .sidebar-section-title{opacity:0;}
+  .sidebar-link{display:flex;align-items:center;gap:10px;padding:12px 15px;margin-bottom:8px;border-radius:8px;font-size:15px;font-weight:500;color:#1A237E;text-decoration:none;transition:all 0.25s ease;white-space:nowrap;}
+  .sidebar.collapsed .sidebar-link span{display:none;}
+  .sidebar-link i{width:18px;text-align:center;}
+  .sidebar-link:hover{background:rgba(255,255,255,0.5);transform:translateX(4px);}
+  .sidebar-link.active{background:rgba(255,255,255,0.7);color:#4154F1;font-weight:600;}
+  .main{margin-left:260px;padding:100px 30px 30px;min-height:100vh;transition:margin-left 0.3s ease;}
+  .sidebar.collapsed ~ .main{margin-left:80px;}
+  .card{background:#fff;padding:20px;border-radius:16px;box-shadow:0 8px 25px rgba(0,0,0,0.08);margin-bottom:16px;}
+  label{display:block;margin-bottom:6px;font-weight:600;color:#333;}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;margin-bottom:15px;font-size:14px;}
+  
+  /* Modern Button Styles */
+  .btn {
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+  }
+  .btn-primary {
+    background-color: #5D5FEF;
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background-color: #4154F1;
+  }
+  .btn-secondary {
+    background-color: #e0e0e0;
+    color: #333;
+  }
+  .btn-secondary:hover {
+    background-color: #d0d0d0;
+  }
+  .btn:disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+  .btn-small {
+    padding: 6px 12px;
+    font-size: 14px;
+    gap: 4px;
+  }
+
+  /* Modal */
+  .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:2000;}
+  .modal.show{display:flex;}
+  .modal-content{background:#fff;padding:20px;border-radius:12px;width:400px;max-width:90%;transform:scale(0.7);transition:transform 0.3s; z-index: 2001;}
+  .modal-content.show{transform:scale(1);}
+  
+  /* Status pill styles */
+  .status-pill {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-pending { background-color: #f97316; }
+  .status-approved { background-color: #22c55e; }
+  .status-rejected { background-color: #ef4444; }
+  .status-action-required { background-color: #FFA500; }
+</style>
+</head>
+<body>
+
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="#" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="#" class="user-info">
+      <span>{{ profile.name }}</span>
+      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
+    </a>
+  </div>
+</header>
+
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
+      <i class="fas fa-home"></i><span>Dashboard</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reports</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
+      <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Manage</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_schedule') }}">
+      <i class="fas fa-calendar"></i><span>Class Schedule</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Rooms</span></a>
+    <a class="sidebar-link" href="#"><i class="fas fa-users"></i><span>Student Attendance</span></a>
+    <a class="sidebar-link active" href="#"><i class="fas fa-calendar-alt"></i><span>Manage Absences</span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
+  </div>
+</div>
+
+<div class="main">
+  <h1 class="text-2xl font-bold mb-4">Manage Student Absences</h1>
+  <div class="breadcrumb"><span class="section">Manage</span> / <span class="current">Manage Absences</span></div>
+
+  <div class="card flex justify-between items-center flex-wrap">
+    <div class="flex-grow mr-4">
+      <input type="text" id="searchInput" placeholder="Search by student name or group..." class="w-full">
+    </div>
+    <div class="flex-shrink-0">
+      <select id="filterStatus" class="p-2 border border-gray-300 rounded-md">
+        <option value="All">All Statuses</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Rejected">Rejected</option>
+        <option value="Action Required">Action Required</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card table-container">
+    <h2 class="text-xl font-semibold mb-3">Absence Applications</h2>
+    <table class="w-full border-collapse">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-2 text-left">Student</th>
+          <th class="p-2 text-left">Group</th>
+          <th class="p-2 text-left">Date</th>
+          <th class="p-2 text-left">Reason</th>
+          <th class="p-2 text-left">Status</th>
+          <th class="p-2 text-left">Action</th>
+        </tr>
+      </thead>
+      <tbody id="report-body">
+        <tr data-status="Approved" data-reason="Medical">
+          <td class="p-2">Ali</td>
+          <td class="p-2">G001</td>
+          <td class="p-2">2025-09-12</td>
+          <td class="p-2">Medical</td>
+          <td class="p-2"><span class="status-pill status-approved">Approved</span></td>
+          <td class="p-2">
+            <button class="btn btn-small btn-primary" disabled><i class="fas fa-check"></i> Reviewed</button>
+          </td>
+        </tr>
+        <tr data-status="Pending" data-reason="Family Emergency">
+          <td class="p-2">Hani</td>
+          <td class="p-2">G002</td>
+          <td class="p-2">2025-09-12</td>
+          <td class="p-2">Family Emergency</td>
+          <td class="p-2"><span class="status-pill status-pending">Pending</span></td>
+          <td class="p-2">
+            <button class="btn btn-small btn-primary review-btn" 
+              data-group="G002" data-student="Hani"><i class="fas fa-pen-to-square"></i> Review</button>
+          </td>
+        </tr>
+        <tr data-status="Rejected" data-reason="Not a valid reason per school policy.">
+          <td class="p-2">Maria</td>
+          <td class="p-2">G003</td>
+          <td class="p-2">2025-09-11</td>
+          <td class="p-2">Not a valid reason per school policy.</td>
+          <td class="p-2"><span class="status-pill status-rejected">Rejected</span></td>
+          <td class="p-2">
+            <button class="btn btn-small btn-primary" disabled><i class="fas fa-check"></i> Reviewed</button>
+          </td>
+        </tr>
+        <tr data-status="Pending" data-reason="Fever">
+          <td class="p-2">John Tan</td>
+          <td class="p-2">G004</td>
+          <td class="p-2">2025-09-15</td>
+          <td class="p-2">Fever</td>
+          <td class="p-2"><span class="status-pill status-pending">Pending</span></td>
+          <td class="p-2">
+            <button class="btn btn-small btn-primary review-btn" data-group="G004" data-student="John Tan"><i class="fas fa-pen-to-square"></i> Review</button>
+          </td>
+        </tr>
+        <tr data-status="Pending" data-reason="Dentist Appointment">
+          <td class="p-2">Siti Bte. Ahmad</td>
+          <td class="p-2">G005</td>
+          <td class="p-2">2025-09-14</td>
+          <td class="p-2">Dentist Appointment</td>
+          <td class="p-2"><span class="status-pill status-pending">Pending</span></td>
+          <td class="p-2">
+            <button class="btn btn-small btn-primary review-btn" data-group="G005" data-student="Siti Bte. Ahmad"><i class="fas fa-pen-to-square"></i> Review</button>
+          </td>
+        </tr>
+        <tr data-status="Approved" data-reason="School Trip">
+          <td class="p-2">David Lim</td>
+          <td class="p-2">G006</td>
+          <td class="p-2">2025-09-13</td>
+          <td class="p-2">School Trip</td>
+          <td class="p-2"><span class="status-pill status-approved">Approved</span></td>
+          <td class="p-2">
+            <button class="btn btn-small btn-primary" disabled><i class="fas fa-check"></i> Reviewed</button>
+          </td>
+        </tr>
+        <tr data-status="Action Required" data-reason="Please provide a valid medical certificate within 48 hours.">
+          <td class="p-2">Aisha Rahman</td>
+          <td class="p-2">G007</td>
+          <td class="p-2">2025-09-10</td>
+          <td class="p-2">Please provide a valid medical certificate within 48 hours.</td>
+          <td class="p-2"><span class="status-pill status-action-required">Action Required</span></td>
+          <td class="p-2">
+            <button class="btn btn-small btn-primary review-btn" data-group="G007" data-student="Aisha Rahman"><i class="fas fa-pen-to-square"></i> Review</button>
+          </td>
+        </tr>
+        <tr data-status="Pending" data-reason="Flu">
+          <td class="p-2">Wei Chen</td>
+          <td class="p-2">G008</td>
+          <td class="p-2">2025-09-09</td>
+          <td class="p-2">Flu</td>
+          <td class="p-2"><span class="status-pill status-pending">Pending</span></td>
+          <td class="p-2">
+            <button class="btn btn-small btn-primary review-btn" data-group="G008" data-student="Wei Chen"><i class="fas fa-pen-to-square"></i> Review</button>
+          </td>
+        </tr>
+        <tr data-status="Approved" data-reason="Doctor's Appointment">
+          <td class="p-2">Sarah Chong</td>
+          <td class="p-2">G009</td>
+          <td class="p-2">2025-09-08</td>
+          <td class="p-2">Doctor's Appointment</td>
+          <td class="p-2"><span class="status-pill status-approved">Approved</span></td>
+          <td class="p-2">
+            <button class="btn btn-small btn-primary" disabled><i class="fas fa-check"></i> Reviewed</button>
+          </td>
+        </tr>
+        <tr data-status="Rejected" data-reason="Oversleeping is not a valid excuse for absence.">
+          <td class="p-2">Michael Wong</td>
+          <td class="p-2">G010</td>
+          <td class="p-2">2025-09-07</td>
+          <td class="p-2">Oversleeping is not a valid excuse for absence.</td>
+          <td class="p-2"><span class="status-pill status-rejected">Rejected</span></td>
+          <td class="p-2">
+            <button class="btn btn-small btn-primary" disabled><i class="fas fa-check"></i> Reviewed</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <h3 class="text-xl font-bold mb-3">Review Absence Application</h3>
+    <p class="mb-2">Student: <span id="modalStudent"></span></p>
+    <label for="status">Status</label>
+    <select id="statusSelect" class="w-full mb-4 p-2 border border-gray-300 rounded-md">
+      <option value="Pending">Pending</option>
+      <option value="Approved">Approved</option>
+      <option value="Rejected">Rejected</option>
+      <option value="Action Required">Action Required</option>
+    </select>
+    
+    <div id="rejectionReason" class="mt-4" style="display: none;">
+      <label for="reason">Reason</label>
+      <textarea id="reasonTextarea" rows="4" placeholder="Provide a reason for the selected status..." class="w-full"></textarea>
+    </div>
+
+    <div class="flex justify-end gap-2 mt-4">
+      <button id="closeModal" class="btn btn-secondary">Cancel</button>
+      <button id="saveModal" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="confirmationModal">
+  <div class="modal-content">
+    <h3 class="text-xl font-bold mb-3">Confirm Status Update</h3>
+    <p id="confirmationMessage" class="mb-4 text-center"></p>
+    <div id="confirmationReason" class="bg-gray-100 p-2 rounded-md mb-4" style="display:none;">
+      <p class="text-sm text-gray-700">Reason:</p>
+      <p id="confirmedReasonText" class="text-sm font-semibold"></p>
+    </div>
+    <div class="flex justify-center gap-4 mt-4">
+      <button id="cancelConfirmBtn" class="btn btn-secondary">No, Cancel</button>
+      <button id="confirmUpdateBtn" class="btn btn-primary">Yes, Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Sidebar toggle logic
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+const mainContent = document.querySelector('.main');
+
+menuToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+  mainContent.classList.toggle('main-expanded');
+});
+
+// Modal Elements
+let currentEdit = {};
+const editModal = document.getElementById('editModal');
+const editModalContent = editModal.querySelector('.modal-content');
+const modalStudent = document.getElementById('modalStudent');
+const statusSelect = document.getElementById('statusSelect');
+const rejectionReasonContainer = document.getElementById('rejectionReason');
+const reasonTextarea = document.getElementById('reasonTextarea');
+
+const confirmationModal = document.getElementById('confirmationModal');
+const confirmationMessage = document.getElementById('confirmationMessage');
+const confirmationReasonContainer = document.getElementById('confirmationReason');
+const confirmedReasonText = document.getElementById('confirmedReasonText');
+const confirmUpdateBtn = document.getElementById('confirmUpdateBtn');
+const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+
+const searchInput = document.getElementById('searchInput');
+const filterStatus = document.getElementById('filterStatus');
+const reportBody = document.getElementById('report-body');
+const allRows = reportBody.getElementsByTagName('tr');
+
+// Show/hide reason field based on status selection
+statusSelect.addEventListener('change', (e) => {
+  if (e.target.value === 'Rejected' || e.target.value === 'Action Required') {
+    rejectionReasonContainer.style.display = 'block';
+  } else {
+    rejectionReasonContainer.style.display = 'none';
+  }
+});
+
+// Open the main edit modal
+document.addEventListener('click', e => {
+  if(e.target.classList.contains('review-btn') && !e.target.disabled) {
+    const studentName = e.target.dataset.student;
+    const row = e.target.closest('tr');
+    const existingReason = row.dataset.reason || '';
+
+    currentEdit = { element: e.target, student: studentName, originalReason: row.cells[3].textContent };
+
+    modalStudent.textContent = studentName;
+    editModal.classList.add('show');
+    editModalContent.classList.add('show');
+    statusSelect.value = row.dataset.status;
+
+    reasonTextarea.value = existingReason;
+    rejectionReasonContainer.style.display = (statusSelect.value === 'Rejected' || statusSelect.value === 'Action Required') ? 'block' : 'none';
+  }
+});
+
+// Close the main edit modal
+document.getElementById('closeModal').addEventListener('click', () => {
+  editModal.classList.remove('show');
+  editModalContent.classList.remove('show');
+});
+
+// Show the confirmation modal
+document.getElementById('saveModal').addEventListener('click', () => {
+  const newStatus = statusSelect.value;
+  const reason = reasonTextarea.value.trim();
+
+  if ((newStatus === 'Rejected' || newStatus === 'Action Required') && reason === '') {
+    alert('Please provide a reason for this status.');
+    return;
+  }
+
+  confirmationMessage.textContent = `Are you sure you want to update ${currentEdit.student}'s status to "${newStatus}"?`;
+
+  if (newStatus === 'Rejected' || newStatus === 'Action Required') {
+    confirmationReasonContainer.style.display = 'block';
+    confirmedReasonText.textContent = reason;
+  } else {
+    confirmationReasonContainer.style.display = 'none';
+    confirmedReasonText.textContent = '';
+  }
+  
+  confirmationModal.classList.add('show');
+});
+
+// Finalize the update when "Yes, Confirm" is clicked
+confirmUpdateBtn.addEventListener('click', () => {
+  const newStatus = statusSelect.value;
+  const reason = reasonTextarea.value.trim();
+  const row = currentEdit.element.closest('tr');
+  const statusSpan = row.querySelector('td:nth-child(5) span');
+  const reasonCell = row.cells[3];
+  const actionBtn = currentEdit.element;
+  
+  // Update the status
+  row.dataset.status = newStatus;
+  statusSpan.textContent = newStatus;
+  statusSpan.className = `status-pill status-${newStatus.toLowerCase().replace(/\s/g, '-')}`;
+
+  // Update the reason cell based on the new status
+  if (newStatus === 'Rejected' || newStatus === 'Action Required') {
+      reasonCell.textContent = reason;
+      row.dataset.reason = reason;
+  } else {
+      reasonCell.textContent = currentEdit.originalReason;
+      row.dataset.reason = currentEdit.originalReason;
+  }
+  
+  // Update the action button based on the new status
+  if (newStatus !== 'Pending' && newStatus !== 'Action Required') {
+    actionBtn.disabled = true;
+    actionBtn.innerHTML = `<i class="fas fa-check"></i> Reviewed`;
+  }
+  
+  // Close both modals
+  editModal.classList.remove('show');
+  editModalContent.classList.remove('show');
+  confirmationModal.classList.remove('show');
+  alert(`Status for ${currentEdit.student} updated to ${newStatus}.`);
+});
+
+// Cancel the confirmation and go back to the first modal
+cancelConfirmBtn.addEventListener('click', () => {
+  confirmationModal.classList.remove('show');
+});
+
+// Search and Filter Logic
+const updateTable = () => {
+  const searchTerm = searchInput.value.toLowerCase();
+  const filterTerm = filterStatus.value.toLowerCase();
+
+  for (let i = 0; i < allRows.length; i++) {
+    const row = allRows[i];
+    const studentName = row.cells[0].textContent.toLowerCase();
+    const group = row.cells[1].textContent.toLowerCase();
+    const status = row.dataset.status.toLowerCase();
+    const reason = row.dataset.reason.toLowerCase();
+
+    const matchesSearch = studentName.includes(searchTerm) || group.includes(searchTerm) || reason.includes(searchTerm);
+    const matchesFilter = filterTerm === 'all' || status === filterTerm;
+
+    if (matchesSearch && matchesFilter) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  }
+};
+
+searchInput.addEventListener('input', updateTable);
+filterStatus.addEventListener('change', updateTable);
+</script>
+</body>
+</html>
