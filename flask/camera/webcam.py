@@ -1,6 +1,10 @@
-from flask import Flask, Response, render_template, redirect, url_for
-import cv2, threading, time, os, numpy as np
+import os
+import cv2
+import threading
+import time
+import numpy as np
 from datetime import datetime
+from flask import Flask, Response, render_template, redirect, url_for
 import face_recognition
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -12,37 +16,49 @@ db = firestore.client()
 
 # ===== Flask App =====
 app = Flask(__name__)
-
 # ===== Load Students =====
-STUDENTS = {}
+STUDENTS = {}          # student_id -> student data
 encodings, classNames = [], []
 
-students_ref = db.collection("students")
-for doc in students_ref.stream():
+print("[INFO] Loading student images and encodings...")
+
+students_ref = db.collection("users").where("role_type", "==", 1).stream()
+for doc in students_ref:
     data = doc.to_dict()
     student_id = doc.id
     STUDENTS[student_id] = data
 
-    photo_filename = data.get("photo")
-    if not photo_filename:
-        continue
-    photo_path = os.path.join("student_pics", photo_filename)
+    # Try Firestore photo_name first
+    photo_filename = data.get("photo_name")
+    if photo_filename:
+        photo_path = os.path.join("student_pics", photo_filename)
+    else:
+        # Fallback: use student's name as filename
+        name_safe = data.get("name", "").replace(" ", "_")
+        photo_path = os.path.join("student_pics", f"{name_safe}.jpg")
+        print(f"[WARN] Student {student_id} ({data.get('name')}) has no photo_name field. Trying {photo_path}")
+
     if not os.path.exists(photo_path):
+        print(f"[WARN] File not found: {photo_path}")
         continue
 
     img = cv2.imread(photo_path)
     if img is None:
+        print(f"[WARN] Unable to read image: {photo_path}")
         continue
-    rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    encode = face_recognition.face_encodings(rgb_img)
-    if encode:
-        encodings.append(encode[0])
-        classNames.append(student_id)
 
-print(f"[INFO] Loaded {len(encodings)} student face encodings.")
+    rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    face_enc = face_recognition.face_encodings(rgb_img)
+    if face_enc:
+        encodings.append(face_enc[0])
+        classNames.append(student_id)
+        print(f"[INFO] Loaded encoding for {data.get('name')} ({student_id})")
+
+print(f"[INFO] Finished loading students. Total encodings loaded: {len(encodings)}")
+
 
 # ===== Attendance Tracking =====
-attended_today = {}
+attended_today = {}  # (student_id, date) -> True
 
 # ===== Camera Setup =====
 camera = None
@@ -51,110 +67,82 @@ frame_lock = threading.Lock()
 camera_thread = None
 camera_running = False
 
+# ===== Helper: Mark Attendance =====
+def mark_attendance(student_id):
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    key = (student_id, today_str)
 
-def get_attendance_times():
-    doc_snap = db.collection("settings").document("attendanceTimes").get()
-    data = doc_snap.to_dict() or {}
-    start_time_str = data.get("startTime", "08:30")
-    cutoff_time_str = data.get("cutoffTime", "09:00")
-    active = data.get("active", False)
-    start_time = datetime.strptime(start_time_str, "%H:%M").time()
-    cutoff_time = datetime.strptime(cutoff_time_str, "%H:%M").time()
-    return start_time, cutoff_time, active
+    if attended_today.get(key):
+        return None  # Already marked
 
+    attended_today[key] = True
+
+    student_data = STUDENTS.get(student_id, {})
+    name = student_data.get("name", "")
+    group = student_data.get("fk_groupcode", "")
+    program = student_data.get("program", "")
+
+    db.collection("attendance").document(today_str).collection("students").document(student_id).set({
+        "name": name,
+        "group": group,
+        "program": program,
+        "status": "Present",
+        "timestamp": firestore.SERVER_TIMESTAMP
+    })
+
+    print(f"[INFO] Marked {name} ({student_id}) as Present.")
+    return name
 
 # ===== Camera Loop =====
+
 def camera_loop():
-    global latest_frame, attended_today, camera_running, camera
-    camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
-    frame_count, last_times = 0, None
+    global latest_frame, camera_running, camera
+    camera = cv2.VideoCapture(0)  # Change 0 to your camera index if needed
 
     while camera_running:
-        ok, frame = camera.read()
-        if not ok:
+        ret, frame = camera.read()
+        if not ret:
             time.sleep(0.1)
             continue
 
-        start_time, cutoff_time, active = get_attendance_times()
-        if not active:
-            time.sleep(1)
-            continue
+        small_frame = cv2.resize(frame, (0,0), fx=0.25, fy=0.25)
+        rgb_small = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
 
-        current_times = (start_time, cutoff_time)
-        if last_times != current_times:
-            attended_today = {}
-            last_times = current_times
+        boxes = face_recognition.face_locations(rgb_small, model="hog")
+        face_encs = face_recognition.face_encodings(rgb_small, boxes)
 
-        frame_count += 1
-        recognized_faces = []
-
-        if frame_count % 5 == 0:
-            small = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-            rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
-            boxes = face_recognition.face_locations(rgb_small, model="hog")
-            face_encs = face_recognition.face_encodings(rgb_small, boxes)
-
-            for enc, (top, right, bottom, left) in zip(face_encs, boxes):
-                student_id = None
-                if encodings:
-                    matches = face_recognition.compare_faces(encodings, enc, tolerance=0.6)
-                    if True in matches:
-                        best_idx = np.argmax(matches)
-                        student_id = classNames[best_idx]
-
-                        today_str = datetime.now().strftime("%Y-%m-%d")
-                        if attended_today.get(student_id) != today_str:
-                            now_time = datetime.now().time()
-                            if now_time <= start_time:
-                                status = "Present"
-                            elif now_time <= cutoff_time:
-                                status = "Late"
-                            else:
-                                status = "Absent"
-
-                            attended_today[student_id] = today_str
-                            student_data = STUDENTS.get(student_id, {})
-                            name = f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip()
-                            email = student_data.get("email","")
-                            student_class = student_data.get("studentClass","")
-
-                            db.collection("attendance").add({
-                                "student_id": student_id,
-                                "name": name,
-                                "email": email,
-                                "class": student_class,
-                                "status": status,
-                                "timestamp": firestore.SERVER_TIMESTAMP
-                            })
-                            print(f"[INFO] {name} marked {status} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-
-                recognized_faces.append((student_id, left, top, right, bottom))
-
-        for student_id, x1, y1, x2, y2 in recognized_faces:
-            x1, y1, x2, y2 = [v*4 for v in (x1, y1, x2, y2)]
-            if student_id:
-                name = f"{STUDENTS[student_id].get('firstName','')} {STUDENTS[student_id].get('lastName','')}".strip()
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
-                cv2.putText(frame, name, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
+        for enc, (top, right, bottom, left) in zip(face_encs, boxes):
+            matches = face_recognition.compare_faces(encodings, enc, tolerance=0.6)
+            student_id = None
+            if True in matches:
+                best_idx = np.argmax(matches)
+                student_id = classNames[best_idx]
+                name = mark_attendance(student_id)
             else:
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0,0,255), 2)
-                cv2.putText(frame, "Unknown", (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
+                name = "Unknown"
 
-        ok, buf = cv2.imencode(".jpg", frame)
-        if ok:
+            # Draw box and label
+            top, right, bottom, left = [v*4 for v in (top, right, bottom, left)]
+            color = (0, 255, 0) if student_id else (0, 0, 255)
+            cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
+            cv2.putText(frame, name, (left, top-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+
+        # Encode frame
+        ret, buffer = cv2.imencode(".jpg", frame)
+        if ret:
             with frame_lock:
-                latest_frame = buf.tobytes()
+                latest_frame = buffer.tobytes()
 
         time.sleep(0.01)
 
     camera.release()
     cv2.destroyAllWindows()
-
+    
 
 # ===== Flask Routes =====
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html")  # This should include <img src="/video_feed">
 
 @app.route("/start_camera")
 def start_camera():
@@ -173,19 +161,17 @@ def stop_camera():
 
 @app.route("/video_feed")
 def video_feed():
-    def gen_frames():
+    def generate_frames():
         while True:
-            frame = get_latest_frame()
+            with frame_lock:
+                frame = latest_frame
             if frame:
-                yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n'+frame+b'\r\n')
+                yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
             else:
                 time.sleep(0.05)
-    return Response(gen_frames(), mimetype="multipart/x-mixed-replace; boundary=frame")
+    return Response(generate_frames(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
-def get_latest_frame():
-    with frame_lock:
-        return latest_frame
-
-# ===== Run Flask =====
+# ===== Run App =====
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=False)
+    app.run(host="0.0.0.0", port=5001, debug=True)
+
