@@ -46,8 +46,13 @@
     .dropdown-toggle { display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
     .dropdown-menu { display:none; flex-direction:column; padding-left:20px; transition: opacity 0.3s ease; }
     .sidebar-dropdown.active .dropdown-menu { display:flex; opacity:1; }
-    .sidebar-dropdown .dropdown-toggle i { transition: transform 0.3s; }
-    .sidebar-dropdown.active .dropdown-toggle i { transform: rotate(180deg); }
+.sidebar-dropdown .dropdown-toggle i:last-child {
+  margin-left:auto;
+  transition: transform 0.3s;
+}
+.sidebar-dropdown.active .dropdown-toggle i:last-child {
+  transform: rotate(180deg);
+}
 
     /* Collapse behavior */
     .sidebar.collapsed .sidebar-link span,
