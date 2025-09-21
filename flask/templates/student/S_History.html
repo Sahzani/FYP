@@ -79,22 +79,38 @@
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('student_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    <a class="sidebar-link" href="{{ url_for('student_dashboard') }}">
+      <i class="fas fa-home"></i><span>Dashboard</span>
+    </a>
   </div>
+
   <div class="sidebar-section">
-    <div class="sidebar-section-title">Analyse</div>
-    <a class="sidebar-link active" href="{{ url_for('student_attendance') }}"><i class="fas fa-chart-line"></i><span>Attendance</span></a>
-    <a class="sidebar-link" href="{{ url_for('student_schedule') }}"><i class="fas fa-chart-line"></i><span>My Schedule</span></a>
+    <div class="sidebar-section-title">Academics</div>
+    <a class="sidebar-link active" href="{{ url_for('student_schedule') }}">
+      <i class="fas fa-calendar-days"></i><span>My Schedule</span>
+    </a>
+    <a class="sidebar-link active" href="{{ url_for('student_attendance') }}">
+      <i class="fas fa-clipboard-check"></i><span>Attendance</span>
+    </a>
   </div>
+
   <div class="sidebar-section">
     <div class="sidebar-section-title">Request</div>
-    <a class="sidebar-link" href="{{ url_for('student_absentapp') }}"><i class="fas fa-file-alt"></i><span>Absence Application</span></a>
-    <a class="sidebar-link" href="{{ url_for('student_contact') }}"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
+    <a class="sidebar-link" href="{{ url_for('student_absentapp') }}">
+      <i class="fas fa-file-alt"></i><span>Absence Application</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('student_contact') }}">
+      <i class="fas fa-envelope"></i><span>Contact Us</span>
+    </a>
   </div>
+
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    <a class="sidebar-link" href="{{ url_for('logout') }}">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
   </div>
 </div>
+
 
 <div class="main">
   <h1 class="page-title">Attendance History</h1>
