@@ -583,12 +583,96 @@ def teacher_class_list():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
     return render_template("teacher/T_class_list.html")
-
+# ------------------ Teacher Modules Page ------------------
 @app.route("/teacher_modules")
 def teacher_modules():
+    # Role check
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
-    return render_template("teacher/T_modules.html")
+
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("login"))
+
+    teacher_id = user.get("uid")
+    if not teacher_id:
+        return redirect(url_for("login"))
+
+    # ------------------ Fetch Modules ------------------
+    modules_ref = db.collection("mlmodules").where("user_id", "==", teacher_id).stream()
+    modules = {mod_doc.id: mod_doc.to_dict() for mod_doc in modules_ref}
+
+    module_ids = list(modules.keys())
+    modules_data = []
+    groups_data = {}
+
+    if module_ids:
+        # ------------------ Fetch Groups ------------------
+        groups_ref = db.collection("groups").where("fk_module", "in", module_ids).stream()
+        groups = {}
+        for g_doc in groups_ref:
+            g_data = g_doc.to_dict()
+            g_data["id"] = g_doc.id
+            groups[g_doc.id] = g_data
+
+        group_ids = list(groups.keys())
+
+        # ------------------ Fetch Schedules ------------------
+        schedules_ref = db.collection("schedules").stream()
+        schedules = {}
+        for s_doc in schedules_ref:
+            s_data = s_doc.to_dict()
+            key = (s_data.get("fk_module"), s_data.get("fk_group"))
+            schedules[key] = {
+                "day": s_data.get("day", ""),
+                "time": f"{s_data.get('start_time', '')} - {s_data.get('end_time', '')}",
+                "room": s_data.get("room", "")
+            }
+
+        # ------------------ Fetch Students ------------------
+        students_ref = db.collection("users").where("role_type", "==", 1).stream()
+        students_by_group = {}
+        for stu_doc in students_ref:
+            stu = stu_doc.to_dict()
+            group_code = stu.get("group_code")
+            if group_code not in students_by_group:
+                students_by_group[group_code] = []
+            students_by_group[group_code].append({
+                "name": stu.get("name", "Student"),
+                "status": "Not Marked",
+                "date": ""
+            })
+
+        # ------------------ Assemble Data ------------------
+        for mod_id, mod in modules.items():
+            module_obj = {"moduleName": mod.get("moduleName", "Module"), "groups": []}
+            for g_id, g in groups.items():
+                if g.get("fk_module") != mod_id:
+                    continue
+                group_code = g.get("groupCode")
+                sched = schedules.get((mod_id, group_code), {"day":"", "time":"", "room":""})
+                students = students_by_group.get(group_code, [])
+
+                # Add to modules_data
+                module_obj["groups"].append(group_code)
+
+                # Add to groups_data
+                groups_data[group_code] = {
+                    "groupName": group_code,
+                    "students": students,
+                    "day": sched["day"],
+                    "time": sched["time"],
+                    "room": sched["room"]
+                }
+            modules_data.append(module_obj)
+
+
+    return render_template(
+        "teacher/T_modules.html",
+        modules_data=modules_data,
+        groups_data=groups_data
+    )
+
 
 @app.route("/teacher/attendance")
 def teacher_attendance():

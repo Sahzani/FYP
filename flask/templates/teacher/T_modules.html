@@ -192,43 +192,24 @@
     </div>
   </div>
 </div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-// Existing data (modules & groups)
-const modulesData = [
-  { moduleName: "Web Development", groups: ["G001","G002","G003"] },
-  { moduleName: "Database Systems", groups: ["G004"] },
-  { moduleName: "Networking", groups: ["G005","G006"] }
-];
-
-const groupsData = {
-  G001: { groupName:"Group 1", day:"Mon", time:"08:00-10:00", room:"A101", students:[
-    {name:"Hani",status:"Present", date:"15-09-2025"},
-    {name:"Ali",status:"Absent", date:"15-09-2025"},
-    {name:"Ali",status:"Absent", date:"10-09-2025"},
-    {name:"Ali",status:"Absent", date:"05-09-2025"}
-  ]},
-  G002: { groupName:"Group 2", day:"Mon", time:"10:00-12:00", room:"B202", students:[
-    {name:"Sara",status:"Present", date:"15-09-2025"},
-    {name:"John",status:"Present", date:"15-09-2025"}
-  ]},
-  G003: { groupName:"Group 3", day:"Tue", time:"08:00-10:00", room:"C303", students:[
-    {name:"Nurul",status:"Present", date:"16-09-2025"},
-    {name:"Fadhil",status:"Absent", date:"16-09-2025"}
-  ]},
-  G004: { groupName:"DB 1", day:"Wed", time:"09:00-11:00", room:"D404", students:[
-    {name:"Amira",status:"Present", date:"17-09-2025"},
-    {name:"Hakim",status:"Late", date:"17-09-2025"}
-  ]},
-  G005: { groupName:"Net 1", day:"Thu", time:"08:00-10:00", room:"E505", students:[
-    {name:"Faizal",status:"Present", date:"18-09-2025"},
-    {name:"Lina",status:"Absent", date:"18-09-2025"}
-  ]},
-  G006: { groupName:"Net 2", day:"Fri", time:"10:00-12:00", room:"F606", students:[
-    {name:"Zahra",status:"Present", date:"19-09-2025"},
-    {name:"Adam",status:"Present", date:"19-09-2025"}
-  ]}
+const firebaseConfig = {
+  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
+  authDomain: "aimanzamani.firebaseapp.com",
+  databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "aimanzamani",
+  storageBucket: "aimanzamani.firebasestorage.app",
+  messagingSenderId: "63348630728",
+  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
 };
+
+firebase.initializeApp(firebaseConfig);
+
+let modulesData = [];
+let groupsData = {};
 
 const modulesContainer = document.getElementById('modulesContainer');
 const moduleDetailsDiv = document.getElementById('moduleDetails');
@@ -241,6 +222,68 @@ const modalStudent = document.getElementById('modalStudent');
 const statusSelect = document.getElementById('statusSelect');
 let currentEdit = { groupCode:null, student:null };
 
+// Fetch data from Firebase
+async function fetchData() {
+  const db = firebase.database();
+  const modulesSnap = await db.ref('mlmodules').once('value');
+  const schedulesSnap = await db.ref('Schedules').once('value');
+  const usersSnap = await db.ref('users').once('value');
+
+  const modulesObj = modulesSnap.val() || {};
+  const schedulesObj = schedulesSnap.val() || {};
+  const usersObj = usersSnap.val() || {};
+
+  modulesData = [];
+  groupsData = {};
+
+  // Build groupsData
+  for (const mKey in modulesObj) {
+    const module = modulesObj[mKey];
+    const groupCodes = [];
+
+    for (const sKey in schedulesObj) {
+      const schedule = schedulesObj[sKey];
+      if (schedule.fk_module === module.moduleName) {
+        const gCode = schedule.fk_group;
+        groupCodes.push(gCode);
+
+        if (!groupsData[gCode]) {
+          groupsData[gCode] = {
+            groupName: gCode,
+            day: schedule.day,
+            time: schedule.start_time + " - " + schedule.end_time,
+            room: schedule.room,
+            students: []
+          };
+        }
+      }
+    }
+
+    modulesData.push({
+      moduleName: module.moduleName,
+      groups: groupCodes
+    });
+  }
+
+  // Populate students from users table
+  for (const gCode in groupsData) {
+    groupsData[gCode].students = [];
+    for (const uKey in usersObj) {
+      const user = usersObj[uKey];
+      if (user.roles && user.roles.includes('student') && user.fk_group === gCode) {
+        groupsData[gCode].students.push({
+          name: user.name,
+          status: 'Not Marked',
+          date: null
+        });
+      }
+    }
+  }
+
+  renderModules();
+}
+
+// Render modules
 function renderModules(){
   modulesContainer.innerHTML='';
   modulesData.forEach(m=>{
@@ -270,12 +313,7 @@ function showModuleDetails(module){
     const g = groupsData[code];
     if(!g) return;
 
-    const today = new Date();
-    const dd = String(today.getDate()).padStart(2,'0');
-    const mm = String(today.getMonth()+1).padStart(2,'0');
-    const yyyy = today.getFullYear();
-    const todayStr = `${dd}-${mm}-${yyyy}`;
-
+    const todayStr = getTodayStr();
     const presentCount = g.students.filter(s=>s.status==="Present" && s.date===todayStr).length;
     const absentCount = g.students.filter(s=>s.status==="Absent" && s.date===todayStr).length;
     const lateCount = g.students.filter(s=>s.status==="Late" && s.date===todayStr).length;
@@ -313,7 +351,6 @@ function showModuleDetails(module){
       </div>
       <p class="text-sm text-gray-500">${g.students.length} student(s)</p>
     `;
-
     groupCard.addEventListener('click',()=>showStudentAttendance(code));
     groupsContainer.appendChild(groupCard);
   });
@@ -325,12 +362,9 @@ function showStudentAttendance(groupCode){
   const g = groupsData[groupCode];
   moduleTitle.textContent = `${g.groupName} - ${g.day} ${g.time} (${g.room})`;
 
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2,'0');
-  const mm = String(today.getMonth()+1).padStart(2,'0');
-  const yyyy = today.getFullYear();
-  const todayStr = `${dd}-${mm}-${yyyy}`;
+  const todayStr = getTodayStr();
 
+  // Attendance summary cards
   const statusCounts = { Present:0, Absent:0, Late:0 };
   g.students.forEach(s=>{
     if(s.date===todayStr && statusCounts[s.status]!==undefined){
@@ -338,7 +372,6 @@ function showStudentAttendance(groupCode){
     }
   });
 
-  // Attendance summary cards
   const summaryDiv = document.createElement('div');
   summaryDiv.className='summary-grid';
   const icons = { Present:'fa-check-circle', Absent:'fa-times-circle', Late:'fa-clock' };
@@ -355,35 +388,26 @@ function showStudentAttendance(groupCode){
     summaryDiv.appendChild(card);
   });
   groupsContainer.appendChild(summaryDiv);
-const filterDiv = document.createElement('div');
-filterDiv.className = 'filter-container flex items-center gap-4 justify-end mb-4';
 
-filterDiv.innerHTML = `
-  <div class="input-group relative">
-    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-    <input 
-      id="searchInput" 
-      type="text" 
-      placeholder="Search student by name..." 
-      class="pl-12 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition w-64"
-    />
-  </div>
-  <div class="input-group relative">
-    <i class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-    <select 
-      id="statusFilter" 
-      class="pl-12 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
-    >
-      <option value="">All Status</option>
-      <option value="Present">Present</option>
-      <option value="Absent">Absent</option>
-      <option value="Late">Late</option>
-      <option value="Not Marked">Not Marked</option>
-    </select>
-  </div>
-`;
-
-
+  // Filters
+  const filterDiv = document.createElement('div');
+  filterDiv.className = 'filter-container flex items-center gap-4 justify-end mb-4';
+  filterDiv.innerHTML = `
+    <div class="input-group relative">
+      <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+      <input id="searchInput" type="text" placeholder="Search student by name..." class="pl-12 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition w-64"/>
+    </div>
+    <div class="input-group relative">
+      <i class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+      <select id="statusFilter" class="pl-12 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition">
+        <option value="">All Status</option>
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+        <option value="Late">Late</option>
+        <option value="Not Marked">Not Marked</option>
+      </select>
+    </div>
+  `;
   groupsContainer.appendChild(filterDiv);
 
   // Notifications for frequent absentees
@@ -453,11 +477,7 @@ filterDiv.innerHTML = `
   statusFilter.addEventListener("change", filterTable);
 }
 
-backBtn.addEventListener('click',()=>{
-  moduleDetailsDiv.classList.add('hidden'); 
-  modulesContainer.classList.remove('hidden');
-});
-
+// Modal edit handlers
 document.addEventListener('click',e=>{
   if(e.target.classList.contains('edit-btn')){
     const groupCode=e.target.dataset.group;
@@ -474,6 +494,7 @@ document.querySelector('.btn-cancel').addEventListener('click',()=>{
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
 });
+
 document.querySelector('.btn-save').addEventListener('click',()=>{
   const {groupCode,student} = currentEdit;
   const newStatus = statusSelect.value;
@@ -483,6 +504,7 @@ document.querySelector('.btn-save').addEventListener('click',()=>{
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
 });
+
 document.querySelector('.btn-reset').addEventListener('click',()=>{
   if(confirm("Are you sure you want to reset this student's attendance?")){
     const {groupCode,student} = currentEdit;
@@ -493,15 +515,27 @@ document.querySelector('.btn-reset').addEventListener('click',()=>{
     document.querySelector('.modal-content').classList.remove('show');
   }
 });
-</script>
 
-<script>
+// Back button
+backBtn.addEventListener('click',()=>{
+  moduleDetailsDiv.classList.add('hidden'); 
+  modulesContainer.classList.remove('hidden');
+});
+
+// Sidebar toggle
 document.getElementById('menu-toggle').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('collapsed'));
-</script>
 
-<script>
-renderModules();
-</script>
+// Get today's date
+function getTodayStr(){
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2,'0');
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const yyyy = today.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
 
+// Start
+fetchData();
+</script>
 </body>
 </html>
