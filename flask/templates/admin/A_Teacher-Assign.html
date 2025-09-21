@@ -66,9 +66,7 @@ button.save-btn{background:#1e90ff;}
           <th>Action</th>
         </tr>
       </thead>
-      <tbody id="teacherTable">
-        <!-- JS will populate this -->
-      </tbody>
+      <tbody id="teacherTable"></tbody>
     </table>
   </div>
 </div>
@@ -93,70 +91,76 @@ async function loadTeachers() {
   tbody.innerHTML = '';
 
   const usersSnap = await getDocs(collection(db,'users'));
+  const modulesSnap = await getDocs(collection(db,'modules'));
+  const programsSnap = await getDocs(collection(db,'programs'));
+
+  // Map programId -> programName
+  const programsMap = {};
+  programsSnap.forEach(p => programsMap[p.id] = p.data().programName);
+
   for(const userDoc of usersSnap.docs){
     const userData = userDoc.data();
-    if(userData.role_type === 2){ // teacher
-      let groupId='', programId='', programName='', groupCode='';
-      
-      const rolesSnap = await getDocs(collection(db,'users',userDoc.id,'roles'));
-      rolesSnap.forEach(r => { if(r.id==='teacher'){ groupId = r.data().fk_groupcode || ''; } });
+    if(userData.role_type !== 2) continue; // only teachers
 
-      if(groupId){
-        const groupDoc = await getDoc(doc(db,'groups',groupId));
-        if(groupDoc.exists()){
-          programId = groupDoc.data().fk_program || '';
-          groupCode = groupDoc.data().group_code || '';
-          if(programId){
-            const programDoc = await getDoc(doc(db,'programs',programId));
-            if(programDoc.exists()) programName = programDoc.data().programName;
-          }
-        }
+    let groupId='', programId='', programName='', groupCode='';
+
+    const rolesSnap = await getDocs(collection(db,'users',userDoc.id,'roles'));
+    rolesSnap.forEach(r => { if(r.id==='teacher'){ groupId = r.data().fk_groupcode || ''; } });
+
+    if(groupId){
+      const groupDoc = await getDoc(doc(db,'groups',groupId));
+      if(groupDoc.exists()){
+        programId = groupDoc.data().fk_program || '';
+        groupCode = groupDoc.data().group_code || '';
+        if(programId) programName = programsMap[programId] || '';
       }
-
-      // Fetch modules for this program
-      let moduleOptions = '';
-      const modulesSnap = await getDocs(collection(db,'programs'));
-      modulesSnap.forEach(mod => {
-        const m = mod.data();
-        if(m.fk_program === programId){
-          moduleOptions += `<option value="${mod.id}">${m.moduleName} (${m.moduleCode})</option>`;
-        }
-      });
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${userData.name}</td>
-        <td>${userData.email}</td>
-        <td>${programName}</td>
-        <td>${groupCode}</td>
-        <td>
-          <select class="module-select">
-            ${moduleOptions}
-          </select>
-        </td>
-        <td>
-          <button class="action-btn save-btn">Save</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-
-      // Save button event
-      tr.querySelector('.save-btn').addEventListener('click', async () => {
-        const moduleId = tr.querySelector('.module-select').value;
-        if(!moduleId) return alert('Select a module first!');
-        try {
-          await setDoc(doc(db,'teacher_modules',userDoc.id),{
-            teacherId: userDoc.id,
-            moduleId: moduleId,
-            groupId: groupId,
-            fk_program: programId
-          });
-          alert('✅ Module assigned successfully!');
-        } catch(err){
-          alert('❌ Error: '+err.message);
-        }
-      });
     }
+
+    // Build module dropdown
+    let moduleOptions = '';
+    modulesSnap.forEach(mod => {
+      const m = mod.data();
+      if(m.status !== 'assigned'){ // only unassigned modules
+        moduleOptions += `<option value="${mod.id}">${m.moduleName} (${m.moduleCode})</option>`;
+      }
+    });
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${userData.name}</td>
+      <td>${userData.email}</td>
+      <td>${programName}</td>
+      <td>${groupCode}</td>
+      <td>
+        <select class="module-select">
+          ${moduleOptions}
+        </select>
+      </td>
+      <td>
+        <button class="action-btn save-btn">Save</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+
+    tr.querySelector('.save-btn').addEventListener('click', async () => {
+      const moduleId = tr.querySelector('.module-select').value;
+      if(!moduleId) return alert('Select a module first!');
+      try {
+        const moduleData = modulesSnap.docs.find(d=>d.id===moduleId).data();
+        await setDoc(doc(db,'mlmodule',moduleId),{
+          user_id: userDoc.id,
+          group_code: groupCode,
+          moduleName: moduleData.moduleName,
+          status: 'assigned',
+          programName: programName
+        }, { merge: true });
+
+        alert('✅ Module assigned successfully!');
+        loadTeachers();
+      } catch(err){
+        alert('❌ Error: '+err.message);
+      }
+    });
   }
 }
 
