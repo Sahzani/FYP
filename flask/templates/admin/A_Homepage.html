@@ -100,29 +100,34 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
   </div>
 
   <div class="sidebar-section">
-    <div class="sidebar-section-title">Management</div>
-    <a class="sidebar-link" href="{{ url_for('admin_modules') }}"><i class="fas fa-book"></i><span>Modules</span></a>
-    <a class="sidebar-link" href="{{ url_for('admin_programs') }}"><i class="fas fa-graduation-cap"></i><span>Programs</span></a>
+  <div class="sidebar-section-title">Management</div>
 
-
-    <div class="sidebar-dropdown">
-      <a class="sidebar-link dropdown-toggle"><i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i></a>
-      <div class="dropdown-menu">
-        <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
-        <a class="sidebar-link" href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
-        <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
-      </div>
-    </div>
-
-    <div class="sidebar-dropdown">
-      <a class="sidebar-link dropdown-toggle"><i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i></a>
-      <div class="dropdown-menu">
-        <a class="sidebar-link" href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
-        <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
-        <a class="sidebar-link" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
-      </div>
+  <div class="sidebar-dropdown">
+    <a class="sidebar-link dropdown-toggle">
+      <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
+    </a>
+    <div class="dropdown-menu">
+      <a class="sidebar-link" href="{{ url_for('admin_student_list') }}"><span>All Students</span></a>
+      <a class="sidebar-link" href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
+      <a class="sidebar-link" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
     </div>
   </div>
+
+  <div class="sidebar-dropdown">
+    <a class="sidebar-link dropdown-toggle">
+      <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
+    </a>
+    <div class="dropdown-menu">
+      <a class="sidebar-link" href="{{ url_for('admin_teacher_list') }}"><span>All Teachers</span></a>
+      <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+      <a class="sidebar-link" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
+    </div>
+  </div>
+
+  <a class="sidebar-link {% if request.endpoint == 'admin_modules' %}active{% endif %}" href="{{ url_for('admin_modules') }}">
+    <i class="fas fa-book"></i><span>Modules</span>
+  </a>
+</div>
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">System</div>
@@ -132,8 +137,10 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Logs</div>
-    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-clipboard-list"></i><span>Attendance Logs</span></a>
-    <a class="sidebar-link" href="{{ url_for('admin_groups') }}"><i class="fas fa-history"></i><span>Change Logs</span></a>
+    <a class="sidebar-link" href="{{ url_for('admin_attendance_logs') }}">
+  <i class="fas fa-history"></i><span>Attendance Logs</span>
+</a>
+
   </div>
 
   <div class="sidebar-section">
