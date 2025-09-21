@@ -47,8 +47,13 @@ header {
 .sidebar-dropdown { display:flex; flex-direction:column; }
 .dropdown-menu { display:none; flex-direction:column; padding-left:20px; }
 .sidebar-dropdown.active .dropdown-menu { display:flex; }
-.sidebar-dropdown .dropdown-toggle i { margin-left:auto; transition: transform 0.3s; }
-.sidebar-dropdown.active .dropdown-toggle i { transform: rotate(180deg); }
+.sidebar-dropdown .dropdown-toggle i:last-child {
+  margin-left:auto;
+  transition: transform 0.3s;
+}
+.sidebar-dropdown.active .dropdown-toggle i:last-child {
+  transform: rotate(180deg);
+}
 
 /* ========== MAIN CONTENT ========== */
 .main-content { margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; }
