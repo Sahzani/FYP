@@ -698,6 +698,16 @@ def teacher_logout():
     session.clear()
     return redirect(url_for("home"))
 
+events = [
+    {
+        "id": 1,
+        "title": "Workshop A",
+        "datetime": datetime(2025, 10, 2, 14, 0),
+        "group": {"name": "Group Alpha"},
+        "attendees": [{"name": "Student 1"}, {"name": "Student 2"}]
+    }
+]
+
 # ------------------ Teacher Class Schedule ------------------
 # ------------------ Teacher Schedule page ------------------
 @app.route("/teacher/schedules")
