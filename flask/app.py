@@ -1443,12 +1443,104 @@ def admin_rooms():
         return render_template("admin/A_Rooms.html")
     return redirect(url_for("home"))
 
-
-@app.route("/admin/teacher_assign")
+# ------------------ Admin Assign Modules to Teachers ------------------
+@app.route("/admin/teacher_assign", methods=["GET", "POST"])
 def admin_teacher_assign():
-    if session.get("role") == "admin":
-        return render_template("admin/A_TeacherAssign.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    if request.method == "POST":
+        # Handle module assignment form submission
+        teacher_id = request.form.get("teacher_id")
+        module_id = request.form.get("module_id")
+        group_id = request.form.get("group_id")
+
+        if teacher_id and module_id and group_id:
+            # Save to teacher_assignments
+            db.collection("teacher_assignments").add({
+                "teacher_id": teacher_id,
+                "module_id": module_id,
+                "group_id": group_id
+            })
+
+            # Fetch module and group info
+            module_doc = db.collection("modules").document(module_id).get()
+            group_doc = db.collection("groups").document(group_id).get()
+            module_data = module_doc.to_dict() if module_doc.exists else {}
+            group_data = group_doc.to_dict() if group_doc.exists else {}
+
+            # Save to mlmodule
+            db.collection("mlmodule").add({
+                "group_code": group_data.get("groupCode", ""),
+                "moduleName": module_data.get("moduleName", ""),
+                "status": "active",
+                "teacherID": teacher_id
+            })
+
+            flash("Module assigned to teacher successfully!", "success")
+        else:
+            flash("Please select all fields before submitting.", "error")
+
+        return redirect(url_for("admin_teacher_assign"))
+
+    # ------------------ GET: fetch data for page ------------------
+    # Fetch all teachers
+    users_docs = db.collection("users").where("role_type", "==", 2).stream()
+    teachers = []
+    for doc in users_docs:
+        t = doc.to_dict()
+        t["docId"] = doc.id
+        t["firstName"] = t.get("firstName", "")
+        t["lastName"] = t.get("lastName", "")
+        t["email"] = t.get("email", "")
+
+        # Fetch roles/teacher subcollection
+        role_doc = db.collection("users").document(t["docId"]).collection("roles").document("teacher").get()
+        if role_doc.exists:
+            role = role_doc.to_dict()
+            t["program"] = role.get("program", "")
+        else:
+            t["program"] = ""
+
+        # Fetch current assignments from mlmodule
+        assignments_docs = db.collection("mlmodule").where("teacherID", "==", t["docId"]).stream()
+        t["assignments"] = []
+        for a_doc in assignments_docs:
+            a = a_doc.to_dict()
+            t["assignments"].append(a)
+
+        teachers.append(t)
+
+    # Fetch programs
+    programs_docs = db.collection("programs").stream()
+    programs_map = {}
+    for doc in programs_docs:
+        p = doc.to_dict()
+        programs_map[doc.id] = p.get("programName", "")
+
+    # Fetch groups
+    groups_docs = db.collection("groups").stream()
+    groups = []
+    for doc in groups_docs:
+        g = doc.to_dict()
+        g["docId"] = doc.id
+        groups.append(g)
+
+    # Fetch modules
+    modules_docs = db.collection("modules").stream()
+    modules = []
+    for doc in modules_docs:
+        m = doc.to_dict()
+        m["docId"] = doc.id
+        modules.append(m)
+
+    return render_template(
+        "admin/A_Teacher-Assign.html",
+        teachers=teachers,
+        programs_map=programs_map,
+        groups=groups,
+        modules=modules
+    )
 
 # ------------------ Admin Schedule page ------------------
 @app.route("/admin/schedules")
