@@ -16,6 +16,7 @@ db = firestore.client()
 
 # ===== Flask App =====
 app = Flask(__name__)
+
 # ===== Load Students =====
 STUDENTS = {}          # student_id -> student data
 encodings, classNames = [], []
@@ -56,7 +57,6 @@ for doc in students_ref:
 
 print(f"[INFO] Finished loading students. Total encodings loaded: {len(encodings)}")
 
-
 # ===== Attendance Tracking =====
 attended_today = {}  # (student_id, date) -> True
 
@@ -70,34 +70,47 @@ camera_running = False
 # ===== Helper: Mark Attendance =====
 def mark_attendance(student_id):
     today_str = datetime.now().strftime("%Y-%m-%d")
-    key = (student_id, today_str)
-
-    if attended_today.get(key):
-        return None  # Already marked
-
-    attended_today[key] = True
-
     student_data = STUDENTS.get(student_id, {})
     name = student_data.get("name", "")
-    group = student_data.get("fk_groupcode", "")
-    program = student_data.get("program", "")
 
-    db.collection("attendance").document(today_str).collection("students").document(student_id).set({
+    group = student_data.get("fk_groupcode")
+    module = student_data.get("module_name")
+
+    if not group or not module:
+        print(f"[WARN] Student {student_id} ({name}) missing group/module info!")
+        return None
+
+    # Path: attendance/today/Students/group
+    group_ref = db.collection("attendance").document(today_str) \
+                  .collection("Students").document(group)
+
+    # Get existing module data or empty dict
+    group_doc = group_ref.get()
+    module_data = group_doc.to_dict() if group_doc.exists else {}
+
+    # Add/update this student under the module
+    if module not in module_data:
+        module_data[module] = {}
+
+    module_data[module][student_id] = {
         "name": name,
-        "group": group,
-        "program": program,
         "status": "Present",
         "timestamp": firestore.SERVER_TIMESTAMP
-    })
+    }
 
-    print(f"[INFO] Marked {name} ({student_id}) as Present.")
+    # Save back to Firestore
+    group_ref.set(module_data, merge=True)
+
+    key = (student_id, today_str)
+    attended_today[key] = True
+
+    print(f"[INFO] Marked {name} ({student_id}) as Present in group {group}, module {module}")
     return name
 
 # ===== Camera Loop =====
-
 def camera_loop():
     global latest_frame, camera_running, camera
-    camera = cv2.VideoCapture(0)  # Change 0 to your camera index if needed
+    camera = cv2.VideoCapture(0)
 
     while camera_running:
         ret, frame = camera.read()
@@ -137,12 +150,11 @@ def camera_loop():
 
     camera.release()
     cv2.destroyAllWindows()
-    
 
 # ===== Flask Routes =====
 @app.route("/")
 def index():
-    return render_template("index.html")  # This should include <img src="/video_feed">
+    return render_template("index.html")  # Include <img src="/video_feed">
 
 @app.route("/start_camera")
 def start_camera():
@@ -174,4 +186,3 @@ def video_feed():
 # ===== Run App =====
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
-
