@@ -1,0 +1,36 @@
+<!-- gc_group_settings.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>iAttend | Group Settings</title>
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+  {% include 'gc_sidebar.html' %}
+  <div class="main">
+    <h2>Group Settings</h2>
+    <div class="breadcrumb"><span class="section">Group Coordinator</span> / <span class="current">Group Settings</span></div>
+
+    <div class="card">
+      <h3>Manage Group Permissions</h3>
+      <form action="{{ url_for('gc_update_permissions') }}" method="POST">
+        <label>Select Group:</label>
+        <select name="group_id">
+          {% for group in groups %}
+            <option value="{{ group.id }}">{{ group.name }}</option>
+          {% endfor %}
+        </select><br><br>
+
+        <label>Allow Student Attendance Edit:</label>
+        <input type="checkbox" name="edit_permission"><br><br>
+
+        <label>Enable Notifications:</label>
+        <input type="checkbox" name="notifications_enabled"><br><br>
+
+        <button type="submit">Update Settings</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
