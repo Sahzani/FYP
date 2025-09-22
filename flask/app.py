@@ -1203,82 +1203,75 @@ def admin_teacher_add():
     # Fetch all programs
     programs_docs = db.collection("programs").stream()
     programs = []
+    program_map = {}  # Map program doc ID -> programName
     for doc in programs_docs:
         p = doc.to_dict()
         p["docId"] = doc.id
         programs.append(p)
+        program_map[doc.id] = p.get("programName", "")
 
-    # Fetch all modules
-    modules_docs = db.collection("modules").stream()
-    modules = []
-    for doc in modules_docs:
-        m = doc.to_dict()
-        m["docId"] = doc.id
-        modules.append(m)
-
-    # Fetch all teachers (optional, for table)
+    # Fetch all teachers
     teachers_docs = db.collection("users").where("role_type", "==", 2).stream()
     teachers = []
     for doc in teachers_docs:
         t = doc.to_dict()
         t["uid"] = doc.id
 
-        # Fetch module & program info from roles subcollection
+        # Fetch roles
         role_doc = db.collection("users").document(t["uid"]).collection("roles").document("teacher").get()
         if role_doc.exists:
             role = role_doc.to_dict()
             t["program"] = role.get("program", "")
-            t["module"] = role.get("module", "")
             t["teacherID"] = role.get("teacherID", "")
+            t["isCoordinator"] = role.get("isCoordinator", False)
+            t["programName"] = program_map.get(t["program"], "")  # <-- Add program name
         else:
             t["program"] = ""
-            t["module"] = ""
             t["teacherID"] = ""
+            t["isCoordinator"] = False
+            t["programName"] = ""
 
-        # Optional: Fetch module info for display
-        if t["module"]:
-            mod_doc = db.collection("modules").document(t["module"]).get()
-            t["modules"] = [mod_doc.to_dict()] if mod_doc.exists else []
-        else:
-            t["modules"] = []
+        t["firstName"] = t.get("firstName", "")
+        t["lastName"] = t.get("lastName", "")
+        t["photo"] = t.get("photo", "")
 
         teachers.append(t)
 
     return render_template(
         "admin/A_Teacher-Add.html",
         programs=programs,
-        modules=modules,
         teachers=teachers
     )
-
-
-    return render_template("admin/A_Teacher-Add.html", modules=modules, programs=programs)  
 
 
 # ------------------ Save (Add/Edit) Teacher ------------------
 @app.route('/admin/teacher/save', methods=['POST'])
 def admin_teacher_save():
     teacher_id = request.form.get('userId')  # Firestore UID if editing
-    name = request.form['name']
+    firstName = request.form['firstName']
+    lastName = request.form['lastName']
     email = request.form['email']
     password = request.form.get('password')
-    program = request.form['program']   # ✅ use program instead of course
-    module = request.form['module']
+    program = request.form['program']
     teacherID = request.form['teacherID']
+    isCoordinator = request.form.get('isCoordinator') == 'on'  # checkbox in form
+
+    display_name = f"{firstName} {lastName}"
 
     if teacher_id:
         # -------- Update existing user --------
         try:
             if password:
-                auth.update_user(teacher_id, email=email, display_name=name, password=password)
+                auth.update_user(teacher_id, email=email, display_name=display_name, password=password)
             else:
-                auth.update_user(teacher_id, email=email, display_name=name)
+                auth.update_user(teacher_id, email=email, display_name=display_name)
         except exceptions.FirebaseError as e:
             flash(f"Error updating Auth user: {str(e)}", "error")
             return redirect(url_for("admin_teacher_add"))
 
         db.collection('users').document(teacher_id).update({
-            'name': name,
+            'firstName': firstName,
+            'lastName': lastName,
             'email': email,
             'active': True,
             'role_type': 2,
@@ -1286,15 +1279,15 @@ def admin_teacher_save():
         })
 
         db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
-            'program': program,   # ✅ changed key
-            'module': module,
-            'teacherID': teacherID
+            'program': program,
+            'teacherID': teacherID,
+            'isCoordinator': isCoordinator
         })
 
     else:
         # -------- Add new teacher --------
         try:
-            user = auth.create_user(email=email, password=password or "password123", display_name=name)
+            user = auth.create_user(email=email, password=password or "password123", display_name=display_name)
             teacher_id = user.uid
         except exceptions.FirebaseError as e:
             flash(f"Error creating Auth user: {str(e)}", "error")
@@ -1302,7 +1295,8 @@ def admin_teacher_save():
 
         db.collection('users').document(teacher_id).set({
             'user_id': teacher_id,
-            'name': name,
+            'firstName': firstName,
+            'lastName': lastName,
             'email': email,
             'active': True,
             'role_type': 2,
@@ -1310,12 +1304,58 @@ def admin_teacher_save():
         })
 
         db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
-            'program': program,   # ✅ changed key
-            'module': module,
-            'teacherID': teacherID
+            'program': program,
+            'teacherID': teacherID,
+            'isCoordinator': isCoordinator
         })
 
     return redirect(url_for('admin_teacher_add'))
+
+
+# ------------------ Get Teacher for Edit Modal ------------------
+@app.route('/api/teacher/<uid>')
+def api_get_teacher(uid):
+    if session.get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    user_doc = db.collection("users").document(uid).get()
+    if not user_doc.exists:
+        return jsonify({"error": "Teacher not found"}), 404
+
+    teacher = user_doc.to_dict()
+
+    # Fetch roles
+    role_doc = db.collection("users").document(uid).collection("roles").document("teacher").get()
+    if role_doc.exists:
+        role = role_doc.to_dict()
+        teacher["program"] = role.get("program", "")
+        teacher["teacherID"] = role.get("teacherID", "")
+        teacher["isCoordinator"] = role.get("isCoordinator", False)
+    else:
+        teacher["program"] = ""
+        teacher["teacherID"] = ""
+        teacher["isCoordinator"] = False
+
+    return jsonify(teacher)
+
+
+# ------------------ Delete Teacher ------------------
+@app.route('/admin/teacher/delete/<uid>', methods=['POST'])
+def admin_teacher_delete(uid):
+    if session.get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+    try:
+        # Delete user from Firebase Auth
+        auth.delete_user(uid)
+    except exceptions.FirebaseError as e:
+        flash(f"Error deleting Auth user: {str(e)}", "error")
+        return redirect(url_for("admin_teacher_add"))
+
+    # Delete user doc
+    db.collection("users").document(uid).delete()
+    return jsonify({"success": True})
+
+
 
 # ------------------ Upload Teachers via CSV ------------------
 @app.route("/admin/teacher_upload", methods=["POST"])
