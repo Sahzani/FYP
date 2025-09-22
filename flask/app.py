@@ -683,11 +683,11 @@ def teacher_attendance():
         return redirect(url_for("home"))
     return render_template("teacher/T_attendance_report.html")
 
-@app.route("/teacher/daily_attend")
-def teacher_daily_attend():
+@app.route("/teacher/manage_absent")
+def teacher_manage_absent():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
-    return render_template("teacher/T_DailyAttend.html")
+    return render_template("teacher/T_manageAbsent.html")
 
 @app.route("/teacher/login")
 def teacher_login():
