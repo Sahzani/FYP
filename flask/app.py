@@ -683,11 +683,11 @@ def teacher_attendance():
         return redirect(url_for("home"))
     return render_template("teacher/T_attendance_report.html")
 
-@app.route("/teacher/daily_attend")
-def teacher_daily_attend():
+@app.route("/teacher/manage_absent")
+def teacher_manage_absent():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
-    return render_template("teacher/T_DailyAttend.html")
+    return render_template("teacher/T_manageAbsent.html")
 
 @app.route("/teacher/login")
 def teacher_login():
@@ -697,6 +697,16 @@ def teacher_login():
 def teacher_logout():
     session.clear()
     return redirect(url_for("home"))
+
+events = [
+    {
+        "id": 1,
+        "title": "Workshop A",
+        "datetime": datetime(2025, 10, 2, 14, 0),
+        "group": {"name": "Group Alpha"},
+        "attendees": [{"name": "Student 1"}, {"name": "Student 2"}]
+    }
+]
 
 # ------------------ Teacher Class Schedule ------------------
 # ------------------ Teacher Schedule page ------------------
@@ -860,8 +870,51 @@ def generate_student_id():
     return "STU" + str(random.randint(1000, 9999))  # simple random ID
 
 # ------------------ Admin Student Add Page ------------------
-@app.route("/admin/student_add")
+@app.route("/admin/student_add", methods=["GET", "POST"])
 def admin_student_add():
+    if request.method == "POST":
+        # Get form values
+        first_name = request.form.get("firstName")
+        last_name = request.form.get("lastName")
+        nickname = request.form.get("nickname") or ""   # optional
+        phone_number = request.form.get("phoneNumber") or ""  # optional
+
+        program = request.form.get("program")
+        group = request.form.get("group")
+        student_id = request.form.get("studentID")
+
+        # Handle photo upload
+        photo = request.files.get("photo")
+        photo_filename = ""
+        if photo and allowed_file(photo.filename):
+            filename = secure_filename(photo.filename)
+            photo_filename = f"{student_id}_{filename}"
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], photo_filename)
+            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+            photo.save(save_path)
+
+        # Save student main info
+        new_student_ref = db.collection("users").document()
+        new_student_ref.set({
+            "firstName": first_name,
+            "lastName": last_name,
+            "nickname": nickname,
+            "phoneNumber": phone_number,
+            "role_type": 1,  # student
+            "photo_name": photo_filename
+        })
+
+        # Save student role info
+        new_student_ref.collection("roles").document("student").set({
+            "studentID": student_id,
+            "fk_groupcode": group,
+            "program": program
+        })
+
+        flash("Student added successfully!", "success")
+        return redirect(url_for("admin_student_add"))
+
+    # ------------------ GET: Fetch Data ------------------
     # Fetch all programs
     programs_docs = db.collection("programs").stream()
     programs = []
@@ -881,7 +934,6 @@ def admin_student_add():
     # Fetch all students
     students_docs = db.collection("users").where("role_type", "==", 1).stream()
     students = []
-
     for doc in students_docs:
         s = doc.to_dict()
         s["uid"] = doc.id
@@ -924,7 +976,6 @@ def admin_student_add():
         groups=groups,
         students=students
     )
-
 # ------------------ Save (Add/Edit) Student ------------------
 UPLOAD_FOLDER = "student_pics"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
@@ -936,10 +987,16 @@ def allowed_file(filename):
 @app.route('/admin/student/save', methods=['POST'])
 def admin_student_save():
     student_id = request.form.get('userId')
-    name = request.form['name']
+    first_name = request.form.get('firstName', '')
+    last_name = request.form.get('lastName', '')
+    nickname = request.form.get('nickname', '')  # optional
+    phone_number = request.form.get('phoneNumber', '')  # optional
     email = request.form['email']
     password = request.form.get('password')
     program = request.form['program']
+
+    # Combine for display_name (Firebase Auth)
+    display_name = f"{first_name} {last_name}".strip()
 
     # Auto-generate studentID
     import random, string
@@ -962,15 +1019,18 @@ def admin_student_save():
         # Update existing student
         try:
             if password:
-                auth.update_user(student_id, email=email, display_name=name, password=password)
+                auth.update_user(student_id, email=email, display_name=display_name, password=password)
             else:
-                auth.update_user(student_id, email=email, display_name=name)
+                auth.update_user(student_id, email=email, display_name=display_name)
         except exceptions.FirebaseError as e:
             flash(f"Error updating Auth user: {str(e)}", "error")
             return redirect(url_for("admin_student_add"))
 
         student_data = {
-            'name': name,
+            'firstName': first_name,
+            'lastName': last_name,
+            'nickname': nickname,
+            'phoneNumber': phone_number,
             'email': email,
             'active': True,
             'role_type': 1
@@ -991,7 +1051,7 @@ def admin_student_save():
     else:
         # Add new student
         try:
-            user = auth.create_user(email=email, password=password or "password123", display_name=name)
+            user = auth.create_user(email=email, password=password or "password123", display_name=display_name)
             student_id = user.uid
         except exceptions.FirebaseError as e:
             flash(f"Error creating Auth user: {str(e)}", "error")
@@ -999,7 +1059,10 @@ def admin_student_save():
 
         student_data = {
             'user_id': student_id,
-            'name': name,
+            'firstName': first_name,
+            'lastName': last_name,
+            'nickname': nickname,
+            'phoneNumber': phone_number,
             'email': email,
             'active': True,
             'role_type': 1
@@ -1020,7 +1083,6 @@ def admin_student_save():
         })
 
     return redirect(url_for('admin_student_add'))
-
 
 
 @app.route('/student_pics/<filename>')

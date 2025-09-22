@@ -1,0 +1,38 @@
+<!-- gc_review_attendance.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>iAttend | Attendance Records</title>
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+  {% include 'gc_sidebar.html' %}
+  <div class="main">
+    <h2>Attendance Records</h2>
+    <div class="breadcrumb"><span class="section">Group Coordinator</span> / <span class="current">Attendance Records</span></div>
+
+    <div class="card">
+      <h3>Group: {{ group.name }}</h3>
+      <table class="styled-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Student</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in attendance_records %}
+          <tr>
+            <td>{{ record.date }}</td>
+            <td>{{ record.student_name }}</td>
+            <td>{{ record.status }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

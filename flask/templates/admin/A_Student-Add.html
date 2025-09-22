@@ -75,7 +75,8 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>Name</th>
+          <th>First Name</th>
+          <th>Last Name</th>
           <th>Email</th>
           <th>Student ID</th>
           <th>Program</th>
@@ -86,7 +87,8 @@
         {% for student in students %}
         <tr>
           <td>{{ loop.index }}</td>
-          <td>{{ student.name }}</td>
+          <td>{{ student.firstName }}</td>
+           <td>{{ student.lastName }}</td>
           <td>{{ student.email }}</td>
           <td>{{ student.studentID }}</td>
           <td>{{ student.programName }}</td>
@@ -113,8 +115,11 @@
         <input type="hidden" id="formStudentId" name="userId">
         <input type="hidden" id="formGroupCode" name="fk_groupcode">
 
-        <label for="formName">Name:</label>
-        <input type="text" id="formName" name="name" required>
+        <label for="formFirstName">First Name:</label>
+        <input type="text" id="formFirstName" name="firstName" required>
+
+        <label for="formLastName">Last Name:</label>
+        <input type="text" id="formLastName" name="lastName" required>
 
         <label for="formEmail">Email:</label>
         <input type="email" id="formEmail" name="email" required>
@@ -154,7 +159,8 @@
   function openAddModal(){
     document.getElementById('modalTitle').innerText = "Add Student";
     document.getElementById('formStudentId').value = "";
-    document.getElementById('formName').value = "";
+    document.getElementById('formFirstName').value = "";
+    document.getElementById('formLastName').value = "";
     document.getElementById('formEmail').value = "";
     document.getElementById('formPassword').value = "";
     document.getElementById('formProgram').selectedIndex = 0;
@@ -167,7 +173,8 @@
       .then(data => {
         document.getElementById('modalTitle').innerText = "Edit Student";
         document.getElementById('formStudentId').value = uid;
-        document.getElementById('formName').value = data.name;
+        document.getElementById('formFirstName').value = data.firstName;
+        document.getElementById('formLastName').value = data.lastName;
         document.getElementById('formEmail').value = data.email;
         document.getElementById('formPassword').value = "";
         document.getElementById('formProgram').value = data.program;
