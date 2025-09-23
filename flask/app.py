@@ -1640,10 +1640,12 @@ def admin_schedules():
             t["module"] = ""
             t["teacherID"] = ""
 
+        # Precompute full name
+        t["fullName"] = f"{t.get('firstName','')} {t.get('lastName','')}".strip()
         teachers.append(t)
 
-    # ✅ Sort teachers by name (case-insensitive)
-    teachers.sort(key=lambda t: t.get("name", "").lower())
+    # ✅ Sort teachers by full name (case-insensitive)
+    teachers.sort(key=lambda t: t.get("fullName", "").lower())
 
     # Fetch schedules and attach teacher names
     schedules = []
@@ -1651,9 +1653,9 @@ def admin_schedules():
         s = doc.to_dict()
         s["docId"] = doc.id
 
-        # Match teacher name from teachers list
+        # Match teacher and set full name
         teacher = next((t for t in teachers if t["docId"] == s.get("fk_teacher")), None)
-        s["teacher_name"] = teacher.get("name", "") if teacher else ""
+        s["teacher_name"] = teacher.get("fullName", "") if teacher else ""
 
         schedules.append(s)
 
@@ -1670,8 +1672,6 @@ def admin_schedules():
         schedules=schedules,
         selected_teacher=selected_teacher
     )
-
-
 
 # ------------------ Save/Add/Edit Schedule ------------------
 @app.route("/admin/schedule/save", methods=["POST"])
