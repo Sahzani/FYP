@@ -1,3 +1,4 @@
+import profile
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
@@ -586,10 +587,10 @@ def teacher_class_list():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
     return render_template("teacher/T_class_list.html")
-# ------------------ Teacher Modules Page ------------------
+
+# ------------------ Teacher modules, groups, and attendance ------------------
 @app.route("/teacher_modules")
 def teacher_modules():
-    # Role check
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
@@ -601,80 +602,158 @@ def teacher_modules():
     if not teacher_id:
         return redirect(url_for("login"))
 
-    # ------------------ Fetch Modules ------------------
-    modules_ref = db.collection("mlmodules").where("user_id", "==", teacher_id).stream()
-    modules = {mod_doc.id: mod_doc.to_dict() for mod_doc in modules_ref}
+    # ------------------ Profile for header ------------------
+    # Fetch the teacher's full profile from Firestore
+    teacher_doc = db.collection("users").document(teacher_id).get()
+    if teacher_doc.exists:
+        teacher_data = teacher_doc.to_dict()
+        profile = {
+            "firstName": teacher_data.get("firstName", ""),
+            "lastName": teacher_data.get("lastName", "")
+        }
+    else:
+        profile = {"firstName": "", "lastName": ""}
 
-    module_ids = list(modules.keys())
+    # ------------------ 1. Fetch schedules for this teacher ------------------
+    schedules_ref = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+    schedules = [s.to_dict() | {"id": s.id} for s in schedules_ref]
+
+    if not schedules:
+        return render_template("teacher/T_modules.html", modules_data=[], groups_data={}, profile=profile)
+
+    # ------------------ 2. Collect module IDs and group IDs ------------------
+    module_ids = list({s["fk_module"] for s in schedules})
+    group_ids = list({s["fk_group"] for s in schedules})
+
+    # ------------------ 3. Fetch module names ------------------
+    modules_ref = db.collection("modules").where("__name__", "in", module_ids).stream()
+    modules = {m.id: m.to_dict() for m in modules_ref}
+
+    # ------------------ 4. Fetch groups ------------------
+    groups_ref = db.collection("groups").where("__name__", "in", group_ids).stream()
+    groups = {g.id: g.to_dict() for g in groups_ref}
+
+    # ------------------ 5. Fetch students ------------------
+    students_ref = db.collection("users").where("role_type", "==", 1).stream()
+    students_by_group = {}
+    for stu_doc in students_ref:
+        stu = stu_doc.to_dict()
+        g_id = stu.get("group_code")
+        if g_id not in students_by_group:
+            students_by_group[g_id] = []
+
+        full_name = f"{stu.get('firstName', '')} {stu.get('lastName', '')}".strip()
+        students_by_group[g_id].append({
+            "id": stu_doc.id,
+            "name": full_name if full_name else "Student",
+            "status": "Not Marked",
+            "date": ""
+        })
+
+    # ------------------ 6. Fetch attendance ------------------
+    attendance_ref = db.collection("attendance").stream()
+    attendance_map = {}
+    for att_doc in attendance_ref:
+        att = att_doc.to_dict()
+        key = (att.get("schedule_id"), att.get("student_id"))
+        attendance_map[key] = {"status": att.get("status", "Not Marked"), "date": att.get("date", "")}
+
+    # ------------------ 7. Assemble modules & groups ------------------
     modules_data = []
     groups_data = {}
 
-    if module_ids:
-        # ------------------ Fetch Groups ------------------
-        groups_ref = db.collection("groups").where("fk_module", "in", module_ids).stream()
-        groups = {}
-        for g_doc in groups_ref:
-            g_data = g_doc.to_dict()
-            g_data["id"] = g_doc.id
-            groups[g_doc.id] = g_data
+    for sched in schedules:
+        mod_id = sched["fk_module"]
+        g_id = sched["fk_group"]
 
-        group_ids = list(groups.keys())
+        # Module name from 'modules' collection
+        module_name = modules.get(mod_id, {}).get("moduleName", "Unknown Module")
 
-        # ------------------ Fetch Schedules ------------------
-        schedules_ref = db.collection("schedules").stream()
-        schedules = {}
-        for s_doc in schedules_ref:
-            s_data = s_doc.to_dict()
-            key = (s_data.get("fk_module"), s_data.get("fk_group"))
-            schedules[key] = {
-                "day": s_data.get("day", ""),
-                "time": f"{s_data.get('start_time', '')} - {s_data.get('end_time', '')}",
-                "room": s_data.get("room", "")
-            }
-
-        # ------------------ Fetch Students ------------------
-        students_ref = db.collection("users").where("role_type", "==", 1).stream()
-        students_by_group = {}
-        for stu_doc in students_ref:
-            stu = stu_doc.to_dict()
-            group_code = stu.get("group_code")
-            if group_code not in students_by_group:
-                students_by_group[group_code] = []
-            students_by_group[group_code].append({
-                "name": stu.get("name", "Student"),
-                "status": "Not Marked",
-                "date": ""
-            })
-
-        # ------------------ Assemble Data ------------------
-        for mod_id, mod in modules.items():
-            module_obj = {"moduleName": mod.get("moduleName", "Module"), "groups": []}
-            for g_id, g in groups.items():
-                if g.get("fk_module") != mod_id:
-                    continue
-                group_code = g.get("groupCode")
-                sched = schedules.get((mod_id, group_code), {"day":"", "time":"", "room":""})
-                students = students_by_group.get(group_code, [])
-
-                # Add to modules_data
-                module_obj["groups"].append(group_code)
-
-                # Add to groups_data
-                groups_data[group_code] = {
-                    "groupName": group_code,
-                    "students": students,
-                    "day": sched["day"],
-                    "time": sched["time"],
-                    "room": sched["room"]
-                }
+        # Add module entry if not exists
+        module_obj = next((m for m in modules_data if m["moduleName"] == module_name), None)
+        if not module_obj:
+            module_obj = {"moduleName": module_name, "groups": []}
             modules_data.append(module_obj)
 
+        # Add group under module
+        if g_id not in module_obj["groups"]:
+            module_obj["groups"].append(g_id)
 
+        # Add group details with student attendance
+        students_list = []
+        for stu in students_by_group.get(g_id, []):
+            key = (sched["id"], stu["id"])
+            att_info = attendance_map.get(key, {"status": "Not Marked", "date": ""})
+            students_list.append({
+                "id": stu["id"],
+                "name": stu["name"],
+                "status": att_info["status"],
+                "date": att_info["date"]
+            })
+
+        groups_data[g_id] = {
+            "groupName": groups.get(g_id, {}).get("groupCode", g_id),
+            "students": students_list,
+            "day": sched.get("day", ""),
+            "time": f"{sched.get('start_time', '')} - {sched.get('end_time', '')}",
+            "room": sched.get("room", "")
+        }
+
+    # ------------------ 8. Render template ------------------
     return render_template(
         "teacher/T_modules.html",
         modules_data=modules_data,
-        groups_data=groups_data
+        groups_data=groups_data,
+        profile=profile
     )
+
+
+# ------------------ Teacher marks attendance ------------------
+@app.route("/mark_attendance", methods=["POST"])
+def mark_attendance():
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("login"))
+
+    teacher_id = user.get("uid")
+    if not teacher_id:
+        return redirect(url_for("login"))
+
+    # Expect data from form / AJAX
+    schedule_id = request.form.get("schedule_id")
+    student_id = request.form.get("student_id")
+    status = request.form.get("status")  # e.g., "Present", "Absent", etc.
+
+    if not (schedule_id and student_id and status):
+        flash("Missing attendance information.", "error")
+        return redirect(url_for("teacher_modules"))
+
+    # Save or update attendance
+    attendance_ref = db.collection("attendance")
+    query = attendance_ref.where("schedule_id", "==", schedule_id)\
+                          .where("student_id", "==", student_id).stream()
+
+    existing_att = list(query)
+    att_data = {
+        "schedule_id": schedule_id,
+        "student_id": student_id,
+        "status": status,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    if existing_att:
+        # Update existing document
+        doc_id = existing_att[0].id
+        attendance_ref.document(doc_id).set(att_data)
+    else:
+        # Add new attendance record
+        attendance_ref.add(att_data)
+
+    flash("Attendance updated successfully!", "success")
+    return redirect(url_for("teacher_modules"))
 
 
 @app.route("/teacher/attendance")
@@ -1539,10 +1618,10 @@ def admin_schedules():
 
     # Fetch supporting data
     programs = [{**p.to_dict(), "docId": p.id} for p in db.collection("programs").stream()]
-    groups   = [{**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream()]
-    modules  = [{**m.to_dict(), "docId": m.id} for m in db.collection("modules").stream()]
+    groups = [{**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream()]
+    modules = [{**m.to_dict(), "docId": m.id} for m in db.collection("modules").stream()]
 
-    # Fetch teachers from users collection (role_type==2)
+    # Fetch teachers from users collection (role_type == 2)
     teachers_docs = db.collection("users").where("role_type", "==", 2).stream()
     teachers = []
     for doc in teachers_docs:
@@ -1613,13 +1692,14 @@ def admin_schedule_save():
     }
 
     if schedule_id:
+        # Update existing schedule
         db.collection("schedules").document(schedule_id).set(schedule_data, merge=True)
     else:
+        # Add new schedule
         db.collection("schedules").add(schedule_data)
 
     flash("Schedule saved successfully!", "success")
     return redirect(url_for("admin_schedules"))
-
 
 # ------------------ Delete Schedule ------------------
 @app.route("/admin/schedule/delete/<schedule_id>", methods=["POST"])

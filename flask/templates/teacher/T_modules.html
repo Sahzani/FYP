@@ -4,111 +4,79 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>iAttend - My Modules & Groups</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-  header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
-  #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
-  .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
-  .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; text-decoration: none; }
-  .user-info:hover { background:#f0f0f0; }
-  .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-  .user-info span { font-size:16px; font-weight:600; color:#444; }
-  .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-top:4px; }
-  .breadcrumb .section { color:#989797; }
-  .breadcrumb .current { color:#444444; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
+.header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
+.user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; text-decoration: none; }
+.user-info:hover { background:#f0f0f0; }
+.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+.user-info span { font-size:16px; font-weight:600; color:#444; }
+.breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-top:4px; }
+.breadcrumb .section { color:#989797; }
+.breadcrumb .current { color:#444444; }
 
-  /* Sidebar */
-  .sidebar { position: fixed; top:60px; left:0; width:267px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden;}
-  .sidebar.collapsed { width:70px; }
-  .sidebar-section { margin-bottom:25px; padding:0 15px; }
-  .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
-  .sidebar.collapsed .sidebar-section-title { opacity:0; }
-  .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
-  .sidebar.collapsed .sidebar-link span { display:none; }
-  .sidebar-link i { width:18px; text-align:center; }
-  .sidebar-link:hover { background: rgba(255,255,255,0.5); transform: translateX(4px);}
-  .sidebar-link.active { background: rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
+/* Sidebar */
+.sidebar { position: fixed; top:60px; left:0; width:267px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden;}
+.sidebar.collapsed { width:70px; }
+.sidebar-section { margin-bottom:25px; padding:0 15px; }
+.sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
+.sidebar.collapsed .sidebar-section-title { opacity:0; }
+.sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
+.sidebar.collapsed .sidebar-link span { display:none; }
+.sidebar-link i { width:18px; text-align:center; }
+.sidebar-link:hover { background: rgba(255,255,255,0.5); transform: translateX(4px);}
+.sidebar-link.active { background: rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
 
-  /* Main */
-  .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease;}
-  .sidebar.collapsed ~ .main { margin-left:80px; }
+/* Main */
+.main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease;}
+.sidebar.collapsed ~ .main { margin-left:80px; }
 
-  /* Table compact styles */
-  table { width:100%; border-collapse:collapse; }
-  thead { position: sticky; top:0; background:#f1f3f6; z-index:10; }
-  table th, table td { padding:8px 12px; font-size:14px; border-radius:4px; text-align:left; }
-  tr:hover { background:#f9f9f9; }
-  td.status-Present { color: green; font-weight: 600; }
-  td.status-Absent { color: red; font-weight: 600; }
-  td.status-Late { color: orange; font-weight: 600; }
-  td.status-NotMarked { color: gray; font-weight: 600; }
-  .edit-btn { cursor:pointer; font-size:12px; padding:4px 8px; border-radius:6px; transition:0.2s; }
-  .edit-btn:hover { transform:scale(1.05); }
-  h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
+/* Table compact styles */
+table { width:100%; border-collapse:collapse; }
+thead { position: sticky; top:0; background:#f1f3f6; z-index:10; }
+table th, table td { padding:8px 12px; font-size:14px; border-radius:4px; text-align:left; }
+tr:hover { background:#f9f9f9; }
+td.status-Present { color: green; font-weight: 600; }
+td.status-Absent { color: red; font-weight: 600; }
+td.status-Late { color: orange; font-weight: 600; }
+td.status-NotMarked { color: gray; font-weight: 600; }
+.edit-btn { cursor:pointer; font-size:12px; padding:4px 8px; border-radius:6px; transition:0.2s; }
+.edit-btn:hover { transform:scale(1.05); }
+h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
 
-  /* Scrollable table container */
-  .table-scroll { overflow-x:auto; }
+/* Scrollable table container */
+.table-scroll { overflow-x:auto; }
 
-  /* Attendance summary cards */
-  .summary-card { background:#fff; p-4 rounded-2xl shadow flex flex-col items-center justify-center; }
-  .summary-card i { font-size:1.25rem; }
-  .summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem; }
 
-  /* Modal */
-  .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:10000; }
-  .modal-content { background:#fff; padding:20px 25px; border-radius:12px; width:320px; text-align:center; transform:translateY(-50px); transition:transform 0.3s ease; }
-  .modal.show { display:flex; }
-  .modal-content.show { transform:translateY(0); }
-  .modal button { margin:5px; padding:6px 12px; border:none; border-radius:8px; font-weight:600; cursor:pointer; }
-  .btn-save { background:#4154F1; color:#fff; }
-  .btn-cancel { background:#ccc; color:#000; }
-  .btn-reset { background:#f87171; color:#fff; }
+/* Attendance summary cards */
+.summary-card { background:#fff; p-4 rounded-2xl shadow flex flex-col items-center justify-center; }
+.summary-card i { font-size:1.25rem; }
+.summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem; }
 
-  /* Attendance notifications */
-  .notification { background:#fff3cd; color:#856404; padding:10px 15px; border:1px solid #ffeeba; border-radius:8px; margin-bottom:10px; font-size:14px; }
-  .filter-container {
-  margin-bottom: 15px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end; /* align search & filter to right */
-}
+/* Modal */
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:10000; }
+.modal-content { background:#fff; padding:20px 25px; border-radius:12px; width:320px; text-align:center; transform:translateY(-50px); transition:transform 0.3s ease; }
+.modal.show { display:flex; }
+.modal-content.show { transform:translateY(0); }
+.modal button { margin:5px; padding:6px 12px; border:none; border-radius:8px; font-weight:600; cursor:pointer; }
+.btn-save { background:#4154F1; color:#fff; }
+.btn-cancel { background:#ccc; color:#000; }
+.btn-reset { background:#f87171; color:#fff; }
 
-.input-group {
-  position: relative;
-}
-
-.input-group i {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #888;
-  pointer-events: none; /* so icon doesn’t block typing */
-}
-
-.filter-container input,
-.filter-container select {
-  padding: 8px 12px;
-  padding-left: 32px; /* space for icon */
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-}
-
-.filter-container input:focus,
-.filter-container select:focus {
-  border-color: #5D5FEF;
-  box-shadow: 0 0 0 2px rgba(93, 95, 239, 0.2);
-}
-
+/* Attendance notifications */
+.notification { background:#fff3cd; color:#856404; padding:10px 15px; border:1px solid #ffeeba; border-radius:8px; margin-bottom:10px; font-size:14px; }
+.filter-container { margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.input-group { position: relative; }
+.input-group i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none; }
+.filter-container input, .filter-container select { padding: 8px 12px; padding-left: 32px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; }
+.filter-container input:focus, .filter-container select:focus { border-color: #5D5FEF; box-shadow: 0 0 0 2px rgba(93, 95, 239, 0.2); }
 </style>
 </head>
 <body>
@@ -118,7 +86,7 @@
   <div class="header-content">
     <a href="#" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="#" class="user-info">
-      <span>{{ profile.name }}</span>
+      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
       <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
     </a>
   </div>
@@ -126,31 +94,20 @@
 
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
-      <i class="fas fa-home"></i><span>Dashboard</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
-      <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}"><i class="fas fa-chart-bar"></i><span>Attendance Report</span></a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}">
-      <i class="fas fa-calendar"></i><span>Class Schedule</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}"><i class="fas fa-calendar"></i><span>Class Schedule</span></a>
     <a class="sidebar-link active" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Groups</span></a>
-       <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
   </div>
-
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
-      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
@@ -162,8 +119,10 @@
     </div>
   </div>
 
+  <!-- Modules Grid -->
   <div id="modulesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
+  <!-- Module Details -->
   <div id="moduleDetails" class="hidden">
     <button id="backBtn" class="mb-4 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400">← Back</button>
     <h2 id="moduleTitle" class="module-title mb-4"></h2>
@@ -179,6 +138,7 @@
       <option value="Present">Present</option>
       <option value="Absent">Absent</option>
       <option value="Late">Late</option>
+      <option value="Not Marked">Not Marked</option>
     </select>
     <div>
       <button class="btn-save">Save</button>
@@ -187,24 +147,9 @@
     </div>
   </div>
 </div>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyC_pq3Gnzwkdvc9CPeRa3Yre_vkcijzVpk",
-  authDomain: "aimanzamani.firebaseapp.com",
-  databaseURL: "https://aimanzamani-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "aimanzamani",
-  storageBucket: "aimanzamani.firebasestorage.app",
-  messagingSenderId: "63348630728",
-  appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-let modulesData = [];
-let groupsData = {};
+const modulesData = {{ modules_data|tojson }};
+const groupsData = {{ groups_data|tojson }};
 
 const modulesContainer = document.getElementById('modulesContainer');
 const moduleDetailsDiv = document.getElementById('moduleDetails');
@@ -217,74 +162,13 @@ const modalStudent = document.getElementById('modalStudent');
 const statusSelect = document.getElementById('statusSelect');
 let currentEdit = { groupCode:null, student:null };
 
-// Fetch data from Firebase
-async function fetchData() {
-  const db = firebase.database();
-  const modulesSnap = await db.ref('mlmodules').once('value');
-  const schedulesSnap = await db.ref('Schedules').once('value');
-  const usersSnap = await db.ref('users').once('value');
-
-  const modulesObj = modulesSnap.val() || {};
-  const schedulesObj = schedulesSnap.val() || {};
-  const usersObj = usersSnap.val() || {};
-
-  modulesData = [];
-  groupsData = {};
-
-  // Build groupsData
-  for (const mKey in modulesObj) {
-    const module = modulesObj[mKey];
-    const groupCodes = [];
-
-    for (const sKey in schedulesObj) {
-      const schedule = schedulesObj[sKey];
-      if (schedule.fk_module === module.moduleName) {
-        const gCode = schedule.fk_group;
-        groupCodes.push(gCode);
-
-        if (!groupsData[gCode]) {
-          groupsData[gCode] = {
-            groupName: gCode,
-            day: schedule.day,
-            time: schedule.start_time + " - " + schedule.end_time,
-            room: schedule.room,
-            students: []
-          };
-        }
-      }
-    }
-
-    modulesData.push({
-      moduleName: module.moduleName,
-      groups: groupCodes
-    });
-  }
-
-  // Populate students from users table
-  for (const gCode in groupsData) {
-    groupsData[gCode].students = [];
-    for (const uKey in usersObj) {
-      const user = usersObj[uKey];
-      if (user.roles && user.roles.includes('student') && user.fk_group === gCode) {
-        groupsData[gCode].students.push({
-          name: user.name,
-          status: 'Not Marked',
-          date: null
-        });
-      }
-    }
-  }
-
-  renderModules();
-}
-
-// Render modules
+// Render Modules
 function renderModules(){
   modulesContainer.innerHTML='';
   modulesData.forEach(m=>{
-    const card=document.createElement('div');
+    const card = document.createElement('div');
     card.className='bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
-    card.innerHTML=`
+    card.innerHTML = `
       <div class="flex items-center mb-3">
         <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mr-3">
           <i class="fas fa-book text-xl"></i>
@@ -298,6 +182,7 @@ function renderModules(){
   });
 }
 
+// Show Module Details
 function showModuleDetails(module){
   modulesContainer.classList.add('hidden');
   moduleDetailsDiv.classList.remove('hidden');
@@ -312,63 +197,61 @@ function showModuleDetails(module){
     const presentCount = g.students.filter(s=>s.status==="Present" && s.date===todayStr).length;
     const absentCount = g.students.filter(s=>s.status==="Absent" && s.date===todayStr).length;
     const lateCount = g.students.filter(s=>s.status==="Late" && s.date===todayStr).length;
-
     const icons = { Present:'fa-check-circle', Absent:'fa-times-circle', Late:'fa-clock' };
 
     const groupCard = document.createElement('div');
-    groupCard.className='bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
-    groupCard.innerHTML=`
-      <div class="flex items-center mb-2">
-        <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mr-3">
-          <i class="fas fa-users text-xl"></i>
-        </div>
-        <div>
-          <h3 class="text-lg font-semibold">${g.groupName}</h3>
-          <p class="text-sm text-gray-500">${g.day} ${g.time} | Room: ${g.room}</p>
-          <div class="flex items-center gap-3 mt-1 text-sm">
-            <span class="flex items-center gap-1">
-              <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-                <i class="fas ${icons['Present']}"></i>
-              </div> ${presentCount}
-            </span>
-            <span class="flex items-center gap-1">
-              <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-                <i class="fas ${icons['Absent']}"></i>
-              </div> ${absentCount}
-            </span>
-            <span class="flex items-center gap-1">
-              <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-                <i class="fas ${icons['Late']}"></i>
-              </div> ${lateCount}
-            </span>
-          </div>
-        </div>
+groupCard.className = 'bg-white p-4 rounded-2xl shadow hover:shadow-lg transition cursor-pointer group-card';
+groupCard.style.maxWidth = '400px'; // optional: prevent it from stretching too wide
+groupCard.style.height = 'auto';     // ensures height matches content
+groupCard.innerHTML = `
+  <div class="flex items-center gap-3">
+    <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 flex-shrink-0">
+      <i class="fas fa-users text-xl"></i>
+    </div>
+    <div class="flex-1">
+      <h3 class="text-lg font-semibold mb-1">${g.groupName}</h3>
+      <p class="text-sm text-gray-500 mb-2">${g.day} ${g.time} | Room: ${g.room}</p>
+      <div class="flex items-center gap-3 text-sm mb-2">
+        <span class="flex items-center gap-1">
+          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+            <i class="fas ${icons['Present']}"></i>
+          </div> ${presentCount}
+        </span>
+        <span class="flex items-center gap-1">
+          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+            <i class="fas ${icons['Absent']}"></i>
+          </div> ${absentCount}
+        </span>
+        <span class="flex items-center gap-1">
+          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+            <i class="fas ${icons['Late']}"></i>
+          </div> ${lateCount}
+        </span>
       </div>
-      <p class="text-sm text-gray-500">${g.students.length} student(s)</p>
-    `;
+      <p class="text-sm text-gray-500 mb-0">${g.students.length} student(s)</p>
+    </div>
+  </div>
+`;
+
     groupCard.addEventListener('click',()=>showStudentAttendance(code));
     groupsContainer.appendChild(groupCard);
   });
 }
 
+// Show Student Attendance
 function showStudentAttendance(groupCode){
   modulesContainer.classList.add('hidden');
-  groupsContainer.innerHTML = '';
+  groupsContainer.innerHTML='';
   const g = groupsData[groupCode];
   moduleTitle.textContent = `${g.groupName} - ${g.day} ${g.time} (${g.room})`;
 
   const todayStr = getTodayStr();
 
-  // Attendance summary cards
-  const statusCounts = { Present:0, Absent:0, Late:0 };
-  g.students.forEach(s=>{
-    if(s.date===todayStr && statusCounts[s.status]!==undefined){
-      statusCounts[s.status]++;
-    }
-  });
-
+  // Summary cards
   const summaryDiv = document.createElement('div');
-  summaryDiv.className='summary-grid';
+  summaryDiv.className='summary-grid mb-4';
+  const statusCounts = { Present:0, Absent:0, Late:0 };
+  g.students.forEach(s=>{ if(s.date===todayStr && statusCounts[s.status]!==undefined) statusCounts[s.status]++; });
   const icons = { Present:'fa-check-circle', Absent:'fa-times-circle', Late:'fa-clock' };
   Object.keys(statusCounts).forEach(status=>{
     const card = document.createElement('div');
@@ -377,63 +260,44 @@ function showStudentAttendance(groupCode){
       <div class="w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-2">
         <i class="fas ${icons[status]}"></i>
       </div>
-      <p class="text-sm text-gray-500">${status} (Today)</p>
+      <p class="text-sm font-semibold">${status}</p>
       <p class="text-lg font-bold">${statusCounts[status]}</p>
     `;
     summaryDiv.appendChild(card);
   });
   groupsContainer.appendChild(summaryDiv);
 
+  // Attendance notifications
+  g.students.filter(s=>s.consecutiveAbsences>=3).forEach(s=>{
+    const notif = document.createElement('div');
+    notif.className='notification';
+    notif.textContent=`${s.name} has been absent for ${s.consecutiveAbsences} consecutive classes.`;
+    groupsContainer.appendChild(notif);
+  });
+
   // Filters
   const filterDiv = document.createElement('div');
-  filterDiv.className = 'filter-container flex items-center gap-4 justify-end mb-4';
-  filterDiv.innerHTML = `
-    <div class="input-group relative">
-      <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-      <input id="searchInput" type="text" placeholder="Search student by name..." class="pl-12 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition w-64"/>
-    </div>
-    <div class="input-group relative">
-      <i class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-      <select id="statusFilter" class="pl-12 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition">
-        <option value="">All Status</option>
-        <option value="Present">Present</option>
-        <option value="Absent">Absent</option>
-        <option value="Late">Late</option>
-        <option value="Not Marked">Not Marked</option>
-      </select>
-    </div>
+  filterDiv.className='filter-container';
+  filterDiv.innerHTML=`
+    <div class="input-group"><i class="fas fa-search"></i><input id="searchInput" placeholder="Search student..."></div>
+    <select id="statusFilter">
+      <option value="">All Status</option>
+      <option value="Present">Present</option>
+      <option value="Absent">Absent</option>
+      <option value="Late">Late</option>
+      <option value="Not Marked">Not Marked</option>
+    </select>
   `;
   groupsContainer.appendChild(filterDiv);
 
-  // Notifications for frequent absentees
-  const absentCounts = {};
-  g.students.forEach(s=>{
-    if(s.status==="Absent"){
-      absentCounts[s.name]=(absentCounts[s.name]||0)+1;
-    }
-  });
-  Object.keys(absentCounts).forEach(name=>{
-    if(absentCounts[name]>=3){
-      const notif=document.createElement('div');
-      notif.className="notification";
-      notif.textContent=`⚠️ ${name} has been absent ${absentCounts[name]} times.`;
-      groupsContainer.appendChild(notif);
-    }
-  });
-
-  // Student table
+  // Student Table
   const tableWrapper = document.createElement('div');
   tableWrapper.className='bg-white p-4 rounded-2xl shadow overflow-x-auto table-scroll w-full';
-  tableWrapper.innerHTML = `
-    <table id="studentTable" class="w-full text-sm">
+  tableWrapper.innerHTML=`
+    <table class="w-full text-sm">
       <thead>
         <tr class="bg-gray-100">
-          <th>Name</th>
-          <th>Status</th>
-          <th>Date</th>
-          <th>Time</th>
-          <th>Room</th>
-          <th>Action</th>
+          <th>Name</th><th>Status</th><th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -441,9 +305,6 @@ function showStudentAttendance(groupCode){
           <tr class="border-b hover:bg-gray-50">
             <td>${s.name}</td>
             <td class="status-${s.status.replace(' ','')}">${s.status}</td>
-            <td>${s.date || 'N/A'}</td>
-            <td>${g.time}</td>
-            <td>${g.room}</td>
             <td>
               <button class="edit-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600" data-group="${groupCode}" data-student="${s.name}">Edit</button>
             </td>
@@ -453,84 +314,66 @@ function showStudentAttendance(groupCode){
   `;
   groupsContainer.appendChild(tableWrapper);
 
-  // Filter logic
-  const searchInput = document.getElementById("searchInput");
-  const statusFilter = document.getElementById("statusFilter");
-  function filterTable(){
-    const filterText = searchInput.value.toLowerCase();
-    const statusValue = statusFilter.value;
-    const rows = document.querySelectorAll("#studentTable tbody tr");
-    rows.forEach(r=>{
-      const name = r.querySelector("td").textContent.toLowerCase();
-      const status = r.querySelector("td:nth-child(2)").textContent;
-      const matchText = name.includes(filterText);
-      const matchStatus = statusValue === "" || status === statusValue;
-      r.style.display = matchText && matchStatus ? "" : "none";
+  // Edit buttons
+  document.querySelectorAll('.edit-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const group = btn.dataset.group;
+      const student = btn.dataset.student;
+      currentEdit={groupCode:group,student:student};
+      modalStudent.textContent=student;
+      statusSelect.value = groupsData[group].students.find(s=>s.name===student).status;
+      modal.classList.add('show');
+      document.querySelector('.modal-content').classList.add('show');
     });
-  }
-  searchInput.addEventListener("keyup", filterTable);
-  statusFilter.addEventListener("change", filterTable);
+  });
+
+  // Filters functionality
+  document.getElementById('searchInput').addEventListener('input',(e)=>{
+    const search = e.target.value.toLowerCase();
+    tableWrapper.querySelectorAll('tbody tr').forEach(tr=>{
+      const name = tr.querySelector('td:first-child').textContent.toLowerCase();
+      tr.style.display = name.includes(search) ? '' : 'none';
+    });
+  });
+  document.getElementById('statusFilter').addEventListener('change',(e)=>{
+    const filter = e.target.value;
+    tableWrapper.querySelectorAll('tbody tr').forEach(tr=>{
+      const status = tr.querySelector('td:nth-child(2)').textContent;
+      tr.style.display = (!filter || status===filter) ? '' : 'none';
+    });
+  });
 }
 
-// Modal edit handlers
-document.addEventListener('click',e=>{
-  if(e.target.classList.contains('edit-btn')){
-    const groupCode=e.target.dataset.group;
-    const studentName=e.target.dataset.student;
-    currentEdit={groupCode,student:studentName};
-    modalStudent.textContent=studentName;
-    statusSelect.value=groupsData[groupCode].students.find(s=>s.name===studentName).status;
-    modal.classList.add('show');
-    document.querySelector('.modal-content').classList.add('show');
-  }
-});
-
-document.querySelector('.btn-cancel').addEventListener('click',()=>{
+// Modal actions
+document.querySelector('.btn-cancel').addEventListener('click',()=>{ modal.classList.remove('show'); document.querySelector('.modal-content').classList.remove('show'); });
+document.querySelector('.btn-save').addEventListener('click',()=>{
+  const {groupCode,student} = currentEdit;
+  const s = groupsData[groupCode].students.find(st=>st.name===student);
+  s.status = statusSelect.value;
+  showStudentAttendance(groupCode);
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
 });
-
-document.querySelector('.btn-save').addEventListener('click',()=>{
+document.querySelector('.btn-reset').addEventListener('click',()=>{
   const {groupCode,student} = currentEdit;
-  const newStatus = statusSelect.value;
   const s = groupsData[groupCode].students.find(st=>st.name===student);
-  s.status=newStatus;
+  s.status="Not Marked";
   showStudentAttendance(groupCode);
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
 });
 
-document.querySelector('.btn-reset').addEventListener('click',()=>{
-  if(confirm("Are you sure you want to reset this student's attendance?")){
-    const {groupCode,student} = currentEdit;
-    const s = groupsData[groupCode].students.find(st=>st.name===student);
-    s.status="Not Marked";
-    showStudentAttendance(groupCode);
-    modal.classList.remove('show');
-    document.querySelector('.modal-content').classList.remove('show');
-  }
-});
-
 // Back button
-backBtn.addEventListener('click',()=>{
-  moduleDetailsDiv.classList.add('hidden'); 
-  modulesContainer.classList.remove('hidden');
-});
+backBtn.addEventListener('click',()=>{ moduleDetailsDiv.classList.add('hidden'); modulesContainer.classList.remove('hidden'); });
 
 // Sidebar toggle
 document.getElementById('menu-toggle').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('collapsed'));
 
-// Get today's date
-function getTodayStr(){
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2,'0');
-  const mm = String(today.getMonth()+1).padStart(2,'0');
-  const yyyy = today.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
-}
+// Helper
+function getTodayStr(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
-// Start
-fetchData();
+renderModules();
 </script>
+
 </body>
 </html>
