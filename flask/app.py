@@ -1456,20 +1456,13 @@ def admin_teacher_assign():
         group_id = request.form.get("group_id")
 
         if teacher_id and module_id and group_id:
-            # Save to teacher_assignments
-            db.collection("teacher_assignments").add({
-                "teacher_id": teacher_id,
-                "module_id": module_id,
-                "group_id": group_id
-            })
-
             # Fetch module and group info
             module_doc = db.collection("modules").document(module_id).get()
             group_doc = db.collection("groups").document(group_id).get()
             module_data = module_doc.to_dict() if module_doc.exists else {}
             group_data = group_doc.to_dict() if group_doc.exists else {}
 
-            # Save to mlmodule
+            # Save directly to mlmodule (no teacher_assignments)
             db.collection("mlmodule").add({
                 "group_code": group_data.get("groupCode", ""),
                 "moduleName": module_data.get("moduleName", ""),
@@ -1495,7 +1488,13 @@ def admin_teacher_assign():
         t["email"] = t.get("email", "")
 
         # Fetch roles/teacher subcollection
-        role_doc = db.collection("users").document(t["docId"]).collection("roles").document("teacher").get()
+        role_doc = (
+            db.collection("users")
+              .document(t["docId"])
+              .collection("roles")
+              .document("teacher")
+              .get()
+        )
         if role_doc.exists:
             role = role_doc.to_dict()
             t["program"] = role.get("program", "")
@@ -1503,43 +1502,33 @@ def admin_teacher_assign():
             t["program"] = ""
 
         # Fetch current assignments from mlmodule
-        assignments_docs = db.collection("mlmodule").where("teacherID", "==", t["docId"]).stream()
-        t["assignments"] = []
-        for a_doc in assignments_docs:
-            a = a_doc.to_dict()
-            t["assignments"].append(a)
+        assignments_docs = (
+            db.collection("mlmodule")
+              .where("teacherID", "==", t["docId"])
+              .stream()
+        )
+        t["assignments"] = [a_doc.to_dict() for a_doc in assignments_docs]
 
         teachers.append(t)
 
     # Fetch programs
     programs_docs = db.collection("programs").stream()
-    programs_map = {}
-    for doc in programs_docs:
-        p = doc.to_dict()
-        programs_map[doc.id] = p.get("programName", "")
+    programs_map = {doc.id: doc.to_dict().get("programName", "") for doc in programs_docs}
 
     # Fetch groups
     groups_docs = db.collection("groups").stream()
-    groups = []
-    for doc in groups_docs:
-        g = doc.to_dict()
-        g["docId"] = doc.id
-        groups.append(g)
+    groups = [{"docId": doc.id, **doc.to_dict()} for doc in groups_docs]
 
     # Fetch modules
     modules_docs = db.collection("modules").stream()
-    modules = []
-    for doc in modules_docs:
-        m = doc.to_dict()
-        m["docId"] = doc.id
-        modules.append(m)
+    modules = [{"docId": doc.id, **doc.to_dict()} for doc in modules_docs]
 
     return render_template(
         "admin/A_Teacher-Assign.html",
         teachers=teachers,
         programs_map=programs_map,
         groups=groups,
-        modules=modules
+        modules=modules,
     )
 
 # ------------------ Admin Schedule page ------------------
