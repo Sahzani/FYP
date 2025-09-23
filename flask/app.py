@@ -794,33 +794,44 @@ def teacher_schedules():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
-    teacher_id = session.get("user_id")  # assuming you store teacher's uid in session
+    # Ensure teacher_id is a clean string
+    teacher_id = str(session.get("user_id")).strip()
 
-    # Fetch schedules that belong to this teacher
-    schedules_docs = (
-        db.collection("schedules")
-        .where("fk_teacher", "==", teacher_id)   # <-- make sure you save fk_teacher when creating schedule
-        .stream()
-    )
-
-    schedules = []
-    for doc in schedules_docs:
-        s = doc.to_dict()
-        s["docId"] = doc.id
-        schedules.append(s)
+    # Fetch all schedules
+    schedules_docs = db.collection("schedules").stream()
 
     # Fetch supporting info (programs, groups, modules)
     programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
     groups   = {g.id: g.to_dict() for g in db.collection("groups").stream()}
     modules  = {m.id: m.to_dict() for m in db.collection("modules").stream()}
 
-    return render_template("teacher/T_Schedule.html",
-                           programs=programs,
-                           groups=groups,
-                           modules=modules,
-                           schedules=schedules)
+    schedules = []
+    for doc in schedules_docs:
+        s = doc.to_dict()
+        s['docId'] = doc.id
 
-    return render_template("teacher/T_schedule.html", schedule=schedule, profile=profile)
+        # Only include schedules that belong to this teacher
+        if str(s.get('fk_teacher', '')).strip() == teacher_id:
+            # Map foreign keys to names
+            s['moduleName'] = modules.get(s.get('fk_module'), {}).get('name', 'Unknown Module')
+            s['groupName']  = groups.get(s.get('fk_group'), {}).get('name', 'Unknown Group')
+            s['programName'] = programs.get(s.get('fk_program'), {}).get('name', 'Unknown Program')
+
+            schedules.append(s)
+
+    # Optional: Fetch teacher profile for header
+    profile_doc = db.collection("users").document(teacher_id).get()
+    profile = profile_doc.to_dict() if profile_doc.exists else {"name": "Teacher"}
+
+    return render_template(
+        "teacher/T_Schedule.html",
+        schedules=schedules,
+        programs=programs,
+        groups=groups,
+        modules=modules,
+        profile=profile
+    )
+
 
 # ------------------ Teacher Manage Groups ------------------
 @app.route("/teacher/manage_groups", methods=["GET", "POST"])
@@ -1418,22 +1429,25 @@ def api_get_teacher(uid):
     return jsonify(teacher)
 
 
-# ------------------ Delete Teacher ------------------
 @app.route('/admin/teacher/delete/<uid>', methods=['POST'])
 def admin_teacher_delete(uid):
     if session.get("role") != "admin":
         return jsonify({"error": "Unauthorized"}), 403
 
     try:
-        # Delete user from Firebase Auth
+        # Try deleting user from Firebase Auth
         auth.delete_user(uid)
+    except exceptions.NotFoundError:
+        # If user doesn't exist in Auth, just skip
+        pass
     except exceptions.FirebaseError as e:
-        return jsonify({"error": str(e)}), 400  # <-- return JSON instead of redirect
+        return jsonify({"error": str(e)}), 400
 
-    # Delete user doc
+    # Delete Firestore user document anyway
     db.collection("users").document(uid).delete()
+
     return jsonify({"success": True})
-    
+
 
 # ------------------ Upload Teachers via CSV ------------------
 @app.route("/admin/teacher_upload", methods=["POST"])
