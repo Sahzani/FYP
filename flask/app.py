@@ -139,9 +139,11 @@ def login():
             return redirect(url_for("home"))
 
         # Store session
-        session["user"] = {"uid": uid, "email": email}
+        session["user_id"] = uid  # 🔹 Use Firestore UID / doc ID
+        session["user_email"] = email  # optional
         session["role"] = role
         session.permanent = True if remember == "on" else False
+
 
         return redirect(url_for(redirect_url))
 
@@ -794,13 +796,14 @@ def teacher_schedules():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
-    # Ensure teacher_id is a clean string
+    # Ensure teacher_id is string and stripped
     teacher_id = str(session.get("user_id")).strip()
+    print("Logged-in teacher_id:", teacher_id)  # 🔹 Debug
 
     # Fetch all schedules
     schedules_docs = db.collection("schedules").stream()
 
-    # Fetch supporting info (programs, groups, modules)
+    # Fetch supporting info
     programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
     groups   = {g.id: g.to_dict() for g in db.collection("groups").stream()}
     modules  = {m.id: m.to_dict() for m in db.collection("modules").stream()}
@@ -810,16 +813,14 @@ def teacher_schedules():
         s = doc.to_dict()
         s['docId'] = doc.id
 
-        # Only include schedules that belong to this teacher
-        if str(s.get('fk_teacher', '')).strip() == teacher_id:
-            # Map foreign keys to names
+        # Match teacher ID
+        if str(s.get('fk_teacher','')).strip() == teacher_id:
             s['moduleName'] = modules.get(s.get('fk_module'), {}).get('name', 'Unknown Module')
             s['groupName']  = groups.get(s.get('fk_group'), {}).get('name', 'Unknown Group')
             s['programName'] = programs.get(s.get('fk_program'), {}).get('name', 'Unknown Program')
-
             schedules.append(s)
 
-    # Optional: Fetch teacher profile for header
+    # Teacher profile
     profile_doc = db.collection("users").document(teacher_id).get()
     profile = profile_doc.to_dict() if profile_doc.exists else {"name": "Teacher"}
 
