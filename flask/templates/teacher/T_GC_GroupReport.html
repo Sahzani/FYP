@@ -1,0 +1,160 @@
+<!-- gc_generate_reports.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>iAttend | Group Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    body { margin:0; font-family:'Poppins',sans-serif; background:linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+    header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+    #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
+    .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
+    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; text-decoration:none; }
+    .user-info:hover { background:#f0f0f0; }
+    .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+    .user-info span { font-size:16px; font-weight:600; color:#444; }
+    .breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
+    .breadcrumb .section { color:#989797; }
+    .breadcrumb .current { color:#444444; }
+
+    .sidebar { position:fixed; top:60px; left:0; width:267px; height:calc(100% - 60px); background:linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition:width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden; }
+    .sidebar.collapsed { width:70px; }
+    .sidebar-section { margin-bottom:25px; padding:0 15px; }
+    .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
+    .sidebar.collapsed .sidebar-section-title { opacity:0; }
+    .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
+    .sidebar.collapsed .sidebar-link span { display:none; }
+    .sidebar-link i { width:18px; text-align:center; }
+    .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
+    .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
+
+    .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease; }
+    .sidebar.collapsed ~ .main { margin-left:80px; }
+
+    .card { background:#fff; padding:1.5rem; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition:transform 0.3s ease, box-shadow 0.3s ease; }
+    .card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
+
+    label { font-weight:500; display:block; margin:10px 0 5px; }
+    select { padding:8px 12px; border-radius:8px; border:1px solid #ccc; font-size:14px; margin-right:10px; }
+    button { padding:10px 20px; background:#4154F1; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:background 0.3s ease; }
+    button:hover { background:#2e3bbd; }
+
+    table.styled-table { width:100%; border-collapse:collapse; margin-top:1rem; }
+    .styled-table th, .styled-table td { border:1px solid #ddd; padding:12px 15px; text-align:center; }
+    .styled-table th { background-color:#f4f4f4; font-weight:600; color:#333; }
+    .styled-table tr:nth-child(even) { background-color:#fafafa; }
+    .styled-table tr:hover { background-color:#f1f1f1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="{{ url_for('gc_generate_report') }}" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="{{ url_for('teacher_profile') }}" class="user-info">
+      <span>{{ profile.name }}</span>
+      <img src="https://placehold.co/40x40/ffa07a/ffffff?text=GC" alt="Group Coordinator">
+    </a>
+  </div>
+</header>
+
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
+      <i class="fas fa-home"></i><span>Dashboard</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Group Coordinator</div>
+    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
+      <i class="fas fa-users-cog"></i><span>Manage Group</span>
+    </a>
+    <a class="sidebar-link active" href="{{ url_for('gc_group_report') }}">
+      <i class="fas fa-file-alt"></i><span>Group Report</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
+  </div>
+</div>
+
+<div class="main">
+  <h2>Group Report</h2>
+  <div class="breadcrumb"><span class="section">Group Coordinator</span> / <span class="current">Group Report</span></div>
+
+  <div class="card">
+    <form action="{{ url_for('gc_generate_report') }}" method="POST">
+      <label>Select Month:</label>
+      <select name="report_month">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+
+      <label>Select Year:</label>
+      <select name="report_year">
+        {% for year in range(2000, 2101) %}
+          <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit">Generate Report</button>
+    </form>
+  </div>
+
+  {% if report_data %}
+  <div class="card" style="margin-top:20px;">
+    <h3>Report Results</h3>
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Group</th>
+          <th>Total Students</th>
+          <th>Total Days</th>
+          <th>Present</th>
+          <th>Absent</th>
+          <th>Overall Attendance (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report_data %}
+        <tr>
+          <td>{{ row.group }}</td>
+          <td>{{ row.total_students }}</td>
+          <td>{{ row.total_days }}</td>
+          <td>{{ row.present }}</td>
+          <td>{{ row.absent }}</td>
+          <td>{{ row.overall_percentage }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  menuToggle.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
+</script>
+
+</body>
+</html>
