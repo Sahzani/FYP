@@ -773,13 +773,43 @@ def mark_attendance():
 def teacher_attendance():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
-    return render_template("teacher/T_attendance_report.html")
+
+    user_id = session.get("user_id")  # this exists in your session
+    if not user_id:
+        return redirect(url_for("home"))
+
+    # Fetch teacher profile from Firestore
+    user_doc_ref = db.collection("users").document(user_id)
+    user_doc = user_doc_ref.get()
+    if not user_doc.exists:
+        flash("User profile not found.")
+        return redirect(url_for("home"))
+
+    profile = user_doc.to_dict()  # profile now has all fields (e.g., name, email)
+
+    return render_template("teacher/T_attendance_report.html", profile=profile)
+
 
 @app.route("/teacher/manage_absent")
 def teacher_manage_absent():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
-    return render_template("teacher/T_manageAbsent.html")
+
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("home"))
+
+    # Fetch teacher profile from Firestore
+    user_doc_ref = db.collection("users").document(user_id)
+    user_doc = user_doc_ref.get()
+    if not user_doc.exists:
+        flash("User profile not found.")
+        return redirect(url_for("home"))
+
+    profile = user_doc.to_dict()  # contains name, email, etc.
+
+    return render_template("teacher/T_manageAbsent.html", profile=profile)
+
 
 @app.route("/teacher/login")
 def teacher_login():
