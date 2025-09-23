@@ -169,12 +169,13 @@ th{background:#f8f7ff; font-weight:600;}
       {% endfor %}
     </select>
 
-    <select name="fk_teacher" required style="flex:1; min-width:150px;">
-      <option value="">Select Teacher</option>
-      {% for t in teachers %}
-        <option value="{{ t.docId }}">{{ t.name }}</option>
-      {% endfor %}
-    </select>
+<select name="fk_teacher" required style="flex:1; min-width:150px;">
+  <option value="">Select Teacher</option>
+  {% for t in teachers %}
+    <option value="{{ t.docId }}">{{ t.firstName }} {{ t.lastName }}</option>
+  {% endfor %}
+</select>
+
 
     <select name="day" required style="flex:1; min-width:100px;">
       <option value="Monday">Monday</option>
