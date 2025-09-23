@@ -118,8 +118,8 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
         {% if schedules %}
           {% for s in schedules %}
             <tr>
-              <td>{{ s.group }}</td>
-              <td>{{ s.module }}</td>
+              <td>{{ groupName }}</td>
+              <td>{{ s.moduleName }}</td>
               <td>{{ s.day }}</td>
               <td>{{ s.startTime }}</td>
               <td>{{ s.endTime }}</td>
@@ -135,53 +135,60 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
     </table>
   </div>
 
-  <!-- NEW Timetable Grid -->
-  <div class="card">
-    <h2>Timetable View</h2>
-    <div style="overflow-x:auto; width:100%;">
-      <table>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Monday</th>
-            <th>Tuesday</th>
-            <th>Wednesday</th>
-            <th>Thursday</th>
-            <th>Saturday</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% set slots = [] %}
-          {% for s in schedules %}
-            {% if s.startTime not in slots %}
-              {% set _ = slots.append(s.startTime) %}
-            {% endif %}
-          {% endfor %}
+<!-- NEW Timetable Grid -->
+<div class="card">
+  <h2>Timetable View</h2>
+  <div style="overflow-x:auto; width:100%;">
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Monday</th>
+          <th>Tuesday</th>
+          <th>Wednesday</th>
+          <th>Thursday</th>
+          <th>Saturday</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set slots = [] %}
+        {% for s in schedules %}
+          {% if s.startTime not in slots %}
+            {% set _ = slots.append(s.startTime) %}
+          {% endif %}
+        {% endfor %}
 
-          {% for slot in slots|sort %}
-          <tr>
-            <td>{{ slot }}</td>
-            {% for day in ["Monday","Tuesday","Wednesday","Thursday","Saturday"] %}
-              <td>
-                {% set entry = schedules 
-                              | selectattr("day","equalto",day) 
-                              | selectattr("startTime","equalto",slot) 
-                              | list %}
-                {% if entry %}
-                  {{ entry[0].moduleName }} <br>
-                  {{ entry[0].startTime }} - {{ entry[0].endTime }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-            {% endfor %}
-          </tr>
+        {% for slot in slots|sort %}
+        <tr>
+          <td>{{ slot }}</td>
+          {% for day in ["Monday","Tuesday","Wednesday","Thursday","Saturday"] %}
+            <td>
+              {% set entries = schedules 
+                               | selectattr("day","equalto",day) 
+                               | selectattr("startTime","equalto",slot)
+                               | list %}
+              {% if entries %}
+                {% for e in entries %}
+                  <div>
+                    <strong>{{ e.moduleName }}</strong><br>
+                    {{ e.startTime }} - {{ e.endTime }}<br>
+                    {{ e.groupName }}<br>
+                    {{ e.room }}
+                    <hr style="margin:2px 0; border-top:1px dashed #ccc;">
+                  </div>
+                {% endfor %}
+              {% else %}
+                -
+              {% endif %}
+            </td>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
+
 
 <script>
 const menuToggle = document.getElementById('menu-toggle');

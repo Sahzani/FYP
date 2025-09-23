@@ -794,33 +794,40 @@ def teacher_schedules():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
-    teacher_id = session.get("user_id")  # assuming you store teacher's uid in session
+    teacher_id = session.get("user_id")  # teacher's uid from session
 
     # Fetch schedules that belong to this teacher
-    schedules_docs = (
-        db.collection("schedules")
-        .where("fk_teacher", "==", teacher_id)   # <-- make sure you save fk_teacher when creating schedule
-        .stream()
-    )
-
-    schedules = []
-    for doc in schedules_docs:
-        s = doc.to_dict()
-        s["docId"] = doc.id
-        schedules.append(s)
+    schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
 
     # Fetch supporting info (programs, groups, modules)
     programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
     groups   = {g.id: g.to_dict() for g in db.collection("groups").stream()}
     modules  = {m.id: m.to_dict() for m in db.collection("modules").stream()}
 
-    return render_template("teacher/T_Schedule.html",
-                           programs=programs,
-                           groups=groups,
-                           modules=modules,
-                           schedules=schedules)
+    schedules = []
+    for doc in schedules_docs:
+        s = doc.to_dict()
+        s['docId'] = doc.id
 
-    return render_template("teacher/T_schedule.html", schedule=schedule, profile=profile)
+        # Map foreign keys to names
+        s['moduleName'] = modules.get(s['fk_module'], {}).get('name', 'Unknown Module')
+        s['groupName']  = groups.get(s['fk_group'], {}).get('name', 'Unknown Group')
+        s['programName'] = programs.get(s['fk_program'], {}).get('name', 'Unknown Program')
+
+        schedules.append(s)
+
+    # Optional: Fetch teacher profile for header
+    profile_doc = db.collection("users").document(teacher_id).get()
+    profile = profile_doc.to_dict() if profile_doc.exists else {"name": "Teacher"}
+
+    return render_template(
+        "teacher/T_Schedule.html",
+        schedules=schedules,
+        programs=programs,
+        groups=groups,
+        modules=modules,
+        profile=profile
+    )
 
 # ------------------ Teacher Manage Groups ------------------
 @app.route("/teacher/manage_groups", methods=["GET", "POST"])
