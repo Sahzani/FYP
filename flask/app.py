@@ -1618,10 +1618,10 @@ def admin_schedules():
 
     # Fetch supporting data
     programs = [{**p.to_dict(), "docId": p.id} for p in db.collection("programs").stream()]
-    groups   = [{**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream()]
-    modules  = [{**m.to_dict(), "docId": m.id} for m in db.collection("modules").stream()]
+    groups = [{**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream()]
+    modules = [{**m.to_dict(), "docId": m.id} for m in db.collection("modules").stream()]
 
-    # Fetch teachers from users collection (role_type==2)
+    # Fetch teachers from users collection (role_type == 2)
     teachers_docs = db.collection("users").where("role_type", "==", 2).stream()
     teachers = []
     for doc in teachers_docs:
@@ -1642,8 +1642,8 @@ def admin_schedules():
 
         teachers.append(t)
 
-        # ✅ Sort teachers by name (case-insensitive)
-teachers.sort(key=lambda t: t.get("name", "").lower())
+    # ✅ Sort teachers by name (case-insensitive)
+    teachers.sort(key=lambda t: t.get("name", "").lower())
 
     # Fetch schedules
     schedules = []
@@ -1686,13 +1686,14 @@ def admin_schedule_save():
     }
 
     if schedule_id:
+        # Update existing schedule
         db.collection("schedules").document(schedule_id).set(schedule_data, merge=True)
     else:
+        # Add new schedule
         db.collection("schedules").add(schedule_data)
 
     flash("Schedule saved successfully!", "success")
     return redirect(url_for("admin_schedules"))
-
 
 # ------------------ Delete Schedule ------------------
 @app.route("/admin/schedule/delete/<schedule_id>", methods=["POST"])
