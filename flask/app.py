@@ -1203,82 +1203,75 @@ def admin_teacher_add():
     # Fetch all programs
     programs_docs = db.collection("programs").stream()
     programs = []
+    program_map = {}  # Map program doc ID -> programName
     for doc in programs_docs:
         p = doc.to_dict()
         p["docId"] = doc.id
         programs.append(p)
+        program_map[doc.id] = p.get("programName", "")
 
-    # Fetch all modules
-    modules_docs = db.collection("modules").stream()
-    modules = []
-    for doc in modules_docs:
-        m = doc.to_dict()
-        m["docId"] = doc.id
-        modules.append(m)
-
-    # Fetch all teachers (optional, for table)
+    # Fetch all teachers
     teachers_docs = db.collection("users").where("role_type", "==", 2).stream()
     teachers = []
     for doc in teachers_docs:
         t = doc.to_dict()
         t["uid"] = doc.id
 
-        # Fetch module & program info from roles subcollection
+        # Fetch roles
         role_doc = db.collection("users").document(t["uid"]).collection("roles").document("teacher").get()
         if role_doc.exists:
             role = role_doc.to_dict()
             t["program"] = role.get("program", "")
-            t["module"] = role.get("module", "")
             t["teacherID"] = role.get("teacherID", "")
+            t["isCoordinator"] = role.get("isCoordinator", False)
+            t["programName"] = program_map.get(t["program"], "")  # <-- Add program name
         else:
             t["program"] = ""
-            t["module"] = ""
             t["teacherID"] = ""
+            t["isCoordinator"] = False
+            t["programName"] = ""
 
-        # Optional: Fetch module info for display
-        if t["module"]:
-            mod_doc = db.collection("modules").document(t["module"]).get()
-            t["modules"] = [mod_doc.to_dict()] if mod_doc.exists else []
-        else:
-            t["modules"] = []
+        t["firstName"] = t.get("firstName", "")
+        t["lastName"] = t.get("lastName", "")
+        t["photo"] = t.get("photo", "")
 
         teachers.append(t)
 
     return render_template(
         "admin/A_Teacher-Add.html",
         programs=programs,
-        modules=modules,
         teachers=teachers
     )
-
-
-    return render_template("admin/A_Teacher-Add.html", modules=modules, programs=programs)  
 
 
 # ------------------ Save (Add/Edit) Teacher ------------------
 @app.route('/admin/teacher/save', methods=['POST'])
 def admin_teacher_save():
     teacher_id = request.form.get('userId')  # Firestore UID if editing
-    name = request.form['name']
+    firstName = request.form['firstName']
+    lastName = request.form['lastName']
     email = request.form['email']
     password = request.form.get('password')
-    program = request.form['program']   # ✅ use program instead of course
-    module = request.form['module']
+    program = request.form['program']
     teacherID = request.form['teacherID']
+    isCoordinator = request.form.get('isCoordinator') == 'on'  # checkbox in form
+
+    display_name = f"{firstName} {lastName}"
 
     if teacher_id:
         # -------- Update existing user --------
         try:
             if password:
-                auth.update_user(teacher_id, email=email, display_name=name, password=password)
+                auth.update_user(teacher_id, email=email, display_name=display_name, password=password)
             else:
-                auth.update_user(teacher_id, email=email, display_name=name)
+                auth.update_user(teacher_id, email=email, display_name=display_name)
         except exceptions.FirebaseError as e:
             flash(f"Error updating Auth user: {str(e)}", "error")
             return redirect(url_for("admin_teacher_add"))
 
         db.collection('users').document(teacher_id).update({
-            'name': name,
+            'firstName': firstName,
+            'lastName': lastName,
             'email': email,
             'active': True,
             'role_type': 2,
@@ -1286,15 +1279,15 @@ def admin_teacher_save():
         })
 
         db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
-            'program': program,   # ✅ changed key
-            'module': module,
-            'teacherID': teacherID
+            'program': program,
+            'teacherID': teacherID,
+            'isCoordinator': isCoordinator
         })
 
     else:
         # -------- Add new teacher --------
         try:
-            user = auth.create_user(email=email, password=password or "password123", display_name=name)
+            user = auth.create_user(email=email, password=password or "password123", display_name=display_name)
             teacher_id = user.uid
         except exceptions.FirebaseError as e:
             flash(f"Error creating Auth user: {str(e)}", "error")
@@ -1302,7 +1295,8 @@ def admin_teacher_save():
 
         db.collection('users').document(teacher_id).set({
             'user_id': teacher_id,
-            'name': name,
+            'firstName': firstName,
+            'lastName': lastName,
             'email': email,
             'active': True,
             'role_type': 2,
@@ -1310,12 +1304,58 @@ def admin_teacher_save():
         })
 
         db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
-            'program': program,   # ✅ changed key
-            'module': module,
-            'teacherID': teacherID
+            'program': program,
+            'teacherID': teacherID,
+            'isCoordinator': isCoordinator
         })
 
     return redirect(url_for('admin_teacher_add'))
+
+
+# ------------------ Get Teacher for Edit Modal ------------------
+@app.route('/api/teacher/<uid>')
+def api_get_teacher(uid):
+    if session.get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    user_doc = db.collection("users").document(uid).get()
+    if not user_doc.exists:
+        return jsonify({"error": "Teacher not found"}), 404
+
+    teacher = user_doc.to_dict()
+
+    # Fetch roles
+    role_doc = db.collection("users").document(uid).collection("roles").document("teacher").get()
+    if role_doc.exists:
+        role = role_doc.to_dict()
+        teacher["program"] = role.get("program", "")
+        teacher["teacherID"] = role.get("teacherID", "")
+        teacher["isCoordinator"] = role.get("isCoordinator", False)
+    else:
+        teacher["program"] = ""
+        teacher["teacherID"] = ""
+        teacher["isCoordinator"] = False
+
+    return jsonify(teacher)
+
+
+# ------------------ Delete Teacher ------------------
+@app.route('/admin/teacher/delete/<uid>', methods=['POST'])
+def admin_teacher_delete(uid):
+    if session.get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+    try:
+        # Delete user from Firebase Auth
+        auth.delete_user(uid)
+    except exceptions.FirebaseError as e:
+        flash(f"Error deleting Auth user: {str(e)}", "error")
+        return redirect(url_for("admin_teacher_add"))
+
+    # Delete user doc
+    db.collection("users").document(uid).delete()
+    return jsonify({"success": True})
+
+
 
 # ------------------ Upload Teachers via CSV ------------------
 @app.route("/admin/teacher_upload", methods=["POST"])
@@ -1403,12 +1443,104 @@ def admin_rooms():
         return render_template("admin/A_Rooms.html")
     return redirect(url_for("home"))
 
-
-@app.route("/admin/teacher_assign")
+# ------------------ Admin Assign Modules to Teachers ------------------
+@app.route("/admin/teacher_assign", methods=["GET", "POST"])
 def admin_teacher_assign():
-    if session.get("role") == "admin":
-        return render_template("admin/A_TeacherAssign.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    if request.method == "POST":
+        # Handle module assignment form submission
+        teacher_id = request.form.get("teacher_id")
+        module_id = request.form.get("module_id")
+        group_id = request.form.get("group_id")
+
+        if teacher_id and module_id and group_id:
+            # Save to teacher_assignments
+            db.collection("teacher_assignments").add({
+                "teacher_id": teacher_id,
+                "module_id": module_id,
+                "group_id": group_id
+            })
+
+            # Fetch module and group info
+            module_doc = db.collection("modules").document(module_id).get()
+            group_doc = db.collection("groups").document(group_id).get()
+            module_data = module_doc.to_dict() if module_doc.exists else {}
+            group_data = group_doc.to_dict() if group_doc.exists else {}
+
+            # Save to mlmodule
+            db.collection("mlmodule").add({
+                "group_code": group_data.get("groupCode", ""),
+                "moduleName": module_data.get("moduleName", ""),
+                "status": "active",
+                "teacherID": teacher_id
+            })
+
+            flash("Module assigned to teacher successfully!", "success")
+        else:
+            flash("Please select all fields before submitting.", "error")
+
+        return redirect(url_for("admin_teacher_assign"))
+
+    # ------------------ GET: fetch data for page ------------------
+    # Fetch all teachers
+    users_docs = db.collection("users").where("role_type", "==", 2).stream()
+    teachers = []
+    for doc in users_docs:
+        t = doc.to_dict()
+        t["docId"] = doc.id
+        t["firstName"] = t.get("firstName", "")
+        t["lastName"] = t.get("lastName", "")
+        t["email"] = t.get("email", "")
+
+        # Fetch roles/teacher subcollection
+        role_doc = db.collection("users").document(t["docId"]).collection("roles").document("teacher").get()
+        if role_doc.exists:
+            role = role_doc.to_dict()
+            t["program"] = role.get("program", "")
+        else:
+            t["program"] = ""
+
+        # Fetch current assignments from mlmodule
+        assignments_docs = db.collection("mlmodule").where("teacherID", "==", t["docId"]).stream()
+        t["assignments"] = []
+        for a_doc in assignments_docs:
+            a = a_doc.to_dict()
+            t["assignments"].append(a)
+
+        teachers.append(t)
+
+    # Fetch programs
+    programs_docs = db.collection("programs").stream()
+    programs_map = {}
+    for doc in programs_docs:
+        p = doc.to_dict()
+        programs_map[doc.id] = p.get("programName", "")
+
+    # Fetch groups
+    groups_docs = db.collection("groups").stream()
+    groups = []
+    for doc in groups_docs:
+        g = doc.to_dict()
+        g["docId"] = doc.id
+        groups.append(g)
+
+    # Fetch modules
+    modules_docs = db.collection("modules").stream()
+    modules = []
+    for doc in modules_docs:
+        m = doc.to_dict()
+        m["docId"] = doc.id
+        modules.append(m)
+
+    return render_template(
+        "admin/A_Teacher-Assign.html",
+        teachers=teachers,
+        programs_map=programs_map,
+        groups=groups,
+        modules=modules
+    )
 
 # ------------------ Admin Schedule page ------------------
 @app.route("/admin/schedules")
