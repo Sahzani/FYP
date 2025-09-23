@@ -1653,7 +1653,7 @@ def admin_schedules():
 
         # Match teacher name from teachers list
         teacher = next((t for t in teachers if t["docId"] == s.get("fk_teacher")), None)
-        s["teacher_name"] = teacher["name"] if teacher else ""
+        s["teacher_name"] = teacher.get("name", "") if teacher else ""
 
         schedules.append(s)
 
