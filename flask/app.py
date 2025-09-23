@@ -1563,14 +1563,19 @@ def admin_schedules():
 
         teachers.append(t)
 
-        # ✅ Sort teachers by name (case-insensitive)
-teachers.sort(key=lambda t: t.get("name", "").lower())
+    # ✅ Sort teachers by name (case-insensitive)
+    teachers.sort(key=lambda t: t.get("name", "").lower())
 
-    # Fetch schedules
+    # Fetch schedules and attach teacher names
     schedules = []
     for doc in db.collection("schedules").stream():
         s = doc.to_dict()
         s["docId"] = doc.id
+
+        # Match teacher name from teachers list
+        teacher = next((t for t in teachers if t["docId"] == s.get("fk_teacher")), None)
+        s["teacher_name"] = teacher["name"] if teacher else ""
+
         schedules.append(s)
 
     # Get selected teacher for timetable view
@@ -1586,6 +1591,7 @@ teachers.sort(key=lambda t: t.get("name", "").lower())
         schedules=schedules,
         selected_teacher=selected_teacher
     )
+
 
 
 # ------------------ Save/Add/Edit Schedule ------------------

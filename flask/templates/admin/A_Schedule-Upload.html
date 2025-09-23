@@ -226,13 +226,12 @@ th{background:#f8f7ff; font-weight:600;}
             {% set matched_program = programs | selectattr("docId","equalto",s.fk_program) | list %}
             {% set matched_group   = groups   | selectattr("docId","equalto",s.fk_group)   | list %}
             {% set matched_module  = modules  | selectattr("docId","equalto",s.fk_module)  | list %}
-            {% set matched_teacher = teachers | selectattr("docId","equalto",s.fk_teacher) | list %}
           <tr>
             <td>{{ loop.index }}</td>
             <td>{{ matched_program[0].programName if matched_program else '' }}</td>
             <td>{{ matched_group[0].groupCode if matched_group else '' }}</td>
             <td>{{ matched_module[0].moduleName if matched_module else '' }}</td>
-            <td>{{ matched_teacher[0].name if matched_teacher else '' }}</td>
+            <td>{{ s.teacher_name }}</td>
             <td>{{ s.day }}</td>
             <td>{{ s.start_time }}</td>
             <td>{{ s.end_time }}</td>
@@ -245,6 +244,7 @@ th{background:#f8f7ff; font-weight:600;}
           </tr>
           {% endfor %}
         </tbody>
+
       </table>
     </div>
   </div>
