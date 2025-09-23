@@ -1423,18 +1423,17 @@ def api_get_teacher(uid):
 def admin_teacher_delete(uid):
     if session.get("role") != "admin":
         return jsonify({"error": "Unauthorized"}), 403
+
     try:
         # Delete user from Firebase Auth
         auth.delete_user(uid)
     except exceptions.FirebaseError as e:
-        flash(f"Error deleting Auth user: {str(e)}", "error")
-        return redirect(url_for("admin_teacher_add"))
+        return jsonify({"error": str(e)}), 400  # <-- return JSON instead of redirect
 
     # Delete user doc
     db.collection("users").document(uid).delete()
     return jsonify({"success": True})
-
-
+    
 
 # ------------------ Upload Teachers via CSV ------------------
 @app.route("/admin/teacher_upload", methods=["POST"])
