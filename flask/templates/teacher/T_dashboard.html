@@ -67,9 +67,10 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
-    <a href="{{ profile.firstName }} {{ profile.lastName }}" class="user-info">
-      <img src="https://placehold.co/36x36/b8c6ff/ffffff?text=T" alt="Teacher">
+    <a href="#" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="#" class="user-info">
+      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
+      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
     </a>
   </div>
 </header>
@@ -77,50 +78,52 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link active" href="{{ url_for('teacher_dashboard') }}">
+    <a class="sidebar-link {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}" href="{{ url_for('teacher_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
+    <a class="sidebar-link {% if request.endpoint == 'teacher_attendance' %}active{% endif %}" href="{{ url_for('teacher_attendance') }}">
       <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
     </a>
+    {% if schedules %}
+        {% for s in schedules %}
+          <a class="sidebar-link {% if current_schedule and s.docId == current_schedule.docId %}active{% endif %}" href="{{ url_for('teacher_attendance_summary', schedule_id=s.docId) }}">
+            <i class="fas fa-list-check"></i><span>Summary: {{ s.module_name }}</span>
+          </a>
+        {% endfor %}
+    {% else %}
+        <p style="font-size:12px; color:#888; padding-left:10px;">No schedules assigned</p>
+    {% endif %}
   </div>
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}">
-      <i class="fas fa-calendar"></i><span>Class Schedule</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
-      <i class="fas fa-book"></i><span>My Modules & Rooms</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}"><i class="fas fa-calendar"></i><span>Class Schedule</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Rooms</span></a>
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
+    {% if schedules %}
+      <a class="sidebar-link" href="{{ url_for('T_LiveAttend', schedule_id=schedules[0].docId) }}"><i class="fas fa-video"></i><span>Live Attendance</span></a>
+    {% endif %}
   </div>
 
   {% if profile.is_gc %}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_manage_groups') }}">
-      <i class="fas fa-users-cog"></i><span>Manage Groups</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_group_reports') }}">
-      <i class="fas fa-file-alt"></i><span>Group Reports</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_manage_groups') }}"><i class="fas fa-users-cog"></i><span>Manage Groups</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_group_reports') }}"><i class="fas fa-file-alt"></i><span>Group Reports</span></a>
   </div>
   {% endif %}
 
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
-      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
 <div class="main-content">
-  <h2>Welcome, <span id="teacher-name">{{ profile.name }}</span>!</h2>
+  <h2>Welcome, <span id="teacher-name">{{ profile.firstName }} {{ profile.lastName }}</span>!</h2>
   <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Home</span></div>
 
   <div class="grid-container-lg grid-container card-spacing">
@@ -128,21 +131,20 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
       <div class="card stats-card">
         <div class="icon-circle"><i class="fas fa-school"></i></div>
         <p>My Classes</p>
-        <span id="stats-classes">0</span>
+        <span id="stats-classes">{{ stats.classes }}</span>
       </div>
       <div class="card stats-card">
         <div class="icon-circle"><i class="fas fa-user-check"></i></div>
         <p>Students Present Today</p>
-        <span id="stats-present">0</span>
+        <span id="stats-present">{{ stats.present }}</span>
       </div>
       <div class="card stats-card">
         <div class="icon-circle"><i class="fas fa-user-times"></i></div>
         <p>Students Absent Today</p>
-        <span id="stats-absent">0</span>
+        <span id="stats-absent">{{ stats.absent }}</span>
       </div>
     </div>
 
-    <!-- Calendar Card -->
     <div>
       <div class="card">
         <h3 style="margin-bottom:10px;">Calendar</h3>
@@ -182,10 +184,13 @@ function generateCalendar() {
     calendarEl.appendChild(dayEl);
   }
 }
-
 generateCalendar();
-document.getElementById('menu-toggle').addEventListener('click', () => {
-  document.querySelector('.sidebar').classList.toggle('collapsed');
+
+// Sidebar toggle
+const toggle = document.getElementById("menu-toggle");
+const sidebar = document.querySelector(".sidebar");
+toggle.addEventListener("click", () => {
+  sidebar.classList.toggle("collapsed");
 });
 </script>
 
