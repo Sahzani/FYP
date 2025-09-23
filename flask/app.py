@@ -794,10 +794,11 @@ def teacher_schedules():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
-    teacher_id = session.get("user_id")  # teacher's uid from session
+    # Ensure teacher_id is a clean string
+    teacher_id = str(session.get("user_id")).strip()
 
-    # Fetch schedules that belong to this teacher
-    schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+    # Fetch all schedules
+    schedules_docs = db.collection("schedules").stream()
 
     # Fetch supporting info (programs, groups, modules)
     programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
@@ -809,12 +810,14 @@ def teacher_schedules():
         s = doc.to_dict()
         s['docId'] = doc.id
 
-        # Map foreign keys to names
-        s['moduleName'] = modules.get(s['fk_module'], {}).get('name', 'Unknown Module')
-        s['groupName']  = groups.get(s['fk_group'], {}).get('name', 'Unknown Group')
-        s['programName'] = programs.get(s['fk_program'], {}).get('name', 'Unknown Program')
+        # Only include schedules that belong to this teacher
+        if str(s.get('fk_teacher', '')).strip() == teacher_id:
+            # Map foreign keys to names
+            s['moduleName'] = modules.get(s.get('fk_module'), {}).get('name', 'Unknown Module')
+            s['groupName']  = groups.get(s.get('fk_group'), {}).get('name', 'Unknown Group')
+            s['programName'] = programs.get(s.get('fk_program'), {}).get('name', 'Unknown Program')
 
-        schedules.append(s)
+            schedules.append(s)
 
     # Optional: Fetch teacher profile for header
     profile_doc = db.collection("users").document(teacher_id).get()
@@ -828,6 +831,7 @@ def teacher_schedules():
         modules=modules,
         profile=profile
     )
+
 
 # ------------------ Teacher Manage Groups ------------------
 @app.route("/teacher/manage_groups", methods=["GET", "POST"])
