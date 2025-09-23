@@ -262,7 +262,18 @@ def student_dashboard():
 def teacher_dashboard():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
-    return render_template("teacher/T_dashboard.html")
+
+    # Get teacher's doc ID from session
+    teacher_id = str(session.get("user_id")).strip()
+
+    # Fetch profile from Firestore
+    profile_doc = db.collection("users").document(teacher_id).get()
+    profile = profile_doc.to_dict() if profile_doc.exists else {"firstName": "Teacher", "lastName": ""}
+
+    return render_template(
+        "teacher/T_dashboard.html",
+        profile=profile  # pass profile to template
+    )
 
 @app.route("/admin_dashboard")
 def admin_dashboard():
