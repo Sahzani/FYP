@@ -1559,7 +1559,6 @@ def admin_schedules():
     for doc in teachers_docs:
         t = doc.to_dict()
         t["docId"] = doc.id
-        teachers.append(t)
 
         # Fetch role info
         role_doc = db.collection("users").document(t["docId"]).collection("roles").document("teacher").get()
@@ -1574,6 +1573,9 @@ def admin_schedules():
             t["teacherID"] = ""
 
         teachers.append(t)
+
+        # ✅ Sort teachers by name (case-insensitive)
+teachers.sort(key=lambda t: t.get("name", "").lower())
 
     # Fetch schedules
     schedules = []
