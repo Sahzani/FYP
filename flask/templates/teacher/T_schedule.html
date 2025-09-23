@@ -57,7 +57,7 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
   <div class="header-content">
     <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="{{ url_for('teacher_profile') }}" class="user-info">
-      <span>{{ profile.name }}</span>
+      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
       <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
     </a>
   </div>
