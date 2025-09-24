@@ -5,7 +5,12 @@ from firebase_admin import credentials, auth, firestore
 from datetime import timedelta
 from werkzeug.utils import secure_filename
 from firebase_admin import auth, exceptions
+from firebase import db
 import firebase_admin, random
+import time
+
+from camera import webcam
+
 from flask import Flask, Response, render_template, redirect, url_for, send_from_directory
 
 import os
@@ -22,16 +27,12 @@ app = Flask(__name__)
 app.secret_key = "supersecretkey"
 app.permanent_session_lifetime = timedelta(days=30)
 
-# ------------------ Firebase Setup ------------------
-cred_path = os.path.join(BASE_DIR, "serviceAccountKey.json")
-cred = credentials.Certificate(cred_path)
-firebase_admin.initialize_app(cred)
-
-db = firestore.client()
-
 # ------------------ Context Processor for Teacher Profile ------------------
 @app.context_processor
 def inject_teacher_profile():
+    profile_data = {}
+    schedules_list = []
+
     if session.get("role") == "teacher":
         user = session.get("user")
         if user:
@@ -40,17 +41,31 @@ def inject_teacher_profile():
             if user_doc.exists:
                 user_data = user_doc.to_dict()
                 if user_data.get("role_type") == 2:  # Ensure it's a teacher
-                    return {
-                        "profile": {
-                            "name": user_data.get("name", "Teacher"),
-                            "profile_pic": user_data.get(
-                                "photo_name",
-                                "https://placehold.co/140x140/E9E9E9/333333?text=T"
-                            )
-                        }
+                    profile_data = {
+                        "name": user_data.get("name", "Teacher"),
+                        "profile_pic": user_data.get(
+                            "photo_name",
+                            "https://placehold.co/140x140/E9E9E9/333333?text=T"
+                        ),
+                        "is_gc": user_data.get("is_gc", False)
                     }
-    return {}
 
+                    # Fetch schedules assigned to this teacher
+                    schedules_docs = db.collection("schedules").where("fk_teacher", "==", uid).stream()
+                    for doc in schedules_docs:
+                        s = doc.to_dict()
+                        s["docId"] = doc.id
+
+                        # Fetch group/module names for display
+                        group_doc = db.collection("groups").document(s.get("fk_group")).get()
+                        module_doc = db.collection("modules").document(s.get("fk_module")).get()
+
+                        s["group_name"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
+                        s["module_name"] = module_doc.to_dict().get("moduleName") if module_doc.exists else ""
+
+                        schedules_list.append(s)
+
+    return {"profile": profile_data, "schedules": schedules_list}
 
 # ------------------ Context Processor for Student Full Name ------------------
 @app.context_processor
@@ -256,42 +271,358 @@ def student_dashboard():
         status_icon=status_icon
     )
 
-@app.route("/teacher_dashboard")
+#
+# Helper functions
+def get_students_present_today(teacher_id):
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    present_count = 0
+
+    schedules = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+    for schedule_doc in schedules:
+        schedule_id = schedule_doc.id
+        attendance_docs = db.collection("attendance")\
+            .document(today_str)\
+            .collection(schedule_id).stream()
+        for att_doc in attendance_docs:
+            att = att_doc.to_dict()
+            if att.get("status") == "Present":
+                present_count += 1
+    return present_count
+
+
+def get_students_absent_today(teacher_id):
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    absent_count = 0
+
+    schedules = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+    for schedule_doc in schedules:
+        schedule_id = schedule_doc.id
+        attendance_docs = db.collection("attendance")\
+            .document(today_str)\
+            .collection(schedule_id).stream()
+        for att_doc in attendance_docs:
+            att = att_doc.to_dict()
+            if att.get("status") == "Absent":
+                absent_count += 1
+    return absent_count
+
+
+def get_teacher_schedules(teacher_id):
+    schedules = []
+    schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+    for doc in schedules_docs:
+        s = doc.to_dict()
+        s["docId"] = doc.id
+        # Fetch group and module names
+        group_doc = db.collection("groups").document(s.get("fk_groupcode")).get()
+        module_doc = db.collection("modules").document(s.get("fk_module")).get()
+        s["group_name"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
+        s["module_name"] = module_doc.to_dict().get("moduleName") if module_doc.exists else ""
+        schedules.append(s)
+    return schedules
+
+
+# ------------------ Teacher Dashboard ------------------
+@app.route("/teacher/dashboard")
 def teacher_dashboard():
+    # Ensure user is a teacher
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
-    # Get teacher's doc ID from session
-    teacher_id = str(session.get("user_id")).strip()
+    # Get teacher UID from session
+    teacher_uid = session["user"]["uid"]
 
-    # Fetch profile from Firestore
-    profile_doc = db.collection("users").document(teacher_id).get()
-    profile = profile_doc.to_dict() if profile_doc.exists else {"firstName": "Teacher", "lastName": ""}
+    # Fetch schedules assigned to this teacher
+    schedules = []
+    schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_uid).stream()
+    for doc in schedules_docs:
+        s = doc.to_dict()
+        s["docId"] = doc.id
 
+        # Fetch group/module names for display
+        group_doc = db.collection("groups").document(s.get("fk_group")).get()
+        module_doc = db.collection("modules").document(s.get("fk_module")).get()
+
+        s["group_name"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
+        s["module_name"] = module_doc.to_dict().get("moduleName") if module_doc.exists else ""
+
+        schedules.append(s)
+
+    # Stats calculation
+    from datetime import datetime
+    today_str = datetime.now().strftime("%Y-%m-%d")
+
+    total_present = 0
+    total_absent = 0
+
+    for schedule in schedules:
+        # Corrected: use 'schedule' not 'schedules'
+        attendance_docs = db.collection("attendance").document(today_str)\
+            .collection(schedule["fk_group"]).document(schedule["fk_module"])\
+            .collection("students").stream()
+
+        for att in attendance_docs:
+            att_data = att.to_dict()
+            if att_data.get("status") == "Present":
+                total_present += 1
+            else:
+                total_absent += 1
+
+    stats = {
+        "classes": len(schedules),
+        "present": total_present,
+        "absent": total_absent
+    }
+
+    # Fetch teacher profile for sidebar
+    profile_doc = db.collection("users").document(teacher_uid).get()
+    profile = {}
+    if profile_doc.exists:
+        user_data = profile_doc.to_dict()
+        profile = {
+            "name": user_data.get("name", "Teacher"),
+            "profile_pic": user_data.get("photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"),
+            "is_gc": user_data.get("is_gc", False)
+        }
+
+    # Render dashboard with schedules and stats
     return render_template(
         "teacher/T_dashboard.html",
-        profile=profile  # pass profile to template
+        stats=stats,
+        schedules=schedules,
+        profile=profile,
+        current_schedule=None
     )
 
+
+# ------------------ Start Attendance ------------------
+@app.route("/teacher/attendance/start/<schedule_id>")
+def start_attendance(schedule_id):
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+
+    schedule_doc = db.collection("schedules").document(schedule_id).get()
+    if not schedule_doc.exists:
+        flash("Schedule not found", "error")
+        return redirect(url_for("teacher_attendance_dashboard"))
+
+    schedule = schedule_doc.to_dict()
+    group = schedule.get("fk_groupcode")
+    module = schedule.get("fk_module")
+
+    # Pass schedule info to webcam module
+    webcam.set_schedule(group, module)
+    webcam.start_camera()
+
+    return redirect(url_for("T_LiveAttend", schedule_id=schedule_id))
+
+# ------------------ Stop Attendance ------------------
+@app.route("/teacher/attendance/stop")
+def stop_attendance():
+    schedule_id = request.args.get("schedule_id")
+    webcam.stop_camera()
+    flash("Attendance stopped", "success")
+    if schedule_id:
+        return redirect(url_for("T_LiveAttend", schedule_id=schedule_id))
+    else:
+        return redirect(url_for("teacher_dashboard"))
+
+# ------------------ Attendance Summary ------------------
+@app.route('/teacher/attendance_summary/<schedule_id>')
+def teacher_attendance_summary(schedule_id):
+    # Ensure teacher is logged in
+    user = session.get('user')
+    if not user or session.get("role") != "teacher":
+        return redirect(url_for("teacher_login"))
+
+    teacher_uid = user['uid']
+
+    # Fetch all schedules for this teacher
+    schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_uid).stream()
+    schedules = []
+    for doc in schedules_docs:
+        s = doc.to_dict()
+        s["docId"] = doc.id
+        # Fetch group/module names
+        group_doc = db.collection("groups").document(s.get("fk_groupcode")).get()
+        module_doc = db.collection("modules").document(s.get("fk_module")).get()
+        s["group_name"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
+        s["module_name"] = module_doc.to_dict().get("moduleName") if module_doc.exists else ""
+        schedules.append(s)
+
+    # Fetch selected schedule
+    schedule_doc = db.collection("schedules").document(schedule_id).get()
+    if not schedule_doc.exists:
+        return "Schedule not found", 404
+
+    schedule = schedule_doc.to_dict()
+    schedule["docId"] = schedule_doc.id
+    group_doc = db.collection("groups").document(schedule.get("fk_groupcode")).get()
+    module_doc = db.collection("modules").document(schedule.get("fk_module")).get()
+    schedule["group_name"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
+    schedule["module_name"] = module_doc.to_dict().get("moduleName") if module_doc.exists else ""
+
+    # Fetch attendance records for this schedule
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    records = []
+
+    att_collection = db.collection("attendance").document(today_str)\
+                        .collection(schedule["fk_groupcode"]).document(schedule["fk_module"])\
+                        .collection("students").stream()
+
+    total_present = 0
+    total_absent = 0
+
+    for att in att_collection:
+        att_data = att.to_dict()
+        status = att_data.get("status", "Absent")
+        if status == "Present":
+            total_present += 1
+        else:
+            total_absent += 1
+        records.append({
+            "name": att_data.get("name", "Unknown"),
+            "status": status,
+            "timestamp": att_data.get("timestamp")
+        })
+
+    # Fetch teacher profile
+    profile_doc = db.collection("users").document(teacher_uid).get()
+    profile = {}
+    if profile_doc.exists:
+        user_data = profile_doc.to_dict()
+        profile = {
+            "name": user_data.get("name", "Teacher"),
+            "profile_pic": user_data.get("photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"),
+            "is_gc": user_data.get("is_gc", False)
+        }
+
+    return render_template(
+        "teacher/T_Summary.html",
+        profile=profile,
+        schedules=schedules,
+        schedule=schedule,
+        records=records,
+        total_present=total_present,
+        total_absent=total_absent
+    )
+# ------------------ Teacher Live Attendance ------------------
+
+@app.route("/teacher/live_feed/<schedule_id>")
+def T_LiveAttend(schedule_id):
+    schedule_doc = db.collection("schedules").document(schedule_id).get()
+    if not schedule_doc.exists:
+        flash("Schedule not found", "error")
+        return redirect(url_for("teacher_dashboard"))
+
+    schedule = schedule_doc.to_dict()
+    schedule["docId"] = schedule_id
+
+    # attach group/module names
+    group_doc = db.collection("groups").document(schedule.get("fk_group")).get()
+    module_doc = db.collection("modules").document(schedule.get("fk_module")).get()
+    schedule["group_name"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
+    schedule["module_name"] = module_doc.to_dict().get("moduleName") if module_doc.exists else ""
+
+    # Load students (initial Absent table)
+    group_id = schedule.get("fk_group")
+    students_query = (
+        db.collection("users")
+        .where("role_type", "==", 1)
+        .where("fk_groupcode", "==", group_id)
+        .stream()
+    )
+    students = []
+    for sd in students_query:
+        d = sd.to_dict()
+        d["id"] = sd.id
+        d["status"] = "Absent"
+        students.append(d)
+
+    # set schedule in webcam
+    webcam.set_schedule(schedule.get("fk_groupcode"), schedule.get("fk_module"))
+
+    return render_template("teacher/T_LiveAttend.html", schedule=schedule, students=students)
+
+
+# ------------------ Start Camera ------------------
+@app.route("/teacher/live_feed/<schedule_id>/start")
+def start_camera(schedule_id):
+    schedule_doc = db.collection("schedules").document(schedule_id).get()
+    if not schedule_doc.exists:
+        flash("Schedule not found", "error")
+        return redirect(url_for("teacher_dashboard"))
+
+    schedule = schedule_doc.to_dict()
+    webcam.set_schedule(schedule.get("fk_groupcode"), schedule.get("fk_module"))
+    webcam.start_camera()
+    flash("Camera started", "success")
+    return redirect(url_for("T_LiveAttend", schedule_id=schedule_id))
+
+
+# ------------------ Stop Camera ------------------
+@app.route("/teacher/live_feed/<schedule_id>/stop")
+def stop_camera(schedule_id):
+    webcam.stop_camera()
+    flash("Camera stopped", "info")
+    return redirect(url_for("T_LiveAttend", schedule_id=schedule_id))
+
+
+# ------------------ Video Feed ------------------
+@app.route("/teacher/live_feed/<schedule_id>/video")
+def video_feed(schedule_id):
+    def generate():
+        while True:
+            frame = webcam.get_latest_frame()
+            if frame:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            else:
+                time.sleep(0.05)
+    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
+
+# ------------------ Attendance JSON ------------------
+@app.route("/teacher/live_feed/<schedule_id>/attendance")
+def get_attendance(schedule_id):
+    # Fetch schedule
+    schedule_doc = db.collection("schedules").document(schedule_id).get()
+    if not schedule_doc.exists:
+        return jsonify({"error": "Schedule not found"}), 404
+
+    schedule = schedule_doc.to_dict()
+    group_id = schedule.get("fk_group")
+
+    # Fetch all students in the group
+    students_query = db.collection("users")\
+                       .where("role_type", "==", 1)\
+                       .where("fk_groupcode", "==", group_id).stream()
+
+    students = []
+    for sd in students_query:
+        s = sd.to_dict()
+        sid = sd.id
+        s["id"] = sid
+
+        # Check if student is detected in webcam
+        s["status"] = "Present" if sid in getattr(webcam, "present_students", set()) else "Absent"
+        s["name"] = s.get("name", "Unknown")  # fix undefined name
+        s["photo_name"] = s.get("photo_name", "")  # ensure photo is available
+
+        students.append(s)
+
+    # Sort Present students first
+    students = sorted(students, key=lambda x: 0 if x["status"] == "Present" else 1)
+
+    return jsonify({"students": students})
+
+#------------------ Admin Pages ------------------
 @app.route("/admin_dashboard")
 def admin_dashboard():
     if session.get("role") == "admin":
         return render_template("admin/A_Homepage.html")
     return redirect(url_for("home"))
 
-# ------------------ Camera Page ------------------
-@app.route("/camera")
-def camera_page():
-    return render_template("camera.html")  # This will be a new template
-
-@app.route("/start-camera")
-def start_camera():
-    global camera_process
-    if camera_process is None:
-        camera_process = subprocess.Popen(
-            ["python", WEBCAM_PATH], shell=True
-        )
-    return redirect(url_for("camera_page"))
 
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")
@@ -995,56 +1326,14 @@ def teacher_profile():
 
 
 
+    
+
 # Helper to generate a unique studentID
 def generate_student_id():
     return "STU" + str(random.randint(1000, 9999))  # simple random ID
-
 # ------------------ Admin Student Add Page ------------------
-@app.route("/admin/student_add", methods=["GET", "POST"])
+@app.route("/admin/student_add")
 def admin_student_add():
-    if request.method == "POST":
-        # Get form values
-        first_name = request.form.get("firstName")
-        last_name = request.form.get("lastName")
-        nickname = request.form.get("nickname") or ""   # optional
-        phone_number = request.form.get("phoneNumber") or ""  # optional
-
-        program = request.form.get("program")
-        group = request.form.get("group")
-        student_id = request.form.get("studentID")
-
-        # Handle photo upload
-        photo = request.files.get("photo")
-        photo_filename = ""
-        if photo and allowed_file(photo.filename):
-            filename = secure_filename(photo.filename)
-            photo_filename = f"{student_id}_{filename}"
-            save_path = os.path.join(app.config["UPLOAD_FOLDER"], photo_filename)
-            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-            photo.save(save_path)
-
-        # Save student main info
-        new_student_ref = db.collection("users").document()
-        new_student_ref.set({
-            "firstName": first_name,
-            "lastName": last_name,
-            "nickname": nickname,
-            "phoneNumber": phone_number,
-            "role_type": 1,  # student
-            "photo_name": photo_filename
-        })
-
-        # Save student role info
-        new_student_ref.collection("roles").document("student").set({
-            "studentID": student_id,
-            "fk_groupcode": group,
-            "program": program
-        })
-
-        flash("Student added successfully!", "success")
-        return redirect(url_for("admin_student_add"))
-
-    # ------------------ GET: Fetch Data ------------------
     # Fetch all programs
     programs_docs = db.collection("programs").stream()
     programs = []
@@ -1064,6 +1353,7 @@ def admin_student_add():
     # Fetch all students
     students_docs = db.collection("users").where("role_type", "==", 1).stream()
     students = []
+
     for doc in students_docs:
         s = doc.to_dict()
         s["uid"] = doc.id
@@ -1080,7 +1370,7 @@ def admin_student_add():
             s["fk_groupcode"] = ""
             s["program"] = ""
 
-        # Group name
+        # Group name from document ID
         if s["fk_groupcode"]:
             group_doc = db.collection("groups").document(s["fk_groupcode"]).get()
             s["groupName"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
@@ -1088,12 +1378,11 @@ def admin_student_add():
             s["groupName"] = ""
 
         # Program name
-        program_name = ""
         if s.get("program"):
             program_doc = db.collection("programs").document(s["program"]).get()
-            if program_doc.exists:
-                program_name = program_doc.to_dict().get("programName", "")
-        s["programName"] = program_name
+            s["programName"] = program_doc.to_dict().get("programName", "") if program_doc.exists else ""
+        else:
+            s["programName"] = ""
 
         # Include photo
         s["photo_name"] = s.get("photo_name", "")
@@ -1106,6 +1395,8 @@ def admin_student_add():
         groups=groups,
         students=students
     )
+
+
 # ------------------ Save (Add/Edit) Student ------------------
 UPLOAD_FOLDER = "student_pics"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
@@ -1117,22 +1408,19 @@ def allowed_file(filename):
 @app.route('/admin/student/save', methods=['POST'])
 def admin_student_save():
     student_id = request.form.get('userId')
-    first_name = request.form.get('firstName', '')
-    last_name = request.form.get('lastName', '')
-    nickname = request.form.get('nickname', '')  # optional
-    phone_number = request.form.get('phoneNumber', '')  # optional
+    first_name = request.form['first_name']
+    last_name = request.form['last_name']
     email = request.form['email']
     password = request.form.get('password')
     program = request.form['program']
 
-    # Combine for display_name (Firebase Auth)
-    display_name = f"{first_name} {last_name}".strip()
+    display_name = f"{first_name} {last_name}"
 
     # Auto-generate studentID
     import random, string
     studentID = ''.join(random.choices(string.digits, k=6))
 
-    # Auto-assign first group of the program
+    # Auto-assign first group of the program (document ID)
     group_docs = db.collection('groups').where('program', '==', program).limit(1).stream()
     fk_groupcode = ""
     for g in group_docs:
@@ -1144,6 +1432,8 @@ def admin_student_save():
     photo_name = None
     if photo_file and allowed_file(photo_file.filename):
         ext = photo_file.filename.rsplit(".", 1)[1].lower()
+        photo_name = f"{student_id}.{ext}"
+        photo_file.save(os.path.join(UPLOAD_FOLDER, photo_name))
 
     if student_id:
         # Update existing student
@@ -1157,24 +1447,21 @@ def admin_student_save():
             return redirect(url_for("admin_student_add"))
 
         student_data = {
-            'firstName': first_name,
-            'lastName': last_name,
-            'nickname': nickname,
-            'phoneNumber': phone_number,
+            'first_name': first_name,
+            'last_name': last_name,
+            'name': display_name,
             'email': email,
             'active': True,
             'role_type': 1
         }
 
-        if photo_file and allowed_file(photo_file.filename):
-            photo_name = f"{student_id}.{ext}"
-            photo_file.save(os.path.join(UPLOAD_FOLDER, photo_name))
+        if photo_name:
             student_data['photo_name'] = photo_name
 
         db.collection('users').document(student_id).update(student_data)
         db.collection('users').document(student_id).collection('roles').document('student').set({
             'studentID': studentID,
-            'fk_groupcode': fk_groupcode,
+            'fk_groupcode': fk_groupcode,  # ⚡ group ID
             'program': program
         })
 
@@ -1189,35 +1476,23 @@ def admin_student_save():
 
         student_data = {
             'user_id': student_id,
-            'firstName': first_name,
-            'lastName': last_name,
-            'nickname': nickname,
-            'phoneNumber': phone_number,
+            'first_name': first_name,
+            'last_name': last_name,
+            'name': display_name,
             'email': email,
             'active': True,
-            'role_type': 1
+            'role_type': 1,
+            'photo_name': photo_name if photo_name else f"{student_id}.jpg"
         }
-
-        if photo_file and allowed_file(photo_file.filename):
-            photo_name = f"{student_id}.{ext}"
-            photo_file.save(os.path.join(UPLOAD_FOLDER, photo_name))
-            student_data['photo_name'] = photo_name
-        else:
-            student_data['photo_name'] = ''
 
         db.collection('users').document(student_id).set(student_data)
         db.collection('users').document(student_id).collection('roles').document('student').set({
             'studentID': studentID,
-            'fk_groupcode': fk_groupcode,
+            'fk_groupcode': fk_groupcode,  # ⚡ group ID
             'program': program
         })
 
     return redirect(url_for('admin_student_add'))
-
-
-@app.route('/student_pics/<filename>')
-def student_photo(filename):
-    return send_from_directory('student_pics', filename)
 
 
 # ------------------ Upload Students via CSV ------------------
@@ -1226,29 +1501,26 @@ def admin_student_upload():
     if session.get("role") != "admin":
         return redirect(url_for("admin_dashboard"))
 
-    if "csv_file" not in request.files:
+    if "csv_file" not in request.files or request.files["csv_file"].filename == "":
         flash("No file selected", "error")
         return redirect(url_for("admin_student_add"))
 
     file = request.files["csv_file"]
-    if file.filename == "":
-        flash("No file selected", "error")
-        return redirect(url_for("admin_student_add"))
 
     import csv, io, random, string
     stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
     reader = csv.DictReader(stream)
 
     for row in reader:
-        name = row.get("name")
+        first_name = row.get("first_name")
+        last_name = row.get("last_name")
         email = row.get("email")
         password = row.get("password") or "password123"
         program = row.get("program")
 
-        if not name or not email or not program:
+        if not first_name or not last_name or not email or not program:
             continue
 
-        # Auto-generate studentID
         studentID = ''.join(random.choices(string.digits, k=6))
 
         # Auto-assign first group of the program
@@ -1258,26 +1530,28 @@ def admin_student_upload():
             fk_groupcode = g.id
             break
 
-        # Create Auth user
         try:
-            user = auth.create_user(email=email, password=password, display_name=name)
+            display_name = f"{first_name} {last_name}"
+            user = auth.create_user(email=email, password=password, display_name=display_name)
             student_id = user.uid
         except exceptions.FirebaseError:
             continue
 
-        # Create Firestore doc
+        # Save user to Firestore
         db.collection('users').document(student_id).set({
             'user_id': student_id,
-            'name': name,
+            'first_name': first_name,
+            'last_name': last_name,
+            'name': display_name,
             'email': email,
             'active': True,
             'role_type': 1,
-            'photo_name': ''
+            'photo_name': f"{student_id}.jpg"
         })
 
         db.collection('users').document(student_id).collection('roles').document('student').set({
             'studentID': studentID,
-            'fk_groupcode': fk_groupcode,
+            'fk_groupcode': fk_groupcode,  # ⚡ group ID
             'program': program
         })
 
@@ -1297,8 +1571,16 @@ def api_student(uid):
         role = role_doc.to_dict()
         s["studentID"] = role.get("studentID", "")
         s["program"] = role.get("program", "")
-        s["fk_groupcode"] = role.get("fk_groupcode", "")
+        s["fk_groupcode"] = role.get("fk_groupcode", "")  # ⚡ ID
     return jsonify(s)
+
+
+# ------------------ Serve student photos ------------------
+@app.route('/student_pics/<filename>')
+def student_photo(filename):
+    return send_from_directory('student_pics', filename)
+
+
 # ------------------ Delete Student ------------------
 @app.route("/admin/student/delete/<uid>", methods=["POST"])
 def admin_student_delete(uid):
@@ -1311,6 +1593,7 @@ def admin_student_delete(uid):
     except Exception as e:
         flash(f"Error deleting student: {str(e)}", "error")
     return redirect(url_for("admin_student_add"))
+
 #--------------------student list -----------------------
 @app.route("/admin/student_list")
 def admin_student_list():

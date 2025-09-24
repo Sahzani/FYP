@@ -25,7 +25,6 @@
   table{width:100%;border-collapse:collapse;font-size:14px;}
   th{background-color:#f8f7ff;text-align:left;padding:12px;font-weight:500;}
   td{padding:12px;border-top:1px solid #ddd;}
-  .tag{display:inline-block;background:#1e90ff;color:white;padding:3px 8px;border-radius:12px;font-size:12px;margin:2px;}
   button.action-btn{padding:5px 10px;border:none;border-radius:5px;cursor:pointer;margin-right:5px;color:white;}
   .edit-btn{background:#1e90ff;}
   .delete-btn{background:#ff4c4c;}
@@ -67,7 +66,7 @@
   <h2>Students</h2>
   <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:15px;">
     <button class="action-btn edit-btn" onclick="openAddModal()"><i class="fas fa-plus"></i> Add Student</button>
-    <button class="action-btn upload-btn" onclick="document.getElementById('uploadForm').submit()"><i class="fas fa-file-csv"></i> Upload CSV</button>
+    <button class="action-btn upload-btn" onclick="document.getElementById('uploadFile').click()"><i class="fas fa-file-csv"></i> Upload CSV</button>
   </div>
 
   <div class="card">
@@ -75,6 +74,7 @@
       <thead>
         <tr>
           <th>#</th>
+          <th>Photo</th>
           <th>First Name</th>
           <th>Last Name</th>
           <th>Email</th>
@@ -87,14 +87,21 @@
         {% for student in students %}
         <tr>
           <td>{{ loop.index }}</td>
-          <td>{{ student.firstName }}</td>
-           <td>{{ student.lastName }}</td>
+          <td>
+            {% if student.photo_name %}
+              <img src="{{ url_for('student_photo', filename=student.photo_name) }}" width="50" height="50" style="border-radius:50%">
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>{{ student.first_name }}</td>
+          <td>{{ student.last_name }}</td>
           <td>{{ student.email }}</td>
           <td>{{ student.studentID }}</td>
           <td>{{ student.programName }}</td>
           <td>
             <button class="action-btn edit-btn" onclick="openEditModal('{{ student.uid }}')">Edit</button>
-            <button class="action-btn delete-btn" onclick="openDeleteModal('{{ student.uid }}')">Delete</button>
+            <button class="action-btn delete-btn" onclick="deleteStudent('{{ student.uid }}')">Delete</button>
           </td>
         </tr>
         {% endfor %}
@@ -111,15 +118,15 @@
       <span class="close" onclick="closeStudentModal()">&times;</span>
     </div>
     <div class="modal-body">
-      <form id="studentForm" method="POST" action="{{ url_for('admin_student_save') }}">
+      <form id="studentForm" method="POST" action="{{ url_for('admin_student_save') }}" enctype="multipart/form-data">
         <input type="hidden" id="formStudentId" name="userId">
         <input type="hidden" id="formGroupCode" name="fk_groupcode">
 
         <label for="formFirstName">First Name:</label>
-        <input type="text" id="formFirstName" name="firstName" required>
+        <input type="text" id="formFirstName" name="first_name" required>
 
         <label for="formLastName">Last Name:</label>
-        <input type="text" id="formLastName" name="lastName" required>
+        <input type="text" id="formLastName" name="last_name" required>
 
         <label for="formEmail">Email:</label>
         <input type="email" id="formEmail" name="email" required>
@@ -135,11 +142,12 @@
           {% endfor %}
         </select>
 
+        <label for="formPhoto">Photo:</label>
+        <input type="file" id="formPhoto" name="photo" accept="image/*">
+
         <div class="modal-buttons">
           <button type="button" class="cancel-btn" onclick="closeStudentModal()">Cancel</button>
           <button type="submit" class="save-btn">Save</button>
-
-          
         </div>
       </form>
     </div>
@@ -148,57 +156,52 @@
 
 <!-- CSV Upload Form -->
 <form id="uploadForm" method="POST" action="{{ url_for('admin_student_upload') }}" enctype="multipart/form-data" style="display:none;">
-  <input type="file" name="csv_file" onchange="this.form.submit()">
+  <input type="file" id="uploadFile" name="csv_file" onchange="this.form.submit()">
 </form>
 
 <script>
-  const menuToggle = document.getElementById('menu-toggle');
-  const sidebar = document.querySelector('.sidebar');
-  menuToggle.addEventListener('click', ()=>{ sidebar.classList.toggle('collapsed'); });
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+menuToggle.addEventListener('click', ()=>{ sidebar.classList.toggle('collapsed'); });
 
-  function openAddModal(){
-    document.getElementById('modalTitle').innerText = "Add Student";
-    document.getElementById('formStudentId').value = "";
-    document.getElementById('formFirstName').value = "";
-    document.getElementById('formLastName').value = "";
-    document.getElementById('formEmail').value = "";
-    document.getElementById('formPassword').value = "";
-    document.getElementById('formProgram').selectedIndex = 0;
-    document.getElementById('studentModal').classList.add('show');
+function openAddModal(){
+  document.getElementById('modalTitle').innerText = "Add Student";
+  document.getElementById('formStudentId').value = "";
+  document.getElementById('formFirstName').value = "";
+  document.getElementById('formLastName').value = "";
+  document.getElementById('formEmail').value = "";
+  document.getElementById('formPassword').value = "";
+  document.getElementById('formProgram').selectedIndex = 0;
+  document.getElementById('studentModal').classList.add('show');
+}
+
+function openEditModal(uid){
+  fetch(`/api/student/${uid}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('modalTitle').innerText = "Edit Student";
+      document.getElementById('formStudentId').value = uid;
+      document.getElementById('formFirstName').value = data.first_name;
+      document.getElementById('formLastName').value = data.last_name;
+      document.getElementById('formEmail').value = data.email;
+      document.getElementById('formPassword').value = "";
+      document.getElementById('formProgram').value = data.program;
+      document.getElementById('formGroupCode').value = data.fk_groupcode;
+      document.getElementById('studentModal').classList.add('show');
+    });
+}
+
+function closeStudentModal(){ document.getElementById('studentModal').classList.remove('show'); }
+
+document.getElementById('formProgram').addEventListener('change', function(){
+  document.getElementById('formGroupCode').value = this.value; // backend will assign group
+});
+
+function deleteStudent(uid){
+  if(confirm("Are you sure you want to delete this student?")){
+    fetch(`/admin/student/delete/${uid}`, { method: "POST" })
+      .then(()=> location.reload());
   }
-
-  function openEditModal(uid){
-    fetch(`/api/student/${uid}`)
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('modalTitle').innerText = "Edit Student";
-        document.getElementById('formStudentId').value = uid;
-        document.getElementById('formFirstName').value = data.firstName;
-        document.getElementById('formLastName').value = data.lastName;
-        document.getElementById('formEmail').value = data.email;
-        document.getElementById('formPassword').value = "";
-        document.getElementById('formProgram').value = data.program;
-        document.getElementById('studentModal').classList.add('show');
-      });
-  }
-
-  function closeStudentModal(){ document.getElementById('studentModal').classList.remove('show'); }
-
-  // Set hidden group code automatically on program change
-  document.getElementById('formProgram').addEventListener('change', function(){
-    const selectedProgram = this.value;
-    document.getElementById('formGroupCode').value = selectedProgram; // backend will pick first group
-  });
-</script>
-<script>
-function openDeleteModal(uid){
-    if(confirm("Are you sure you want to delete this student?")){
-        fetch(`/admin/student/delete/${uid}`, {
-            method: "POST"
-        }).then(()=>{
-            location.reload();
-        });
-    }
 }
 </script>
 
