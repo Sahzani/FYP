@@ -164,11 +164,9 @@ def student_dashboard():
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
-    user = session.get("user")
-    if not user:
+    uid = session.get("user_id")  # 🔹 now uses user_id instead of user
+    if not uid:
         return redirect(url_for("home"))
-
-    uid = user["uid"]
 
     # Get student data
     student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
