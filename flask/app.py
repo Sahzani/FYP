@@ -323,14 +323,22 @@ def get_teacher_schedules(teacher_id):
 
 
 # ------------------ Teacher Dashboard ------------------
+# ------------------ Teacher Dashboard ------------------
 @app.route("/teacher/dashboard")
 def teacher_dashboard():
-    # Ensure user is a teacher
+    # Ensure user is logged in and is a teacher
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
-    # Get teacher UID from session
-    teacher_uid = session["user"]["uid"]
+    user = session.get("user")
+    if not user:
+        # User not in session, redirect to login/home
+        return redirect(url_for("home"))
+
+    teacher_uid = user.get("uid")
+    if not teacher_uid:
+        # UID missing for some reason
+        return redirect(url_for("home"))
 
     # Fetch schedules assigned to this teacher
     schedules = []
@@ -356,9 +364,9 @@ def teacher_dashboard():
     total_absent = 0
 
     for schedule in schedules:
-        # Corrected: use 'schedule' not 'schedules'
         attendance_docs = db.collection("attendance").document(today_str)\
-            .collection(schedule["fk_group"]).document(schedule["fk_module"])\
+            .collection(schedule.get("fk_group", ""))\
+            .document(schedule.get("fk_module", ""))\
             .collection("students").stream()
 
         for att in attendance_docs:
@@ -376,14 +384,18 @@ def teacher_dashboard():
 
     # Fetch teacher profile for sidebar
     profile_doc = db.collection("users").document(teacher_uid).get()
-    profile = {}
+    profile = {
+        "name": "Teacher",
+        "profile_pic": "https://placehold.co/140x140/E9E9E9/333333?text=T",
+        "is_gc": False
+    }
     if profile_doc.exists:
         user_data = profile_doc.to_dict()
-        profile = {
-            "name": user_data.get("name", "Teacher"),
-            "profile_pic": user_data.get("photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"),
-            "is_gc": user_data.get("is_gc", False)
-        }
+        profile.update({
+            "name": user_data.get("name", profile["name"]),
+            "profile_pic": user_data.get("photo_name", profile["profile_pic"]),
+            "is_gc": user_data.get("is_gc", profile["is_gc"])
+        })
 
     # Render dashboard with schedules and stats
     return render_template(
