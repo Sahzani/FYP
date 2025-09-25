@@ -102,10 +102,6 @@ def inject_student_name():
     return {"full_name": "Student", "student_class": "", "group_code": ""}
 
 # ------------------ Routes ------------------
-@app.route("/")
-def home():
-    return render_template("combinePage/Login.html")  # login page
-
 @app.route("/login", methods=["POST"])
 def login():
     email = request.form.get("email", "").strip()
@@ -114,7 +110,7 @@ def login():
 
     if not email or not password:
         flash("Please enter both email and password.")
-        return redirect(url_for("home"))
+        return redirect(url_for("home"))  # "/" route
 
     try:
         # ---------- Admin Login ----------
@@ -122,6 +118,8 @@ def login():
             doc = db.collection("admin").document("admin").get()
             if doc.exists and doc.to_dict().get("password") == password:
                 session["user"] = {"uid": "admin", "email": email}
+                session["user_id"] = "admin"
+                session["user_email"] = email
                 session["role"] = "admin"
                 session.permanent = True if remember == "on" else False
                 return redirect(url_for("admin_dashboard"))
@@ -129,7 +127,7 @@ def login():
                 flash("Invalid admin credentials.")
                 return redirect(url_for("home"))
 
-       # ---------- Student / Teacher Login ----------
+        # ---------- Student / Teacher Login ----------
         user = auth.get_user_by_email(email)  # Firebase Auth lookup
         uid = user.uid
 
@@ -154,12 +152,12 @@ def login():
             flash("Role not assigned. Contact admin.")
             return redirect(url_for("home"))
 
-        # Store session
-        session["user_id"] = uid  # 🔹 Use Firestore UID / doc ID
-        session["user_email"] = email  # optional
+        # ✅ Unified session
+        session["user"] = {"uid": uid, "email": email}
+        session["user_id"] = uid
+        session["user_email"] = email
         session["role"] = role
         session.permanent = True if remember == "on" else False
-
 
         return redirect(url_for(redirect_url))
 
@@ -170,6 +168,11 @@ def login():
     except Exception as e:
         flash(f"Login error: {str(e)}")
         return redirect(url_for("home"))
+
+@app.route("/")
+def home():
+    return render_template("combinePage/Login.html")  # login page
+
 
 # ------------------student Dashboards ------------------
 from datetime import datetime
@@ -271,6 +274,7 @@ def student_dashboard():
         status_color=status_color,
         status_icon=status_icon
     )
+    
 # ------------------ Teacher Dashboard ------------------
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
@@ -281,9 +285,9 @@ def teacher_dashboard():
     user = session.get("user")
     if not user:
         return redirect(url_for("home"))
-    teacher_uid = user["uid"]
+    teacher_uid = user.get("uid")
 
-    # Fetch teacher profile from Firebase
+    # ------------------ Fetch teacher profile ------------------
     profile_doc = db.collection("users").document(teacher_uid).get()
     profile = {}
     if profile_doc.exists:
@@ -291,7 +295,7 @@ def teacher_dashboard():
         full_name = user_data.get("name", "Teacher")
         parts = full_name.split(" ", 1)
         profile = {
-            "role": user_data.get("role", "Teacher"),  # <--- add role from Firebase
+            "role": user_data.get("role", "Teacher"),
             "firstName": parts[0],
             "lastName": parts[1] if len(parts) > 1 else "",
             "profile_pic": user_data.get(
@@ -301,34 +305,48 @@ def teacher_dashboard():
         }
     else:
         profile = {
-            "role": "Teacher",  # default role
+            "role": "Teacher",
             "firstName": "Teacher",
             "lastName": "",
             "profile_pic": "",
             "is_gc": False
         }
 
-    # Fetch schedules assigned to this teacher
+    # ------------------ Fetch schedules ------------------
     schedules = []
     schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_uid).stream()
     for doc in schedules_docs:
         s = doc.to_dict()
         s["docId"] = doc.id
 
-        # Fetch group and module names
-        group_doc = db.collection("groups").document(s.get("fk_groupcode")).get()
-        module_doc = db.collection("modules").document(s.get("fk_module")).get()
+        group_code = s.get("fk_groupcode")
+        module_code = s.get("fk_module")
+
+        # Skip schedules with missing fields
+        if not group_code or not module_code:
+            continue
+
+        # Fetch group and module names safely
+        group_doc = db.collection("groups").document(group_code).get()
+        module_doc = db.collection("modules").document(module_code).get()
         s["group_name"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
         s["module_name"] = module_doc.to_dict().get("moduleName") if module_doc.exists else ""
+
         schedules.append(s)
 
-    # Stats calculation
+    # ------------------ Stats calculation ------------------
     today_str = datetime.now().strftime("%Y-%m-%d")
     total_present, total_absent = 0, 0
 
     for schedule in schedules:
+        group_code = schedule.get("fk_groupcode")
+        module_code = schedule.get("fk_module")
+
+        if not group_code or not module_code:
+            continue
+
         attendance_docs = db.collection("attendance").document(today_str)\
-            .collection(schedule["fk_groupcode"]).document(schedule["fk_module"])\
+            .collection(group_code).document(module_code)\
             .collection("students").stream()
 
         for att in attendance_docs:
