@@ -16,6 +16,7 @@ db = firestore.client()
 
 # ===== Flask App =====
 app = Flask(__name__)
+
 # ===== Load Students =====
 STUDENTS = {}          # student_id -> student data
 encodings, classNames = [], []
@@ -33,7 +34,6 @@ for doc in students_ref:
     if photo_filename:
         photo_path = os.path.join("student_pics", photo_filename)
     else:
-        # Fallback: use student's name as filename
         name_safe = data.get("name", "").replace(" ", "_")
         photo_path = os.path.join("student_pics", f"{name_safe}.jpg")
         print(f"[WARN] Student {student_id} ({data.get('name')}) has no photo_name field. Trying {photo_path}")
@@ -56,9 +56,8 @@ for doc in students_ref:
 
 print(f"[INFO] Finished loading students. Total encodings loaded: {len(encodings)}")
 
-
 # ===== Attendance Tracking =====
-attended_today = {}  # (student_id, date) -> True
+attended_today = {}  # (student_id, schedule_id, date) -> True
 
 # ===== Camera Setup =====
 camera = None
@@ -67,11 +66,52 @@ frame_lock = threading.Lock()
 camera_thread = None
 camera_running = False
 
+# ===== Helper: Get Active Schedule =====
+def get_active_schedule(student_id):
+    now = datetime.now()
+    current_day = now.strftime("%A")  # e.g., 'Monday'
+    current_time = now.strftime("%H:%M")
+
+    student_data = STUDENTS.get(student_id, {})
+    group_id = student_data.get("fk_groupcode")
+    if not group_id:
+        return None
+
+    # Query schedules for this group today
+    schedules_ref = db.collection("schedules") \
+                      .where("fk_group", "==", group_id) \
+                      .where("day", "==", current_day).stream()
+
+    schedules_list = list(schedules_ref)
+    if schedules_list:
+        # Try to match current time
+        for sched_doc in schedules_list:
+            sched = sched_doc.to_dict()
+            start_time = sched.get("start_time")
+            end_time = sched.get("end_time")
+            if start_time <= current_time <= end_time:
+                return sched_doc.id
+        # Fallback: pick the first schedule of today
+        return schedules_list[0].id
+
+    # No schedule today, fallback to last known schedule for this group
+    last_schedule_ref = db.collection("schedules") \
+                          .where("fk_group", "==", group_id) \
+                          .order_by("day").limit(1).stream()
+    for sched_doc in last_schedule_ref:
+        return sched_doc.id
+
+    return None
+
 # ===== Helper: Mark Attendance =====
 def mark_attendance(student_id):
     today_str = datetime.now().strftime("%Y-%m-%d")
-    key = (student_id, today_str)
+    schedule_id = get_active_schedule(student_id)
+    if not schedule_id:
+        print(f"[WARN] No schedule found for student {student_id}. Attendance skipped.")
+        return None
 
+    key = (student_id, schedule_id, today_str)
     if attended_today.get(key):
         return None  # Already marked
 
@@ -82,7 +122,7 @@ def mark_attendance(student_id):
     group = student_data.get("fk_groupcode", "")
     program = student_data.get("program", "")
 
-    db.collection("attendance").document(today_str).collection("students").document(student_id).set({
+    db.collection("attendance").document(schedule_id).collection(today_str).document(student_id).set({
         "name": name,
         "group": group,
         "program": program,
@@ -90,11 +130,10 @@ def mark_attendance(student_id):
         "timestamp": firestore.SERVER_TIMESTAMP
     })
 
-    print(f"[INFO] Marked {name} ({student_id}) as Present.")
+    print(f"[INFO] Marked {name} ({student_id}) as Present under schedule {schedule_id}.")
     return name
 
 # ===== Camera Loop =====
-
 def camera_loop():
     global latest_frame, camera_running, camera
     camera = cv2.VideoCapture(0)  # Change 0 to your camera index if needed
@@ -137,12 +176,11 @@ def camera_loop():
 
     camera.release()
     cv2.destroyAllWindows()
-    
 
 # ===== Flask Routes =====
 @app.route("/")
 def index():
-    return render_template("index.html")  # This should include <img src="/video_feed">
+    return render_template("index.html")  # Include <img src="/video_feed">
 
 @app.route("/start_camera")
 def start_camera():
@@ -174,4 +212,3 @@ def video_feed():
 # ===== Run App =====
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
-
