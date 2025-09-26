@@ -501,36 +501,60 @@ def student_absentapp():
 
     uid = user.get("uid")
 
-    # Fetch full student data
-    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
-    student_data = None
-    for doc in student_doc:
-        student_data = doc.to_dict()
-        break
+    # Fetch full user data from "users" collection
+    user_doc = db.collection("users").document(uid).get()
+    user_data = user_doc.to_dict() if user_doc.exists else None
+
+    if not user_data:
+        flash("User not found.", "danger")
+        return redirect(url_for("home"))
 
     # Combine firstName + lastName
-    first_name = student_data.get("firstName") if student_data else ""
-    last_name = student_data.get("lastName") if student_data else ""
+    first_name = user_data.get("first_name", "")
+    last_name = user_data.get("last_name", "")
     full_name = f"{first_name} {last_name}".strip()
+
+    # Student subcollection (roles → student)
+    student_data = None
+    student_ref = db.collection("users").document(uid).collection("roles").document("student").get()
+    if student_ref.exists:
+        student_data = student_ref.to_dict()
+
     student_ID = student_data.get("studentID") if student_data else ""
 
     if request.method == "POST":
+        # Detect if editing (record_id sent as hidden input)
+        record_id = request.form.get("record_id")
         reason = request.form.get("reason")
-        duration = request.form.get("duration")
-        if not reason or not duration:
+        start_date = request.form.get("start_date")
+        end_date = request.form.get("end_date")
+
+        if not reason or not start_date or not end_date:
             flash("Please fill in all fields.", "danger")
             return redirect(url_for("student_absentapp"))
 
-        db.collection("absenceRecords").add({
+        data = {
             "student_id": uid,
             "studentID": student_ID,
-            "full_name": full_name,  # Send combined name
+            "full_name": full_name,
             "reason": reason,
-            "duration": duration,
+            "start_date": start_date,
+            "end_date": end_date,
             "status": "In Progress",
             "submitted_at": firestore.SERVER_TIMESTAMP
-        })
-        flash("Absence application submitted successfully!", "success")
+        }
+
+        try:
+            if record_id:  # Editing existing record
+                db.collection("absenceRecords").document(record_id).update(data)
+                flash("Absence record updated successfully!", "success")
+            else:  # New record
+                db.collection("absenceRecords").add(data)
+                flash("Absence application submitted successfully!", "success")
+        except Exception as e:
+            print("Error saving record:", e)
+            flash("Failed to save absence record.", "danger")
+
         return redirect(url_for("student_absentapp"))
 
     # GET: fetch absence records
@@ -540,6 +564,20 @@ def student_absentapp():
         for doc in records_ref.stream():
             rec = doc.to_dict()
             rec["id"] = doc.id
+
+            # Calculate duration days
+            if "start_date" in rec and "end_date" in rec:
+                try:
+                    from datetime import datetime
+                    start = datetime.strptime(rec["start_date"], "%Y-%m-%d")
+                    end = datetime.strptime(rec["end_date"], "%Y-%m-%d")
+                    rec["duration_days"] = (end - start).days + 1
+                except Exception as e:
+                    print("Error calculating duration:", e)
+                    rec["duration_days"] = "-"
+            else:
+                rec["duration_days"] = "-"
+
             records.append(rec)
     except Exception as e:
         print("Error fetching records:", e)
@@ -553,6 +591,48 @@ def student_absentapp():
         student_ID=student_ID
     )
 
+
+# ------------------ Delete Absence Record ------------------
+@app.route("/student/absentapp/delete/<record_id>", methods=["POST"])
+def delete_absent_record(record_id):
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
+
+    try:
+        db.collection("absenceRecords").document(record_id).delete()
+        flash("Absence record deleted successfully!", "success")
+    except Exception as e:
+        print("Error deleting absence record:", e)
+        flash("Failed to delete absence record.", "danger")
+
+    return redirect(url_for("student_absentapp"))
+# ------------------ Edit Absence Record ------------------
+@app.route("/student/absentapp/edit/<record_id>", methods=["POST"])
+def edit_absent_record(record_id):
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
+
+    reason = request.form.get("reason")
+    start_date = request.form.get("start_date")
+    end_date = request.form.get("end_date")
+
+    if not reason or not start_date or not end_date:
+        flash("Please fill in all fields.", "danger")
+        return redirect(url_for("student_absentapp"))
+
+    try:
+        # Update the record in Firestore
+        db.collection("absenceRecords").document(record_id).update({
+            "reason": reason,
+            "start_date": start_date,
+            "end_date": end_date
+        })
+        flash("Absence record updated successfully!", "success")
+    except Exception as e:
+        print("Error updating record:", e)
+        flash("Failed to update absence record.", "danger")
+
+    return redirect(url_for("student_absentapp"))
 
 
 # ------------------ Student Profile ------------------
