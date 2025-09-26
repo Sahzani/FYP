@@ -1211,7 +1211,7 @@ def admin_student_save():
     studentID = ''.join(random.choices(string.digits, k=6))
 
     # Auto-assign first group of the program (document ID)
-    group_docs = db.collection('groups').where('program', '==', program).limit(1).stream()
+    group_docs = db.collection('groups').where('fk_program', '==', program).limit(1).stream()
     fk_groupcode = ""
     for g in group_docs:
         fk_groupcode = g.id
@@ -1314,7 +1314,8 @@ def admin_student_upload():
         studentID = ''.join(random.choices(string.digits, k=6))
 
         # Auto-assign first group of the program
-        group_docs = db.collection('groups').where('program', '==', program).limit(1).stream()
+        group_docs = db.collection('groups').where('fk_program', '==', program).limit(1).stream()
+        
         fk_groupcode = ""
         for g in group_docs:
             fk_groupcode = g.id
@@ -1347,6 +1348,7 @@ def admin_student_upload():
 
     flash("CSV uploaded successfully", "success")
     return redirect(url_for("admin_student_add"))
+
 
 
 # ------------------ API to get student data for edit ------------------
