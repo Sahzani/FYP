@@ -145,9 +145,22 @@ def login():
         if role_type == 1:
             role = "student"
             redirect_url = "student_dashboard"
+
         elif role_type == 2:
             role = "teacher"
             redirect_url = "teacher_dashboard"
+
+            # ---------- Check if GC (only for teacher) ----------
+            roles_subcol = db.collection("users").document(uid).collection("roles").stream()
+            is_gc = False
+            for r in roles_subcol:
+                r_data = r.to_dict()
+                if r_data.get("isCoordinator") == True:
+                    is_gc = True
+                    break
+            # You can store this info in session if needed
+            session["is_gc"] = is_gc
+
         else:
             flash("Role not assigned. Contact admin.")
             return redirect(url_for("home"))
@@ -169,9 +182,11 @@ def login():
         flash(f"Login error: {str(e)}")
         return redirect(url_for("home"))
 
+
 @app.route("/")
 def home():
     return render_template("combinePage/Login.html")  # login page
+
 
 
 # ------------------student Dashboards ------------------
@@ -294,6 +309,13 @@ def teacher_dashboard():
         user_data = profile_doc.to_dict()
         full_name = user_data.get("name", "Teacher")
         parts = full_name.split(" ", 1)
+
+        # ------------------ Check if GC ------------------
+        role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
+        is_gc = False
+        if role_doc.exists:
+            is_gc = role_doc.to_dict().get("isCoordinator", False)
+
         profile = {
             "role": user_data.get("role", "Teacher"),
             "firstName": parts[0],
@@ -301,7 +323,7 @@ def teacher_dashboard():
             "profile_pic": user_data.get(
                 "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
             ),
-            "is_gc": user_data.get("is_gc", False)
+            "is_gc": is_gc
         }
     else:
         profile = {
@@ -362,6 +384,7 @@ def teacher_dashboard():
         "absent": total_absent
     }
 
+    # ------------------ Render template ------------------
     return render_template(
         "teacher/T_dashboard.html",
         stats=stats,
@@ -918,17 +941,17 @@ def teacher_schedules():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
-    # Ensure teacher_id is string and stripped
     teacher_id = str(session.get("user_id")).strip()
-    print("Logged-in teacher_id:", teacher_id)  # 🔹 Debug
 
     # Fetch all schedules
     schedules_docs = db.collection("schedules").stream()
 
     # Fetch supporting info
     programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
-    groups   = {g.id: g.to_dict() for g in db.collection("groups").stream()}
     modules  = {m.id: m.to_dict() for m in db.collection("modules").stream()}
+
+    # Fetch groups collection once
+    groups_collection = {g.id: g.to_dict() for g in db.collection("groups").stream()}
 
     schedules = []
     for doc in schedules_docs:
@@ -937,9 +960,25 @@ def teacher_schedules():
 
         # Match teacher ID
         if str(s.get('fk_teacher','')).strip() == teacher_id:
-            s['moduleName'] = modules.get(s.get('fk_module'), {}).get('name', 'Unknown Module')
-            s['groupName']  = groups.get(s.get('fk_group'), {}).get('name', 'Unknown Group')
-            s['programName'] = programs.get(s.get('fk_program'), {}).get('name', 'Unknown Program')
+            # Module name
+            s['moduleName'] = modules.get(s.get('fk_module'), {}).get('moduleName', 'Unknown Module')
+            
+            # Use groupCode as the displayed group name
+            group_doc = groups_collection.get(s.get('fk_group'), {})
+            s['groupName'] = group_doc.get('groupCode', s.get('fk_group'))  # fallback to fk_group if missing
+            s['groupCode'] = group_doc.get('groupCode', s.get('fk_group'))
+            
+            # Program name
+            s['programName'] = programs.get(s.get('fk_program'), {}).get('programName', 'Unknown Program')
+            
+            # Start and End time
+            s['startTime'] = s.get('start_time', 'Unknown Start')
+            s['endTime'] = s.get('end_time', 'Unknown End')
+            
+            # Day and Room
+            s['day'] = s.get('day', 'Unknown Day')
+            s['room'] = s.get('room', 'Unknown Room')
+
             schedules.append(s)
 
     # Teacher profile
@@ -950,11 +989,10 @@ def teacher_schedules():
         "teacher/T_Schedule.html",
         schedules=schedules,
         programs=programs,
-        groups=groups,
+        groups=groups_collection,
         modules=modules,
         profile=profile
     )
-
 
 # ------------------ Teacher Manage Groups ------------------
 @app.route("/teacher/manage_groups", methods=["GET", "POST"])

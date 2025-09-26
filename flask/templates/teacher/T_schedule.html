@@ -118,7 +118,7 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
         {% if schedules %}
           {% for s in schedules %}
             <tr>
-              <td>{{ groupName }}</td>
+              <td>{{ s.groupName }}</td>
               <td>{{ s.moduleName }}</td>
               <td>{{ s.day }}</td>
               <td>{{ s.startTime }}</td>
