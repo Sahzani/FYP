@@ -1018,7 +1018,7 @@ def teacher_manage_absent():
     # Fetch teacher profile
     user_doc = db.collection("users").document(user_id).get()
     if not user_doc.exists:
-        flash("User profile not found.")
+        # flash("User profile not found.")  # removed
         return redirect(url_for("home"))
     profile = user_doc.to_dict()
 
@@ -1031,9 +1031,10 @@ def teacher_manage_absent():
             if record_ref.get().exists:
                 new_status = "Approved" if action == "approve" else "Rejected"
                 record_ref.update({"status": new_status})
-                flash(f"Absence record {new_status.lower()} successfully.")
+                # flash(f"Absence record {new_status.lower()} successfully.")  # removed
             else:
-                flash("Record not found.")
+                # flash("Record not found.")  # removed
+                pass
 
     # Fetch all group codes taught by this teacher
     teacher_groups = set()
