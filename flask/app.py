@@ -480,7 +480,6 @@ def student_schedule():
         student_class=student_class,
         group_code=group_code
     )
-
 # ------------------ Student Absent Pages ------------------
 @app.route("/student/absentapp", methods=["GET", "POST"])
 def student_absentapp():
@@ -489,14 +488,14 @@ def student_absentapp():
 
     user = session.get("user")
     if not user:
-        records = []
         return render_template(
             "student/S_AbsentApp.html",
-            records=records,
+            records=[],
             student=None,
             full_name=None,
             uid=None,
-            student_ID=None
+            student_ID=None,
+            group_code=None
         )
 
     uid = user.get("uid")
@@ -510,8 +509,8 @@ def student_absentapp():
         return redirect(url_for("home"))
 
     # Combine firstName + lastName
-    first_name = user_data.get("first_name", "")
-    last_name = user_data.get("last_name", "")
+    first_name = user_data.get("firstName", "")
+    last_name = user_data.get("lastName", "")
     full_name = f"{first_name} {last_name}".strip()
 
     # Student subcollection (roles → student)
@@ -521,10 +520,17 @@ def student_absentapp():
         student_data = student_ref.to_dict()
 
     student_ID = student_data.get("studentID") if student_data else ""
+    group_code = None
 
+    # Fetch actual group code from groups collection
+    if student_data and student_data.get("fk_groupcode"):
+        group_doc = db.collection("groups").document(student_data["fk_groupcode"]).get()
+        if group_doc.exists:
+            group_code = group_doc.to_dict().get("groupCode")
+
+    # ---------- Handle POST (create or edit) ----------
     if request.method == "POST":
-        # Detect if editing (record_id sent as hidden input)
-        record_id = request.form.get("record_id")
+        record_id = request.form.get("record_id")  # hidden field for edits
         reason = request.form.get("reason")
         start_date = request.form.get("start_date")
         end_date = request.form.get("end_date")
@@ -541,14 +547,15 @@ def student_absentapp():
             "start_date": start_date,
             "end_date": end_date,
             "status": "In Progress",
+            "group_code": group_code,
             "submitted_at": firestore.SERVER_TIMESTAMP
         }
 
         try:
-            if record_id:  # Editing existing record
+            if record_id:
                 db.collection("absenceRecords").document(record_id).update(data)
                 flash("Absence record updated successfully!", "success")
-            else:  # New record
+            else:
                 db.collection("absenceRecords").add(data)
                 flash("Absence application submitted successfully!", "success")
         except Exception as e:
@@ -557,27 +564,49 @@ def student_absentapp():
 
         return redirect(url_for("student_absentapp"))
 
-    # GET: fetch absence records
+    # ---------- Handle GET ----------
+    # If AJAX request for JSON
+    if request.args.get("fetch") == "1":
+        records = []
+        try:
+            records_ref = db.collection("absenceRecords").where("student_id", "==", uid)
+            for doc in records_ref.stream():
+                rec = doc.to_dict()
+                rec["id"] = doc.id
+
+                # Calculate duration days
+                from datetime import datetime
+                try:
+                    start = datetime.strptime(rec["start_date"], "%Y-%m-%d")
+                    end = datetime.strptime(rec["end_date"], "%Y-%m-%d")
+                    rec["duration_days"] = (end - start).days + 1
+                    rec["start_date"] = start.strftime("%Y-%m-%d")  # keep ISO for JS
+                    rec["end_date"] = end.strftime("%Y-%m-%d")
+                except Exception:
+                    rec["duration_days"] = "-"
+                # status class for frontend
+                rec["status_class"] = rec.get("status", "").lower().replace(" ", "-")
+                records.append(rec)
+        except Exception as e:
+            print("Error fetching records:", e)
+        return {"records": records}
+
+    # Normal GET: render template
     records = []
     try:
         records_ref = db.collection("absenceRecords").where("student_id", "==", uid)
         for doc in records_ref.stream():
             rec = doc.to_dict()
             rec["id"] = doc.id
-
-            # Calculate duration days
-            if "start_date" in rec and "end_date" in rec:
-                try:
-                    from datetime import datetime
-                    start = datetime.strptime(rec["start_date"], "%Y-%m-%d")
-                    end = datetime.strptime(rec["end_date"], "%Y-%m-%d")
-                    rec["duration_days"] = (end - start).days + 1
-                except Exception as e:
-                    print("Error calculating duration:", e)
-                    rec["duration_days"] = "-"
-            else:
+            from datetime import datetime
+            try:
+                start = datetime.strptime(rec["start_date"], "%Y-%m-%d")
+                end = datetime.strptime(rec["end_date"], "%Y-%m-%d")
+                rec["duration_days"] = (end - start).days + 1
+                rec["start_date"] = start.strftime("%d/%m/%Y")
+                rec["end_date"] = end.strftime("%d/%m/%Y")
+            except Exception:
                 rec["duration_days"] = "-"
-
             records.append(rec)
     except Exception as e:
         print("Error fetching records:", e)
@@ -588,7 +617,8 @@ def student_absentapp():
         student=student_data,
         full_name=full_name,
         uid=uid,
-        student_ID=student_ID
+        student_ID=student_ID,
+        group_code=group_code
     )
 
 
@@ -606,6 +636,8 @@ def delete_absent_record(record_id):
         flash("Failed to delete absence record.", "danger")
 
     return redirect(url_for("student_absentapp"))
+
+
 # ------------------ Edit Absence Record ------------------
 @app.route("/student/absentapp/edit/<record_id>", methods=["POST"])
 def edit_absent_record(record_id):
@@ -621,7 +653,6 @@ def edit_absent_record(record_id):
         return redirect(url_for("student_absentapp"))
 
     try:
-        # Update the record in Firestore
         db.collection("absenceRecords").document(record_id).update({
             "reason": reason,
             "start_date": start_date,
@@ -974,8 +1005,8 @@ def teacher_attendance():
 
     return render_template("teacher/T_attendance_report.html", profile=profile)
 
-
-@app.route("/teacher/manage_absent")
+# ------------------ Teacher manage Absence ------------------
+@app.route("/teacher/manage_absent", methods=["GET", "POST"])
 def teacher_manage_absent():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
@@ -984,16 +1015,55 @@ def teacher_manage_absent():
     if not user_id:
         return redirect(url_for("home"))
 
-    # Fetch teacher profile from Firestore
-    user_doc_ref = db.collection("users").document(user_id)
-    user_doc = user_doc_ref.get()
+    # Fetch teacher profile
+    user_doc = db.collection("users").document(user_id).get()
     if not user_doc.exists:
         flash("User profile not found.")
         return redirect(url_for("home"))
+    profile = user_doc.to_dict()
 
-    profile = user_doc.to_dict()  # contains name, email, etc.
+    # Handle approve/reject
+    if request.method == "POST":
+        record_id = request.form.get("record_id")
+        action = request.form.get("action")
+        if record_id and action in ["approve", "reject"]:
+            record_ref = db.collection("absenceRecords").document(record_id)
+            if record_ref.get().exists:
+                new_status = "Approved" if action == "approve" else "Rejected"
+                record_ref.update({"status": new_status})
+                flash(f"Absence record {new_status.lower()} successfully.")
+            else:
+                flash("Record not found.")
 
-    return render_template("teacher/T_manageAbsent.html", profile=profile)
+    # Fetch all group codes taught by this teacher
+    teacher_groups = set()
+    for m in db.collection("mlmodule").where("teacherID", "==", user_id).stream():
+        group_code = m.to_dict().get("group_code")
+        if group_code:
+            teacher_groups.add(group_code)
+
+    # Fetch all absence records and filter by teacher groups
+    absence_records = []
+    all_records = db.collection("absenceRecords").stream()
+    for rec in all_records:
+        data = rec.to_dict()
+        group_code = data.get("group_code")
+        if group_code in teacher_groups:
+            data["id"] = rec.id
+            student_doc = db.collection("users").document(data.get("student_id")).get()
+            if student_doc.exists:
+                student_data = student_doc.to_dict()
+                data["full_name"] = f"{student_data.get('first_name','')} {student_data.get('last_name','')}"
+            else:
+                data["full_name"] = "Unknown Student"
+            absence_records.append(data)
+
+    return render_template(
+        "teacher/T_manageAbsent.html",
+        profile=profile,
+        absence_records=absence_records,
+        teacher_groups=sorted(teacher_groups)
+    )
 
 
 @app.route("/teacher/login")
