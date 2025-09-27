@@ -54,9 +54,9 @@
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <a href="{{ url_for('gc_manage_groups') }}" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="{{ url_for('gc_manage_group') }}" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="{{ url_for('teacher_profile') }}" class="user-info">
-      <span>{{ profile.name }}</span>
+      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
       <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=GC" alt="Group Coordinator">
     </a>
   </div>
@@ -71,7 +71,7 @@
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
-    <a class="sidebar-link active" href="{{ url_for('gc_manage_groups') }}">
+    <a class="sidebar-link active" href="{{ url_for('gc_manage_group') }}">
       <i class="fas fa-users-cog"></i><span>Manage Group</span>
     </a>
     <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
@@ -92,42 +92,73 @@
 
   <div class="card">
     <h3>Select Group</h3>
-    <form method="GET" action="{{ url_for('gc_manage_groups') }}">
+    <form method="GET" action="{{ url_for('gc_manage_group') }}">
       <select name="group_id" onchange="this.form.submit()">
         <option value="">-- Select a Group --</option>
         {% for group in groups %}
-          <option value="{{ group.id }}" {% if selected_group and selected_group.id == group.id %}selected{% endif %}>{{ group.name }}</option>
+          <option value="{{ group.id }}" {% if selected_group and selected_group.id == group.id %}selected{% endif %}>{{ group.groupCode }} ({{ group.intake }})</option>
         {% endfor %}
       </select>
     </form>
 
     {% if selected_group %}
-      <h4>Students in {{ selected_group.name }}</h4>
-      <table>
-        <thead>
-          <tr>
-            <th>Student ID</th>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Email</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for student in selected_group.members %}
-          <tr>
-            <td>{{ student.id }}</td>
-            <td>{{ student.first_name }}</td>
-            <td>{{ student.last_name }}</td>
-            <td>{{ student.email }}</td>
-          </tr>
-          {% else %}
-          <tr><td colspan="4">No students in this group.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% endif %}
-  </div>
-</div>
+  <h4>Students in {{ selected_group.id }}</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>Student ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Email</th>
+        <th>Assign Group</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in selected_group.members %}
+      <tr>
+        <td>{{ student.studentID }}</td>
+        <td>{{ student.first_name }}</td>
+        <td>{{ student.last_name }}</td>
+        <td>{{ student.email }}</td>
+        <td>
+          <select class="assign-group" data-student-id="{{ student.uid }}">
+            <option value="">-- Select Group --</option>
+            {% for group in groups %}
+              <option value="{{ group.id }}" {% if student.fk_groupcode == group.id %}selected{% endif %}>
+                {{ group.groupCode }}
+              </option>
+            {% endfor %}
+          </select>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No students in this group.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+<script>
+document.querySelectorAll(".assign-group").forEach(select => {
+  select.addEventListener("change", async (e) => {
+    const studentId = e.target.dataset.studentId;
+    const groupId = e.target.value;
+
+    const response = await fetch(`/assign_student_group`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentId, groupId })
+    });
+
+    if (response.ok) {
+      alert("Student updated successfully!");
+      location.reload(); // optional: reload table
+    } else {
+      alert("Failed to update student.");
+    }
+  });
+});
+</script>
 
 <script>
   const menuToggle = document.getElementById('menu-toggle');
