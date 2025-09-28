@@ -1593,10 +1593,19 @@ def admin_teacher_add():
 
         teachers.append(t)
 
+            # Fetch all groups
+    groups_docs = db.collection("groups").stream()
+    groups = []
+    for doc in groups_docs:
+        g = doc.to_dict()
+        g["id"] = doc.id
+        groups.append(g)
+
     return render_template(
         "admin/A_Teacher-Add.html",
         programs=programs,
-        teachers=teachers
+        teachers=teachers,
+        groups=groups   # ✅ pass groups to template
     )
 
 
@@ -1611,8 +1620,19 @@ def admin_teacher_save():
     program = request.form['program']
     teacherID = request.form['teacherID']
     isCoordinator = request.form.get('isCoordinator') == 'on'  # checkbox in form
+    groupId = request.form.get('groupCode') if isCoordinator else ""  # dropdown value is doc.id
 
     display_name = f"{firstName} {lastName}"
+
+     # If group selected, also fetch group details (for groupCode, intake)
+    groupCode = ""
+    intake = ""
+    if isCoordinator and groupId:
+        group_doc = db.collection("groups").document(groupId).get()
+        if group_doc.exists:
+            g = group_doc.to_dict()
+            groupCode = g.get("groupCode", "")
+            intake = g.get("intake", "")
 
     if teacher_id:
         # -------- Update existing user --------
@@ -1637,7 +1657,10 @@ def admin_teacher_save():
         db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
             'program': program,
             'teacherID': teacherID,
-            'isCoordinator': isCoordinator
+            'isCoordinator': isCoordinator,
+            'groupId': groupId,
+            'groupCode': groupCode,
+            'intake': intake
         })
 
     else:
@@ -1662,7 +1685,10 @@ def admin_teacher_save():
         db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
             'program': program,
             'teacherID': teacherID,
-            'isCoordinator': isCoordinator
+            'isCoordinator': isCoordinator,
+            'groupId': groupId,
+            'groupCode': groupCode,
+            'intake': intake
         })
 
     return redirect(url_for('admin_teacher_add'))
@@ -1686,10 +1712,16 @@ def api_get_teacher(uid):
         teacher["program"] = role.get("program", "")
         teacher["teacherID"] = role.get("teacherID", "")
         teacher["isCoordinator"] = role.get("isCoordinator", False)
+        teacher["groupId"] = role.get("groupId", "")
+        teacher["groupCode"] = role.get("groupCode", "")
+        teacher["intake"] = role.get("intake", "")
     else:
         teacher["program"] = ""
         teacher["teacherID"] = ""
         teacher["isCoordinator"] = False
+        teacher["groupId"] = ""
+        teacher["groupCode"] = ""
+        teacher["intake"] = ""
 
     return jsonify(teacher)
 
