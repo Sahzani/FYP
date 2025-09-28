@@ -1581,11 +1581,17 @@ def admin_teacher_add():
             t["teacherID"] = role.get("teacherID", "")
             t["isCoordinator"] = role.get("isCoordinator", False)
             t["programName"] = program_map.get(t["program"], "")  # <-- Add program name
+            t["groupId"] = role.get("groupId", "")  # Add group info
+            t["groupCode"] = role.get("groupCode", "")
+            t["intake"] = role.get("intake", "")
         else:
             t["program"] = ""
             t["teacherID"] = ""
             t["isCoordinator"] = False
             t["programName"] = ""
+            t["groupId"] = ""
+            t["groupCode"] = ""
+            t["intake"] = ""
 
         t["firstName"] = t.get("firstName", "")
         t["lastName"] = t.get("lastName", "")

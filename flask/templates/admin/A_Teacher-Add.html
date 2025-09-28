@@ -423,7 +423,7 @@
             <th>Program</th>
             <th>Teacher ID</th>
             <th>Coordinator</th>
-            
+            <th>Group</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -437,7 +437,13 @@
             <td>{{ teacher.programName }}</td>
             <td>{{ teacher.teacherID }}</td>
             <td>{{ 'Yes' if teacher.isCoordinator else 'No' }}</td>
-
+            <td>
+              {% if teacher.isCoordinator %}
+                {{ teacher.groupCode }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
             <td>
               <button class="action-btn edit-btn" onclick="openEditModal('{{ teacher.uid }}')">Edit</button>
               <button class="action-btn delete-btn" onclick="openDeleteModal('{{ teacher.uid }}')">Delete</button>
