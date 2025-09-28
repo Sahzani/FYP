@@ -279,18 +279,7 @@
     <h2>Manage Group</h2>
     <div class="breadcrumb"><span class="section">Group Coordinator</span> / <span class="current">Manage Group</span>
     </div>
-
-    <div class="card">
-      <h3>Select Group</h3>
-      <form method="GET" action="{{ url_for('gc_manage_group') }}">
-        <select name="group_id" onchange="this.form.submit()">
-          <option value="">-- Select a Group --</option>
-          {% for group in groups %}
-          <option value="{{ group.id }}" {% if selected_group and selected_group.id==group.id %}selected{% endif %}>{{
-            group.groupCode }} ({{ group.intake }})</option>
-          {% endfor %}
-        </select>
-      </form>
+    
 
       {% if selected_group %}
       <h4>Students in {{ selected_group.id }}</h4>

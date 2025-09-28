@@ -1145,56 +1145,103 @@ def teacher_schedules():
         profile=profile
     )
 
-# ------------------ Teacher Manage Groups ------------------
-@app.route("/teacher/manage_groups", methods=["GET", "POST"])
-def teacher_manage_groups():
+# ------------------ Group Coordinator Manage Group ------------------
+@app.route("/gc/manage_group", methods=["GET", "POST"])
+def gc_manage_group():
+    # 1. Ensure user is logged in as teacher
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
-    # Fetch teacher profile
-    profile = db.collection("users").document(session.get("uid")).get().to_dict()
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("login"))
+    teacher_uid = user.get("uid")
+    if not teacher_uid:
+        return redirect(url_for("login"))
 
-    if request.method == "POST":
-        # Create a new group
-        group_name = request.form.get("group_name")
-        student_ids = request.form.getlist("students")  # multiple select
-        if group_name and student_ids:
-            new_group_ref = db.collection("groups").document()  # auto ID
-            new_group_ref.set({
-                "name": group_name,
-                "members": student_ids
-            })
-            return redirect(url_for("teacher_manage_groups"))
+    # 2. Get teacher profile
+    profile_doc = db.collection("users").document(teacher_uid).get()
+    profile = {"name": "Teacher", "is_gc": False}
+    if profile_doc.exists:
+        profile.update(profile_doc.to_dict())
 
-    # GET request
-    # Fetch existing groups
+    # 3. Check GC flag from roles subcollection
+    roles_docs = db.collection("users").document(teacher_uid).collection("roles").stream()
+    for role_doc in roles_docs:
+        role_data = role_doc.to_dict()
+        if role_data.get("isCoordinator") is True:
+            profile["is_gc"] = True
+            break
+
+    #  Only allow GC teachers to access
+    if not profile.get("is_gc"):
+        return redirect(url_for("teacher_dashboard"))
+
+    # 4. Fetch all groups
     groups_docs = db.collection("groups").stream()
     groups = []
     for doc in groups_docs:
         data = doc.to_dict()
-        members = []
-        for sid in data.get("members", []):
-            student_doc = db.collection("users").document(sid).get()
-            if student_doc.exists:
-                members.append({"id": sid, "name": student_doc.to_dict().get("name")})
-        groups.append({"id": doc.id, "name": data.get("name"), "members": members})
+        groups.append({
+            "id": doc.id,
+            "groupCode": data.get("groupCode"),
+            "intake": data.get("intake"),
+            "fk_program": data.get("fk_program")
+        })
 
-    # Fetch unassigned students (students not in any group)
-    all_students_docs = db.collection("users").where("role", "==", "student").stream()
-    unassigned_students = []
-    assigned_ids = [m["id"] for g in groups for m in g["members"]]
-    for student_doc in all_students_docs:
-        student_data = student_doc.to_dict()
-        if student_doc.id not in assigned_ids:
-            unassigned_students.append({"id": student_doc.id, "name": student_data.get("name")})
+    # 5. Determine selected group
+    selected_group_id = request.args.get("group_id")
+    selected_group = None
+    if selected_group_id:
+        group_doc = db.collection("groups").document(selected_group_id).get()
+        if group_doc.exists:
+            gdata = group_doc.to_dict()
+            members = []
+            # Find students with matching fk_groupcode
+            student_query = db.collection("users").where("fk_groupcode", "==", selected_group_id).stream()
+            for sdoc in student_query:
+                sdata = sdoc.to_dict()
+                members.append({
+                    "id": sdoc.id,
+                    "studentID": sdata.get("studentID"),
+                    "first_name": sdata.get("first_name"),
+                    "last_name": sdata.get("last_name"),
+                    "email": sdata.get("email"),
+                    "fk_groupcode": sdata.get("fk_groupcode", "")
+                })
+            selected_group = {
+                "id": group_doc.id,
+                "groupCode": gdata.get("groupCode"),
+                "intake": gdata.get("intake"),
+                "fk_program": gdata.get("fk_program"),
+                "members": members
+            }
 
+    # 6. Render page
     return render_template(
         "teacher/T_GC_ManageGroup.html",
         profile=profile,
         groups=groups,
-        unassigned_students=unassigned_students
+        selected_group=selected_group
     )
 
+# ------------------ API: Assign Student to Group ------------------
+@app.route("/assign_student_group", methods=["POST"])
+def assign_student_group():
+    data = request.get_json()
+    student_id = data.get("studentId")
+    group_id = data.get("groupId")
+
+    if not student_id:
+        return jsonify({"success": False, "error": "Missing studentId"}), 400
+
+    try:
+        db.collection("users").document(student_id).update({
+            "fk_groupcode": group_id if group_id else ""
+        })
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # ------------------ Delete a Group ------------------
 @app.route("/teacher/delete_group/<group_id>", methods=["POST"])
@@ -1207,30 +1254,54 @@ def teacher_delete_group(group_id):
     return redirect(url_for("teacher_manage_groups"))
 
 
-# ------------------ Teacher Group Reports ------------------
-@app.route("/teacher/group_reports")
-def teacher_group_reports():
+# ------------------ Group Coordinator Group Reports ------------------
+@app.route("/gc/group_reports")
+def gc_group_report():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
-    profile = db.collection("users").document(session.get("uid")).get().to_dict()
-    
-    # Fetch all groups with members
-    groups_docs = db.collection("groups").stream()
-    groups = []
-    for doc in groups_docs:
-        data = doc.to_dict()
+    user = session.get("user")
+    teacher_uid = user.get("uid") if user else None
+    if not teacher_uid:
+        return redirect(url_for("login"))
+
+    # Check GC flag
+    roles_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
+    if not roles_doc.exists or not roles_doc.to_dict().get("isCoordinator"):
+        return redirect(url_for("teacher_dashboard"))
+
+    # Fetch the group the GC is responsible for
+    role_data = roles_doc.to_dict()
+    group_id = role_data.get("groupId")
+    group_doc = db.collection("groups").document(group_id).get()
+    group = None
+    if group_doc.exists:
+        gdata = group_doc.to_dict()
         members = []
-        for sid in data.get("members", []):
-            student_doc = db.collection("users").document(sid).get()
-            if student_doc.exists:
-                members.append({"id": sid, "name": student_doc.to_dict().get("name")})
-        groups.append({"id": doc.id, "name": data.get("name"), "members": members})
+        student_query = db.collection("users").where("fk_groupcode", "==", group_id).stream()
+        for sdoc in student_query:
+            sdata = sdoc.to_dict()
+            members.append({
+                "id": sdoc.id,
+                "studentID": sdata.get("studentID"),
+                "first_name": sdata.get("first_name"),
+                "last_name": sdata.get("last_name"),
+                "email": sdata.get("email")
+            })
+        group = {
+            "id": group_doc.id,
+            "groupCode": gdata.get("groupCode"),
+            "intake": gdata.get("intake"),
+            "members": members
+        }
+
+    profile_doc = db.collection("users").document(teacher_uid).get()
+    profile = profile_doc.to_dict() if profile_doc.exists else {}
 
     return render_template(
         "teacher/T_GC_GroupReports.html",
         profile=profile,
-        groups=groups
+        group=group
     )
 
 # ------------------ Teacher Profile ------------------

@@ -125,11 +125,11 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
   {% if profile.is_gc %}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_manage_groups') }}">
-      <i class="fas fa-users-cog"></i><span>Manage Groups</span>
+    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
+      <i class="fas fa-users-cog"></i><span>Manage Group</span>
     </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_group_reports') }}">
-      <i class="fas fa-file-alt"></i><span>Group Reports</span>
+    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
+      <i class="fas fa-file-alt"></i><span>Group Report</span>
     </a>
   </div>
   {% endif %}
