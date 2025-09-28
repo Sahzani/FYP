@@ -1177,8 +1177,8 @@ def gc_manage_group():
     if not profile.get("is_gc"):
         return redirect(url_for("teacher_dashboard"))
 
-    # 4. Fetch all groups
-    groups_docs = db.collection("groups").stream()
+     # 4. Fetch only groups assigned to this GC
+    groups_docs = db.collection("groups").where("coordinator_id", "==", teacher_uid).stream()
     groups = []
     for doc in groups_docs:
         data = doc.to_dict()
