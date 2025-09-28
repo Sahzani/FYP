@@ -423,7 +423,7 @@
             <th>Program</th>
             <th>Teacher ID</th>
             <th>Coordinator</th>
-            <th>Assign Group</th>
+            
             <th>Actions</th>
           </tr>
         </thead>
@@ -437,17 +437,7 @@
             <td>{{ teacher.programName }}</td>
             <td>{{ teacher.teacherID }}</td>
             <td>{{ 'Yes' if teacher.isCoordinator else 'No' }}</td>
-            <td>
-              <select class="assign-gc" data-teacher-id="{{ teacher.id }}" {% if not teacher.isCoordinator %}disabled{%
-                endif %}>
-                <option value="">-- Select Group --</option>
-                {% for group in groups %}
-                <option value="{{ group.id }}" {% if teacher.fk_groupcode==group.id %}selected{% endif %}>
-                  {{ group.groupCode }} ({{ group.intake }})
-                </option>
-                {% endfor %}
-              </select>
-            </td>
+
             <td>
               <button class="action-btn edit-btn" onclick="openEditModal('{{ teacher.uid }}')">Edit</button>
               <button class="action-btn delete-btn" onclick="openDeleteModal('{{ teacher.uid }}')">Delete</button>
