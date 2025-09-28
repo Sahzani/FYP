@@ -438,7 +438,8 @@
             <td>{{ teacher.teacherID }}</td>
             <td>{{ 'Yes' if teacher.isCoordinator else 'No' }}</td>
             <td>
-              <select class="assign-gc" data-teacher-id="{{ teacher.id }}" {% if not teacher.isCoordinator %}disabled{% endif %}>
+              <select class="assign-gc" data-teacher-id="{{ teacher.id }}" {% if not teacher.isCoordinator %}disabled{%
+                endif %}>
                 <option value="">-- Select Group --</option>
                 {% for group in groups %}
                 <option value="{{ group.id }}" {% if teacher.fk_groupcode==group.id %}selected{% endif %}>
@@ -486,12 +487,21 @@
             {% endfor %}
           </select>
 
+          <!-- Assign Group Dropdown (hidden by default) -->
+          <label for="formGroup" id="formGroupLabel" style="display:none;">Assign Group:</label>
+          <select id="formGroup" name="groupCode" style="display:none;">
+            <option value="">-- Select Group --</option>
+            {% for group in groups %}
+            <option value="{{ group.id }}">{{ group.groupCode }} ({{ group.intake }})</option>
+            {% endfor %}
+          </select>
+
           <!-- Coordinator Toggle -->
           <div
             style="display:flex; align-items:center; justify-content: space-between; margin-top:8px; margin-bottom:12px;">
             <label class="switch-text" for="formIsCoordinator">Is Coordinator</label>
             <label class="switch">
-              <input type="checkbox" id="formIsCoordinator" name="isCoordinator">
+              <input type="checkbox" id="formIsCoordinator" name="isCoordinator" onchange="toggleGroupDropdown()">
               <span class="slider"></span>
             </label>
           </div>
@@ -529,6 +539,21 @@
     const sidebar = document.querySelector('.sidebar');
     menuToggle.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
 
+    function toggleGroupDropdown() {
+      const isCoordinator = document.getElementById('formIsCoordinator').checked;
+      const groupLabel = document.getElementById('formGroupLabel');
+      const groupSelect = document.getElementById('formGroup');
+
+      if (isCoordinator) {
+        groupLabel.style.display = "block";
+        groupSelect.style.display = "block";
+      } else {
+        groupLabel.style.display = "none";
+        groupSelect.style.display = "none";
+        groupSelect.value = ""; // clear selection if unchecked
+      }
+    }
+
     function openAddModal() {
       document.getElementById('modalTitle').innerText = "Add Teacher";
       document.getElementById('formTeacherId').value = "";
@@ -538,7 +563,7 @@
       document.getElementById('formPassword').value = "";
       document.getElementById('formTeacherID').value = "";
       document.getElementById('formProgram').selectedIndex = 0;
-      document.getElementById('formIsCoordinator').checked = false;
+      document.getElementById('formIsCoordinator').checked = false; toggleGroupDropdown();
       document.getElementById('teacherModal').classList.add('show');
     }
 
@@ -555,6 +580,14 @@
           document.getElementById('formTeacherID').value = data.teacherID;
           document.getElementById('formProgram').value = data.program;
           document.getElementById('formIsCoordinator').checked = data.isCoordinator;
+          document.getElementById('teacherModal').classList.add('show');
+
+          // Group dropdown for coordinators
+          toggleGroupDropdown();
+          if (data.isCoordinator && data.groupCode) {
+            document.getElementById('formGroup').value = data.groupCode;
+          }
+
           document.getElementById('teacherModal').classList.add('show');
         });
     }
