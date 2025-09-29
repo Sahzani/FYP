@@ -1178,7 +1178,7 @@ def gc_manage_group():
         return redirect(url_for("teacher_dashboard"))
 
      # 4. Fetch only groups assigned to this GC
-    groups_docs = db.collection("groups").where("coordinator_id", "==", teacher_uid).stream()
+    groups_docs = db.collection("groups").where("coordinatorId", "==", teacher_uid).stream()
     groups = []
     for doc in groups_docs:
         data = doc.to_dict()
