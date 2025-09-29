@@ -6,7 +6,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-<style>
   *{margin:0;padding:0;box-sizing:border-box;}
   html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
   header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding:0 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
@@ -36,13 +35,8 @@
   .sidebar-dropdown { display:flex; flex-direction:column; }
   .dropdown-menu { display:none; flex-direction:column; padding-left:20px; }
   .sidebar-dropdown.active .dropdown-menu { display:flex; }
-  .sidebar-dropdown .dropdown-toggle i:last-child {
-    margin-left:auto;
-    transition: transform 0.3s;
-  }
-  .sidebar-dropdown.active .dropdown-toggle i:last-child {
-    transform: rotate(180deg);
-  }
+  .sidebar-dropdown .dropdown-toggle i:last-child { margin-left:auto; transition: transform 0.3s; }
+  .sidebar-dropdown.active .dropdown-toggle i:last-child { transform: rotate(180deg); }
 
   /* ==== Main Content ==== */
   .main-content{margin-left:260px;padding:100px 30px 30px;height:100vh;overflow-y:auto;transition:margin-left 0.3s ease;}
@@ -67,7 +61,31 @@
   .modal button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:500;font-size:14px;margin-left:10px;}
   .modal .save-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;}
   .modal .cancel-btn{background:#ccc;color:#000;}
+  
+  .main-content h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: #444;
+    margin-bottom: 10px;
+  }
+
+  /* ==== Breadcrumb ==== */
+.breadcrumb {
+    font-family:'Nunito',sans-serif;
+    font-size:14px;
+    font-weight:600;  /* change from 500 to 600 */
+    margin-bottom:20px; /* or 30px if you want same spacing */
+}
+.breadcrumb .section {
+    color:#989797;
+}
+.breadcrumb .current {
+    color:#444444;
+}
+
 </style>
+
 </head>
 <body>
 
@@ -131,6 +149,9 @@
 
 <div class="main-content">
   <h2>Students</h2>
+<div class="breadcrumb">
+  <span class="section">Management</span> / <span class="current">Add Students</span>
+</div>
   <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:15px;">
     <button class="action-btn edit-btn" onclick="openAddModal()"><i class="fas fa-plus"></i> Add Student</button>
     <button class="action-btn upload-btn" onclick="document.getElementById('uploadFile').click()"><i class="fas fa-file-csv"></i> Upload CSV</button>
