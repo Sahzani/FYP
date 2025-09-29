@@ -1155,6 +1155,7 @@ def gc_manage_group():
     user = session.get("user")
     if not user:
         return redirect(url_for("login"))
+    
     teacher_uid = user.get("uid")
     if not teacher_uid:
         return redirect(url_for("login"))
@@ -1177,55 +1178,79 @@ def gc_manage_group():
     if not profile.get("is_gc"):
         return redirect(url_for("teacher_dashboard"))
 
-     # 4. Fetch only groups assigned to this GC
-    gc_groups_docs = db.collection("gc_group").where("fk_users", "==", teacher_uid).stream()
-    group_ids = [doc.to_dict().get("fk_groupcode") for doc in gc_groups_docs]
-    groups = []
-    for gid in group_ids:
-        gdoc = db.collection("groups").document(gid).get()
-        if gdoc.exists:
-            gdata = gdoc.to_dict()
-            groups.append({
-                "id": gdoc.id,
-                "groupCode": gdata.get("groupCode"),
-                "intake": gdata.get("intake"),
-                "fk_program": gdata.get("fk_program")
-            })
+     # 4. Fetch the single group assigned to this GC
+    gc_group_docs = (db.collection("gc_group").where("coordinatorId", "==", teacher_uid).limit(1).get())
+    if not gc_group_docs:
+        # No group assigned
+        return render_template(
+            "teacher/T_GC_ManageGroup.html",
+            profile=profile,
+            groups=[],
+            selected_group=None,
+        )
 
-    # 5. Determine selected group
-    selected_group_id = request.args.get("group_id")
+    gc_group = gc_group_docs[0].to_dict()
+    group_id = gc_group.get("fk_groupId")
+
+    # Fetch group details
+    group_doc = db.collection("groups").document(group_id).get()
     selected_group = None
-    if selected_group_id:
-        group_doc = db.collection("groups").document(selected_group_id).get()
-        if group_doc.exists:
-            gdata = group_doc.to_dict()
-            members = []
-            # Find students with matching fk_groupcode
-            student_query = db.collection("users").where("fk_groupId", "==", selected_group_id).stream()
-            for sdoc in student_query:
-                sdata = sdoc.to_dict()
-                members.append({
-                    "id": sdoc.id,
-                    "studentID": sdata.get("studentID"),
-                    "first_name": sdata.get("first_name"),
-                    "last_name": sdata.get("last_name"),
-                    "email": sdata.get("email"),
-                    "fk_groupId": sdata.get("fk_groupId", ""),
-                    "fk_groupcode": sdata.get("fk_groupcode", "")
-                })
-            selected_group = {
-                "id": group_doc.id,
-                "groupCode": gdata.get("groupCode"),
-                "intake": gdata.get("intake"),
-                "fk_program": gdata.get("fk_program"),
-                "members": members
-            }
+    members = []
 
-    # 6. Render page
+    if group_doc.exists:
+        gdata = group_doc.to_dict()
+        group_code = gdata.get("groupCode")
+
+        # 🔑 Fetch program name using fk_program
+    program_name = ""
+    fk_program = gdata.get("fk_program")
+    if fk_program:
+        program_doc = db.collection("programs").document(fk_program).get()
+        if program_doc.exists:
+            program_name = program_doc.to_dict().get("programName", "")
+
+
+        # Fetch all student users
+        student_docs = db.collection("users").where("role_type", "==", 1).stream()
+        for sdoc in student_docs:
+            sdata = sdoc.to_dict()
+
+             # Look into roles/student subdoc
+            role_doc = (
+                db.collection("users")
+                .document(sdoc.id)
+                .collection("roles")
+                .document("student")
+                .get()
+            )
+            if role_doc.exists:
+                role_data = role_doc.to_dict()
+                # Compare against Firestore document ID, not groupCode
+                if role_data.get("fk_groupcode") == group_doc.id:
+                    members.append({
+                        "id": sdoc.id,
+                        "studentID": role_data.get("studentID", ""),
+                        "first_name": sdata.get("first_name", ""),
+                        "last_name": sdata.get("last_name", ""),
+                        "email": sdata.get("email", ""),
+                        "fk_groupcode": role_data.get("fk_groupcode", ""),
+                        "program": role_data.get("program", "")
+                    })
+
+        selected_group = {
+            "id": group_doc.id,
+            "groupCode": gdata.get("groupCode"),
+            "intake": gdata.get("intake"),
+            "fk_program": gdata.get("fk_program"),
+            "programName": program_name,
+            "members": members
+        }
+
+    # 5. Render page
     return render_template(
         "teacher/T_GC_ManageGroup.html",
         profile=profile,
-        groups=groups,
+        groups=[selected_group] if selected_group else [],
         selected_group=selected_group
     )
 
