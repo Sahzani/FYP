@@ -1768,6 +1768,16 @@ def admin_teacher_save():
             'intake': intake
         })
 
+        # Update group doc if this teacher is coordinator
+    if isCoordinator and groupId:
+        db.collection("groups").document(groupId).update({
+            "coordinatorId": teacher_id,
+            "coordinatorName": display_name,
+            "programId": program,
+            "groupCode": groupCode,
+            "intake": intake
+        })
+
     return redirect(url_for('admin_teacher_add'))
 
 # ------------------ Get Teacher for Edit Modal ------------------
@@ -1886,6 +1896,56 @@ def admin_teacher_list():
     if session.get("role") == "admin":
         return render_template("admin/A_Teacher-List.html")
     return redirect(url_for("home"))
+
+    teachers = []
+    teacher_docs = db.collection("users").where("role_type", "==", 2).stream()
+
+    for doc in teacher_docs:
+        t = doc.to_dict()
+        teacher_id = doc.id
+
+        # Default values
+        programName = ""
+        teacherID = ""
+        isCoordinator = False
+        groupCode = ""
+        intake = ""
+
+        # Get teacher role info
+        role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
+        if role_doc.exists:
+            role = role_doc.to_dict()
+            program_id = role.get("program", "")
+            teacherID = role.get("teacherID", "")
+            isCoordinator = role.get("isCoordinator", False)
+
+            # Fetch program name
+            if program_id:
+                program_doc = db.collection("programs").document(program_id).get()
+                if program_doc.exists:
+                    programName = program_doc.to_dict().get("programName", "")
+
+            # If coordinator → fetch assigned group
+            if isCoordinator and role.get("groupId"):
+                group_doc = db.collection("groups").document(role["groupId"]).get()
+                if group_doc.exists:
+                    g = group_doc.to_dict()
+                    groupCode = g.get("groupCode", "")
+                    intake = g.get("intake", "")
+
+        teachers.append({
+            "uid": teacher_id,
+            "firstName": t.get("firstName", ""),
+            "lastName": t.get("lastName", ""),
+            "email": t.get("email", ""),
+            "programName": programName,
+            "teacherID": teacherID,
+            "isCoordinator": isCoordinator,
+            "groupCode": groupCode,
+            "intake": intake
+        })
+
+    return render_template("admin/A_Teacher-List.html", teachers=teachers)
 
 @app.route("/admin/module/assign", methods=["POST"])
 def assign_module():
