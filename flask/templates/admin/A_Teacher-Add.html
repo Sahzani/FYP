@@ -238,7 +238,7 @@
 
           <!-- Assign Group Dropdown (hidden by default) -->
           <label for="formGroup" id="formGroupLabel" style="display:none;">Assign Group:</label>
-          <select id="formGroup" name="groupCode" style="display:none;">
+          <select id="formGroup" name="fk_groupId" style="display:none;">
             <option value="">-- Select Group --</option>
             {% for group in groups %}
             <option value="{{ group.id }}">{{ group.groupCode }} ({{ group.intake }})</option>
@@ -254,7 +254,6 @@
               <span class="slider"></span>
             </label>
           </div>
-
 
 
           <div class="modal-buttons">
@@ -342,9 +341,20 @@ document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
 
           // Group dropdown for coordinators
           toggleGroupDropdown();
-          if (data.isCoordinator && data.groupCode) {
-            document.getElementById('formGroup').value = data.groupCode;
-          }
+          // use fk_groupId from gc_group
+          if (data.isCoordinator && data.fk_groupId) {
+            document.getElementById('formGroup').value = data.fk_groupId;
+          } else {
+        document.getElementById('formGroup').value = ""; // clear
+      }
+
+      // (Optional) Show read-only group info somewhere
+      if (data.groupCode && data.intake) {
+        document.getElementById('groupInfo').innerText = 
+          `Assigned Group: ${data.groupCode} (${data.intake})`;
+      } else {
+        document.getElementById('groupInfo').innerText = "";
+      }
 
           document.getElementById('teacherModal').classList.add('show');
         });

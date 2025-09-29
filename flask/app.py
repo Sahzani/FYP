@@ -1178,16 +1178,19 @@ def gc_manage_group():
         return redirect(url_for("teacher_dashboard"))
 
      # 4. Fetch only groups assigned to this GC
-    groups_docs = db.collection("groups").where("coordinatorId", "==", teacher_uid).stream()
+    gc_groups_docs = db.collection("gc_group").where("fk_users", "==", teacher_uid).stream()
+    group_ids = [doc.to_dict().get("fk_groupcode") for doc in gc_groups_docs]
     groups = []
-    for doc in groups_docs:
-        data = doc.to_dict()
-        groups.append({
-            "id": doc.id,
-            "groupCode": data.get("groupCode"),
-            "intake": data.get("intake"),
-            "fk_program": data.get("fk_program")
-        })
+    for gid in group_ids:
+        gdoc = db.collection("groups").document(gid).get()
+        if gdoc.exists:
+            gdata = gdoc.to_dict()
+            groups.append({
+                "id": gdoc.id,
+                "groupCode": gdata.get("groupCode"),
+                "intake": gdata.get("intake"),
+                "fk_program": gdata.get("fk_program")
+            })
 
     # 5. Determine selected group
     selected_group_id = request.args.get("group_id")
@@ -1716,15 +1719,7 @@ def admin_teacher_save():
 
     display_name = f"{firstName} {lastName}"
 
-     # If group selected, also fetch group details (for groupCode, intake)
-    groupCode = ""
-    intake = ""
-    if isCoordinator and groupId:
-        group_doc = db.collection("groups").document(groupId).get()
-        if group_doc.exists:
-            g = group_doc.to_dict()
-            groupCode = g.get("groupCode", "")
-            intake = g.get("intake", "")
+
 
     if teacher_id:
         # -------- Update existing user --------
@@ -1746,21 +1741,18 @@ def admin_teacher_save():
             'photo_name': ''
         })
 
-        db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
-            'program': program,
-            'teacherID': teacherID,
-            'isCoordinator': isCoordinator,
-            'groupId': groupId,
-            'groupCode': groupCode,
-            'intake': intake
-        })
+
 
     else:
         # -------- Add new teacher --------
         try:
-            user = auth.create_user(email=email, password=password or "password123", display_name=display_name)
+            user = auth.create_user(
+                email=email,
+                password=password or "password123",
+                display_name=display_name
+            )
             teacher_id = user.uid
-        except exceptions.FirebaseError as e:
+        except Exception as e:
             flash(f"Error creating Auth user: {str(e)}", "error")
             return redirect(url_for("admin_teacher_add"))
 
@@ -1774,25 +1766,29 @@ def admin_teacher_save():
             'photo_name': ''
         })
 
-        db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
-            'program': program,
-            'teacherID': teacherID,
-            'isCoordinator': isCoordinator,
-            'groupId': groupId,
-            'groupCode': groupCode,
-            'intake': intake
-        })
+           # --- Update teacher role ---
+    db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
+        'program': program,
+        'teacherID': teacherID,
+        'isCoordinator': isCoordinator
+    }, merge=True)
 
-        # Update group doc if this teacher is coordinator
+        # -------- Handle gc_group collection --------
+    gc_group_ref = db.collection("gc_group")
+    
+    # Remove any previous gc_group entry for this teacher
+    old_entries = gc_group_ref.where("fk_users", "==", teacher_id).stream()
+    for e in old_entries:
+        e.reference.delete()
+
     if isCoordinator and groupId:
-        db.collection("groups").document(groupId).update({
-            "coordinatorId": teacher_id,
-            "coordinatorName": display_name,
-            "programId": program,
-            "groupCode": groupCode,
-            "intake": intake
+        # Add new coordinator assignment
+        gc_group_ref.add({
+            "fk_users": teacher_id,
+            "fk_groupcode": groupId
         })
 
+    flash("Teacher saved successfully!", "success")
     return redirect(url_for('admin_teacher_add'))
 
 # ------------------ Get Teacher for Edit Modal ------------------
@@ -1806,6 +1802,7 @@ def api_get_teacher(uid):
         return jsonify({"error": "Teacher not found"}), 404
 
     teacher = user_doc.to_dict()
+    teacher["uid"] = uid
 
     # Fetch roles
     role_doc = db.collection("users").document(uid).collection("roles").document("teacher").get()
@@ -1814,16 +1811,34 @@ def api_get_teacher(uid):
         teacher["program"] = role.get("program", "")
         teacher["teacherID"] = role.get("teacherID", "")
         teacher["isCoordinator"] = role.get("isCoordinator", False)
-        teacher["groupId"] = role.get("groupId", "")
-        teacher["groupCode"] = role.get("groupCode", "")
-        teacher["intake"] = role.get("intake", "")
+
     else:
         teacher["program"] = ""
         teacher["teacherID"] = ""
         teacher["isCoordinator"] = False
-        teacher["groupId"] = ""
-        teacher["groupCode"] = ""
-        teacher["intake"] = ""
+
+    # --- If coordinator, fetch assigned group from gc_group ---
+    teacher["fk_groupId"] = ""
+    teacher["fk_groupCode"] = ""
+    teacher["intake"] = ""
+
+    if teacher["isCoordinator"]:
+        gc_docs = db.collection("gc_group").where("fk_users", "==", uid).stream()
+        for gc_doc in gc_docs:
+            gc_data = gc_doc.to_dict()
+            group_id = gc_data.get("fk_groupcode")
+            if group_id:
+                group_doc = db.collection("groups").document(group_id).get()
+                if group_doc.exists:
+                    g = group_doc.to_dict()
+                    teacher["fk_groupId"] = group_id  # for dropdown selection
+                    teacher["groupCode"] = g.get("groupCode", "")
+                    teacher["intake"] = g.get("intake", "")
+            break  # only one group per coordinator
+
+    # Add name fields for modal
+    teacher["first_name"] = teacher.get("firstName", "")
+    teacher["last_name"] = teacher.get("lastName", "")
 
     return jsonify(teacher)
 
