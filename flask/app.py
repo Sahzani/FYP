@@ -1198,7 +1198,7 @@ def gc_manage_group():
             gdata = group_doc.to_dict()
             members = []
             # Find students with matching fk_groupcode
-            student_query = db.collection("users").where("fk_groupcode", "==", selected_group_id).stream()
+            student_query = db.collection("users").where("fk_groupId", "==", selected_group_id).stream()
             for sdoc in student_query:
                 sdata = sdoc.to_dict()
                 members.append({
@@ -1207,6 +1207,7 @@ def gc_manage_group():
                     "first_name": sdata.get("first_name"),
                     "last_name": sdata.get("last_name"),
                     "email": sdata.get("email"),
+                    "fk_groupId": sdata.get("fk_groupId", ""),
                     "fk_groupcode": sdata.get("fk_groupcode", "")
                 })
             selected_group = {
@@ -1235,10 +1236,24 @@ def assign_student_group():
     if not student_id:
         return jsonify({"success": False, "error": "Missing studentId"}), 400
 
+    if not group_id:
+        return jsonify({"success": False, "error": "Missing groupId"}), 400
+
     try:
+        # Fetch the group document to get the group code
+        group_doc = db.collection("groups").document(group_id).get()
+        if not group_doc.exists:
+            return jsonify({"success": False, "error": "Group not found"}), 404
+
+        group_data = group_doc.to_dict()
+        group_code = group_data.get("groupCode", "")
+
+        # Update student document with both group ID and group code
         db.collection("users").document(student_id).update({
-            "fk_groupcode": group_id if group_id else ""
+            "fk_groupId": group_id,
+            "fk_groupCode": group_code
         })
+
         return jsonify({"success": True}), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
