@@ -119,7 +119,7 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
       </a>
       <div class="dropdown-menu">
         <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
-        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_assign' %}active{% endif %}" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_assign' %}active{% endif %}" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules</span></a>
       </div>
     </div>
 
