@@ -1720,9 +1720,8 @@ def admin_teacher_save():
     display_name = f"{firstName} {lastName}"
 
 
-
+    # -------- Update existing user --------
     if teacher_id:
-        # -------- Update existing user --------
         try:
             if password:
                 auth.update_user(teacher_id, email=email, display_name=display_name, password=password)
@@ -1740,8 +1739,6 @@ def admin_teacher_save():
             'role_type': 2,
             'photo_name': ''
         })
-
-
 
     else:
         # -------- Add new teacher --------
@@ -1766,27 +1763,43 @@ def admin_teacher_save():
             'photo_name': ''
         })
 
-           # --- Update teacher role ---
-    db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
+           # -------- Update roles/teacher --------
+    role_data = {
         'program': program,
         'teacherID': teacherID,
         'isCoordinator': isCoordinator
-    }, merge=True)
+    }
+
+    # Add group info if coordinator
+    if isCoordinator and groupId:
+        group_doc = db.collection('groups').document(groupId).get()
+        if group_doc.exists:
+            group = group_doc.to_dict()
+            role_data.update({
+                'groupId': groupId,
+                'groupCode': group.get('groupCode', ''),
+                'intake': group.get('intake', '')
+            })
+
+    db.collection('users').document(teacher_id).collection('roles').document('teacher').set(role_data, merge=True)
 
         # -------- Handle gc_group collection --------
-    gc_group_ref = db.collection("gc_group")
-    
-    # Remove any previous gc_group entry for this teacher
-    old_entries = gc_group_ref.where("fk_users", "==", teacher_id).stream()
-    for e in old_entries:
-        e.reference.delete()
+    gc_ref = db.collection('gc_group').document(teacher_id)  # Use teacher_id as doc ID
 
     if isCoordinator and groupId:
-        # Add new coordinator assignment
-        gc_group_ref.add({
-            "fk_users": teacher_id,
-            "fk_groupcode": groupId
-        })
+        # Save required fields in gc_group
+        group_doc = db.collection('groups').document(groupId).get()
+        if group_doc.exists:
+            group = group_doc.to_dict()
+            gc_ref.set({
+                "coordinatorId": teacher_id,
+                "fk_groupId": groupId,
+                "groupCode": group.get("groupCode", ""),
+                "intake": group.get("intake", "")
+            })
+    else:
+        # Remove gc_group if not coordinator
+        gc_ref.delete()
 
     flash("Teacher saved successfully!", "success")
     return redirect(url_for('admin_teacher_add'))

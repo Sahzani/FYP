@@ -190,13 +190,7 @@
             <td>{{ teacher.programName }}</td>
             <td>{{ teacher.teacherID }}</td>
             <td>{{ 'Yes' if teacher.isCoordinator else 'No' }}</td>
-            <td>
-              {% if teacher.isCoordinator %}
-                {{ teacher.groupCode }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
+            <td>{{ teacher.groupCode if teacher.isCoordinator else '-' }}</td>
             <td>
               <button class="action-btn edit-btn" onclick="openEditModal('{{ teacher.uid }}')">Edit</button>
               <button class="action-btn delete-btn" onclick="openDeleteModal('{{ teacher.uid }}')">Delete</button>
@@ -238,7 +232,7 @@
 
           <!-- Assign Group Dropdown (hidden by default) -->
           <label for="formGroup" id="formGroupLabel" style="display:none;">Assign Group:</label>
-          <select id="formGroup" name="fk_groupId" style="display:none;">
+          <select id="formGroup" name="groupCode" style="display:none;">
             <option value="">-- Select Group --</option>
             {% for group in groups %}
             <option value="{{ group.id }}">{{ group.groupCode }} ({{ group.intake }})</option>
@@ -255,6 +249,8 @@
             </label>
           </div>
 
+          <!-- Read-only assigned group info -->
+          <p id="groupInfo" style="font-size:14px;color:#555;margin-bottom:10px;"></p>
 
           <div class="modal-buttons">
             <button type="button" class="cancel-btn" onclick="closeTeacherModal()">Cancel</button>
@@ -337,6 +333,8 @@ document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
           document.getElementById('formTeacherID').value = data.teacherID;
           document.getElementById('formProgram').value = data.program;
           document.getElementById('formIsCoordinator').checked = data.isCoordinator;
+          document.getElementById('formGroup').value = data.fk_groupId || "";
+          document.getElementById('groupInfo').innerText = data.groupCode && data.intake ? `Assigned Group: ${data.groupCode} (${data.intake})` : "";
           document.getElementById('teacherModal').classList.add('show');
 
           // Group dropdown for coordinators
