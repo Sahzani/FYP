@@ -70,13 +70,35 @@ th{background:#f8f7ff; font-weight:600;}
   .sidebar.active { left:0; }
   .main-content { margin-left:0 !important; }
 }
+
+        /* ==== Breadcrumb ==== */
+.breadcrumb {
+    font-family:'Nunito',sans-serif;
+    font-size:14px;
+    font-weight:600;  /* change from 500 to 600 */
+    margin-bottom:20px; /* or 30px if you want same spacing */
+}
+.breadcrumb .section {
+    color:#989797;
+}
+.breadcrumb .current {
+    color:#444444;
+}
+
+    .main-content h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: #444;
+    margin-bottom: 10px;
+  }
 </style>
 </head>
 <body>
 
 <header>
   <span id="menu-toggle">&#9776;</span>
-  <div class="header-content">iAttend Admin – Schedules</div>
+  <div class="header-content">iAttend Admin</div>
 </header>
 
 <!-- ========== SIDEBAR ========== -->
@@ -128,11 +150,20 @@ th{background:#f8f7ff; font-weight:600;}
 </div>
 
 <div class="main-content">
+  <!-- Page Title -->
+  <h2>Upload Schedules</h2>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <span class="section">System</span> / <span class="current">Upload Schedules</span>
+  </div>
+
   <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab('list')">List View</div>
     <div class="tab" onclick="switchTab('timetable')">Timetable View</div>
   </div>
+
 
 <!-- Add Schedule Form (Horizontal Layout) -->
 <div class="card">
