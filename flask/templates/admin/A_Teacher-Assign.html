@@ -42,6 +42,20 @@
   .sidebar-dropdown.active .dropdown-toggle i:last-child {
     transform: rotate(180deg);
   }
+    /* ==== Breadcrumb ==== */
+.breadcrumb {
+    font-family:'Nunito',sans-serif;
+    font-size:14px;
+    font-weight:600;  /* change from 500 to 600 */
+    margin-bottom:20px; /* or 30px if you want same spacing */
+}
+.breadcrumb .section {
+    color:#989797;
+}
+.breadcrumb .current {
+    color:#444444;
+}
+
 
   /* ==== Main Content ==== */
   .main-content{margin-left:260px;padding:100px 30px 30px;height:100vh;overflow-y:auto;transition:margin-left 0.3s ease;}
@@ -66,6 +80,13 @@
   .modal button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:500;font-size:14px;margin-left:10px;}
   .modal .save-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;}
   .modal .cancel-btn{background:#ccc;color:#000;}
+    .main-content h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: #444;
+    margin-bottom: 10px;
+  }
   </style>
 </head>
 
@@ -100,7 +121,7 @@
       </a>
       <div class="dropdown-menu">
         <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
-        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_assign' %}active{% endif %} active" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules / Rooms</span></a>
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_assign' %}active{% endif %} active" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules</span></a>
       </div>
     </div>
 
@@ -128,7 +149,10 @@
 </div>
 
 <div class="main-content">
-  <h2>Assign Modules to Teachers</h2>
+  <h2>Assign Modules</h2>
+    <div class="breadcrumb">
+  <span class="section">Management</span> / <span class="section">Teachers</span> / <span class="current">Assign Modules</span>
+</div>
 
   <div class="card">
     <table>
