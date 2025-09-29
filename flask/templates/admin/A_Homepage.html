@@ -109,15 +109,9 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
 
-    <div class="sidebar-dropdown {% if request.endpoint in ['admin_student_add','admin_student_assign','admin_students'] %}active{% endif %}">
-      <a class="sidebar-link dropdown-toggle">
-        <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
-      </a>
-      <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %}" href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
-        <a class="sidebar-link {% if request.endpoint == 'admin_student_assign' %}active{% endif %}" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
-      </div>
-    </div>
+    <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %}" href="{{ url_for('admin_student_add') }}">
+      <i class="fas fa-user-graduate"></i><span>Add Students</span>
+    </a>
 
     <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_add','admin_teacher_assign'] %}active{% endif %}">
       <a class="sidebar-link dropdown-toggle">
@@ -151,6 +145,7 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
     <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
+
 
 <!-- ========== MAIN CONTENT ========== -->
 <div class="main-content">

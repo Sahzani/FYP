@@ -17,7 +17,7 @@
   .user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
   .user-info span{font-size:16px;font-weight:600;color:#444;}
 
-  /* ==== Sidebar (from Admin Dashboard) ==== */
+  /* ==== Sidebar ==== */
   .sidebar {
     position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
     padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
@@ -90,15 +90,9 @@
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
 
-    <div class="sidebar-dropdown {% if request.endpoint in ['admin_student_add','admin_student_assign','admin_students'] %}active{% endif %}">
-      <a class="sidebar-link dropdown-toggle">
-        <i class="fas fa-user-graduate"></i><span>Students</span><i class="fas fa-chevron-down"></i>
-      </a>
-      <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %} active" href="{{ url_for('admin_student_add') }}"><span>Add Student</span></a>
-        <a class="sidebar-link {% if request.endpoint == 'admin_student_assign' %}active{% endif %}" href="{{ url_for('admin_student_assign') }}"><span>Assign Modules / Groups</span></a>
-      </div>
-    </div>
+    <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %} active" href="{{ url_for('admin_student_add') }}">
+      <i class="fas fa-user-graduate"></i><span>Add Students</span>
+    </a>
 
     <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_add','admin_teacher_assign'] %}active{% endif %}">
       <a class="sidebar-link dropdown-toggle">
@@ -132,6 +126,7 @@
     <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
+
 
 
 <div class="main-content">
