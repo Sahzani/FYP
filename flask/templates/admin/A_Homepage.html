@@ -97,11 +97,10 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
     </a>
   </div>
 </header>
-
 <!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %} active" href="{{ url_for('admin_dashboard') }}">
+    <a class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
@@ -136,15 +135,16 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Logs</div>
-    <a class="sidebar-link {% if request.endpoint == 'admin_attendance_logs' %}active{% endif %}" href="{{ url_for('admin_attendance_logs') }}"><i class="fas fa-history"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link {% if request.endpoint == 'admin_attendance_log' %}active{% endif %}" href="{{ url_for('admin_attendance_log') }}"><i class="fas fa-history"></i><span>Attendance Logs</span></a>
   </div>
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>
-    <a class="sidebar-link {% if request.endpoint == 'admin_summary' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
+    <a class="sidebar-link {% if request.endpoint == 'admin_summary' %}active{% endif %}" href="{{ url_for('admin_summary') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
     <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
+
 
 
 <!-- ========== MAIN CONTENT ========== -->

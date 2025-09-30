@@ -86,23 +86,10 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
-    
     <a class="sidebar-link {% if request.endpoint == 'teacher_attendance' %}active{% endif %}" 
        href="{{ url_for('teacher_attendance') }}">
       <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
     </a>
-
-    {% if schedules %}
-        {% for s in schedules %}
-          <a class="sidebar-link {% if current_schedule and s.docId == current_schedule.docId %}active{% endif %}" 
-             href="{{ url_for('teacher_attendance_summary', schedule_id=s.docId) }}">
-            <i class="fas fa-list-check"></i>
-            <span>Summary: {{ s.module_name }}</span>
-          </a>
-        {% endfor %}
-    {% else %}
-        <p style="font-size:12px; color:#888; padding-left:10px;">No schedules assigned</p>
-    {% endif %}
   </div>
 
   <div class="sidebar-section">
@@ -113,13 +100,9 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
     <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
       <i class="fas fa-book"></i><span>My Modules & Rooms</span>
     </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
-    
-    {% if schedules %}
-      <a class="sidebar-link" href="{{ url_for('T_LiveAttend', schedule_id=schedules[0].docId) }}">
-        <i class="fas fa-video"></i><span>Live Attendance</span>
-      </a>
-    {% endif %}
+    <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}">
+      <i class="fas fa-calendar-alt"></i><span>Absences Application</span>
+    </a>
   </div>
 
   {% if profile.is_gc %}
