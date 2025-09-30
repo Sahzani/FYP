@@ -2125,7 +2125,7 @@ def admin_schedules():
     selected_teacher = next((t for t in teachers if t["docId"] == selected_teacher_id), None)
 
     # ✅ Create teacher assignments mapping
-teacher_assignments = {
+    teacher_assignments = {
     t["docId"]: {
         "program": t.get("program", ""),
         "group": t.get("group", ""),
