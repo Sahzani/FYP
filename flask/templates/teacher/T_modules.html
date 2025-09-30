@@ -116,11 +116,20 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
   </div>
   <div class="sidebar-section">
+    <div class="sidebar-section-title">Group Coordinator</div>
+    <a class="sidebar-link active" href="{{ url_for('gc_manage_group') }}">
+      <i class="fas fa-users-cog"></i><span>Manage Group</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
+      <i class="fas fa-file-alt"></i><span>Group Report</span>
+    </a>
+  </div>
+  <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
-<div class="main">
+
   <div class="flex justify-between items-center mb-6">
     <div>
       <h1 class="text-2xl font-bold">My Modules</h1>

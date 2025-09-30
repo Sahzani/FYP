@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-  
+
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -58,6 +58,23 @@ td{padding:12px;border-top:1px solid #ddd;}
     <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reports</div>
+    <a class="sidebar-link active" href="{{ url_for('teacher_attendance') }}">
+      <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
+    </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Manage</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}">
+      <i class="fas fa-calendar"></i><span>Class Schedule</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Rooms</span></a>
+    <a class="sidebar-link">
+      <i class="fas fa-users"></i><span>Student Attendance</span>
+    </a>
+       <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
