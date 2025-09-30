@@ -169,65 +169,90 @@
       <tbody>
         {% for teacher in teachers %}
         <tr>
-          <td>{{ teacher.firstName }} {{ teacher.lastName }}</td>
-          <td>{{ teacher.email }}</td>
-          <td>
-            {% if teacher.program %}
-              {{ programs_map.get(teacher.program, 'N/A') }}
-            {% else %}
-              N/A
-            {% endif %}
-          </td>
+<td>{{ teacher.firstName }} {{ teacher.lastName }}</td>
+<td>{{ teacher.email }}</td>
+<td>{% if teacher.program %}{{ programs_map.get(teacher.program, 'N/A') }}{% else %}N/A{% endif %}</td>
+<form method="POST" action="{{ url_for('admin_teacher_assign') }}">
+<td>
+<input type="hidden" name="teacher_id" value="{{ teacher.docId }}" id="fk_teacher_{{ teacher.docId }}">
+<input type="hidden" id="fk_program_{{ teacher.docId }}" name="fk_program">
+<input type="hidden" id="fk_group_{{ teacher.docId }}" name="fk_group">
+<input type="hidden" id="fk_module_{{ teacher.docId }}" name="fk_module">
 
-          <form method="POST" action="{{ url_for('admin_teacher_assign') }}">
-          <td>
-            <input type="hidden" name="teacher_id" value="{{ teacher.docId }}">
-            <select name="group_id" required>
-              <option value="">Select Group</option>
-              {% if teacher.program %}
-                {% for group in groups %}
-                  {% if group.fk_program and group.fk_program.strip() == teacher.program.strip() %}
-                    <option value="{{ group.docId }}">{{ group.groupCode }}{% if group.intake %} - {{ group.intake }}{% endif %}</option>
-                  {% endif %}
-                {% endfor %}
-              {% endif %}
-            </select>
-          </td>
+<select name="group_id" required>
+<option value="">Select Group</option>
+{% if teacher.program %}
+{% for group in groups %}
+{% if group.fk_program and group.fk_program.strip() == teacher.program.strip() %}
+<option value="{{ group.docId }}">{{ group.groupCode }}{% if group.intake %} - {{ group.intake }}{% endif %}</option>
+{% endif %}
+{% endfor %}
+{% endif %}
+</select>
 
-          <td>
-            <select name="module_id" required>
-              <option value="">Select Module</option>
-              {% for module in modules %}
-                {% if module.status != 'assigned' %}
-                  <option value="{{ module.docId }}">{{ module.moduleName }} ({{ module.moduleCode }})</option>
-                {% endif %}
-              {% endfor %}
-            </select>
-          </td>
+<select id="teacher_assignment_dropdown_{{ teacher.docId }}" style="display:none"></select>
+</td>
 
-          <td>
-            <button type="submit" class="action-btn save-btn">Save</button>
-          </td>
-          </form>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<td>
+<select name="module_id" required>
+<option value="">Select Module</option>
+{% for module in modules %}
+{% if module.status != 'assigned' %}
+<option value="{{ module.docId }}">{{ module.moduleName }} ({{ module.moduleCode }})</option>
+{% endif %}
+{% endfor %}
+</select>
+</td>
+
+<td>
+<button type="submit" class="action-btn save-btn">Save</button>
+</td>
+</form>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
 </div>
 <script>
-  // Dropdown toggle
-  document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-    toggle.addEventListener('click', e => {
-      e.preventDefault();
-      toggle.parentElement.classList.toggle('active');
-    });
-  });
+// Dropdown toggle
+document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+toggle.addEventListener('click', e => { e.preventDefault(); toggle.parentElement.classList.toggle('active'); });
+});
 
-  // Sidebar collapse
-  const menuToggle = document.getElementById('menu-toggle');
-  const sidebar = document.querySelector('.sidebar');
-  menuToggle.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
+// Sidebar collapse
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+menuToggle.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
+
+// Teacher assignment dropdowns
+document.querySelectorAll('[id^="fk_teacher_"]').forEach(input => {
+    const teacherId = input.value;
+    const dropdown = document.getElementById(`teacher_assignment_dropdown_${teacherId}`);
+    fetch(`/api/teacher_assignment/${teacherId}`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.error){ dropdown.style.display="none"; return; }
+            dropdown.innerHTML = "";
+            data.forEach((assignment,index)=>{
+                const option = document.createElement("option");
+                option.value=index;
+                option.text=`${assignment.moduleName} | ${assignment.groupCode} | ${assignment.programName}`;
+                dropdown.appendChild(option);
+            });
+            dropdown.style.display="block";
+            fillScheduleFields(teacherId, data[0]);
+            dropdown.onchange = ()=>fillScheduleFields(teacherId, data[dropdown.value]);
+        })
+        .catch(err=>console.error("Error fetching assignments:", err));
+});
+
+function fillScheduleFields(teacherId, assignment){
+    document.getElementById(`fk_program_${teacherId}`).value = assignment.programId;
+    document.getElementById(`fk_group_${teacherId}`).value = assignment.groupId;
+    document.getElementById(`fk_module_${teacherId}`).value = assignment.moduleName;
+}
+
 </script>
 
 </body>

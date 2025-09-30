@@ -1957,63 +1957,7 @@ def admin_teacher_upload():
 
     flash("CSV uploaded successfully", "success")
     return redirect(url_for("admin_teacher_add"))
-#--------------------teacher list -----------------------
 
-@app.route("/admin/teacher_list")
-def admin_teacher_list():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Teacher-List.html")
-    return redirect(url_for("home"))
-
-    teachers = []
-    teacher_docs = db.collection("users").where("role_type", "==", 2).stream()
-
-    for doc in teacher_docs:
-        t = doc.to_dict()
-        teacher_id = doc.id
-
-        # Default values
-        programName = ""
-        teacherID = ""
-        isCoordinator = False
-        groupCode = ""
-        intake = ""
-
-        # Get teacher role info
-        role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
-        if role_doc.exists:
-            role = role_doc.to_dict()
-            program_id = role.get("program", "")
-            teacherID = role.get("teacherID", "")
-            isCoordinator = role.get("isCoordinator", False)
-
-            # Fetch program name
-            if program_id:
-                program_doc = db.collection("programs").document(program_id).get()
-                if program_doc.exists:
-                    programName = program_doc.to_dict().get("programName", "")
-
-            # If coordinator → fetch assigned group
-            if isCoordinator and role.get("groupId"):
-                group_doc = db.collection("groups").document(role["groupId"]).get()
-                if group_doc.exists:
-                    g = group_doc.to_dict()
-                    groupCode = g.get("groupCode", "")
-                    intake = g.get("intake", "")
-
-        teachers.append({
-            "uid": teacher_id,
-            "firstName": t.get("firstName", ""),
-            "lastName": t.get("lastName", ""),
-            "email": t.get("email", ""),
-            "programName": programName,
-            "teacherID": teacherID,
-            "isCoordinator": isCoordinator,
-            "groupCode": groupCode,
-            "intake": intake
-        })
-
-    return render_template("admin/A_Teacher-List.html", teachers=teachers)
 
 @app.route("/admin/module/assign", methods=["POST"])
 def assign_module():
@@ -2149,10 +2093,12 @@ def admin_schedules():
             role = role_doc.to_dict()
             t["program"] = role.get("program", "")
             t["module"] = role.get("module", "")
+            t["group"] = role.get("group", "")
             t["teacherID"] = role.get("teacherID", "")
         else:
             t["program"] = ""
             t["module"] = ""
+            t["group"] = ""
             t["teacherID"] = ""
 
         # Precompute full name
@@ -2178,6 +2124,16 @@ def admin_schedules():
     selected_teacher_id = request.args.get("teacher_id")
     selected_teacher = next((t for t in teachers if t["docId"] == selected_teacher_id), None)
 
+    # ✅ Create teacher assignments mapping
+    teacher_assignments = {
+        t["docId"]: {
+            "program": t["program"],
+            "group": t["group"],
+            "module": t["module"]
+        }
+        for t in teachers
+    }
+
     return render_template(
         "admin/A_Schedule-Upload.html",
         programs=programs,
@@ -2185,7 +2141,8 @@ def admin_schedules():
         modules=modules,
         teachers=teachers,
         schedules=schedules,
-        selected_teacher=selected_teacher
+        selected_teacher=selected_teacher,
+        teacher_assignments=teacher_assignments  # pass to template
     )
 
 # ------------------ Save/Add/Edit Schedule ------------------
@@ -2557,6 +2514,49 @@ def admin_program_upload():
 
     flash("CSV uploaded successfully!", "success")
     return redirect(url_for("admin_programs"))
+
+@app.route("/api/teacher_assignment/<teacher_id>")
+def api_teacher_assignment(teacher_id):
+    if session.get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    ml_query = db.collection("mlmodule").where("teacherID", "==", teacher_id).stream()
+    assignments = []
+
+    for ml_doc in ml_query:
+        ml = ml_doc.to_dict()
+        group_code = ml.get("group_code")
+        module_name = ml.get("moduleName")
+
+        # Resolve group
+        group_query = db.collection("groups").where("groupCode", "==", group_code).limit(1).get()
+        if group_query:
+            group_doc = group_query[0]
+            group_data = group_doc.to_dict()
+            group_id = group_doc.id
+            program_id = group_data.get("fk_program")
+
+            # Resolve program name
+            program_name = ""
+            if program_id:
+                program_doc = db.collection("programs").document(program_id).get()
+                if program_doc.exists:
+                    program_name = program_doc.to_dict().get("programName", "")
+
+            assignments.append({
+                "programId": program_id,
+                "programName": program_name,
+                "groupId": group_id,
+                "groupCode": group_data.get("groupCode", ""),
+                "intake": group_data.get("intake", ""),
+                "moduleName": module_name
+            })
+
+    if not assignments:
+        return jsonify({"error": "No assignments found"}), 404
+
+    return jsonify(assignments)
+
 
 # ------------------ Logout / Signup ------------------
 @app.route("/logout")
