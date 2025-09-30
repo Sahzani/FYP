@@ -358,7 +358,7 @@ function switchTab(tab) {
 }
 
 // --- Teacher assignments mapping ---
-const teacherAssignments = {{ teacher_assignments | tojson }};
+const teacherAssignments = {{ teacher_assignments | tojson | default('{}') }};
 
 // --- Auto-fill Add Schedule form based on selected teacher ---
 const teacherSelect = document.querySelector('select[name="fk_teacher"]');

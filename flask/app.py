@@ -2125,14 +2125,15 @@ def admin_schedules():
     selected_teacher = next((t for t in teachers if t["docId"] == selected_teacher_id), None)
 
     # ✅ Create teacher assignments mapping
-    teacher_assignments = {
-        t["docId"]: {
-            "program": t["program"],
-            "group": t["group"],
-            "module": t["module"]
-        }
-        for t in teachers
+teacher_assignments = {
+    t["docId"]: {
+        "program": t.get("program", ""),
+        "group": t.get("group", ""),
+        "module": t.get("module", "")
     }
+    for t in teachers
+}
+
 
     return render_template(
         "admin/A_Schedule-Upload.html",
