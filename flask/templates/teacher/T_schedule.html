@@ -88,6 +88,8 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
     </a>
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absence Application</span></a>
   </div>
+
+  {% if profile.is_gc %}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
     <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
@@ -97,6 +99,8 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
       <i class="fas fa-file-alt"></i><span>Group Report</span>
     </a>
   </div>
+  {% endif %}
+
   <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
       <i class="fas fa-sign-out-alt"></i><span>Logout</span>
