@@ -2275,10 +2275,8 @@ def admin_schedules():
     # Fetch supporting data
     programs = [{**p.to_dict(), "docId": p.id} for p in db.collection("programs").stream()]
     groups = [{**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream()]
-    modules = [{**m.to_dict(), "docId": m.id} for m in db.collection("modules").stream()]
-
-    # Fetch teachers from users collection (role_type == 2)
     teachers_docs = db.collection("users").where("role_type", "==", 2).stream()
+
     teachers = []
     for doc in teachers_docs:
         t = doc.to_dict()
@@ -2286,71 +2284,47 @@ def admin_schedules():
         t["fullName"] = f"{t.get('firstName','')} {t.get('lastName','')}".strip()
         teachers.append(t)
 
-    # Sort teachers by full name
+    # Sort teachers
     teachers.sort(key=lambda t: t.get("fullName", "").lower())
 
-    # Fetch schedules and attach teacher names
+    # Fetch mlmodule (since fk_module points here, not modules)
+    mlmodules = [{**ml.to_dict(), "docId": ml.id} for ml in db.collection("mlmodule").stream()]
+
+    # Fetch schedules and attach teacher/module/program/group names
     schedules = []
     for doc in db.collection("schedules").stream():
         s = doc.to_dict()
         s["docId"] = doc.id
+
+        # Teacher
         teacher = next((t for t in teachers if t["docId"] == s.get("fk_teacher")), None)
         s["teacher_name"] = teacher.get("fullName", "") if teacher else ""
+
+        # mlmodule (module + group together)
+        mlmodule = next((ml for ml in mlmodules if ml["docId"] == s.get("fk_module")), None)
+        if mlmodule:
+            s["module_name"] = mlmodule.get("moduleName", "")
+            s["group_name"] = mlmodule.get("group_code", "")
+        else:
+            s["module_name"] = ""
+            s["group_name"] = ""
+
+        # Program (linked via group)
+        group = next((g for g in groups if g.get("groupCode") == s.get("group_name")), None)
+        s["program_name"] = ""
+        if group:
+            program = next((p for p in programs if p["docId"] == group.get("fk_program")), None)
+            s["program_name"] = program.get("programName", "") if program else ""
+
         schedules.append(s)
-
-    # Get selected teacher for timetable view
-    selected_teacher_id = request.args.get("teacher_id")
-    selected_teacher = next((t for t in teachers if t["docId"] == selected_teacher_id), None)
-
-    # ------------------- NEW teacher_assignments from mlmodule -------------------
-    teacher_assignments = {}
-    for t in teachers:
-        teacher_id = t["docId"]
-
-        # Query mlmodule docs for this teacher
-        mlmodules_docs = db.collection("mlmodule").where("teacherID", "==", teacher_id).stream()
-
-        modules_list = []
-        groups_list = []
-        programs_set = set()  # to store program IDs from groups
-
-        for doc in mlmodules_docs:
-            ml = doc.to_dict()
-            module_name = ml.get("moduleName", "")
-            group_code = ml.get("group_code", "")
-
-            # Modules
-            if module_name:
-                modules_list.append({"id": doc.id, "name": module_name})
-
-            # Groups
-            if group_code:
-                matched_group = next((g for g in groups if g["groupCode"] == group_code), None)
-                if matched_group:
-                    groups_list.append({"id": matched_group["docId"], "name": group_code})
-                    # Get program from group
-                    programs_set.add(matched_group.get("fk_program", ""))
-
-        program_id = list(programs_set)[0] if programs_set else ""
-
-        teacher_assignments[teacher_id] = {
-            "program": program_id,
-            "groups": groups_list,
-            "modules": modules_list
-        }
-    # -----------------------------------------------------------------
 
     return render_template(
         "admin/A_Schedule-Upload.html",
         programs=programs,
         groups=groups,
-        modules=modules,
         teachers=teachers,
-        schedules=schedules,
-        selected_teacher=selected_teacher,
-        teacher_assignments=teacher_assignments  # pass to template
+        schedules=schedules
     )
-
 
 # ------------------ Save/Add/Edit Schedule ------------------
 @app.route("/admin/schedule/save", methods=["POST"])

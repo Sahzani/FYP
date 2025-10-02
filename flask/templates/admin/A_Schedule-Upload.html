@@ -224,51 +224,48 @@ th{background:#f8f7ff; font-weight:600;}
     </form>
   </div>
 
-  <!-- List View -->
-  <div id="list" class="tab-content">
-    <div class="card">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Teacher</th>
-            <th>Program</th>
-            <th>Group</th>
-            <th>Module</th>
-            <th>Day</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Room</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for s in schedules %}
-            {% set matched_program = programs | selectattr("docId","equalto",s.fk_program) | list %}
-            {% set matched_group   = groups   | selectattr("docId","equalto",s.fk_group)   | list %}
-            {% set matched_module  = modules  | selectattr("docId","equalto",s.fk_module)  | list %}
-          <tr>
-            <td>{{ loop.index }}</td>
-            <td>{{ matched_program[0].programName if matched_program else '' }}</td>
-            <td>{{ matched_group[0].groupCode if matched_group else '' }}</td>
-            <td>{{ matched_module[0].moduleName if matched_module else '' }}</td>
-            <td>{{ s.teacher_name }}</td>
-            <td>{{ s.day }}</td>
-            <td>{{ s.start_time }}</td>
-            <td>{{ s.end_time }}</td>
-            <td>{{ s.room }}</td>
-            <td>
-              <form method="POST" action="{{ url_for('admin_schedule_delete', schedule_id=s.docId) }}" style="display:inline-block;">
-                <button type="submit" style="background:#ff4c4c;">Delete</button>
-              </form>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-
-      </table>
-    </div>
+<!-- List View -->
+<div id="list" class="tab-content">
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Teacher</th>
+          <th>Program</th>
+          <th>Group</th>
+          <th>Module</th>
+          <th>Day</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Room</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in schedules %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ s.teacher_name }}</td>
+          <td>{{ s.program_name }}</td>
+          <td>{{ s.group_name }}</td>
+          <td>{{ s.module_name }}</td>
+          <td>{{ s.day }}</td>
+          <td>{{ s.start_time }}</td>
+          <td>{{ s.end_time }}</td>
+          <td>{{ s.room }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_schedule_delete', schedule_id=s.docId) }}" style="display:inline-block;">
+              <button type="submit" style="background:#ff4c4c;">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+</div>
+
 
   <!-- Timetable View -->
   <div id="timetable" class="tab-content" style="display:none;">
@@ -356,7 +353,8 @@ function switchTab(tab) {
 }
 
 // --- Teacher assignments mapping ---
-const teacherAssignments = {{ teacher_assignments | tojson | default('{}') }};
+const teacherAssignments = {{ (teacher_assignments or {}) | tojson }};
+const modules = {{ (modules or []) | tojson }};
 const programs = {{ programs | tojson | default('[]') }};
 
 // Select elements
@@ -399,10 +397,14 @@ function autofillAssignments() {
         // --- Modules ---
         moduleSelect.innerHTML = '<option value="">Select Module</option>';
         assignment.modules.forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m.id;
-            opt.textContent = m.name;
-            moduleSelect.appendChild(opt);
+            // Find the real module in modules collection by name
+            const realModule = modules.find(mod => mod.moduleName === m.name);
+            if (realModule) {
+                const opt = document.createElement('option');
+                opt.value = realModule.docId;   // use correct docId
+                opt.textContent = realModule.moduleName;
+                moduleSelect.appendChild(opt);
+            }
         });
         moduleSelect.disabled = assignment.modules.length === 0;
 
