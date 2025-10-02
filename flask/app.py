@@ -1578,8 +1578,6 @@ def teacher_profile():
 
 
 
-    
-
 # Helper to generate a unique studentID
 def generate_student_id():
     return "STU" + str(random.randint(1000, 9999))  # simple random ID
@@ -1647,19 +1645,19 @@ def admin_student_add():
         groups=groups,
         students=students
     )
-
-
 # ------------------ Save (Add/Edit) Student ------------------
-UPLOAD_FOLDER = "student_pics"
+
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+UPLOAD_FOLDER = os.path.join(app.static_folder, "student_pics")  # guaranteed correct path
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/admin/student/save', methods=['POST'])
 def admin_student_save():
-    student_id = request.form.get('userId')
+    student_id = request.form.get('userId')  # empty if adding new
     first_name = request.form['first_name']
     last_name = request.form['last_name']
     email = request.form['email']
@@ -1668,27 +1666,29 @@ def admin_student_save():
 
     display_name = f"{first_name} {last_name}"
 
-    # Auto-generate studentID
-    import random, string
-    studentID = ''.join(random.choices(string.digits, k=6))
-
-    # Auto-assign first group of the program (document ID)
+    # Auto-assign first group of the program
     group_docs = db.collection('groups').where('fk_program', '==', program).limit(1).stream()
     fk_groupcode = ""
     for g in group_docs:
         fk_groupcode = g.id
         break
 
-    # Handle photo upload
     photo_file = request.files.get("photo")
     photo_name = None
-    if photo_file and allowed_file(photo_file.filename):
-        ext = photo_file.filename.rsplit(".", 1)[1].lower()
-        photo_name = f"{student_id}.{ext}"
-        photo_file.save(os.path.join(UPLOAD_FOLDER, photo_name))
 
+    # ---------------- Update Existing Student ----------------
     if student_id:
-        # Update existing student
+        existing_doc = db.collection('users').document(student_id).get()
+        if photo_file and allowed_file(photo_file.filename):
+            ext = photo_file.filename.rsplit(".", 1)[1].lower()
+            photo_name = f"{student_id}.{ext}"
+            save_path = os.path.join(UPLOAD_FOLDER, photo_name)
+            photo_file.save(save_path)
+            print(f"✅ Photo saved to: {save_path}")
+        else:
+            photo_name = existing_doc.to_dict().get('photo_name', 'default.jpg') if existing_doc.exists else 'default.jpg'
+
+        # Update Firebase Auth
         try:
             if password:
                 auth.update_user(student_id, email=email, display_name=display_name, password=password)
@@ -1698,27 +1698,25 @@ def admin_student_save():
             flash(f"Error updating Auth user: {str(e)}", "error")
             return redirect(url_for("admin_student_add"))
 
+        # Update Firestore
         student_data = {
             'first_name': first_name,
             'last_name': last_name,
             'name': display_name,
             'email': email,
             'active': True,
-            'role_type': 1
+            'role_type': 1,
+            'photo_name': photo_name
         }
-
-        if photo_name:
-            student_data['photo_name'] = photo_name
-
         db.collection('users').document(student_id).update(student_data)
         db.collection('users').document(student_id).collection('roles').document('student').set({
-            'studentID': studentID,
-            'fk_groupcode': fk_groupcode,  # ⚡ group ID
+            'studentID': ''.join(random.choices("0123456789", k=6)),
+            'fk_groupcode': fk_groupcode,
             'program': program
         })
 
+    # ---------------- Add New Student ----------------
     else:
-        # Add new student
         try:
             user = auth.create_user(email=email, password=password or "password123", display_name=display_name)
             student_id = user.uid
@@ -1726,7 +1724,16 @@ def admin_student_save():
             flash(f"Error creating Auth user: {str(e)}", "error")
             return redirect(url_for("admin_student_add"))
 
-        student_data = {
+        if photo_file and allowed_file(photo_file.filename):
+            ext = photo_file.filename.rsplit(".", 1)[1].lower()
+            photo_name = f"{student_id}.{ext}"
+            save_path = os.path.join(UPLOAD_FOLDER, photo_name)
+            photo_file.save(save_path)
+            print(f"✅ Photo saved to: {save_path}")
+        else:
+            photo_name = "default.jpg"  # make sure default.jpg exists in static/student_pics
+
+        db.collection('users').document(student_id).set({
             'user_id': student_id,
             'first_name': first_name,
             'last_name': last_name,
@@ -1734,18 +1741,15 @@ def admin_student_save():
             'email': email,
             'active': True,
             'role_type': 1,
-            'photo_name': photo_name if photo_name else f"{student_id}.jpg"
-        }
-
-        db.collection('users').document(student_id).set(student_data)
+            'photo_name': photo_name
+        })
         db.collection('users').document(student_id).collection('roles').document('student').set({
-            'studentID': studentID,
-            'fk_groupcode': fk_groupcode,  # ⚡ group ID
+            'studentID': ''.join(random.choices("0123456789", k=6)),
+            'fk_groupcode': fk_groupcode,
             'program': program
         })
 
     return redirect(url_for('admin_student_add'))
-
 
 # ------------------ Upload Students via CSV ------------------
 @app.route("/admin/student_upload", methods=["POST"])
