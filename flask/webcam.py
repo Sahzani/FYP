@@ -47,29 +47,23 @@ def wait_for_api(url, timeout=30):
 # ===== Load Students and Encodings =====
 def load_students():
     global STUDENTS, encodings, classNames
-    if not wait_for_api(f"{API_URL}/api/students"):
-        return
-
-    print("[INFO] Fetching student data from API...")
     response = requests.get(f"{API_URL}/api/students")
     data_list = response.json()
+    
+    encodings, classNames = [], []
 
     for data in data_list:
         student_id = data["id"]
         STUDENTS[student_id] = data
 
-        # --- Fetch roles/student document directly from Firestore ---
+        # Fetch student role for group
         role_doc = db.collection("users").document(student_id).collection("roles").document("student").get()
-        if role_doc.exists:
-            role_data = role_doc.to_dict()
-            STUDENTS[student_id]["fk_groupcode"] = role_data.get("fk_groupcode", "")
-            STUDENTS[student_id]["program"] = role_data.get("program", "")
-        else:
-            STUDENTS[student_id]["fk_groupcode"] = ""
-            STUDENTS[student_id]["program"] = ""
+        group_code = role_doc.to_dict().get("fk_groupcode", "") if role_doc.exists else ""
+        STUDENTS[student_id]["fk_groupcode"] = group_code
+        STUDENTS[student_id]["program"] = role_doc.to_dict().get("program", "") if role_doc.exists else ""
 
-        photo_filename = data.get("photo_name", "")
-        photo_path = os.path.join("student_pics", photo_filename)
+        photo_name = data.get("photo_name", "")
+        photo_path = os.path.join(app.static_folder, "student_pics", group_code, photo_name)
         if not os.path.exists(photo_path):
             print(f"[WARN] File not found: {photo_path}")
             continue
@@ -86,6 +80,8 @@ def load_students():
             print(f"[INFO] Loaded encoding for {data.get('name')} ({student_id})")
 
     print(f"[INFO] Total encodings loaded: {len(encodings)}")
+
+
 # ===== Attendance =====
 attended_today = {}
 
@@ -170,8 +166,18 @@ def start_camera():
     if not schedule_id:
         return "No schedule selected", 400
 
+    # Get the group code for this schedule
+    schedule_doc = db.collection("schedules").document(schedule_id).get()
+    if not schedule_doc.exists:
+        return "Schedule not found", 404
+
+    group_code = schedule_doc.to_dict().get("fk_groupcode")
+
     # Store selected schedule
-    current_schedule = {"schedule_id": schedule_id}
+    current_schedule = {"schedule_id": schedule_id, "fk_groupcode": group_code}
+
+    # ✅ Only load encodings for this group
+    load_students(current_group=group_code)
 
     if not camera_running:
         camera_running = True
@@ -179,11 +185,7 @@ def start_camera():
         camera_thread.start()
     return "Camera started", 200
 
-@app.route("/stop_camera")
-def stop_camera():
-    global camera_running
-    camera_running = False
-    return "Camera stopped", 200
+
 
 @app.route("/video_feed")
 def video_feed():
@@ -196,6 +198,49 @@ def video_feed():
             else:
                 time.sleep(0.05)
     return Response(generate_frames(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
+
+# ===== Student View =====
+@app.route("/")
+def student_view():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Student Camera View</title>
+        <style>
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background: #f4f4f4;
+                font-family: Arial, sans-serif;
+            }
+            .container {
+                text-align: center;
+            }
+            h2 {
+                margin-bottom: 20px;
+            }
+            img {
+                border: 3px solid #333;
+                border-radius: 10px;
+                box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Student View - Confirm Your Presence</h2>
+            <img src="/video_feed" width="640" height="480">
+        </div>
+    </body>
+    </html>
+    """
+
+
 
 # ===== Run App =====
 if __name__ == "__main__":
