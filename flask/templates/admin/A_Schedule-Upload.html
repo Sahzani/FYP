@@ -169,7 +169,14 @@ th{background:#f8f7ff; font-weight:600;}
 <div class="card">
   <h3>Add Schedule</h3>
   <form method="POST" action="{{ url_for('admin_schedule_save') }}" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-    
+
+<select name="fk_teacher" required style="flex:1; min-width:150px;">
+  <option value="">Select Teacher</option>
+  {% for t in teachers %}
+    <option value="{{ t.docId }}">{{ t.firstName }} {{ t.lastName }}</option>
+  {% endfor %}
+</select>
+
 <select name="fk_program" id="fk_program" required style="flex:1; min-width:150px;" disabled>
   <option value="">Select Program</option>
   {% for p in programs %}
@@ -190,15 +197,6 @@ th{background:#f8f7ff; font-weight:600;}
     <option value="{{ m.docId }}">{{ m.moduleName }}</option>
   {% endfor %}
 </select>
-
-
-<select name="fk_teacher" required style="flex:1; min-width:150px;">
-  <option value="">Select Teacher</option>
-  {% for t in teachers %}
-    <option value="{{ t.docId }}">{{ t.firstName }} {{ t.lastName }}</option>
-  {% endfor %}
-</select>
-
 
     <select name="day" required style="flex:1; min-width:100px;">
       <option value="Monday">Monday</option>
@@ -233,10 +231,10 @@ th{background:#f8f7ff; font-weight:600;}
         <thead>
           <tr>
             <th>#</th>
+            <th>Teacher</th>
             <th>Program</th>
             <th>Group</th>
             <th>Module</th>
-            <th>Teacher</th>
             <th>Day</th>
             <th>Start</th>
             <th>End</th>
@@ -382,39 +380,31 @@ function autofillAssignments() {
                 opt.textContent = prog.programName;
                 programSelect.appendChild(opt);
                 programSelect.disabled = false;
-            } else {
-                programSelect.innerHTML = '<option value="">Select Program</option>';
-                programSelect.disabled = true;
             }
+        } else {
+            programSelect.innerHTML = '<option value="">Select Program</option>';
+            programSelect.disabled = true;
         }
 
         // --- Groups ---
         groupSelect.innerHTML = '<option value="">Select Group</option>';
-        if (assignment.groups && assignment.groups.length > 0) {
-            assignment.groups.forEach(g => {
-                const opt = document.createElement('option');
-                opt.value = g.id;
-                opt.textContent = g.name;
-                groupSelect.appendChild(opt);
-            });
-            groupSelect.disabled = false;
-        } else {
-            groupSelect.disabled = true;
-        }
+        assignment.groups.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.id;
+            opt.textContent = g.name;
+            groupSelect.appendChild(opt);
+        });
+        groupSelect.disabled = assignment.groups.length === 0;
 
         // --- Modules ---
         moduleSelect.innerHTML = '<option value="">Select Module</option>';
-        if (assignment.modules && assignment.modules.length > 0) {
-            assignment.modules.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.id;
-                opt.textContent = m.name;
-                moduleSelect.appendChild(opt);
-            });
-            moduleSelect.disabled = false;
-        } else {
-            moduleSelect.disabled = true;
-        }
+        assignment.modules.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.name;
+            moduleSelect.appendChild(opt);
+        });
+        moduleSelect.disabled = assignment.modules.length === 0;
 
     } else {
         // Reset all if no teacher selected
