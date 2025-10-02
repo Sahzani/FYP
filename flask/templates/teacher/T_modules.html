@@ -115,6 +115,8 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
     <a class="sidebar-link active" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Groups</span></a>
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
   </div>
+
+  {% if profile.is_gc %}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
     <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
@@ -124,6 +126,8 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
       <i class="fas fa-file-alt"></i><span>Group Report</span>
     </a>
   </div>
+  {% endif %}
+
   <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
