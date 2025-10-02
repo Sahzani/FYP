@@ -2283,26 +2283,10 @@ def admin_schedules():
     for doc in teachers_docs:
         t = doc.to_dict()
         t["docId"] = doc.id
-
-        # Fetch role info
-        role_doc = db.collection("users").document(t["docId"]).collection("roles").document("teacher").get()
-        if role_doc.exists:
-            role = role_doc.to_dict()
-            t["program"] = role.get("program", "")
-            t["module"] = role.get("module", "")
-            t["group"] = role.get("group", "")
-            t["teacherID"] = role.get("teacherID", "")
-        else:
-            t["program"] = ""
-            t["module"] = ""
-            t["group"] = ""
-            t["teacherID"] = ""
-
-        # Precompute full name
         t["fullName"] = f"{t.get('firstName','')} {t.get('lastName','')}".strip()
         teachers.append(t)
 
-    # ✅ Sort teachers by full name (case-insensitive)
+    # Sort teachers by full name
     teachers.sort(key=lambda t: t.get("fullName", "").lower())
 
     # Fetch schedules and attach teacher names
@@ -2310,27 +2294,51 @@ def admin_schedules():
     for doc in db.collection("schedules").stream():
         s = doc.to_dict()
         s["docId"] = doc.id
-
-        # Match teacher and set full name
         teacher = next((t for t in teachers if t["docId"] == s.get("fk_teacher")), None)
         s["teacher_name"] = teacher.get("fullName", "") if teacher else ""
-
         schedules.append(s)
 
     # Get selected teacher for timetable view
     selected_teacher_id = request.args.get("teacher_id")
     selected_teacher = next((t for t in teachers if t["docId"] == selected_teacher_id), None)
 
-    # ✅ Create teacher assignments mapping
-    teacher_assignments = {
-    t["docId"]: {
-        "program": t.get("program", ""),
-        "group": t.get("group", ""),
-        "module": t.get("module", "")
-    }
-    for t in teachers
-}
+    # ------------------- NEW teacher_assignments from mlmodule -------------------
+    teacher_assignments = {}
+    for t in teachers:
+        teacher_id = t["docId"]
 
+        # Query mlmodule docs for this teacher
+        mlmodules_docs = db.collection("mlmodule").where("teacherID", "==", teacher_id).stream()
+
+        modules_list = []
+        groups_list = []
+        programs_set = set()  # to store program IDs from groups
+
+        for doc in mlmodules_docs:
+            ml = doc.to_dict()
+            module_name = ml.get("moduleName", "")
+            group_code = ml.get("group_code", "")
+
+            # Modules
+            if module_name:
+                modules_list.append({"id": doc.id, "name": module_name})
+
+            # Groups
+            if group_code:
+                matched_group = next((g for g in groups if g["groupCode"] == group_code), None)
+                if matched_group:
+                    groups_list.append({"id": matched_group["docId"], "name": group_code})
+                    # Get program from group
+                    programs_set.add(matched_group.get("fk_program", ""))
+
+        program_id = list(programs_set)[0] if programs_set else ""
+
+        teacher_assignments[teacher_id] = {
+            "program": program_id,
+            "groups": groups_list,
+            "modules": modules_list
+        }
+    # -----------------------------------------------------------------
 
     return render_template(
         "admin/A_Schedule-Upload.html",
@@ -2342,6 +2350,7 @@ def admin_schedules():
         selected_teacher=selected_teacher,
         teacher_assignments=teacher_assignments  # pass to template
     )
+
 
 # ------------------ Save/Add/Edit Schedule ------------------
 @app.route("/admin/schedule/save", methods=["POST"])
