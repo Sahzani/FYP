@@ -834,7 +834,6 @@ def teacher_modules():
         return redirect(url_for("login"))
 
     # ------------------ Profile for header ------------------
-    # Fetch the teacher's full profile from Firestore
     teacher_doc = db.collection("users").document(teacher_id).get()
     if teacher_doc.exists:
         teacher_data = teacher_doc.to_dict()
@@ -857,12 +856,16 @@ def teacher_modules():
     group_ids = list({s["fk_group"] for s in schedules})
 
     # ------------------ 3. Fetch module names ------------------
-    modules_ref = db.collection("modules").where("__name__", "in", module_ids).stream()
+    modules_ref = db.collection("mlmodule").where("__name__", "in", module_ids).stream()
     modules = {m.id: m.to_dict() for m in modules_ref}
 
+
     # ------------------ 4. Fetch groups ------------------
-    groups_ref = db.collection("groups").where("__name__", "in", group_ids).stream()
-    groups = {g.id: g.to_dict() for g in groups_ref}
+    groups = {}
+    for g_id in group_ids:
+        g_doc = db.collection("groups").document(g_id).get()
+        if g_doc.exists:
+            groups[g_id] = g_doc.to_dict()
 
     # ------------------ 5. Fetch students ------------------
     students_ref = db.collection("users").where("role_type", "==", 1).stream()
@@ -882,12 +885,21 @@ def teacher_modules():
         })
 
     # ------------------ 6. Fetch attendance ------------------
-    attendance_ref = db.collection("attendance").stream()
     attendance_map = {}
+    attendance_ref = db.collection("attendance").stream()
     for att_doc in attendance_ref:
-        att = att_doc.to_dict()
-        key = (att.get("schedule_id"), att.get("student_id"))
-        attendance_map[key] = {"status": att.get("status", "Not Marked"), "date": att.get("date", "")}
+        att_id = att_doc.id
+        # For each attendance document, get its date collections
+        date_collections = db.collection("attendance").document(att_id).collections()
+        for date_col in date_collections:
+            date_str = date_col.id  # e.g., "2025-10-02"
+            for stu_doc in date_col.stream():
+                stu_id = stu_doc.id
+                stu_data = stu_doc.to_dict()
+                schedule_id = stu_data.get("schedule_id")
+                status = stu_data.get("status", "Not Marked")
+                key = (schedule_id, stu_id)
+                attendance_map[key] = {"status": status, "date": date_str}
 
     # ------------------ 7. Assemble modules & groups ------------------
     modules_data = []
@@ -937,6 +949,7 @@ def teacher_modules():
         groups_data=groups_data,
         profile=profile
     )
+
 
 # ------------------ Teacher marks attendance ------------------
 @app.route("/mark_attendance", methods=["POST"])
@@ -994,6 +1007,7 @@ def mark_attendance():
 
     flash("Attendance updated successfully!", "success")
     return redirect(url_for("teacher_modules"))
+
 # ------------------ Teacher Mark Present via API ------------------
 @app.route("/teacher/mark_present", methods=["POST"])
 def mark_present():
