@@ -123,11 +123,6 @@
 
     <a href="#" class="forgot-password">Forgot password?</a>
 
-    <p class="register-text">
-      Don't have an account?
-      <a href="{{ url_for('signup') }}">Sign Up</a>
-    </p>
-
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <ul>

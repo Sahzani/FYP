@@ -2444,8 +2444,6 @@ def admin_schedule_upload_csv():
     return redirect(url_for("admin_schedules"))
 
 
-
-
 ## ------------------ Admin Attendance Log Page ------------------
 from flask import session, redirect, url_for, render_template, request, jsonify
 from datetime import datetime, timedelta
@@ -3030,7 +3028,14 @@ def api_teacher_assignment(teacher_id):
         return jsonify({"error": "Unauthorized"}), 403
 
     ml_query = db.collection("mlmodule").where("teacherID", "==", teacher_id).stream()
-    assignments = []
+
+    teacher_data = {
+        "program": None,
+        "groups": [],
+        "modules": []
+    }
+    group_seen = set()
+    module_seen = set()
 
     for ml_doc in ml_query:
         ml = ml_doc.to_dict()
@@ -3052,20 +3057,30 @@ def api_teacher_assignment(teacher_id):
                 if program_doc.exists:
                     program_name = program_doc.to_dict().get("programName", "")
 
-            assignments.append({
-                "programId": program_id,
-                "programName": program_name,
-                "groupId": group_id,
-                "groupCode": group_data.get("groupCode", ""),
-                "intake": group_data.get("intake", ""),
-                "moduleName": module_name
-            })
+            # Set program if not already set
+            if not teacher_data["program"]:
+                teacher_data["program"] = program_name
 
-    if not assignments:
+            # Add group if new
+            if group_id not in group_seen:
+                teacher_data["groups"].append({
+                    "id": group_id,
+                    "name": group_data.get("groupCode", "")
+                })
+                group_seen.add(group_id)
+
+            # Add module if new
+            if module_name and module_name not in module_seen:
+                teacher_data["modules"].append({
+                    "id": ml_doc.id,
+                    "name": module_name
+                })
+                module_seen.add(module_name)
+
+    if not teacher_data["program"]:
         return jsonify({"error": "No assignments found"}), 404
 
-    return jsonify(assignments)
-
+    return jsonify(teacher_data)
 
 # ------------------ API Endpoints for Students ------------------
 @app.route("/api/students")
