@@ -833,14 +833,36 @@ def teacher_modules():
     if not teacher_id:
         return redirect(url_for("login"))
 
-    # ------------------ Profile for header ------------------
+    # ------------------ Profile for header & GC check ------------------
     teacher_doc = db.collection("users").document(teacher_id).get()
     profile = {}
     if teacher_doc.exists:
         data = teacher_doc.to_dict()
+
+        # Use firstName and lastName directly
+        first_name = data.get("firstName", "Teacher")
+        last_name = data.get("lastName", "")
+
+        # Check if GC
+        role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
+        is_gc = role_doc.to_dict().get("isCoordinator", False) if role_doc.exists else False
+
         profile = {
-            "firstName": data.get("firstName", ""),
-            "lastName": data.get("lastName", "")
+            "firstName": first_name,
+            "lastName": last_name,
+            "role": data.get("role", "Teacher"),
+            "profile_pic": data.get(
+                "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
+            ),
+            "is_gc": is_gc
+        }
+    else:
+        profile = {
+            "role": "Teacher",
+            "firstName": "Teacher",
+            "lastName": "",
+            "profile_pic": "",
+            "is_gc": False
         }
 
     # ------------------ Fetch schedules ------------------
@@ -848,13 +870,14 @@ def teacher_modules():
     schedules = [s.to_dict() | {"id": s.id} for s in schedules_ref]
 
     if not schedules:
-        return render_template("teacher/T_modules.html",
-                               modules_data=[],
-                               groups_data={},
-                               users_data=[],
-                               profile=profile,
-                               available_dates=[]
-                               )
+        return render_template(
+            "teacher/T_modules.html",
+            modules_data=[],
+            groups_data={},
+            users_data=[],
+            profile=profile,
+            available_dates=[]
+        )
 
     module_ids = list({s["fk_module"] for s in schedules})
     group_ids = list({s["fk_group"] for s in schedules})
@@ -980,7 +1003,6 @@ def teacher_modules():
         available_dates=available_dates,
         selected_date=selected_date
     )
-
 
 # ------------------ Teacher marks attendance ------------------
 @app.route("/mark_attendance", methods=["POST"])

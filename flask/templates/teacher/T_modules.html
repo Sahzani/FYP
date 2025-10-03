@@ -7,7 +7,6 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-<!-- Include Flatpickr CSS & JS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
@@ -98,7 +97,7 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
     <a href="#" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="#" class="user-info">
       <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
+      <img src="{{ profile.profile_pic or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher">
     </a>
   </div>
 </header>
@@ -116,6 +115,24 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
     <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}"><i class="fas fa-calendar"></i><span>Class Schedule</span></a>
     <a class="sidebar-link active" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Groups</span></a>
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
+  </div>
+
+  {% if profile.is_gc %}
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Group Coordinator</div>
+    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
+      <i class="fas fa-users-cog"></i><span>Manage Group</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
+      <i class="fas fa-file-alt"></i><span>Group Report</span>
+    </a>
+  </div>
+  {% endif %}
+
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
   </div>
 </div>
 
@@ -236,7 +253,6 @@ function showStudentAttendance(groupCode) {
   groupsContainer.innerHTML = '';
   moduleTitle.textContent = `${g.groupName} - ${g.day} ${g.time} (${g.room})`;
 
-  // Filters
   const filterDiv = document.createElement('div');
   filterDiv.className = 'filter-container mb-4';
   filterDiv.innerHTML = `
@@ -257,7 +273,6 @@ function showStudentAttendance(groupCode) {
   `;
   groupsContainer.appendChild(filterDiv);
 
-  // Flatpickr with YYYY-MM-DD
   const fp = flatpickr("#dateFilter", {
     dateFormat: "Y-m-d",
     defaultDate: selectedDate || new Date(),
@@ -282,7 +297,6 @@ function showStudentAttendance(groupCode) {
       groupsContainer.appendChild(notifDiv);
     }
 
-    // --- Summary ---
     const summaryDiv = document.createElement('div');
     summaryDiv.className = 'summary-grid mb-4';
     summaryDiv.id = 'summaryDiv';
@@ -313,7 +327,6 @@ function showStudentAttendance(groupCode) {
     });
     groupsContainer.appendChild(summaryDiv);
 
-    // --- Table ---
     const tableWrapper = document.createElement('div');
     tableWrapper.className='bg-white p-4 rounded-2xl shadow overflow-x-auto table-scroll w-full';
     tableWrapper.id='attendanceTable';
@@ -337,7 +350,6 @@ function showStudentAttendance(groupCode) {
     `;
     groupsContainer.appendChild(tableWrapper);
 
-    // --- Edit buttons ---
     tableWrapper.querySelectorAll('.edit-btn').forEach(btn=>{
       btn.addEventListener('click',()=>{
         const student = btn.dataset.student;
@@ -351,7 +363,6 @@ function showStudentAttendance(groupCode) {
       });
     });
 
-    // --- Filters ---
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     function applyFilters(){
@@ -370,7 +381,6 @@ function showStudentAttendance(groupCode) {
   renderTable(fp.input.value);
 }
 
-// --- Modal actions ---
 document.querySelector('.btn-cancel').addEventListener('click',()=>{
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
@@ -386,7 +396,7 @@ document.querySelector('.btn-save').addEventListener('click',()=>{
       s.attendance.push({ date: dateValue, status: statusSelect.value, timestamp: new Date().toISOString() });
     }
   }
-  showStudentAttendance(groupCode);
+  showStudentAttendance(currentEdit.groupCode);
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
 });
@@ -401,24 +411,20 @@ document.querySelector('.btn-reset').addEventListener('click',()=>{
       s.attendance.push({ date: dateValue, status: "Not Marked", timestamp: new Date().toISOString() });
     }
   }
-  showStudentAttendance(groupCode);
+  showStudentAttendance(currentEdit.groupCode);
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
 });
 
-// --- Back button ---
 backBtn.addEventListener('click',()=>{
   moduleDetailsDiv.classList.add('hidden');
   modulesContainer.classList.remove('hidden');
 });
 
-// --- Sidebar toggle ---
 document.getElementById('menu-toggle').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('collapsed'));
 
-// Initial render
 renderModules();
 </script>
-
 
 </body>
 </html>
