@@ -371,13 +371,22 @@ function autofillAssignments() {
         // --- Program ---
         programSelect.innerHTML = '';
         if (assignment.program) {
-            const prog = programs.find(p => p.docId === assignment.program);
+            // Match either by docId or programName
+            let prog = programs.find(p => p.docId === assignment.program);
+            if (!prog) {
+                prog = programs.find(p => p.programName === assignment.program);
+            }
+
             if (prog) {
                 const opt = document.createElement('option');
                 opt.value = prog.docId;
                 opt.textContent = prog.programName;
+                opt.selected = true; // auto select
                 programSelect.appendChild(opt);
                 programSelect.disabled = false;
+            } else {
+                programSelect.innerHTML = '<option value="">Select Program</option>';
+                programSelect.disabled = true;
             }
         } else {
             programSelect.innerHTML = '<option value="">Select Program</option>';
@@ -386,27 +395,34 @@ function autofillAssignments() {
 
         // --- Groups ---
         groupSelect.innerHTML = '<option value="">Select Group</option>';
-        assignment.groups.forEach(g => {
-            const opt = document.createElement('option');
-            opt.value = g.id;
-            opt.textContent = g.name;
-            groupSelect.appendChild(opt);
-        });
-        groupSelect.disabled = assignment.groups.length === 0;
+        if (assignment.groups && assignment.groups.length > 0) {
+            assignment.groups.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g.id;
+                opt.textContent = g.name;
+                groupSelect.appendChild(opt);
+            });
+            groupSelect.disabled = false;
+        } else {
+            groupSelect.disabled = true;
+        }
 
         // --- Modules ---
         moduleSelect.innerHTML = '<option value="">Select Module</option>';
-        assignment.modules.forEach(m => {
-            // Find the real module in modules collection by name
-            const realModule = modules.find(mod => mod.moduleName === m.name);
-            if (realModule) {
-                const opt = document.createElement('option');
-                opt.value = realModule.docId;   // use correct docId
-                opt.textContent = realModule.moduleName;
-                moduleSelect.appendChild(opt);
-            }
-        });
-        moduleSelect.disabled = assignment.modules.length === 0;
+        if (assignment.modules && assignment.modules.length > 0) {
+            assignment.modules.forEach(m => {
+                const realModule = modules.find(mod => mod.moduleName === m.name);
+                if (realModule) {
+                    const opt = document.createElement('option');
+                    opt.value = realModule.docId;
+                    opt.textContent = realModule.moduleName;
+                    moduleSelect.appendChild(opt);
+                }
+            });
+            moduleSelect.disabled = false;
+        } else {
+            moduleSelect.disabled = true;
+        }
 
     } else {
         // Reset all if no teacher selected

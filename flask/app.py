@@ -2288,23 +2288,49 @@ def admin_schedules():
         t["fullName"] = f"{t.get('firstName','')} {t.get('lastName','')}".strip()
         teachers.append(t)
 
-    # Sort teachers
     teachers.sort(key=lambda t: t.get("fullName", "").lower())
 
-    # Fetch mlmodule (since fk_module points here, not modules)
+    # Fetch mlmodule (module + group)
     mlmodules = [{**ml.to_dict(), "docId": ml.id} for ml in db.collection("mlmodule").stream()]
 
-    # Fetch schedules and attach teacher/module/program/group names
+    # --- Build Teacher Assignments mapping ---
+    teacherAssignments = {}
+    for ml in mlmodules:
+        fk_teacher = ml.get("fk_teacher")
+        if not fk_teacher:
+            continue
+
+        # find the group
+        group = next((g for g in groups if g["groupCode"] == ml.get("group_code")), None)
+        program_name = ""
+        if group:
+            program = next((p for p in programs if p["docId"] == group.get("fk_program")), None)
+            program_name = program["programName"] if program else ""
+
+        if fk_teacher not in teacherAssignments:
+            teacherAssignments[fk_teacher] = {
+                "program": program_name,
+                "groups": [],
+                "modules": []
+            }
+
+        # add group (avoid duplicates)
+        if group and not any(g["id"] == group["docId"] for g in teacherAssignments[fk_teacher]["groups"]):
+            teacherAssignments[fk_teacher]["groups"].append({"id": group["docId"], "name": group["groupCode"]})
+
+        # add module (avoid duplicates)
+        if ml.get("moduleName") and not any(m["id"] == ml["docId"] for m in teacherAssignments[fk_teacher]["modules"]):
+            teacherAssignments[fk_teacher]["modules"].append({"id": ml["docId"], "name": ml["moduleName"]})
+
+    # Fetch schedules
     schedules = []
     for doc in db.collection("schedules").stream():
         s = doc.to_dict()
         s["docId"] = doc.id
 
-        # Teacher
         teacher = next((t for t in teachers if t["docId"] == s.get("fk_teacher")), None)
         s["teacher_name"] = teacher.get("fullName", "") if teacher else ""
 
-        # mlmodule (module + group together)
         mlmodule = next((ml for ml in mlmodules if ml["docId"] == s.get("fk_module")), None)
         if mlmodule:
             s["module_name"] = mlmodule.get("moduleName", "")
@@ -2313,7 +2339,6 @@ def admin_schedules():
             s["module_name"] = ""
             s["group_name"] = ""
 
-        # Program (linked via group)
         group = next((g for g in groups if g.get("groupCode") == s.get("group_name")), None)
         s["program_name"] = ""
         if group:
@@ -2327,7 +2352,8 @@ def admin_schedules():
         programs=programs,
         groups=groups,
         teachers=teachers,
-        schedules=schedules
+        schedules=schedules,
+        teacher_assignments=teacherAssignments
     )
 
 # ------------------ Save/Add/Edit Schedule ------------------
@@ -2753,7 +2779,6 @@ def admin_summary():
     return redirect(url_for("home"))
 
 # ------------------ Admin Modules page ------------------
-
 # Admin Modules Page
 @app.route("/admin/modules")
 def admin_modules():
@@ -2965,7 +2990,6 @@ def admin_program_save():
     flash("Program saved successfully!", "success")
     return redirect(url_for("admin_programs"))
 
-
 # ------------------ Delete Program ------------------
 @app.route("/admin/program/delete/<program_id>", methods=["POST"])
 def admin_program_delete(program_id):
@@ -2975,7 +2999,6 @@ def admin_program_delete(program_id):
     db.collection("programs").document(program_id).delete()
     flash("Program deleted successfully!", "success")
     return redirect(url_for("admin_programs"))
-
 
 # ------------------ Upload Programs via CSV ------------------
 @app.route("/admin/program/upload", methods=["POST"])
@@ -3045,7 +3068,6 @@ def api_teacher_assignment(teacher_id):
 
 
 # ------------------ API Endpoints for Students ------------------
-
 @app.route("/api/students")
 def api_students():
     students_ref = db.collection("users").where("role_type", "==", 1).stream()
@@ -3180,10 +3202,6 @@ def api_schedules():
 def logout():
     session.clear()
     return redirect(url_for("home"))
-
-@app.route("/signup")
-def signup():
-    return "Signup page coming soon!"
 
 # ------------------ Run Flask ------------------
 if __name__ == "__main__":
