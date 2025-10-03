@@ -7,6 +7,9 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<!-- Include Flatpickr CSS & JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -53,7 +56,6 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
 
 /* Scrollable table container */
 .table-scroll { overflow-x:auto; }
-
 
 /* Attendance summary cards */
 .summary-card {
@@ -115,22 +117,6 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
     <a class="sidebar-link active" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Groups</span></a>
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
   </div>
-
-  {% if profile.is_gc %}
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Group Coordinator</div>
-    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
-      <i class="fas fa-users-cog"></i><span>Manage Group</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
-      <i class="fas fa-file-alt"></i><span>Group Report</span>
-    </a>
-  </div>
-  {% endif %}
-
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
-  </div>
 </div>
 
 <!-- Main Content -->
@@ -151,30 +137,32 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
     <h2 id="moduleTitle" class="module-title mb-4"></h2>
     <div id="groupsContainer" class="flex flex-col gap-6"></div>
   </div>
-</div>
 
-<!-- Modal -->
-<div id="editModal" class="modal">
-  <div class="modal-content">
-    <h3>Edit Attendance</h3>
-    <p id="modalStudent"></p>
-    <select id="statusSelect" class="mb-4 w-full border border-gray-300 rounded px-2 py-1">
-      <option value="Present">Present</option>
-      <option value="Absent">Absent</option>
-      <option value="Late">Late</option>
-      <option value="Not Marked">Not Marked</option>
-    </select>
-    <div>
-      <button class="btn-save">Save</button>
-      <button class="btn-reset">Reset</button>
-      <button class="btn-cancel">Cancel</button>
+  <!-- Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h3>Edit Attendance</h3>
+      <p id="modalStudent"></p>
+      <select id="statusSelect" class="mb-4 w-full border border-gray-300 rounded px-2 py-1">
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+        <option value="Late">Late</option>
+        <option value="Not Marked">Not Marked</option>
+      </select>
+      <div>
+        <button class="btn-save">Save</button>
+        <button class="btn-reset">Reset</button>
+        <button class="btn-cancel">Cancel</button>
+      </div>
     </div>
   </div>
+
 </div>
+
 <script>
-  
 const modulesData = {{ modules_data|tojson }};
 const groupsData = {{ groups_data|tojson }};
+const selectedDate = "{{ selected_date or '' }}";
 
 const modulesContainer = document.getElementById('modulesContainer');
 const moduleDetailsDiv = document.getElementById('moduleDetails');
@@ -185,14 +173,14 @@ const backBtn = document.getElementById('backBtn');
 const modal = document.getElementById('editModal');
 const modalStudent = document.getElementById('modalStudent');
 const statusSelect = document.getElementById('statusSelect');
-let currentEdit = { groupCode:null, student:null };
+let currentEdit = { groupCode:null, student:null, dateValue:null };
 
-// Render Modules
-function renderModules(){
-  modulesContainer.innerHTML='';
-  modulesData.forEach(m=>{
+// --- Render Modules ---
+function renderModules() {
+  modulesContainer.innerHTML = '';
+  modulesData.forEach(m => {
     const card = document.createElement('div');
-    card.className='bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
+    card.className = 'bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
     card.innerHTML = `
       <div class="flex items-center mb-3">
         <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mr-3">
@@ -202,203 +190,235 @@ function renderModules(){
       </div>
       <p class="text-sm text-gray-500">${m.groups.length} group(s)</p>
     `;
-    card.addEventListener('click',()=>showModuleDetails(m));
+    card.addEventListener('click', () => showModuleDetails(m));
     modulesContainer.appendChild(card);
   });
 }
 
-// Show Module Details
-function showModuleDetails(module){
+// --- Show Module Details ---
+function showModuleDetails(module) {
   modulesContainer.classList.add('hidden');
   moduleDetailsDiv.classList.remove('hidden');
   moduleTitle.textContent = module.moduleName;
-  groupsContainer.innerHTML='';
+  renderGroups(module.groups);
+}
 
-  module.groups.forEach(code=>{
+// --- Render Groups ---
+function renderGroups(groupCodes) {
+  groupsContainer.innerHTML = '';
+  groupCodes.forEach(code => {
     const g = groupsData[code];
     if(!g) return;
 
-    const todayStr = getTodayStr();
-    const presentCount = g.students.filter(s=>s.status==="Present" && s.date===todayStr).length;
-    const absentCount = g.students.filter(s=>s.status==="Absent" && s.date===todayStr).length;
-    const lateCount = g.students.filter(s=>s.status==="Late" && s.date===todayStr).length;
-    const icons = { Present:'fa-check-circle', Absent:'fa-times-circle', Late:'fa-clock' };
-
     const groupCard = document.createElement('div');
-groupCard.className = 'bg-white p-4 rounded-2xl shadow hover:shadow-lg transition cursor-pointer group-card';
-groupCard.style.maxWidth = '400px'; // optional: prevent it from stretching too wide
-groupCard.style.height = 'auto';     // ensures height matches content
-groupCard.innerHTML = `
-  <div class="flex items-center gap-3">
-    <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 flex-shrink-0">
-      <i class="fas fa-users text-xl"></i>
-    </div>
-    <div class="flex-1">
-      <h3 class="text-lg font-semibold mb-1">${g.groupName}</h3>
-      <p class="text-sm text-gray-500 mb-2">${g.day} ${g.time} | Room: ${g.room}</p>
-      <div class="flex items-center gap-3 text-sm mb-2">
-        <span class="flex items-center gap-1">
-          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-            <i class="fas ${icons['Present']}"></i>
-          </div> ${presentCount}
-        </span>
-        <span class="flex items-center gap-1">
-          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-            <i class="fas ${icons['Absent']}"></i>
-          </div> ${absentCount}
-        </span>
-        <span class="flex items-center gap-1">
-          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-            <i class="fas ${icons['Late']}"></i>
-          </div> ${lateCount}
-        </span>
+    groupCard.className = 'bg-white p-4 rounded-2xl shadow hover:shadow-lg transition cursor-pointer group-card';
+    groupCard.style.maxWidth = '400px';
+    groupCard.innerHTML = `
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 flex-shrink-0">
+          <i class="fas fa-users text-xl"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold mb-1">${g.groupName}</h3>
+          <p class="text-sm text-gray-500 mb-2">${g.day} ${g.time} | Room: ${g.room}</p>
+          <p class="text-sm text-gray-500 mb-0">${g.students.length} student(s)</p>
+        </div>
       </div>
-      <p class="text-sm text-gray-500 mb-0">${g.students.length} student(s)</p>
-    </div>
-  </div>
-`;
-
-    groupCard.addEventListener('click',()=>showStudentAttendance(code));
+    `;
+    groupCard.addEventListener('click', () => showStudentAttendance(code));
     groupsContainer.appendChild(groupCard);
   });
 }
 
-// Show Student Attendance
-function showStudentAttendance(groupCode){
-  modulesContainer.classList.add('hidden');
-  groupsContainer.innerHTML='';
+// --- Show Student Attendance ---
+function showStudentAttendance(groupCode) {
   const g = groupsData[groupCode];
+  groupsContainer.innerHTML = '';
   moduleTitle.textContent = `${g.groupName} - ${g.day} ${g.time} (${g.room})`;
-
-  const todayStr = getTodayStr();
-
-  // Summary cards
-  const summaryDiv = document.createElement('div');
-  summaryDiv.className='summary-grid mb-4';
-  const statusCounts = { Present:0, Absent:0, Late:0 };
-  g.students.forEach(s=>{ if(s.date===todayStr && statusCounts[s.status]!==undefined) statusCounts[s.status]++; });
-  const icons = { Present:'fa-check-circle', Absent:'fa-times-circle', Late:'fa-clock' };
-  Object.keys(statusCounts).forEach(status=>{
-    const card = document.createElement('div');
-    card.className='summary-card p-4 rounded-2xl shadow flex flex-col items-center justify-center';
-    card.innerHTML=`
-      <div class="w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-2">
-        <i class="fas ${icons[status]}"></i>
-      </div>
-      <p class="text-sm font-semibold">${status}</p>
-      <p class="text-lg font-bold">${statusCounts[status]}</p>
-    `;
-    summaryDiv.appendChild(card);
-  });
-  groupsContainer.appendChild(summaryDiv);
-
-  // Attendance notifications
-  g.students.filter(s=>s.consecutiveAbsences>=3).forEach(s=>{
-    const notif = document.createElement('div');
-    notif.className='notification';
-    notif.textContent=`${s.name} has been absent for ${s.consecutiveAbsences} consecutive classes.`;
-    groupsContainer.appendChild(notif);
-  });
 
   // Filters
   const filterDiv = document.createElement('div');
-  filterDiv.className='filter-container';
-  filterDiv.innerHTML=`
-    <div class="input-group"><i class="fas fa-search"></i><input id="searchInput" placeholder="Search student..."></div>
-    <select id="statusFilter">
-      <option value="">All Status</option>
-      <option value="Present">Present</option>
-      <option value="Absent">Absent</option>
-      <option value="Late">Late</option>
-      <option value="Not Marked">Not Marked</option>
-    </select>
+  filterDiv.className = 'filter-container mb-4';
+  filterDiv.innerHTML = `
+    <div class="input-group mb-2">
+      <i class="fas fa-search"></i>
+      <input id="searchInput" placeholder="Search student...">
+    </div>
+    <div class="flex gap-2 mb-4">
+      <input type="text" id="dateFilter" placeholder="Select Date (YYYY-MM-DD)">
+      <select id="statusFilter" class="ml-2">
+        <option value="">All Status</option>
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+        <option value="Late">Late</option>
+        <option value="Not Marked">Not Marked</option>
+      </select>
+    </div>
   `;
   groupsContainer.appendChild(filterDiv);
 
-  // Student Table
-  const tableWrapper = document.createElement('div');
-  tableWrapper.className='bg-white p-4 rounded-2xl shadow overflow-x-auto table-scroll w-full';
-  tableWrapper.innerHTML=`
-    <table class="w-full text-sm">
-      <thead>
-        <tr class="bg-gray-100">
-          <th>Name</th><th>Status</th><th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${g.students.map(s=>`
-          <tr class="border-b hover:bg-gray-50">
-            <td>${s.name}</td>
-            <td class="status-${s.status.replace(' ','')}">${s.status}</td>
-            <td>
-              <button class="edit-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600" data-group="${groupCode}" data-student="${s.name}">Edit</button>
-            </td>
-          </tr>`).join('')}
-      </tbody>
-    </table>
-  `;
-  groupsContainer.appendChild(tableWrapper);
-
-  // Edit buttons
-  document.querySelectorAll('.edit-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const group = btn.dataset.group;
-      const student = btn.dataset.student;
-      currentEdit={groupCode:group,student:student};
-      modalStudent.textContent=student;
-      statusSelect.value = groupsData[group].students.find(s=>s.name===student).status;
-      modal.classList.add('show');
-      document.querySelector('.modal-content').classList.add('show');
-    });
+  // Flatpickr with YYYY-MM-DD
+  const fp = flatpickr("#dateFilter", {
+    dateFormat: "Y-m-d",
+    defaultDate: selectedDate || new Date(),
+    onChange: function(selectedDates, dateStr) {
+      renderTable(dateStr);
+    }
   });
 
-  // Filters functionality
-  document.getElementById('searchInput').addEventListener('input',(e)=>{
-    const search = e.target.value.toLowerCase();
-    tableWrapper.querySelectorAll('tbody tr').forEach(tr=>{
-      const name = tr.querySelector('td:first-child').textContent.toLowerCase();
-      tr.style.display = name.includes(search) ? '' : 'none';
+  function renderTable(dateValue) {
+    const oldTable = document.getElementById('attendanceTable');
+    if(oldTable) oldTable.remove();
+    const oldSummary = document.getElementById('summaryDiv');
+    if(oldSummary) oldSummary.remove();
+    const oldNotif = document.getElementById('notifDiv');
+    if(oldNotif) oldNotif.remove();
+
+    const notifDiv = document.createElement('div');
+    notifDiv.id = 'notifDiv';
+    if(!g.students.length){
+      notifDiv.className='notification';
+      notifDiv.textContent='No students found in this group.';
+      groupsContainer.appendChild(notifDiv);
+    }
+
+    // --- Summary ---
+    const summaryDiv = document.createElement('div');
+    summaryDiv.className = 'summary-grid mb-4';
+    summaryDiv.id = 'summaryDiv';
+    const statusCounts = { Present:0, Absent:0, Late:0, "Not Marked":0 };
+
+    g.students.forEach(s => {
+      let att = s.attendance.find(a => a.date === dateValue);
+      if(!att){
+        att = { date: dateValue, status: "Not Marked", timestamp: null };
+        s.attendance.push(att);
+      }
+      s.currentStatus = att.status;
+      if(statusCounts[s.currentStatus] !== undefined) statusCounts[s.currentStatus]++;
     });
-  });
-  document.getElementById('statusFilter').addEventListener('change',(e)=>{
-    const filter = e.target.value;
-    tableWrapper.querySelectorAll('tbody tr').forEach(tr=>{
-      const status = tr.querySelector('td:nth-child(2)').textContent;
-      tr.style.display = (!filter || status===filter) ? '' : 'none';
+
+    const icons = { Present:'fa-check-circle', Absent:'fa-times-circle', Late:'fa-clock', "Not Marked":'fa-question-circle' };
+    Object.keys(statusCounts).forEach(status => {
+      const card = document.createElement('div');
+      card.className = 'summary-card p-4 rounded-2xl shadow flex flex-col items-center justify-center';
+      card.innerHTML = `
+        <div class="w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-2">
+          <i class="fas ${icons[status]}"></i>
+        </div>
+        <p class="text-sm font-semibold">${status}</p>
+        <p class="text-lg font-bold">${statusCounts[status]}</p>
+      `;
+      summaryDiv.appendChild(card);
     });
-  });
+    groupsContainer.appendChild(summaryDiv);
+
+    // --- Table ---
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className='bg-white p-4 rounded-2xl shadow overflow-x-auto table-scroll w-full';
+    tableWrapper.id='attendanceTable';
+    tableWrapper.innerHTML = `
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-100"><th>Name</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          ${g.students.map(s=>`
+            <tr class="border-b hover:bg-gray-50">
+              <td>${s.name}</td>
+              <td class="status-${s.currentStatus.replace(' ','')}">${s.currentStatus}</td>
+              <td>
+                <button class="edit-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600" data-student="${s.name}">Edit</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+    groupsContainer.appendChild(tableWrapper);
+
+    // --- Edit buttons ---
+    tableWrapper.querySelectorAll('.edit-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const student = btn.dataset.student;
+        currentEdit={groupCode, student, dateValue};
+        modalStudent.textContent = student;
+        const s = g.students.find(st=>st.name===student);
+        const att = s.attendance.find(a=>a.date===dateValue);
+        statusSelect.value = att.status;
+        modal.classList.add('show');
+        document.querySelector('.modal-content').classList.add('show');
+      });
+    });
+
+    // --- Filters ---
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    function applyFilters(){
+      const search = searchInput.value.toLowerCase();
+      const filter = statusFilter.value;
+      tableWrapper.querySelectorAll('tbody tr').forEach(tr=>{
+        const name = tr.querySelector('td:first-child').textContent.toLowerCase();
+        const status = tr.querySelector('td:nth-child(2)').textContent;
+        tr.style.display = (name.includes(search) && (!filter || status===filter)) ? '' : 'none';
+      });
+    }
+    searchInput.addEventListener('input', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+  }
+
+  renderTable(fp.input.value);
 }
 
-// Modal actions
-document.querySelector('.btn-cancel').addEventListener('click',()=>{ modal.classList.remove('show'); document.querySelector('.modal-content').classList.remove('show'); });
+// --- Modal actions ---
+document.querySelector('.btn-cancel').addEventListener('click',()=>{
+  modal.classList.remove('show');
+  document.querySelector('.modal-content').classList.remove('show');
+});
 document.querySelector('.btn-save').addEventListener('click',()=>{
-  const {groupCode,student} = currentEdit;
+  const {groupCode, student, dateValue} = currentEdit;
   const s = groupsData[groupCode].students.find(st=>st.name===student);
-  s.status = statusSelect.value;
+  if(s){
+    const attIndex = s.attendance.findIndex(a=>a.date===dateValue);
+    if(attIndex>=0){
+      s.attendance[attIndex].status = statusSelect.value;
+    } else {
+      s.attendance.push({ date: dateValue, status: statusSelect.value, timestamp: new Date().toISOString() });
+    }
+  }
   showStudentAttendance(groupCode);
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
 });
 document.querySelector('.btn-reset').addEventListener('click',()=>{
-  const {groupCode,student} = currentEdit;
+  const {groupCode, student, dateValue} = currentEdit;
   const s = groupsData[groupCode].students.find(st=>st.name===student);
-  s.status="Not Marked";
+  if(s){
+    const attIndex = s.attendance.findIndex(a=>a.date===dateValue);
+    if(attIndex>=0){
+      s.attendance[attIndex].status = "Not Marked";
+    } else {
+      s.attendance.push({ date: dateValue, status: "Not Marked", timestamp: new Date().toISOString() });
+    }
+  }
   showStudentAttendance(groupCode);
   modal.classList.remove('show');
   document.querySelector('.modal-content').classList.remove('show');
 });
 
-// Back button
-backBtn.addEventListener('click',()=>{ moduleDetailsDiv.classList.add('hidden'); modulesContainer.classList.remove('hidden'); });
+// --- Back button ---
+backBtn.addEventListener('click',()=>{
+  moduleDetailsDiv.classList.add('hidden');
+  modulesContainer.classList.remove('hidden');
+});
 
-// Sidebar toggle
+// --- Sidebar toggle ---
 document.getElementById('menu-toggle').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('collapsed'));
 
-// Helper
-function getTodayStr(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-
+// Initial render
 renderModules();
 </script>
+
 
 </body>
 </html>

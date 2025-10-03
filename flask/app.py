@@ -835,103 +835,127 @@ def teacher_modules():
 
     # ------------------ Profile for header ------------------
     teacher_doc = db.collection("users").document(teacher_id).get()
+    profile = {}
     if teacher_doc.exists:
-        teacher_data = teacher_doc.to_dict()
+        data = teacher_doc.to_dict()
         profile = {
-            "firstName": teacher_data.get("firstName", ""),
-            "lastName": teacher_data.get("lastName", "")
+            "firstName": data.get("firstName", ""),
+            "lastName": data.get("lastName", "")
         }
-    else:
-        profile = {"firstName": "", "lastName": ""}
 
-    # ------------------ 1. Fetch schedules for this teacher ------------------
+    # ------------------ Fetch schedules ------------------
     schedules_ref = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
     schedules = [s.to_dict() | {"id": s.id} for s in schedules_ref]
 
     if not schedules:
-        return render_template("teacher/T_modules.html", modules_data=[], groups_data={}, profile=profile)
+        return render_template("teacher/T_modules.html",
+                               modules_data=[],
+                               groups_data={},
+                               users_data=[],
+                               profile=profile,
+                               available_dates=[]
+                               )
 
-    # ------------------ 2. Collect module IDs and group IDs ------------------
     module_ids = list({s["fk_module"] for s in schedules})
     group_ids = list({s["fk_group"] for s in schedules})
 
-    # ------------------ 3. Fetch module names ------------------
+    # ------------------ Fetch module & group info ------------------
     modules_ref = db.collection("mlmodule").where("__name__", "in", module_ids).stream()
     modules = {m.id: m.to_dict() for m in modules_ref}
 
-
-    # ------------------ 4. Fetch groups ------------------
     groups = {}
     for g_id in group_ids:
         g_doc = db.collection("groups").document(g_id).get()
         if g_doc.exists:
             groups[g_id] = g_doc.to_dict()
 
-    # ------------------ 5. Fetch students ------------------
+    # ------------------ Fetch students by group ------------------
+    students_by_group = {g_id: [] for g_id in group_ids}
     students_ref = db.collection("users").where("role_type", "==", 1).stream()
-    students_by_group = {}
     for stu_doc in students_ref:
         stu = stu_doc.to_dict()
-        g_id = stu.get("group_code")
-        if g_id not in students_by_group:
-            students_by_group[g_id] = []
+        student_id = stu_doc.id
 
-        full_name = f"{stu.get('firstName', '')} {stu.get('lastName', '')}".strip()
-        students_by_group[g_id].append({
-            "id": stu_doc.id,
-            "name": full_name if full_name else "Student",
-            "status": "Not Marked",
-            "date": ""
-        })
+        role_doc = db.collection("users").document(student_id).collection("roles").document("student").get()
+        fk_groupcode = role_doc.to_dict().get("fk_groupcode", "") if role_doc.exists else ""
 
-    # ------------------ 6. Fetch attendance ------------------
-    attendance_map = {}
+        if fk_groupcode in students_by_group:
+            students_by_group[fk_groupcode].append({
+                "id": student_id,
+                "name": stu.get("name", "Student"),
+                "attendance": []
+            })
+
+    # ------------------ Fetch all attendance ------------------
     attendance_ref = db.collection("attendance").stream()
-    for att_doc in attendance_ref:
-        att_id = att_doc.id
-        # For each attendance document, get its date collections
-        date_collections = db.collection("attendance").document(att_id).collections()
-        for date_col in date_collections:
-            date_str = date_col.id  # e.g., "2025-10-02"
-            for stu_doc in date_col.stream():
-                stu_id = stu_doc.id
-                stu_data = stu_doc.to_dict()
-                schedule_id = stu_data.get("schedule_id")
-                status = stu_data.get("status", "Not Marked")
-                key = (schedule_id, stu_id)
-                attendance_map[key] = {"status": status, "date": date_str}
+    available_dates = set()
 
-    # ------------------ 7. Assemble modules & groups ------------------
+    for att_doc in attendance_ref:
+        attendance_doc_id = att_doc.id
+        for date_col in db.collection("attendance").document(attendance_doc_id).collections():
+            date_str = date_col.id
+            available_dates.add(date_str)
+            for stu_att_doc in date_col.stream():
+                stu_att = stu_att_doc.to_dict()
+                student_id = stu_att_doc.id
+                group_code = stu_att.get("group")
+                status = stu_att.get("status", "Not Marked")
+                timestamp = stu_att.get("timestamp", None)
+
+                if group_code in students_by_group:
+                    for s in students_by_group[group_code]:
+                        if s["id"] == student_id:
+                            # Only add if not already present
+                            if not any(a["date"] == date_str for a in s["attendance"]):
+                                s["attendance"].append({
+                                    "date": date_str,
+                                    "status": status,
+                                    "timestamp": timestamp
+                                })
+
+    available_dates = sorted(list(available_dates))
+    selected_date = request.args.get("date") or None
+    if selected_date and selected_date not in available_dates:
+        selected_date = None
+
+    # ------------------ Fill missing attendance for selected date only ------------------
+    if selected_date:
+        for group_students in students_by_group.values():
+            for s in group_students:
+                if not any(att["date"] == selected_date for att in s["attendance"]):
+                    s["attendance"].append({
+                        "date": selected_date,
+                        "status": "Not Marked",
+                        "timestamp": None
+                    })
+
+    # Sort attendance per student
+    for group_students in students_by_group.values():
+        for s in group_students:
+            s["attendance"].sort(key=lambda x: x["date"])
+
+    # ------------------ Assemble modules & groups ------------------
     modules_data = []
     groups_data = {}
 
     for sched in schedules:
         mod_id = sched["fk_module"]
         g_id = sched["fk_group"]
-
-        # Module name from 'modules' collection
         module_name = modules.get(mod_id, {}).get("moduleName", "Unknown Module")
 
-        # Add module entry if not exists
         module_obj = next((m for m in modules_data if m["moduleName"] == module_name), None)
         if not module_obj:
             module_obj = {"moduleName": module_name, "groups": []}
             modules_data.append(module_obj)
-
-        # Add group under module
         if g_id not in module_obj["groups"]:
             module_obj["groups"].append(g_id)
 
-        # Add group details with student attendance
         students_list = []
         for stu in students_by_group.get(g_id, []):
-            key = (sched["id"], stu["id"])
-            att_info = attendance_map.get(key, {"status": "Not Marked", "date": ""})
             students_list.append({
-                "id": stu["id"],
-                "name": stu["name"],
-                "status": att_info["status"],
-                "date": att_info["date"]
+                "id": stu.get("id"),
+                "name": stu.get("name"),
+                "attendance": stu.get("attendance", [])
             })
 
         groups_data[g_id] = {
@@ -942,12 +966,19 @@ def teacher_modules():
             "room": sched.get("room", "")
         }
 
-    # ------------------ 8. Render template ------------------
+    users_data = []
+    for g in groups_data.values():
+        for stu in g["students"]:
+            users_data.append(stu)
+
     return render_template(
         "teacher/T_modules.html",
         modules_data=modules_data,
         groups_data=groups_data,
-        profile=profile
+        users_data=users_data,
+        profile=profile,
+        available_dates=available_dates,
+        selected_date=selected_date
     )
 
 
