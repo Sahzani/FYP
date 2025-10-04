@@ -393,6 +393,102 @@ def teacher_dashboard():
         current_schedule=None
     )
 
+#------------------ Teacher - view students Individual attendance ------------------
+@app.route("/teacher/individual_summary", methods=["GET"])
+def teacher_individual_summary():
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+
+    teacher_id = session.get("user_id")
+    if not teacher_id:
+        return redirect(url_for("home"))
+
+    # -------- Fetch teacher profile --------
+    teacher_doc = db.collection("users").document(teacher_id).get()
+    profile = teacher_doc.to_dict() if teacher_doc.exists else {}
+    profile.setdefault("firstName", "Teacher")
+    profile.setdefault("lastName", "")
+    profile.setdefault("profile_pic", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+
+    # -------- Get filter values --------
+    student_id = request.args.get("student_id")
+    month = request.args.get("month", type=int)
+    year = request.args.get("year", type=int)
+
+    # -------- Get students taught by this teacher --------
+    students = []
+    schedules = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+    group_ids = {s.to_dict().get("fk_group") for s in schedules if s.to_dict().get("fk_group")}
+
+    users_ref = db.collection("users").where("role_type", "==", 1).stream()
+    for u in users_ref:
+        udata = u.to_dict()
+        role_doc = db.collection("users").document(u.id).collection("roles").document("student").get()
+        if role_doc.exists:
+            role_data = role_doc.to_dict()
+            if role_data.get("fk_groupcode") in group_ids:
+                students.append({
+                    "id": u.id,
+                    "name": udata.get("name", "Student")
+                })
+
+    summary = {}
+    chart_labels = []
+    chart_percents = []
+
+    if student_id and month and year:
+        attendance_ref = db.collection("attendance").where("student_id", "==", student_id).stream()
+        stats_by_module = {}
+
+        for doc in attendance_ref:
+            att = doc.to_dict()
+            date_str = att.get("date", "")
+            if not date_str:
+                continue
+
+            try:
+                att_date = datetime.strptime(date_str[:10], "%Y-%m-%d")
+            except:
+                continue
+
+            if att_date.month == month and att_date.year == year:
+                module_id = att.get("schedule_id") or "Unknown"
+                status = att.get("status", "Unknown")
+
+                if module_id not in stats_by_module:
+                    stats_by_module[module_id] = {"Present": 0, "Absent": 0, "Late": 0}
+
+                if status in stats_by_module[module_id]:
+                    stats_by_module[module_id][status] += 1
+
+        for mid, stats in stats_by_module.items():
+            module_doc = db.collection("modules").document(mid).get()
+            module_name = module_doc.to_dict().get("moduleName", "Unknown Module") if module_doc.exists else "Unknown Module"
+
+            total = stats["Present"] + stats["Absent"] + stats["Late"]
+            percent = (stats["Present"] / total * 100) if total > 0 else 0
+
+            summary[module_name] = {
+                "Present": stats["Present"],
+                "Absent": stats["Absent"],
+                "Late": stats["Late"],
+                "percent": percent
+            }
+
+            chart_labels.append(module_name)
+            chart_percents.append(percent)
+
+    return render_template(
+        "teacher/T_individual_summary.html",
+        profile=profile,
+        students=students,
+        student_id=student_id,
+        month=month,
+        year=year,
+        summary=summary,
+        chart_labels=chart_labels,
+        chart_percents=chart_percents
+    )
 
 #------------------ Admin Pages ------------------
 @app.route("/admin_dashboard")

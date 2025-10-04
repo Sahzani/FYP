@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iAttend - Student Summary</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+
+<style>
+body { font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); margin:0; padding:0; }
+
+/* Header */
+header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
+.header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
+.user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; text-decoration:none; }
+.user-info:hover { background:#f0f0f0; }
+.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+.user-info span { font-size:16px; font-weight:600; color:#444; font-family:'Nunito',sans-serif; }
+
+/* Sidebar */
+.sidebar { position:fixed; top:60px; left:0; width:240px; height:calc(100% - 60px); background:#FFEED3; padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition:width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden; }
+.sidebar.collapsed { width:70px; }
+.sidebar-section { margin-bottom:25px; padding:0 15px; }
+.sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; font-family:'Nunito',sans-serif; }
+.sidebar.collapsed .sidebar-section-title { opacity:0; }
+.sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; font-family:'Nunito',sans-serif; }
+.sidebar.collapsed .sidebar-link span { display:none; }
+.sidebar-link i { width:18px; text-align:center; }
+.sidebar-link:hover { background: rgba(255,255,255,0.5); transform:translateX(4px);}
+.sidebar-link.active { background: rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
+
+/* Main */
+.main-content { margin-left:260px; padding:100px 30px 30px; transition:margin-left 0.3s ease; font-family:'Poppins',sans-serif; }
+.sidebar.collapsed ~ .main-content { margin-left:80px; }
+
+.card { background:#fff; padding:1rem; border-radius:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:1.5rem; }
+.table-scroll { overflow-x:auto; }
+th, td { padding:10px; font-size:14px; border-bottom:1px solid #ddd; }
+th { background:#f5f5f5; text-align:left; }
+td.status-Present { color:green; font-weight:600; }
+td.status-Absent { color:red; font-weight:600; }
+td.status-Late { color:orange; font-weight:600; }
+canvas { max-height:250px; }
+</style>
+</head>
+<body>
+
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="#" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="#" class="user-info">
+      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
+      <img src="{{ profile.profile_pic or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher">
+    </a>
+  </div>
+</header>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}" 
+       href="{{ url_for('teacher_dashboard') }}">
+      <i class="fas fa-home"></i><span>Dashboard</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reports</div>
+    <a class="sidebar-link {% if request.endpoint == 'teacher_attendance' %}active{% endif %}" 
+       href="{{ url_for('teacher_attendance') }}">
+      <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Manage</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}">
+      <i class="fas fa-calendar"></i><span>Class Schedule</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
+      <i class="fas fa-book"></i><span>My Modules & Groups</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}">
+      <i class="fas fa-calendar-alt"></i><span>Absences Application</span>
+    </a>
+        <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}">
+      <i class="fas fa-address-card"></i><span>Individual Attendance</span>
+    </a>
+  </div>
+
+  {% if profile.is_gc %}
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Group Coordinator</div>
+    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
+      <i class="fas fa-users-cog"></i><span>Manage Group</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
+      <i class="fas fa-file-alt"></i><span>Group Report</span>
+    </a>
+  </div>
+  {% endif %}
+
+  <div class="sidebar-section">
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main-content">
+  <h1 class="text-2xl font-bold mb-6">Monthly Attendance Summary</h1>
+
+  <!-- Search Form -->
+  <div class="card">
+    <form method="get" class="flex flex-wrap gap-6 items-end">
+      <div class="flex flex-col">
+        <label class="font-semibold text-sm mb-1">Student</label>
+        <select name="student_id" class="border p-2 rounded w-64">
+          <option value="">-- Select Student --</option>
+          {% for stu in students %}
+          <option value="{{ stu.id }}" {% if stu.id == student_id %}selected{% endif %}>{{ stu.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex flex-col">
+        <label class="font-semibold text-sm mb-1">Month</label>
+        <input type="number" name="month" value="{{ month or '' }}" min="1" max="12" class="border p-2 rounded w-24">
+      </div>
+      <div class="flex flex-col">
+        <label class="font-semibold text-sm mb-1">Year</label>
+        <input type="number" name="year" value="{{ year or '' }}" class="border p-2 rounded w-32">
+      </div>
+      <button class="bg-blue-500 text-white px-4 py-2 rounded">Search</button>
+    </form>
+  </div>
+
+  {% if student_id %}
+  <!-- Summary Table -->
+  <div class="card table-scroll">
+    <h2 class="text-lg font-semibold mb-3">Summary by Module</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Module</th>
+          <th>Present</th>
+          <th>Absent</th>
+          <th>Late</th>
+          <th>Attendance %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for module, stats in summary.items() %}
+        <tr>
+          <td>{{ module }}</td>
+          <td class="status-Present">{{ stats.Present }}</td>
+          <td class="status-Absent">{{ stats.Absent }}</td>
+          <td class="status-Late">{{ stats.Late }}</td>
+          <td class="font-bold">{{ stats.percent|round(2) }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Chart -->
+  <div class="card">
+    <h2 class="text-lg font-semibold mb-3">Attendance Chart</h2>
+    <canvas id="attendanceChart"></canvas>
+  </div>
+  {% else %}
+  <p class="text-gray-700">Please select a student to view summary.</p>
+  {% endif %}
+</div>
+
+<script>
+document.getElementById("menu-toggle").addEventListener("click",()=>{
+  document.querySelector(".sidebar").classList.toggle("collapsed");
+  document.querySelector(".main-content").classList.toggle("collapsed");
+});
+</script>
+
+{% if student_id %}
+<script>
+const ctx = document.getElementById("attendanceChart");
+new Chart(ctx, {
+  type: "bar",
+  data: {
+    labels: {{ chart_labels|tojson|safe }},
+    datasets: [{
+      label: "Attendance %",
+      data: {{ chart_percents|tojson|safe }},
+      backgroundColor: "rgba(59,130,246,0.8)"
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    aspectRatio: 2,
+    scales: { y: { beginAtZero: true, max: 100 } }
+  }
+});
+</script>
+{% endif %}
+
+</body>
+</html>
