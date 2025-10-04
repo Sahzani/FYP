@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import firebase_admin
-from firebase_admin import credentials, auth, firestore
+from firebase_admin import credentials, auth, firestore, storage
 from datetime import timedelta
 from werkzeug.utils import secure_filename
 from firebase_admin import auth, exceptions
@@ -24,9 +24,15 @@ app.permanent_session_lifetime = timedelta(days=30)
 # ------------------ Firebase Setup ------------------
 cred_path = os.path.join(BASE_DIR, "serviceAccountKey.json")
 cred = credentials.Certificate(cred_path)
-firebase_admin.initialize_app(cred)
 
+# Initialize Firebase App with Firestore + Storage
+firebase_admin.initialize_app(cred, {
+    "storageBucket": "aimanzamani.appspot.com"   # ✅ your actual bucket name
+})
+
+# Create clients for Firestore & Storage
 db = firestore.client()
+bucket = storage.bucket()
 
 # ------------------ Context Processor for Teacher Profile ------------------
 @app.context_processor
@@ -609,13 +615,10 @@ def student_absentapp():
     last_name = user_data.get("lastName", "")
     full_name = f"{first_name} {last_name}".strip()
 
-    # Student subcollection (roles → student)
-    student_data = None
-    student_ref = db.collection("users").document(uid).collection("roles").document("student").get()
-    if student_ref.exists:
-        student_data = student_ref.to_dict()
-
-    student_ID = student_data.get("studentID") if student_data else ""
+   # Student subcollection (roles → student)
+    student_doc = db.collection("users").document(uid).collection("roles").document("student").get()
+    student_data = student_doc.to_dict() if student_doc.exists else {}
+    student_ID = student_data.get("studentID", "")
     group_code = None
 
     # Fetch actual group code from groups collection
@@ -630,6 +633,7 @@ def student_absentapp():
         reason = request.form.get("reason")
         start_date = request.form.get("start_date")
         end_date = request.form.get("end_date")
+        file = request.files.get("file")  # get uploaded file
 
         if not reason or not start_date or not end_date:
             flash("Please fill in all fields.", "danger")
@@ -648,6 +652,27 @@ def student_absentapp():
         }
 
         try:
+            # ---------- Handle file upload ----------
+            if file:
+                filename = secure_filename(file.filename)
+                # Make sure bucket is defined somewhere: bucket = storage.bucket()
+                blob = bucket.blob(f"{uid}/{filename}")
+                blob.upload_from_file(file)
+                blob.make_public()  # optional
+                data["file_url"] = blob.public_url
+
+                # If editing, remove old file (optional)
+                if record_id:
+                    old_doc = db.collection("absenceRecords").document(record_id).get()
+                    if old_doc.exists:
+                        old_data = old_doc.to_dict()
+                        old_url = old_data.get("file_url")
+                        if old_url:
+                            # extract old filename and delete
+                            old_blob = bucket.blob(f"{uid}/{old_url.split('/')[-1]}")
+                            old_blob.delete()
+
+            # ---------- Save / Update Record ----------
             if record_id:
                 db.collection("absenceRecords").document(record_id).update(data)
                 flash("Absence record updated successfully!", "success")
