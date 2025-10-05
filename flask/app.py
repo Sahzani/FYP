@@ -2463,51 +2463,71 @@ def admin_schedules():
         return redirect(url_for("home"))
 
     # Fetch supporting data
-    programs = [{**p.to_dict(), "docId": p.id} for p in db.collection("programs").stream()]
-    groups = [{**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream()]
+    programs = {p.id: {**p.to_dict(), "docId": p.id} for p in db.collection("programs").stream()}
+    groups = {g.id: {**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream()}
+    
+    # Fetch teachers (users with role_type == 2)
     teachers_docs = db.collection("users").where("role_type", "==", 2).stream()
-    users = [{**u.to_dict(), "docId": u.id} for u in db.collection("users").stream()] 
-
     teachers = []
     for doc in teachers_docs:
         t = doc.to_dict()
         t["docId"] = doc.id
         t["fullName"] = f"{t.get('firstName','')} {t.get('lastName','')}".strip()
         teachers.append(t)
-
     teachers.sort(key=lambda t: t.get("fullName", "").lower())
 
-    # Fetch mlmodule (module + group)
-    mlmodules = [{**ml.to_dict(), "docId": ml.id} for ml in db.collection("mlmodule").stream()]
+    # Fetch mlmodule records (teacher-module-group assignments)
+    mlmodules = []
+    for doc in db.collection("mlmodule").stream():
+        ml = doc.to_dict()
+        ml["docId"] = doc.id
+        mlmodules.append(ml)
 
-    # --- Build Teacher Assignments mapping ---
-    teacherAssignments = {}
+    # Build teacher assignments mapping
+    teacher_assignments = {}
     for ml in mlmodules:
-        fk_teacher = ml.get("fk_teacher")
+        fk_teacher = ml.get("fk_teacher") or ml.get("teacherID")  # Handle both field names
         if not fk_teacher:
             continue
 
-        # find the group
-        group = next((g for g in groups if g["groupCode"] == ml.get("group_code")), None)
-        program_name = ""
-        if group:
-            program = next((p for p in programs if p["docId"] == group.get("fk_program")), None)
-            program_name = program["programName"] if program else ""
-
-        if fk_teacher not in teacherAssignments:
-            teacherAssignments[fk_teacher] = {
-                "program": program_name,
+        if fk_teacher not in teacher_assignments:
+            teacher_assignments[fk_teacher] = {
+                "program_id": None,
+                "program_name": "",
                 "groups": [],
                 "modules": []
             }
 
-        # add group (avoid duplicates)
-        if group and not any(g["id"] == group["docId"] for g in teacherAssignments[fk_teacher]["groups"]):
-            teacherAssignments[fk_teacher]["groups"].append({"id": group["docId"], "name": group["groupCode"]})
+        # Get group info to find program
+        group_code = ml.get("group_code")
+        if group_code:
+            # Find group by groupCode (not by ID, since mlmodule stores group_code as string)
+            group = None
+            for g_id, g_data in groups.items():
+                if g_data.get("groupCode") == group_code:
+                    group = g_data
+                    break
+            
+            if group:
+                fk_program = group.get("fk_program")
+                if fk_program and fk_program in programs:
+                    teacher_assignments[fk_teacher]["program_id"] = fk_program
+                    teacher_assignments[fk_teacher]["program_name"] = programs[fk_program].get("programName", "")
+                
+                # Add group to assignments
+                if not any(g["id"] == group["docId"] for g in teacher_assignments[fk_teacher]["groups"]):
+                    teacher_assignments[fk_teacher]["groups"].append({
+                        "id": group["docId"], 
+                        "name": group["groupCode"]
+                    })
 
-        # add module (avoid duplicates)
-        if ml.get("moduleName") and not any(m["id"] == ml["docId"] for m in teacherAssignments[fk_teacher]["modules"]):
-            teacherAssignments[fk_teacher]["modules"].append({"id": ml["docId"], "name": ml["moduleName"]})
+        # Add module to assignments
+        module_name = ml.get("moduleName")
+        if module_name and not any(m["id"] == ml["docId"] for m in teacher_assignments[fk_teacher]["modules"]):
+            teacher_assignments[fk_teacher]["modules"].append({
+                "id": ml["docId"], 
+                "name": module_name
+            })
 
     # Fetch schedules
     schedules = []
@@ -2515,9 +2535,11 @@ def admin_schedules():
         s = doc.to_dict()
         s["docId"] = doc.id
 
+        # Get teacher name
         teacher = next((t for t in teachers if t["docId"] == s.get("fk_teacher")), None)
         s["teacher_name"] = teacher.get("fullName", "") if teacher else ""
 
+        # Get module and group info from mlmodule
         mlmodule = next((ml for ml in mlmodules if ml["docId"] == s.get("fk_module")), None)
         if mlmodule:
             s["module_name"] = mlmodule.get("moduleName", "")
@@ -2526,22 +2548,33 @@ def admin_schedules():
             s["module_name"] = ""
             s["group_name"] = ""
 
-        group = next((g for g in groups if g.get("groupCode") == s.get("group_name")), None)
+        # Get program name
         s["program_name"] = ""
-        if group:
-            program = next((p for p in programs if p["docId"] == group.get("fk_program")), None)
-            s["program_name"] = program.get("programName", "") if program else ""
+        if s.get("group_name"):
+            # Find group by groupCode
+            group = None
+            for g_data in groups.values():
+                if g_data.get("groupCode") == s["group_name"]:
+                    group = g_data
+                    break
+            if group:
+                fk_program = group.get("fk_program")
+                if fk_program and fk_program in programs:
+                    s["program_name"] = programs[fk_program].get("programName", "")
 
         schedules.append(s)
 
+    # Prepare groups list for dropdown (all groups)
+    groups_list = list(groups.values())
+    
     return render_template(
         "admin/A_Schedule-Upload.html",
-        programs=programs,
-        groups=groups,
-        users=users,
+        programs=list(programs.values()),
+        groups=groups_list,
         teachers=teachers,
         schedules=schedules,
-        teacher_assignments=teacherAssignments
+        teacher_assignments=teacher_assignments,
+        mlmodules=mlmodules
     )
 
 # ------------------ Save/Add/Edit Schedule ------------------
