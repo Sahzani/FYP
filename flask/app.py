@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import firebase_admin
-from firebase_admin import credentials, auth, firestore, storage
+from firebase_admin import credentials, auth, firestore
 from datetime import timedelta
 from werkzeug.utils import secure_filename
 from firebase_admin import auth, exceptions
@@ -25,14 +25,12 @@ app.permanent_session_lifetime = timedelta(days=30)
 cred_path = os.path.join(BASE_DIR, "serviceAccountKey.json")
 cred = credentials.Certificate(cred_path)
 
-# Initialize Firebase App with Firestore + Storage
-firebase_admin.initialize_app(cred, {
-    "storageBucket": "aimanzamani.appspot.com"   # ✅ your actual bucket name
-})
+# Initialize the default Firebase app
+firebase_admin.initialize_app(cred)
 
-# Create clients for Firestore & Storage
+# Create clients for Firestore
 db = firestore.client()
-bucket = storage.bucket()
+
 
 # ------------------ Context Processor for Teacher Profile ------------------
 @app.context_processor
@@ -651,28 +649,28 @@ def student_absentapp():
             "submitted_at": firestore.SERVER_TIMESTAMP
         }
 
-        try:
-            # ---------- Handle file upload ----------
-            if file:
+        # ---------- Handle File Upload ----------
+        if file and file.filename:
+            try:
+                from werkzeug.utils import secure_filename
+                import base64
+
                 filename = secure_filename(file.filename)
-                # Make sure bucket is defined somewhere: bucket = storage.bucket()
-                blob = bucket.blob(f"{uid}/{filename}")
-                blob.upload_from_file(file)
-                blob.make_public()  # optional
-                data["file_url"] = blob.public_url
+                file_bytes = file.read()
+                file_base64 = base64.b64encode(file_bytes).decode("utf-8")
+                mime_type = file.mimetype
 
-                # If editing, remove old file (optional)
-                if record_id:
-                    old_doc = db.collection("absenceRecords").document(record_id).get()
-                    if old_doc.exists:
-                        old_data = old_doc.to_dict()
-                        old_url = old_data.get("file_url")
-                        if old_url:
-                            # extract old filename and delete
-                            old_blob = bucket.blob(f"{uid}/{old_url.split('/')[-1]}")
-                            old_blob.delete()
+                data["file_name"] = filename
+                data["file_type"] = mime_type
+                data["file_data"] = f"data:{mime_type};base64,{file_base64}"
 
-            # ---------- Save / Update Record ----------
+                print(f"[DEBUG] File uploaded: {filename} ({len(file_bytes)} bytes)")
+            except Exception as e:
+                print("[ERROR] Failed to encode file:", e)
+                flash("Failed to process uploaded file.", "danger")
+
+            # ---------- Save / Update Firestore ----------
+        try:
             if record_id:
                 db.collection("absenceRecords").document(record_id).update(data)
                 flash("Absence record updated successfully!", "success")
@@ -680,13 +678,13 @@ def student_absentapp():
                 db.collection("absenceRecords").add(data)
                 flash("Absence application submitted successfully!", "success")
         except Exception as e:
-            print("Error saving record:", e)
+            print("[ERROR] Failed to save record:", e)
             flash("Failed to save absence record.", "danger")
 
         return redirect(url_for("student_absentapp"))
 
     # ---------- Handle GET ----------
-    # If AJAX request for JSON
+
     if request.args.get("fetch") == "1":
         records = []
         try:
@@ -695,22 +693,22 @@ def student_absentapp():
                 rec = doc.to_dict()
                 rec["id"] = doc.id
 
-                # Calculate duration days
+                # Calculate duration
                 from datetime import datetime
                 try:
                     start = datetime.strptime(rec["start_date"], "%Y-%m-%d")
                     end = datetime.strptime(rec["end_date"], "%Y-%m-%d")
                     rec["duration_days"] = (end - start).days + 1
-                    rec["start_date"] = start.strftime("%Y-%m-%d")  # keep ISO for JS
+                    rec["start_date"] = start.strftime("%Y-%m-%d")
                     rec["end_date"] = end.strftime("%Y-%m-%d")
-                except Exception:
+                except:
                     rec["duration_days"] = "-"
-                # status class for frontend
+
                 rec["status_class"] = rec.get("status", "").lower().replace(" ", "-")
                 records.append(rec)
         except Exception as e:
-            print("Error fetching records:", e)
-        return {"records": records}
+            print("[ERROR] Failed to fetch records:", e)
+        return jsonify({"records": records})
 
     # Normal GET: render template
     records = []
@@ -726,11 +724,11 @@ def student_absentapp():
                 rec["duration_days"] = (end - start).days + 1
                 rec["start_date"] = start.strftime("%d/%m/%Y")
                 rec["end_date"] = end.strftime("%d/%m/%Y")
-            except Exception:
+            except:
                 rec["duration_days"] = "-"
             records.append(rec)
     except Exception as e:
-        print("Error fetching records:", e)
+        print("[ERROR] Failed to fetch records for template:", e)
 
     return render_template(
         "student/S_AbsentApp.html",
@@ -2543,8 +2541,7 @@ def admin_schedules():
         users=users,
         teachers=teachers,
         schedules=schedules,
-        teacherAssignments=teacherAssignments,
-        mlmodules=mlmodules
+        teacher_assignments=teacherAssignments
     )
 
 # ------------------ Save/Add/Edit Schedule ------------------
@@ -3403,8 +3400,7 @@ def api_schedules():
         return jsonify(schedules)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-        
-# ------------------ Logout------------------
+# ------------------ Logout / Signup ------------------
 @app.route("/logout")
 def logout():
     session.clear()

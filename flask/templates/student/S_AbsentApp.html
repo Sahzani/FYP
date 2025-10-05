@@ -177,8 +177,15 @@
                   <td>{{ rec.duration_days }}</td>
                   <td><span class="status {{ rec.status|lower|replace(' ','-') }}">{{ rec.status }}</span></td>
                   <td>
-                    {% if rec.file_url %}
-                      <a href="{{ rec.file_url }}" target="_blank" class="file-link">View File</a>
+                     {% if rec.file_data %}
+                      {% if rec.file_type.startswith('image') %}
+                        <a href="{{ rec.file_data }}" target="_blank">
+                          <img src="{{ rec.file_data }}" alt="{{ rec.file_name }}" style="max-width:60px; max-height:60px; border-radius:4px;"/>
+                        </a>
+
+                      {% else %}
+                        <a href="{{ rec.file_data }}" target="_blank">{{ rec.file_name }}</a>
+                      {% endif %}
                     {% else %}
                       No file
                     {% endif %}
@@ -211,14 +218,14 @@
         <span class="close">&times;</span>
       </div>
       <div class="modal-body">
-        <form id="absenceForm" method="POST" action="{{ url_for('student_absentapp') }}">
+        <form id="absenceForm" method="POST" action="{{ url_for('student_absentapp') }}" enctype="multipart/form-data">
           <label>Reason</label>
           <input type="text" name="reason" placeholder="Enter reason" required>
           <label>Start Date</label>
           <input type="date" name="start_date" required>
           <label>End Date</label>
           <input type="date" name="end_date" required>
-          <label>Upload Document (PDF/Image)</label>
+          <label>Upload File (PDF/Image)</label>
           <input type="file" name="file" accept=".pdf,.jpg,.png" required>
           <div class="modal-buttons">
             <button type="submit" class="save-btn">Send</button>
@@ -229,7 +236,7 @@
     </div>
   </div>
 
-  <script>
+   <script>
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
     const modal = document.getElementById('editModal');
@@ -268,7 +275,7 @@
 
     closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
 
-    // ---------- AJAX polling to refresh table every 10s ----------
+
     function formatDate(d) {
       const dt = new Date(d);
       const day = String(dt.getDate()).padStart(2,'0');
@@ -277,6 +284,64 @@
       return `${day}/${month}/${year}`;
     }
 
+    function renderFileCell(rec) {
+      if (!rec.file_data) return 'No file';
+      if (rec.file_type.startsWith('image')) {
+        return `<a href='${rec.file_data}' target='_blank'><img src='${rec.file_data}' style='max-width:60px; max-height:60px; border-radius:4px'/></a>`;
+      
+      } else {
+        return `<a href='${rec.file_data}' target='_blank'>${rec.file_name}</a>`;
+      }
+    }
+
+    // AJAX form submission
+    absenceForm.onsubmit = async function(e) {
+      e.preventDefault();
+      const formData = new FormData(absenceForm);
+      const actionURL = absenceForm.action;
+
+      try {
+        const response = await fetch(actionURL, { method:"POST", body: formData });
+        if (response.ok) {
+          modal.classList.remove("show");
+          absenceForm.reset();
+
+          // Refresh table immediately
+          fetch("{{ url_for('student_absentapp') }}?fetch=1")
+            .then(res => res.json())
+            .then(data => {
+              const tbody = document.getElementById('recordsBody');
+              tbody.innerHTML = '';
+              if (data.records.length > 0) {
+                data.records.forEach((rec, index) => {
+                  const tr = document.createElement('tr');
+                  tr.innerHTML = `
+                    <td>${index+1}</td>
+                    <td>${rec.reason}</td>
+                    <td>${formatDate(rec.start_date)}</td>
+                    <td>${formatDate(rec.end_date)}</td>
+                    <td>${rec.duration_days}</td>
+                    <td><span class="status ${rec.status_class}">${rec.status}</span></td>
+                    <td>${renderFileCell(rec)}</td>
+                    <td>
+                      <button class='icon-btn edit' data-id='${rec.id}' data-reason='${rec.reason}' data-start='${rec.start_date}' data-end='${rec.end_date}'><i class='fas fa-pen'></i></button>
+                      <form method='POST' action='/student/absentapp/delete/${rec.id}' style='display:inline;'><button type='submit' class='icon-btn delete'><i class='fas fa-trash'></i></button></form>
+                    </td>
+                  `;
+                  tbody.appendChild(tr);
+                });
+                attachEditButtons();
+              } else {
+                tbody.innerHTML = `<tr><td colspan='8'>No absence records found.</td></tr>`;
+              }
+            });
+
+          alert("Absence application sent successfully!");
+        } else { alert("Failed to send application."); }
+      } catch (err) { console.error(err); alert("Error submitting the form."); }
+    };
+
+    // Polling to refresh table every 10s
     setInterval(() => {
       fetch("{{ url_for('student_absentapp') }}?fetch=1")
         .then(res => res.json())
@@ -293,7 +358,7 @@
                 <td>${formatDate(rec.end_date)}</td>
                 <td>${rec.duration_days}</td>
                 <td><span class="status ${rec.status_class}">${rec.status}</span></td>
-                <td>${rec.file_url ? `<a href='${rec.file_url}' target='_blank'>View File</a>` : 'No file'}</td>
+                <td>${renderFileCell(rec)}</td>
                 <td>
                   <button class='icon-btn edit' data-id='${rec.id}' data-reason='${rec.reason}' data-start='${rec.start_date}' data-end='${rec.end_date}'><i class='fas fa-pen'></i></button>
                   <form method='POST' action='/student/absentapp/delete/${rec.id}' style='display:inline;'><button type='submit' class='icon-btn delete'><i class='fas fa-trash'></i></button></form>
@@ -305,9 +370,9 @@
           } else {
             tbody.innerHTML = `<tr><td colspan='8'>No absence records found.</td></tr>`;
           }
-        })
-        .catch(err => console.error(err));
+        });
     }, 10000);
+
   </script>
 </body>
 </html>
