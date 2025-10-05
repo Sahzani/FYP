@@ -331,6 +331,15 @@ th{background:#f8f7ff; font-weight:600;}
 
 
 <script>
+
+// Sidebar dropdown toggle
+document.querySelectorAll('.sidebar-dropdown .dropdown-toggle').forEach(drop => {
+  drop.addEventListener('click', function() {
+    const parent = this.parentElement;
+    parent.classList.toggle('active'); // show/hide the submenu
+  });
+});
+
 const teacherSelect = document.getElementById('fk_teacher');
 const programNameInput = document.getElementById('fk_program_name');
 const programHiddenInput = document.getElementById('fk_program');
