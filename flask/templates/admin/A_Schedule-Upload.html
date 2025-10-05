@@ -331,7 +331,6 @@ th{background:#f8f7ff; font-weight:600;}
 
 
 <script>
-
 // Sidebar dropdown toggle
 document.querySelectorAll('.sidebar-dropdown .dropdown-toggle').forEach(drop => {
   drop.addEventListener('click', function() {
@@ -347,71 +346,42 @@ const groupSelect = document.getElementById('fk_group');
 const moduleSelect = document.getElementById('fk_module');
 
 const programs = {{ programs | tojson | default('[]') }};
+const teachers = {{ users | tojson | default('[]') }};
 const groups = {{ groups | tojson | default('[]') }};
 const modules = {{ mlmodules | tojson | default('[]') }};
 
-// Autofill groups and program based on selected module
-function autofillProgramAndGroups() {
-    const moduleId = moduleSelect.value;
-    if (!moduleId) {
-        programNameInput.value = '';
-        programHiddenInput.value = '';
-        groupSelect.innerHTML = '<option value="">Select Group</option>';
-        groupSelect.disabled = true;
-        return;
-    }
-
-    // Find the selected module
-    const module = modules.find(m => m.docId === moduleId || m.id === moduleId);
-    if (!module) return;
-
-    // Find program linked to this module
-    const program = programs.find(p => p.docId === module.fk_program || p.id === module.fk_program);
-    if (program) {
-        programNameInput.value = program.programName;
-        programHiddenInput.value = program.docId || program.id;
-
-        // Populate groups for this program
-        groupSelect.innerHTML = '<option value="">Select Group</option>';
-        const relevantGroups = groups.filter(g => g.fk_program === program.docId || g.fk_program === program.id);
-        relevantGroups.forEach(g => {
-            const opt = document.createElement('option');
-            opt.value = g.docId;
-            opt.textContent = g.groupCode;
-            groupSelect.appendChild(opt);
-        });
-        groupSelect.disabled = relevantGroups.length === 0;
-    }
-}
-
-// Event listener for module change
-moduleSelect.addEventListener('change', autofillProgramAndGroups);
-
-// Optional: keep teacher-based module filter if you still want it
-function autofillModules() {
+// Autofill program when teacher is selected
+teacherSelect.addEventListener('change', () => {
     const teacherId = teacherSelect.value;
-    moduleSelect.innerHTML = '<option value="">Select Module</option>';
-    const relevantModules = modules.filter(m => m.teacherID === teacherId);
-    relevantModules.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.docId;
-        opt.textContent = m.moduleName;
-        moduleSelect.appendChild(opt);
-    });
-    moduleSelect.disabled = relevantModules.length === 0;
-}
+    const teacher = teachers.find(t => t.docId === teacherId);
 
-// Event listener for teacher change (modules dropdown)
-teacherSelect.addEventListener('change', autofillModules);
+  if (teacher) {
+    const program = programs.find(p => p.id === teacher.program || p.docId === teacher.program);
+    if (program) {
+      programNameInput.value = program.programName;
+      programHiddenInput.value = program.docId || program.id;
+    } else {
+      programNameInput.value = "";
+      programHiddenInput.value = "";
+    }
 
-// Autofill on page load if a teacher or module is pre-selected
-if (teacherSelect.value) {
-    autofillModules();
-}
-if (moduleSelect.value) {
-    autofillProgramAndGroups();
-}
+    // ✅ Enable group and module selects when a teacher is chosen
+    groupSelect.disabled = false;
+    moduleSelect.disabled = false;
+
+  } else {
+    programNameInput.value = "";
+    programHiddenInput.value = "";
+    groupSelect.disabled = true;
+    moduleSelect.disabled = true;
+  }
+
+  // Optional: reset dropdowns
+  groupSelect.value = "";
+  moduleSelect.value = "";
+});
 </script>
+
 
 </body>
 </html>

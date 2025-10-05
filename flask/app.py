@@ -2468,6 +2468,7 @@ def admin_schedules():
     programs = [{**p.to_dict(), "docId": p.id} for p in db.collection("programs").stream()]
     groups = [{**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream()]
     teachers_docs = db.collection("users").where("role_type", "==", 2).stream()
+    users = [{**u.to_dict(), "docId": u.id} for u in db.collection("users").stream()] 
 
     teachers = []
     for doc in teachers_docs:
@@ -2539,6 +2540,7 @@ def admin_schedules():
         "admin/A_Schedule-Upload.html",
         programs=programs,
         groups=groups,
+        users=users,
         teachers=teachers,
         schedules=schedules,
         teacherAssignments=teacherAssignments,
