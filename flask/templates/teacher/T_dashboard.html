@@ -47,18 +47,149 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
 .card { background:#fff; padding:1.5rem; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; position:relative; }
 .card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
 
+/* Stats */
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:1.5rem; }
 .stats-card { display:flex; flex-direction:column; align-items:center; text-align:center; }
 .icon-circle { width:3rem; height:3rem; display:flex; align-items:center; justify-content:center; background-color:#4154F1; color:white; border-radius:50%; margin-bottom:0.75rem; }
 
 /* Calendar */
-.calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-top:30px; }
-.calendar-day { padding:0.5rem; border-radius:9999px; text-align:center; cursor:pointer; transition: all 0.2s ease-in-out; }
-.calendar-day.current-day { background-color:#4154F1; color:white; font-weight:700; }
+.calendar-container { 
+  background: #fff; 
+  border-radius: 12px; 
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+  padding: 1.5rem; 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between;
+}
+.calendar-info { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+}
+.calendar-date { 
+  font-size: 1.8rem; 
+  font-weight: 700; 
+  color: #4154F1; 
+}
+.calendar-time { 
+  font-size: 1.2rem; 
+  color: #666; 
+}
+.calendar-icon { 
+  width: 4rem; 
+  height: 4rem; 
+  background: linear-gradient(135deg, #4154F1, #5D5FEF); 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  color: white; 
+  font-size: 1.8rem; 
+}
+
+/* Notifications */
+.notification-card {
+  background-color: #F6F8FE;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+.notification-icon {
+  width: 3rem;
+  height: 3rem;
+  background-color: #4154F1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+.notification-content {
+  flex-grow: 1;
+}
+.notification-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+.notification-text {
+  color: #666;
+  margin-bottom: 1rem;
+}
+.notification-btn {
+  background: #4154F1;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.notification-btn:hover {
+  background: #3a4cd0;
+}
+
+/* Low Attendance */
+.low-attendance-card {
+  grid-column: 1 / -1;
+}
+.low-attendance-title {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #333;
+}
+.low-attendance-list {
+  list-style: none;
+}
+.low-attendance-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.low-attendance-item:last-child {
+  border-bottom: none;
+}
+.student-name {
+  color: #4154F1;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.student-name:hover {
+  color: #3a4cd0;
+}
+.attendance-percentage {
+  background: #ffebee;
+  color: #c62828;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
 
 @media(min-width:1024px){
   .grid-container-lg { grid-template-columns:3fr 2fr; }
   .grid-container-lg-2 { grid-template-columns:repeat(2,1fr); }
+}
+
+@media(max-width:768px) {
+  .calendar-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
 </head>
@@ -69,7 +200,7 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
   <div class="header-content">
     <a href="#" style="text-decoration:none;color:inherit;">iAttend</a>
     <a href="#" class="user-info">
-      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
+      <span>John Smith</span>
       <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
     </a>
   </div>
@@ -78,120 +209,125 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}" 
-       href="{{ url_for('teacher_dashboard') }}">
+    <a class="sidebar-link active" href="#">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
-    <a class="sidebar-link {% if request.endpoint == 'teacher_attendance' %}active{% endif %}" 
-       href="{{ url_for('teacher_attendance') }}">
+    <a class="sidebar-link" href="#">
       <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
     </a>
   </div>
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}">
+    <a class="sidebar-link" href="#">
       <i class="fas fa-calendar"></i><span>Class Schedule</span>
     </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
+    <a class="sidebar-link" href="#">
       <i class="fas fa-book"></i><span>My Modules & Groups</span>
     </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}">
+    <a class="sidebar-link" href="#">
       <i class="fas fa-calendar-alt"></i><span>Absences Application</span>
     </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}">
+    <a class="sidebar-link" href="#">
       <i class="fas fa-address-card"></i><span>Individual Attendance</span>
     </a>
   </div>
 
-  {% if profile.is_gc %}
   <div class="sidebar-section">
-    <div class="sidebar-section-title">Group Coordinator</div>
-    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
-      <i class="fas fa-users-cog"></i><span>Manage Group</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
-      <i class="fas fa-file-alt"></i><span>Group Report</span>
-    </a>
-  </div>
-  {% endif %}
-
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
+    <a class="sidebar-link" href="#">
       <i class="fas fa-sign-out-alt"></i><span>Logout</span>
     </a>
   </div>
 </div>
 
 <div class="main-content">
-  <h2>Welcome, <span id="teacher-name">{{ profile.firstName }} {{ profile.lastName }}</span>!</h2>
+  <h2>Welcome, <span id="teacher-name">John Smith</span>!</h2>
   <div class="breadcrumb"><span class="section">Dashboard</span> / <span class="current">Home</span></div>
 
   <div class="grid-container-lg grid-container card-spacing">
+    <!-- Simplified Calendar -->
+    <div class="calendar-container">
+      <div class="calendar-info">
+        <div class="calendar-date" id="current-date">Wednesday, June 12</div>
+        <div class="calendar-time" id="current-time">10:45 AM</div>
+      </div>
+      <div class="calendar-icon">
+        <i class="fas fa-calendar-day"></i>
+      </div>
+    </div>
+    
+    <!-- Stats - Only Absent Today -->
     <div class="stats-grid">
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-school"></i></div>
-        <p>My Classes</p>
-        <span id="stats-classes">{{ stats.classes }}</span>
-      </div>
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-user-check"></i></div>
-        <p>Students Present Today</p>
-        <span id="stats-present">{{ stats.present }}</span>
-      </div>
       <div class="card stats-card">
         <div class="icon-circle"><i class="fas fa-user-times"></i></div>
         <p>Students Absent Today</p>
-        <span id="stats-absent">0</span>
-      </div>
-    </div>
-
-    <!-- Calendar Card -->
-    <div>
-      <div class="card">
-        <h3 style="margin-bottom:10px;">Calendar</h3>
-        <div id="calendar-header" style="position:absolute; top:15px; right:20px; font-weight:600;"></div>
-        <div id="calendar" class="calendar"></div>
+        <span id="stats-absent">5</span>
       </div>
     </div>
   </div>
 
+  <!-- Notifications -->
   <div class="grid-container-lg-2 grid-container card-spacing">
-    <div class="card" style="background-color:#F6F8FE; display:flex; align-items:flex-start; gap:1rem;">
-      <div class="icon-circle" style="background-color:#4154F1;"><i class="fas fa-bell" style="font-size:1.5rem;"></i></div>
-      <div style="flex-grow:1;">
-        <h3>Notifications</h3>
-        <p id="notification-message">No new notifications</p>
+    <div class="notification-card">
+      <div class="notification-icon">
+        <i class="fas fa-bell"></i>
+      </div>
+      <div class="notification-content">
+        <div class="notification-title">Pending Absence Requests</div>
+        <div class="notification-text">You have 3 pending absence requests that need your review.</div>
+        <button class="notification-btn" onclick="window.location.href='#'">
+          Review Requests
+        </button>
       </div>
     </div>
+  </div>
+  
+  <!-- Low Attendance Students -->
+  <div class="card low-attendance-card">
+    <div class="low-attendance-title">Students with Attendance Below 75%</div>
+    <ul class="low-attendance-list">
+      <li class="low-attendance-item">
+        <span class="student-name" onclick="window.location.href='#'">Sarah Johnson</span>
+        <span class="attendance-percentage">68%</span>
+      </li>
+      <li class="low-attendance-item">
+        <span class="student-name" onclick="window.location.href='#'">Michael Chen</span>
+        <span class="attendance-percentage">72%</span>
+      </li>
+      <li class="low-attendance-item">
+        <span class="student-name" onclick="window.location.href='#'">Emma Rodriguez</span>
+        <span class="attendance-percentage">65%</span>
+      </li>
+      <li class="low-attendance-item">
+        <span class="student-name" onclick="window.location.href='#'">David Kim</span>
+        <span class="attendance-percentage">70%</span>
+      </li>
+    </ul>
   </div>
 </div>
 
 <script>
-function generateCalendar() {
-  const calendarEl = document.getElementById('calendar');
-  const headerEl = document.getElementById('calendar-header');
+// Update date and time
+function updateDateTime() {
   const now = new Date();
-  const today = now.getDate();
-  const monthName = now.toLocaleString('default', { month: 'long' });
-  const year = now.getFullYear();
-  headerEl.textContent = `${monthName} ${year}`;
-  const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate();
-  calendarEl.innerHTML = '';
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dayEl = document.createElement('div');
-    dayEl.className = 'calendar-day';
-    if (d === today) dayEl.classList.add('current-day');
-    dayEl.textContent = d;
-    calendarEl.appendChild(dayEl);
-  }
+  const options = { weekday: 'long', month: 'long', day: 'numeric' };
+  document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+  document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit',
+    hour12: true 
+  });
 }
 
-generateCalendar();
+// Initialize and update every second
+updateDateTime();
+setInterval(updateDateTime, 1000);
+
+// Toggle sidebar
 document.getElementById('menu-toggle').addEventListener('click', () => {
   document.querySelector('.sidebar').classList.toggle('collapsed');
 });
