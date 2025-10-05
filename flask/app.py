@@ -1477,54 +1477,48 @@ def teacher_schedules():
 
     teacher_id = str(session.get("user_id")).strip()
 
-    # Fetch all schedules
-    schedules_docs = db.collection("schedules").stream()
+    # Fetch all schedules for this teacher
+    schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
 
-    # Fetch supporting info
+    # Fetch supporting collections
     programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
-    modules  = {m.id: m.to_dict() for m in db.collection("modules").stream()}
-
-    # Fetch groups collection once
-    groups_collection = {g.id: g.to_dict() for g in db.collection("groups").stream()}
+    groups = {g.id: g.to_dict() for g in db.collection("groups").stream()}
+    
+    # ⚠️ CRITICAL: Use mlmodule, not modules!
+    mlmodules = {m.id: m.to_dict() for m in db.collection("mlmodule").stream()}
 
     schedules = []
     for doc in schedules_docs:
         s = doc.to_dict()
         s['docId'] = doc.id
 
-        # Match teacher ID
-        if str(s.get('fk_teacher','')).strip() == teacher_id:
-            # Module name
-            s['moduleName'] = modules.get(s.get('fk_module'), {}).get('moduleName', 'Unknown Module')
-            
-            # Use groupCode as the displayed group name
-            group_doc = groups_collection.get(s.get('fk_group'), {})
-            s['groupName'] = group_doc.get('groupCode', s.get('fk_group'))  # fallback to fk_group if missing
-            s['groupCode'] = group_doc.get('groupCode', s.get('fk_group'))
-            
-            # Program name
-            s['programName'] = programs.get(s.get('fk_program'), {}).get('programName', 'Unknown Program')
-            
-            # Start and End time
-            s['startTime'] = s.get('start_time', 'Unknown Start')
-            s['endTime'] = s.get('end_time', 'Unknown End')
-            
-            # Day and Room
-            s['day'] = s.get('day', 'Unknown Day')
-            s['room'] = s.get('room', 'Unknown Room')
+        # Get module info from mlmodule (not modules!)
+        mlmodule = mlmodules.get(s.get('fk_module'), {})
+        s['moduleName'] = mlmodule.get('moduleName', 'Unknown Module')
 
-            schedules.append(s)
+        # Get group info
+        group = groups.get(s.get('fk_group'), {})
+        s['groupName'] = group.get('groupCode', s.get('fk_group', 'Unknown Group'))
 
-    # Teacher profile
+        # Get program name via group
+        fk_program = group.get('fk_program')
+        s['programName'] = programs.get(fk_program, {}).get('programName', 'Unknown Program')
+
+        # Time, day, room
+        s['startTime'] = s.get('start_time', '00:00')
+        s['endTime'] = s.get('end_time', '00:00')
+        s['day'] = s.get('day', 'Unknown')
+        s['room'] = s.get('room', 'Unknown Room')
+
+        schedules.append(s)
+
+    # Fetch teacher profile
     profile_doc = db.collection("users").document(teacher_id).get()
-    profile = profile_doc.to_dict() if profile_doc.exists else {"name": "Teacher"}
+    profile = profile_doc.to_dict() if profile_doc.exists else {"firstName": "Teacher", "lastName": ""}
 
     return render_template(
         "teacher/T_Schedule.html",
         schedules=schedules,
-        programs=programs,
-        groups=groups_collection,
-        modules=modules,
         profile=profile
     )
 

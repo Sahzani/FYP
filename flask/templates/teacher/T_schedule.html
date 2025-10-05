@@ -44,6 +44,22 @@ table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; 
 th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
 th { font-weight:600; text-transform:uppercase; font-size:13px; }
 
+.timetable-cell {
+  min-height: 60px;
+  vertical-align: top;
+  padding: 8px;
+}
+.timetable-class {
+  background: #f0f7ff;
+  border-radius: 6px;
+  padding: 6px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+.timetable-class:last-child {
+  margin-bottom: 0;
+}
+
 .page-title { font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
 .breadcrumb { font-size:14px; font-weight:600; margin-bottom:30px; }
 .breadcrumb .section { color:#989797; }
@@ -148,50 +164,40 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
     </table>
   </div>
 
-<!-- NEW Timetable Grid -->
+<!-- Timetable View -->
 <div class="card">
   <h2>Timetable View</h2>
-  <div style="overflow-x:auto; width:100%;">
-    <table>
+  <div style="overflow-x:auto;">
+    <table class="w-full">
       <thead>
-        <tr>
-          <th>Time</th>
-          <th>Monday</th>
-          <th>Tuesday</th>
-          <th>Wednesday</th>
-          <th>Thursday</th>
-          <th>Saturday</th>
+        <tr class="bg-gray-50">
+          <th class="p-3 text-left">Time</th>
+          {% for day in ["Monday","Tuesday","Wednesday","Thursday","Friday"] %}
+            <th class="p-3 text-center">{{ day }}</th>
+          {% endfor %}
         </tr>
       </thead>
       <tbody>
-        {% set slots = [] %}
-        {% for s in schedules %}
-          {% if s.startTime not in slots %}
-            {% set _ = slots.append(s.startTime) %}
-          {% endif %}
-        {% endfor %}
-
-        {% for slot in slots|sort %}
-        <tr>
-          <td>{{ slot }}</td>
-          {% for day in ["Monday","Tuesday","Wednesday","Thursday","Saturday"] %}
-            <td>
-              {% set entries = schedules 
-                               | selectattr("day","equalto",day) 
-                               | selectattr("startTime","equalto",slot)
+        {% set unique_times = schedules | map(attribute='startTime') | unique | list | sort %}
+        {% for time in unique_times %}
+        <tr class="border-b">
+          <td class="p-3 font-medium">{{ time }}</td>
+          {% for day in ["Monday","Tuesday","Wednesday","Thursday","Friday"] %}
+            <td class="timetable-cell p-3 align-top">
+              {% set classes = schedules 
+                               | selectattr("day", "equalto", day) 
+                               | selectattr("startTime", "equalto", time) 
                                | list %}
-              {% if entries %}
-                {% for e in entries %}
-                  <div>
-                    <strong>{{ e.moduleName }}</strong><br>
-                    {{ e.startTime }} - {{ e.endTime }}<br>
-                    {{ e.groupName }}<br>
-                    {{ e.room }}
-                    <hr style="margin:2px 0; border-top:1px dashed #ccc;">
+              {% if classes %}
+                {% for cls in classes %}
+                  <div class="timetable-class">
+                    <strong>{{ cls.moduleName }}</strong><br>
+                    {{ cls.groupName }} • {{ cls.room }}<br>
+                    {{ cls.startTime }}–{{ cls.endTime }}
                   </div>
                 {% endfor %}
               {% else %}
-                -
+                <span class="text-gray-400">—</span>
               {% endif %}
             </td>
           {% endfor %}
