@@ -128,7 +128,7 @@
           <th>Tuesday</th>
           <th>Wednesday</th>
           <th>Thursday</th>
-          <th>Saturday</th>
+          <th>Friday</th>
         </tr>
       </thead>
       <tbody>
@@ -144,19 +144,24 @@
         {% for slot in slots|sort %}
         <tr>
           <td>{{ slot }}</td>
-          {% for day in ["Monday","Tuesday","Wednesday","Thursday","Saturday"] %}
-            <td>
-              {% set entry = schedules 
-                            | selectattr("day","equalto",day) 
-                            | selectattr("startTime","equalto",slot) 
-                            | list %}
-              {% if entry %}
-                {{ entry[0].moduleName }} <br>
-                {{ entry[0].startTime }} - {{ entry[0].endTime }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
+          {% for day in ["Monday","Tuesday","Wednesday","Thursday","Friday"] %}
+<td>
+  {% set entries = schedules 
+                   | selectattr("day", "equalto", day) 
+                   | selectattr("startTime", "equalto", slot) 
+                   | list %}
+  {% if entries %}
+    {% for e in entries %}
+      <div style="margin-bottom:6px; padding:4px; background:#f0f7ff; border-radius:4px; font-size:13px;">
+        <strong>{{ e.moduleName }}</strong><br>
+        {{ e.room }}<br>
+        {{ e.startTime }} – {{ e.endTime }}
+      </div>
+    {% endfor %}
+  {% else %}
+    <span class="text-gray-400">—</span>
+  {% endif %}
+</td>
           {% endfor %}
         </tr>
         {% endfor %}

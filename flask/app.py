@@ -542,7 +542,6 @@ def student_attendance():
 # ------------------ Student Schedule Page ------------------
 @app.route("/student/schedule")
 def student_schedule():
-    # Check if user is logged in
     user = session.get("user")
     role = session.get("role")
     if not user or role != "student":
@@ -550,7 +549,7 @@ def student_schedule():
 
     uid = user.get("uid")
 
-    # Fetch student info from users/{uid}/roles/student
+    # Fetch student role data
     student_doc_ref = db.collection("users").document(uid).collection("roles").document("student")
     student_doc = student_doc_ref.get()
     if not student_doc.exists:
@@ -558,28 +557,50 @@ def student_schedule():
         return redirect(url_for("student_dashboard"))
 
     student_info = student_doc.to_dict()
-    group_code = student_info.get("fk_groupcode", "")
-    student_class = student_info.get("studentClass", "")
+    group_id = student_info.get("fk_groupcode", "")  # This is the Firestore doc ID
 
-    # Fetch schedules for this group
-    schedules_ref = db.collection("schedules").where("group", "==", group_code).stream()
-    schedules = [doc.to_dict() for doc in schedules_ref]
+    # DEBUG
+    print(f"🔍 Student UID: {uid}")
+    print(f"🔍 Student group_id (fk_groupcode): {group_id}")
 
-    # Fetch full name from users/{uid} document
+    # Fetch full name
     user_doc = db.collection("users").document(uid).get()
-    if user_doc.exists:
-        user_data = user_doc.to_dict()
-        full_name = user_data.get("name", "Student").strip()
-    else:
-        full_name = "Student"
+    full_name = user_doc.to_dict().get("name", "Student").strip() if user_doc.exists else "Student"
+
+    # Fetch mlmodule for module names
+    mlmodules = {m.id: m.to_dict() for m in db.collection("mlmodule").stream()}
+
+    # Fetch schedules WHERE fk_group == group_id
+    schedules_docs = db.collection("schedules").where("fk_group", "==", group_id).stream()
+    schedules = []
+    for doc in schedules_docs:
+        s = doc.to_dict()
+        s['docId'] = doc.id
+
+        # Resolve module name from mlmodule
+        mlmodule = mlmodules.get(s.get('fk_module'), {})
+        s['moduleName'] = mlmodule.get('moduleName', 'Unknown Module')
+
+        # Set display fields
+        s['startTime'] = s.get('start_time', '00:00')
+        s['endTime'] = s.get('end_time', '00:00')
+        s['day'] = s.get('day', 'Unknown')
+        s['room'] = s.get('room', 'Unknown Room')
+
+        schedules.append(s)
+
+    # DEBUG
+    print(f"📚 Found {len(schedules)} schedules")
+    for s in schedules:
+        print(f"  → {s['day']} {s['startTime']}-{s['endTime']}: {s['moduleName']} in {s['room']}")
 
     return render_template(
         "student/S_Schedule.html",
         schedules=schedules,
         full_name=full_name,
-        student_class=student_class,
-        group_code=group_code
+        group_code=group_id
     )
+
 # ------------------ Student Absent Pages ------------------
 @app.route("/student/absentapp", methods=["GET", "POST"])
 def student_absentapp():
@@ -1230,8 +1251,8 @@ def mark_present():
     att_query.set(att_data)
 
     return jsonify({"success": True})
-#------------------- Teacher Attendance Report ------------------
 
+#------------------- Teacher Attendance Report ------------------
 from flask import session, redirect, url_for, render_template, jsonify
 from datetime import datetime
 @app.route("/teacher/attendance")
