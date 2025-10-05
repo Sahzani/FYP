@@ -2353,7 +2353,8 @@ def admin_schedules():
         groups=groups,
         teachers=teachers,
         schedules=schedules,
-        teacher_assignments=teacherAssignments
+        teacherAssignments=teacherAssignments,
+        mlmodules=mlmodules
     )
 
 # ------------------ Save/Add/Edit Schedule ------------------
@@ -3212,7 +3213,8 @@ def api_schedules():
         return jsonify(schedules)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-# ------------------ Logout / Signup ------------------
+        
+# ------------------ Logout------------------
 @app.route("/logout")
 def logout():
     session.clear()
