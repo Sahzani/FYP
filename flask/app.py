@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import firebase_admin
-from firebase_admin import credentials, auth, firestore, storage
+from firebase_admin import credentials, auth, firestore
 from datetime import timedelta
 from werkzeug.utils import secure_filename
 from firebase_admin import auth, exceptions
@@ -25,14 +25,12 @@ app.permanent_session_lifetime = timedelta(days=30)
 cred_path = os.path.join(BASE_DIR, "serviceAccountKey.json")
 cred = credentials.Certificate(cred_path)
 
-# Initialize Firebase App with Firestore + Storage
-firebase_admin.initialize_app(cred, {
-    "storageBucket": "aimanzamani.appspot.com"   # ✅ your actual bucket name
-})
+# Initialize the default Firebase app
+firebase_admin.initialize_app(cred)
 
 # Create clients for Firestore & Storage
 db = firestore.client()
-bucket = storage.bucket()
+
 
 # ------------------ Context Processor for Teacher Profile ------------------
 @app.context_processor
@@ -652,25 +650,19 @@ def student_absentapp():
         }
 
         try:
-            # ---------- Handle file upload ----------
+            # ---------- Handle file upload directly in Firestore ----------
             if file:
-                filename = secure_filename(file.filename)
-                # Make sure bucket is defined somewhere: bucket = storage.bucket()
-                blob = bucket.blob(f"{uid}/{filename}")
-                blob.upload_from_file(file)
-                blob.make_public()  # optional
-                data["file_url"] = blob.public_url
+                from werkzeug.utils import secure_filename
+                import base64
 
-                # If editing, remove old file (optional)
-                if record_id:
-                    old_doc = db.collection("absenceRecords").document(record_id).get()
-                    if old_doc.exists:
-                        old_data = old_doc.to_dict()
-                        old_url = old_data.get("file_url")
-                        if old_url:
-                            # extract old filename and delete
-                            old_blob = bucket.blob(f"{uid}/{old_url.split('/')[-1]}")
-                            old_blob.delete()
+                filename = secure_filename(file.filename)
+                file_bytes = file.read()
+                file_base64 = base64.b64encode(file_bytes).decode('utf-8')
+                mime_type = file.mimetype  # e.g., 'application/pdf', 'image/png'
+
+                data["file_name"] = filename
+                data["file_type"] = mime_type
+                data["file_data"] = f"data:{mime_type};base64,{file_base64}"
 
             # ---------- Save / Update Record ----------
             if record_id:
@@ -2541,8 +2533,7 @@ def admin_schedules():
         groups=groups,
         teachers=teachers,
         schedules=schedules,
-        teacherAssignments=teacherAssignments,
-        mlmodules=mlmodules
+        teacher_assignments=teacherAssignments
     )
 
 # ------------------ Save/Add/Edit Schedule ------------------
@@ -3401,8 +3392,7 @@ def api_schedules():
         return jsonify(schedules)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-        
-# ------------------ Logout------------------
+# ------------------ Logout / Signup ------------------
 @app.route("/logout")
 def logout():
     session.clear()

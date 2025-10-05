@@ -177,8 +177,16 @@
                   <td>{{ rec.duration_days }}</td>
                   <td><span class="status {{ rec.status|lower|replace(' ','-') }}">{{ rec.status }}</span></td>
                   <td>
-                    {% if rec.file_url %}
-                      <a href="{{ rec.file_url }}" target="_blank" class="file-link">View File</a>
+                     {% if rec.file_data %}
+                      {% if rec.file_type.startswith('image') %}
+                        <a href="{{ rec.file_data }}" target="_blank">
+                          <img src="{{ rec.file_data }}" alt="{{ rec.file_name }}" style="max-width:60px; max-height:60px; border-radius:4px;"/>
+                        </a>
+                      {% elif rec.file_type == 'application/pdf' %}
+                        <a href="{{ rec.file_data }}" target="_blank">{{ rec.file_name }}</a>
+                      {% else %}
+                        <a href="{{ rec.file_data }}" target="_blank">{{ rec.file_name }}</a>
+                      {% endif %}
                     {% else %}
                       No file
                     {% endif %}
@@ -277,6 +285,17 @@
       return `${day}/${month}/${year}`;
     }
 
+    function renderFileCell(rec) {
+      if (!rec.file_data) return 'No file';
+      if (rec.file_type.startsWith('image')) {
+        return `<a href='${rec.file_data}' target='_blank'><img src='${rec.file_data}' style='max-width:60px; max-height:60px; border-radius:4px'/></a>`;
+      } else if (rec.file_type === 'application/pdf') {
+        return `<a href='${rec.file_data}' target='_blank'>${rec.file_name}</a>`;
+      } else {
+        return `<a href='${rec.file_data}' target='_blank'>${rec.file_name}</a>`;
+      }
+    }
+
     setInterval(() => {
       fetch("{{ url_for('student_absentapp') }}?fetch=1")
         .then(res => res.json())
@@ -293,7 +312,7 @@
                 <td>${formatDate(rec.end_date)}</td>
                 <td>${rec.duration_days}</td>
                 <td><span class="status ${rec.status_class}">${rec.status}</span></td>
-                <td>${rec.file_url ? `<a href='${rec.file_url}' target='_blank'>View File</a>` : 'No file'}</td>
+                <td>${renderFileCell(rec)}</td>
                 <td>
                   <button class='icon-btn edit' data-id='${rec.id}' data-reason='${rec.reason}' data-start='${rec.start_date}' data-end='${rec.end_date}'><i class='fas fa-pen'></i></button>
                   <form method='POST' action='/student/absentapp/delete/${rec.id}' style='display:inline;'><button type='submit' class='icon-btn delete'><i class='fas fa-trash'></i></button></form>
