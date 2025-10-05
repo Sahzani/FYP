@@ -87,6 +87,7 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
       <i class="fas fa-book"></i><span>My Modules & Rooms</span>
     </a>
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absence Application</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}"><i class="fas fa-address-card"></i><span>Individual Attendance</span></a>
   </div>
 
   {% if profile.is_gc %}

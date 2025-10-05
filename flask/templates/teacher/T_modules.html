@@ -115,6 +115,7 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
     <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}"><i class="fas fa-calendar"></i><span>Class Schedule</span></a>
     <a class="sidebar-link active" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Groups</span></a>
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}"><i class="fas fa-address-card"></i><span>Individual Attendance</span></a>
   </div>
 
   {% if profile.is_gc %}
