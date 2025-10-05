@@ -98,10 +98,13 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
       <i class="fas fa-calendar"></i><span>Class Schedule</span>
     </a>
     <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
-      <i class="fas fa-book"></i><span>My Modules & Rooms</span>
+      <i class="fas fa-book"></i><span>My Modules & Groups</span>
     </a>
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}">
       <i class="fas fa-calendar-alt"></i><span>Absences Application</span>
+    </a>
+        <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}">
+      <i class="fas fa-address-card"></i><span>Individual Attendance</span>
     </a>
   </div>
 

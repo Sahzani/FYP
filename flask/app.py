@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import firebase_admin
-from firebase_admin import credentials, auth, firestore
+from firebase_admin import credentials, auth, firestore, storage
 from datetime import timedelta
 from werkzeug.utils import secure_filename
 from firebase_admin import auth, exceptions
@@ -24,9 +24,15 @@ app.permanent_session_lifetime = timedelta(days=30)
 # ------------------ Firebase Setup ------------------
 cred_path = os.path.join(BASE_DIR, "serviceAccountKey.json")
 cred = credentials.Certificate(cred_path)
-firebase_admin.initialize_app(cred)
 
+# Initialize Firebase App with Firestore + Storage
+firebase_admin.initialize_app(cred, {
+    "storageBucket": "aimanzamani.appspot.com"   # ✅ your actual bucket name
+})
+
+# Create clients for Firestore & Storage
 db = firestore.client()
+bucket = storage.bucket()
 
 # ------------------ Context Processor for Teacher Profile ------------------
 @app.context_processor
@@ -393,6 +399,102 @@ def teacher_dashboard():
         current_schedule=None
     )
 
+#------------------ Teacher - view students Individual attendance ------------------
+@app.route("/teacher/individual_summary", methods=["GET"])
+def teacher_individual_summary():
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+
+    teacher_id = session.get("user_id")
+    if not teacher_id:
+        return redirect(url_for("home"))
+
+    # -------- Fetch teacher profile --------
+    teacher_doc = db.collection("users").document(teacher_id).get()
+    profile = teacher_doc.to_dict() if teacher_doc.exists else {}
+    profile.setdefault("firstName", "Teacher")
+    profile.setdefault("lastName", "")
+    profile.setdefault("profile_pic", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+
+    # -------- Get filter values --------
+    student_id = request.args.get("student_id")
+    month = request.args.get("month", type=int)
+    year = request.args.get("year", type=int)
+
+    # -------- Get students taught by this teacher --------
+    students = []
+    schedules = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+    group_ids = {s.to_dict().get("fk_group") for s in schedules if s.to_dict().get("fk_group")}
+
+    users_ref = db.collection("users").where("role_type", "==", 1).stream()
+    for u in users_ref:
+        udata = u.to_dict()
+        role_doc = db.collection("users").document(u.id).collection("roles").document("student").get()
+        if role_doc.exists:
+            role_data = role_doc.to_dict()
+            if role_data.get("fk_groupcode") in group_ids:
+                students.append({
+                    "id": u.id,
+                    "name": udata.get("name", "Student")
+                })
+
+    summary = {}
+    chart_labels = []
+    chart_percents = []
+
+    if student_id and month and year:
+        attendance_ref = db.collection("attendance").where("student_id", "==", student_id).stream()
+        stats_by_module = {}
+
+        for doc in attendance_ref:
+            att = doc.to_dict()
+            date_str = att.get("date", "")
+            if not date_str:
+                continue
+
+            try:
+                att_date = datetime.strptime(date_str[:10], "%Y-%m-%d")
+            except:
+                continue
+
+            if att_date.month == month and att_date.year == year:
+                module_id = att.get("schedule_id") or "Unknown"
+                status = att.get("status", "Unknown")
+
+                if module_id not in stats_by_module:
+                    stats_by_module[module_id] = {"Present": 0, "Absent": 0, "Late": 0}
+
+                if status in stats_by_module[module_id]:
+                    stats_by_module[module_id][status] += 1
+
+        for mid, stats in stats_by_module.items():
+            module_doc = db.collection("modules").document(mid).get()
+            module_name = module_doc.to_dict().get("moduleName", "Unknown Module") if module_doc.exists else "Unknown Module"
+
+            total = stats["Present"] + stats["Absent"] + stats["Late"]
+            percent = (stats["Present"] / total * 100) if total > 0 else 0
+
+            summary[module_name] = {
+                "Present": stats["Present"],
+                "Absent": stats["Absent"],
+                "Late": stats["Late"],
+                "percent": percent
+            }
+
+            chart_labels.append(module_name)
+            chart_percents.append(percent)
+
+    return render_template(
+        "teacher/T_individual_summary.html",
+        profile=profile,
+        students=students,
+        student_id=student_id,
+        month=month,
+        year=year,
+        summary=summary,
+        chart_labels=chart_labels,
+        chart_percents=chart_percents
+    )
 
 #------------------ Admin Pages ------------------
 @app.route("/admin_dashboard")
@@ -513,13 +615,10 @@ def student_absentapp():
     last_name = user_data.get("lastName", "")
     full_name = f"{first_name} {last_name}".strip()
 
-    # Student subcollection (roles → student)
-    student_data = None
-    student_ref = db.collection("users").document(uid).collection("roles").document("student").get()
-    if student_ref.exists:
-        student_data = student_ref.to_dict()
-
-    student_ID = student_data.get("studentID") if student_data else ""
+   # Student subcollection (roles → student)
+    student_doc = db.collection("users").document(uid).collection("roles").document("student").get()
+    student_data = student_doc.to_dict() if student_doc.exists else {}
+    student_ID = student_data.get("studentID", "")
     group_code = None
 
     # Fetch actual group code from groups collection
@@ -534,6 +633,7 @@ def student_absentapp():
         reason = request.form.get("reason")
         start_date = request.form.get("start_date")
         end_date = request.form.get("end_date")
+        file = request.files.get("file")  # get uploaded file
 
         if not reason or not start_date or not end_date:
             flash("Please fill in all fields.", "danger")
@@ -552,6 +652,27 @@ def student_absentapp():
         }
 
         try:
+            # ---------- Handle file upload ----------
+            if file:
+                filename = secure_filename(file.filename)
+                # Make sure bucket is defined somewhere: bucket = storage.bucket()
+                blob = bucket.blob(f"{uid}/{filename}")
+                blob.upload_from_file(file)
+                blob.make_public()  # optional
+                data["file_url"] = blob.public_url
+
+                # If editing, remove old file (optional)
+                if record_id:
+                    old_doc = db.collection("absenceRecords").document(record_id).get()
+                    if old_doc.exists:
+                        old_data = old_doc.to_dict()
+                        old_url = old_data.get("file_url")
+                        if old_url:
+                            # extract old filename and delete
+                            old_blob = bucket.blob(f"{uid}/{old_url.split('/')[-1]}")
+                            old_blob.delete()
+
+            # ---------- Save / Update Record ----------
             if record_id:
                 db.collection("absenceRecords").document(record_id).update(data)
                 flash("Absence record updated successfully!", "success")
@@ -833,93 +954,152 @@ def teacher_modules():
     if not teacher_id:
         return redirect(url_for("login"))
 
-    # ------------------ Profile for header ------------------
-    # Fetch the teacher's full profile from Firestore
+    # ------------------ Profile for header & GC check ------------------
     teacher_doc = db.collection("users").document(teacher_id).get()
+    profile = {}
     if teacher_doc.exists:
-        teacher_data = teacher_doc.to_dict()
+        data = teacher_doc.to_dict()
+
+        # Use firstName and lastName directly
+        first_name = data.get("firstName", "Teacher")
+        last_name = data.get("lastName", "")
+
+        # Check if GC
+        role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
+        is_gc = role_doc.to_dict().get("isCoordinator", False) if role_doc.exists else False
+
         profile = {
-            "firstName": teacher_data.get("firstName", ""),
-            "lastName": teacher_data.get("lastName", "")
+            "firstName": first_name,
+            "lastName": last_name,
+            "role": data.get("role", "Teacher"),
+            "profile_pic": data.get(
+                "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
+            ),
+            "is_gc": is_gc
         }
     else:
-        profile = {"firstName": "", "lastName": ""}
+        profile = {
+            "role": "Teacher",
+            "firstName": "Teacher",
+            "lastName": "",
+            "profile_pic": "",
+            "is_gc": False
+        }
 
-    # ------------------ 1. Fetch schedules for this teacher ------------------
+    # ------------------ Fetch schedules ------------------
     schedules_ref = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
     schedules = [s.to_dict() | {"id": s.id} for s in schedules_ref]
 
     if not schedules:
-        return render_template("teacher/T_modules.html", modules_data=[], groups_data={}, profile=profile)
+        return render_template(
+            "teacher/T_modules.html",
+            modules_data=[],
+            groups_data={},
+            users_data=[],
+            profile=profile,
+            available_dates=[]
+        )
 
-    # ------------------ 2. Collect module IDs and group IDs ------------------
     module_ids = list({s["fk_module"] for s in schedules})
     group_ids = list({s["fk_group"] for s in schedules})
 
-    # ------------------ 3. Fetch module names ------------------
-    modules_ref = db.collection("modules").where("__name__", "in", module_ids).stream()
+    # ------------------ Fetch module & group info ------------------
+    modules_ref = db.collection("mlmodule").where("__name__", "in", module_ids).stream()
     modules = {m.id: m.to_dict() for m in modules_ref}
 
-    # ------------------ 4. Fetch groups ------------------
-    groups_ref = db.collection("groups").where("__name__", "in", group_ids).stream()
-    groups = {g.id: g.to_dict() for g in groups_ref}
+    groups = {}
+    for g_id in group_ids:
+        g_doc = db.collection("groups").document(g_id).get()
+        if g_doc.exists:
+            groups[g_id] = g_doc.to_dict()
 
-    # ------------------ 5. Fetch students ------------------
+    # ------------------ Fetch students by group ------------------
+    students_by_group = {g_id: [] for g_id in group_ids}
     students_ref = db.collection("users").where("role_type", "==", 1).stream()
-    students_by_group = {}
     for stu_doc in students_ref:
         stu = stu_doc.to_dict()
-        g_id = stu.get("group_code")
-        if g_id not in students_by_group:
-            students_by_group[g_id] = []
+        student_id = stu_doc.id
 
-        full_name = f"{stu.get('firstName', '')} {stu.get('lastName', '')}".strip()
-        students_by_group[g_id].append({
-            "id": stu_doc.id,
-            "name": full_name if full_name else "Student",
-            "status": "Not Marked",
-            "date": ""
-        })
+        role_doc = db.collection("users").document(student_id).collection("roles").document("student").get()
+        fk_groupcode = role_doc.to_dict().get("fk_groupcode", "") if role_doc.exists else ""
 
-    # ------------------ 6. Fetch attendance ------------------
+        if fk_groupcode in students_by_group:
+            students_by_group[fk_groupcode].append({
+                "id": student_id,
+                "name": stu.get("name", "Student"),
+                "attendance": []
+            })
+
+    # ------------------ Fetch all attendance ------------------
     attendance_ref = db.collection("attendance").stream()
-    attendance_map = {}
-    for att_doc in attendance_ref:
-        att = att_doc.to_dict()
-        key = (att.get("schedule_id"), att.get("student_id"))
-        attendance_map[key] = {"status": att.get("status", "Not Marked"), "date": att.get("date", "")}
+    available_dates = set()
 
-    # ------------------ 7. Assemble modules & groups ------------------
+    for att_doc in attendance_ref:
+        attendance_doc_id = att_doc.id
+        for date_col in db.collection("attendance").document(attendance_doc_id).collections():
+            date_str = date_col.id
+            available_dates.add(date_str)
+            for stu_att_doc in date_col.stream():
+                stu_att = stu_att_doc.to_dict()
+                student_id = stu_att_doc.id
+                group_code = stu_att.get("group")
+                status = stu_att.get("status", "Not Marked")
+                timestamp = stu_att.get("timestamp", None)
+
+                if group_code in students_by_group:
+                    for s in students_by_group[group_code]:
+                        if s["id"] == student_id:
+                            # Only add if not already present
+                            if not any(a["date"] == date_str for a in s["attendance"]):
+                                s["attendance"].append({
+                                    "date": date_str,
+                                    "status": status,
+                                    "timestamp": timestamp
+                                })
+
+    available_dates = sorted(list(available_dates))
+    selected_date = request.args.get("date") or None
+    if selected_date and selected_date not in available_dates:
+        selected_date = None
+
+    # ------------------ Fill missing attendance for selected date only ------------------
+    if selected_date:
+        for group_students in students_by_group.values():
+            for s in group_students:
+                if not any(att["date"] == selected_date for att in s["attendance"]):
+                    s["attendance"].append({
+                        "date": selected_date,
+                        "status": "Not Marked",
+                        "timestamp": None
+                    })
+
+    # Sort attendance per student
+    for group_students in students_by_group.values():
+        for s in group_students:
+            s["attendance"].sort(key=lambda x: x["date"])
+
+    # ------------------ Assemble modules & groups ------------------
     modules_data = []
     groups_data = {}
 
     for sched in schedules:
         mod_id = sched["fk_module"]
         g_id = sched["fk_group"]
-
-        # Module name from 'modules' collection
         module_name = modules.get(mod_id, {}).get("moduleName", "Unknown Module")
 
-        # Add module entry if not exists
         module_obj = next((m for m in modules_data if m["moduleName"] == module_name), None)
         if not module_obj:
             module_obj = {"moduleName": module_name, "groups": []}
             modules_data.append(module_obj)
-
-        # Add group under module
         if g_id not in module_obj["groups"]:
             module_obj["groups"].append(g_id)
 
-        # Add group details with student attendance
         students_list = []
         for stu in students_by_group.get(g_id, []):
-            key = (sched["id"], stu["id"])
-            att_info = attendance_map.get(key, {"status": "Not Marked", "date": ""})
             students_list.append({
-                "id": stu["id"],
-                "name": stu["name"],
-                "status": att_info["status"],
-                "date": att_info["date"]
+                "id": stu.get("id"),
+                "name": stu.get("name"),
+                "attendance": stu.get("attendance", [])
             })
 
         groups_data[g_id] = {
@@ -930,12 +1110,19 @@ def teacher_modules():
             "room": sched.get("room", "")
         }
 
-    # ------------------ 8. Render template ------------------
+    users_data = []
+    for g in groups_data.values():
+        for stu in g["students"]:
+            users_data.append(stu)
+
     return render_template(
         "teacher/T_modules.html",
         modules_data=modules_data,
         groups_data=groups_data,
-        profile=profile
+        users_data=users_data,
+        profile=profile,
+        available_dates=available_dates,
+        selected_date=selected_date
     )
 
 # ------------------ Teacher marks attendance ------------------
@@ -994,6 +1181,7 @@ def mark_attendance():
 
     flash("Attendance updated successfully!", "success")
     return redirect(url_for("teacher_modules"))
+
 # ------------------ Teacher Mark Present via API ------------------
 @app.route("/teacher/mark_present", methods=["POST"])
 def mark_present():
