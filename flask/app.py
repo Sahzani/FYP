@@ -1171,7 +1171,6 @@ def teacher_modules():
         available_dates=available_dates,
         selected_date=selected_date
     )
-
 # ------------------ Teacher marks attendance ------------------
 @app.route("/mark_attendance", methods=["POST"])
 def mark_attendance():
@@ -1228,7 +1227,6 @@ def mark_attendance():
 
     flash("Attendance updated successfully!", "success")
     return redirect(url_for("teacher_modules"))
-
 # ------------------ Teacher Mark Present via API ------------------
 @app.route("/teacher/mark_present", methods=["POST"])
 def mark_present():
@@ -1279,10 +1277,11 @@ def mark_present():
     att_query.set(att_data)
 
     return jsonify({"success": True})
-
 #------------------- Teacher Attendance Report ------------------
+
 from flask import session, redirect, url_for, render_template, jsonify
 from datetime import datetime
+
 @app.route("/teacher/attendance")
 def teacher_attendance():
     # Only teachers allowed
@@ -1332,7 +1331,7 @@ def teacher_attendance():
     # ------------------ Render template ------------------
     return render_template(
         "teacher/T_attendance_report.html",
-        profile=profile,       # <-- Pass profile so it shows in header
+        profile=profile,
         schedules=schedules,
         webcam_url="http://127.0.0.1:5001"
     )
@@ -1343,99 +1342,140 @@ from datetime import datetime
 
 @app.route("/api/attendance/<schedule_id>")
 def api_attendance(schedule_id):
-    """Return live attendance for all students in a schedule, including group and program."""
+    """Return live attendance for all students in a schedule, optimized for face detection."""
+    
+    try:
+        # 1️⃣ Fetch schedule
+        sched_doc = db.collection("schedules").document(schedule_id).get()
+        if not sched_doc.exists:
+            return jsonify({"error": "Schedule not found"}), 404
+        sched = sched_doc.to_dict()
+        group_id = sched.get("fk_group", "").strip()
+        teacher_id = sched.get("fk_teacher", "").strip()
+        
+        if not group_id:
+            return jsonify({"error": "Invalid schedule group"}), 400
 
-    # 1️⃣ Fetch schedule
-    sched_doc = db.collection("schedules").document(schedule_id).get()
-    if not sched_doc.exists:
-        return jsonify({"error": "Schedule not found"}), 404
-    sched = sched_doc.to_dict()
-    group_id = sched.get("fk_group", "").strip()
-
-    # 2️⃣ Fetch students in this group (role_type == 1)
-    students_ref = db.collection("users").where("role_type", "==", 1).stream()
-    students = []
-
-    for doc in students_ref:
-        s = doc.to_dict()
-        s["id"] = doc.id
-        s["name"] = f"{s.get('first_name','')} {s.get('last_name','')}".strip() or "Student"
-
-        # --- Fetch the nested roles/student document ---
-        role_doc = db.collection("users").document(s["id"]).collection("roles").document("student").get()
-        if role_doc.exists:
+        # 2️⃣ Fetch ONLY students in this specific group (optimized query)
+        # First, get all student UIDs from the group if you have a group_members collection
+        # But since you store group in roles, we'll filter efficiently
+        
+        students = []
+        student_photos = {}  # For face recognition: {student_id: photo_path}
+        
+        # Fetch all students with role_type == 1
+        students_ref = db.collection("users").where("role_type", "==", 1).stream()
+        
+        for doc in students_ref:
+            s = doc.to_dict()
+            student_id = doc.id
+            
+            # Skip if no first/last name
+            first_name = s.get('first_name', '').strip()
+            last_name = s.get('last_name', '').strip()
+            if not first_name and not last_name:
+                continue
+                
+            # Fetch student role data
+            role_doc = db.collection("users").document(student_id).collection("roles").document("student").get()
+            if not role_doc.exists:
+                continue
+                
             role_data = role_doc.to_dict()
-            s["fk_groupcode"] = role_data.get("fk_groupcode", "")
-            s["program"] = role_data.get("program", "")
-            s["studentID"] = role_data.get("studentID", "")
-        else:
-            s["fk_groupcode"] = ""
-            s["program"] = ""
-            s["studentID"] = ""
+            student_group = role_data.get("fk_groupcode", "").strip()
+            
+            # Only include students from THIS schedule's group
+            if student_group != group_id:
+                continue
 
-        # Only include students belonging to this schedule's group
-        if s["fk_groupcode"] != group_id:
-            continue
+            # Build student data
+            student_name = f"{first_name} {last_name}".strip()
+            student_email = s.get('email', '')
+            studentID = role_data.get("studentID", "")
+            program_id = role_data.get("program", "")
+            
+            # Get program name
+            program_name = "-"
+            if program_id:
+                program_doc = db.collection("programs").document(program_id).get()
+                if program_doc.exists:
+                    program_name = program_doc.to_dict().get("programName", "-")
+            
+            # Get photo path for face recognition
+            photo_name = s.get("photo_name", "")
+            photo_url = ""
+            if photo_name:
+                # Convert to URL for frontend face recognition
+                photo_url = f"/student_pics/{photo_name}"
+                student_photos[student_id] = photo_name  # Store for face detection
+            
+            students.append({
+                "id": student_id,
+                "name": student_name,
+                "email": student_email,
+                "studentID": studentID,
+                "group": group_id,
+                "program": program_name,
+                "photo_url": photo_url,
+                "first_name": first_name,
+                "last_name": last_name
+            })
 
-        # --- Fetch group name ---
-        if s["fk_groupcode"]:
-            group_doc = db.collection("groups").document(s["fk_groupcode"]).get()
-            if group_doc.exists:
-                group_data = group_doc.to_dict()
-                print(f"[DEBUG] Group {s['fk_groupcode']} data:", group_data)
-                s["groupName"] = group_data.get("groupCode") or group_data.get("name") or "-"
-            else:
-                print(f"[DEBUG] Group doc {s['fk_groupcode']} not found")
-                s["groupName"] = "-"
-        else:
-            s["groupName"] = "-"
+        if not students:
+            print(f"[INFO] No students found for group_id: {group_id}")
 
-        # --- Fetch program name ---
-        if s["program"]:
-            program_doc = db.collection("programs").document(s["program"]).get()
-            s["programName"] = program_doc.to_dict().get("programName") if program_doc.exists else "-"
-        else:
-            s["programName"] = "-"
+        # 3️⃣ Fetch today's attendance
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        att_ref = db.collection("attendance").document(schedule_id).collection(today_str).stream()
+        attendance_records = {}
+        for doc in att_ref:
+            att = doc.to_dict()
+            att_time = "-"
+            if att.get("timestamp"):
+                ts = att["timestamp"]
+                if hasattr(ts, "astimezone"):
+                    att_time = ts.astimezone().strftime("%H:%M")
+                else:
+                    att_time = str(ts)
+            attendance_records[doc.id] = {
+                "status": att.get("status", "Present"),
+                "time": att_time
+            }
 
-        students.append(s)
+        # 4️⃣ Build final response with attendance status
+        result = []
+        for s in students:
+            att = attendance_records.get(s["id"])
+            result.append({
+                "id": s["id"],
+                "name": s["name"],
+                "email": s["email"],
+                "status": att["status"] if att else "Absent",
+                "time": att["time"] if att else "-",
+                "group": s["group"],
+                "program": s["program"],
+                "studentID": s["studentID"],
+                "photo_url": s["photo_url"],
+                "first_name": s["first_name"],
+                "last_name": s["last_name"]
+            })
 
-    if not students:
-        print(f"[INFO] No students found for group_id: {group_id}")
-
-    # 3️⃣ Fetch today's attendance
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    att_ref = db.collection("attendance").document(schedule_id).collection(today_str).stream()
-    attendance_records = {}
-    for doc in att_ref:
-        att = doc.to_dict()
-        att_time = "-"
-        if att.get("timestamp"):
-            ts = att["timestamp"]
-            if hasattr(ts, "astimezone"):
-                att_time = ts.astimezone().strftime("%H:%M")
-            else:
-                att_time = str(ts)
-        attendance_records[doc.id] = {
-            "status": att.get("status", "Present"),
-            "time": att_time
+        # 5️⃣ Add schedule context for face recognition validation
+        response_data = {
+            "students": result,
+            "schedule_context": {
+                "schedule_id": schedule_id,
+                "group_id": group_id,
+                "teacher_id": teacher_id,
+                "total_students": len(result)
+            }
         }
 
-    # 4️⃣ Build response
-    result = []
-    for s in students:
-        att = attendance_records.get(s["id"])
-        result.append({
-            "id": s["id"],
-            "name": s["name"],
-            "email": s.get("email", ""),
-            "status": att["status"] if att else "Absent",
-            "time": att["time"] if att else "-",
-            "group": s.get("groupName", "-"),
-            "program": s.get("programName", "-"),
-            "studentID": s.get("studentID", "")
-        })
-
-    return jsonify(result)
+        return jsonify(response_data)
+        
+    except Exception as e:
+        print(f"[ERROR] api_attendance error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 # ------------------ Teacher manage Absence ------------------
 @app.route("/teacher/manage_absent", methods=["GET", "POST"])
@@ -1874,61 +1914,210 @@ def admin_student_add():
         groups=groups,
         students=students
     )
-# ------------------ Save (Add/Edit) Student ------------------
 
+# ------------------ Admin Student Add/Edit ------------------
+
+STUDENT_PHOTO_FOLDER = os.path.join(app.static_folder, 'student_pics')
+os.makedirs(STUDENT_PHOTO_FOLDER, exist_ok=True)
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
-UPLOAD_FOLDER = os.path.join(app.static_folder, "student_pics")  # guaranteed correct path
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
+print(f"[DEBUG] ALLOWED_EXTENSIONS: {ALLOWED_EXTENSIONS}")
 
 def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    if "." not in filename:
+        print(f"[ALLOWED_FILE] No dot in '{filename}'")
+        return False
+    ext = filename.rsplit(".", 1)[1].lower()
+    print(f"[ALLOWED_FILE] Extension: '{ext}' | Allowed: {ext in ALLOWED_EXTENSIONS}")
+    return ext in ALLOWED_EXTENSIONS
 
-@app.route('/admin/student/save', methods=['POST'])
+def generate_student_id():
+    return "STU" + ''.join(random.choices(string.digits, k=4))  # e.g., STU5829
+# ------------------ Admin Student Add Page ------------------
+
+# ------------------ Admin Student Add Page ------------------
+@app.route("/admin/student_add")
+def admin_student_add():
+    # Fetch all programs
+    programs_docs = db.collection("programs").stream()
+    programs = []
+    for doc in programs_docs:
+        p = doc.to_dict()
+        p["docId"] = doc.id
+        programs.append(p)
+
+    # Fetch all groups
+    groups_docs = db.collection("groups").stream()
+    groups = []
+    for doc in groups_docs:
+        g = doc.to_dict()
+        g["docId"] = doc.id
+        groups.append(g)
+
+    # Fetch all students
+    students_docs = db.collection("users").where("role_type", "==", 1).stream()
+    students = []
+
+    for doc in students_docs:
+        s = doc.to_dict()
+        s["uid"] = doc.id
+
+        # Fetch student role info
+        role_doc = db.collection("users").document(s["uid"]).collection("roles").document("student").get()
+        if role_doc.exists:
+            role = role_doc.to_dict()
+            s["studentID"] = role.get("studentID", "")
+            s["fk_groupcode"] = role.get("fk_groupcode", "")
+            s["program"] = role.get("program", "")
+        else:
+            s["studentID"] = ""
+            s["fk_groupcode"] = ""
+            s["program"] = ""
+
+        # Group name from document ID
+        if s["fk_groupcode"]:
+            group_doc = db.collection("groups").document(s["fk_groupcode"]).get()
+            s["groupName"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
+        else:
+            s["groupName"] = ""
+
+        # Program name
+        if s.get("program"):
+            program_doc = db.collection("programs").document(s["program"]).get()
+            s["programName"] = program_doc.to_dict().get("programName", "") if program_doc.exists else ""
+        else:
+            s["programName"] = ""
+
+        # Include photo
+        s["photo_name"] = s.get("photo_name", "")
+
+        students.append(s)
+
+    return render_template(
+        "admin/A_Student-Add.html",
+        programs=programs,
+        groups=groups,
+        students=students
+    )
+
+# ------------------ Save (Add/Edit) Student ------------------
+@app.route("/admin/student/save", methods=["POST"])
 def admin_student_save():
-    student_id = request.form.get('userId')  # empty if adding new
-    first_name = request.form['first_name']
-    last_name = request.form['last_name']
-    email = request.form['email']
-    password = request.form.get('password')
-    program = request.form['program']
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    # Get user_id and clean it properly
+    user_id = request.form.get("userId")
+    if user_id:
+        user_id = user_id.strip()
+    
+    first_name = request.form.get("first_name", "").strip()
+    last_name = request.form.get("last_name", "").strip()
+    email = request.form.get("email", "").strip()
+    password = request.form.get("password")
+    program = request.form.get("program")
+
+    if not first_name or not last_name or not email or not program:
+        flash("All fields are required.", "error")
+        return redirect(url_for("admin_student_add"))
 
     display_name = f"{first_name} {last_name}"
 
     # Auto-assign first group of the program
-    group_docs = db.collection('groups').where('fk_program', '==', program).limit(1).stream()
     fk_groupcode = ""
+    group_docs = db.collection('groups').where('fk_program', '==', program).limit(1).stream()
     for g in group_docs:
         fk_groupcode = g.id
         break
 
-    photo_file = request.files.get("photo")
-    photo_name = None
+    # ------------------ ADD NEW STUDENT ------------------
+    if not user_id:
+        try:
+            user = auth.create_user(
+                email=email,
+                password=password or "password123",
+                display_name=display_name
+            )
+            user_id = user.uid
+        except exceptions.FirebaseError as e:
+            flash(f"Failed to create student: {str(e)}", "error")
+            return redirect(url_for("admin_student_add"))
 
-    # ---------------- Update Existing Student ----------------
-    if student_id:
-        existing_doc = db.collection('users').document(student_id).get()
-        if photo_file and allowed_file(photo_file.filename):
-            ext = photo_file.filename.rsplit(".", 1)[1].lower()
-            photo_name = f"{student_id}.{ext}"
-            save_path = os.path.join(UPLOAD_FOLDER, photo_name)
-            photo_file.save(save_path)
-            print(f"✅ Photo saved to: {save_path}")
-        else:
-            photo_name = existing_doc.to_dict().get('photo_name', 'default.jpg') if existing_doc.exists else 'default.jpg'
+        # Handle photo for new student
+        photo_file = request.files.get("photo")
+        photo_name = ""
+        if photo_file and photo_file.filename != "":
+            filename = photo_file.filename
+            if "." in filename:
+                ext = filename.rsplit(".", 1)[1].lower()
+                if ext in {"png", "jpg", "jpeg"}:
+                    # Use first name as filename
+                    new_filename = f"{first_name}.{ext}"
+                    group_folder = fk_groupcode or "default"
+                    save_path = os.path.join(STUDENT_PHOTO_FOLDER, group_folder)
+                    os.makedirs(save_path, exist_ok=True)
+                    full_save_path = os.path.join(save_path, new_filename)
+                    photo_file.save(full_save_path)
+                    photo_name = f"{group_folder}/{new_filename}"
+                    print(f"[DEBUG] New student photo saved: {full_save_path}")
+
+        # Save main user doc
+        db.collection('users').document(user_id).set({
+            'user_id': user_id,
+            'first_name': first_name,
+            'last_name': last_name,
+            'name': display_name,
+            'email': email,
+            'active': True,
+            'role_type': 1,
+            'photo_name': photo_name
+        })
+
+        # Save role data
+        db.collection('users').document(user_id).collection('roles').document('student').set({
+            'studentID': generate_student_id(),
+            'fk_groupcode': fk_groupcode,
+            'program': program
+        })
+
+    # ------------------ UPDATE EXISTING STUDENT ------------------
+    else:
+        existing_doc = db.collection('users').document(user_id).get()
+        if not existing_doc.exists:
+            flash("Student not found.", "error")
+            return redirect(url_for("admin_student_add"))
+
+        existing_data = existing_doc.to_dict()
+
+        # Handle photo for existing student
+        photo_file = request.files.get("photo")
+        photo_name = existing_data.get("photo_name", "")
+        if photo_file and photo_file.filename != "":
+            filename = photo_file.filename
+            if "." in filename:
+                ext = filename.rsplit(".", 1)[1].lower()
+                if ext in {"png", "jpg", "jpeg"}:
+                    # Use first name as filename
+                    new_filename = f"{first_name}.{ext}"
+                    group_folder = fk_groupcode or "default"
+                    save_path = os.path.join(STUDENT_PHOTO_FOLDER, group_folder)
+                    os.makedirs(save_path, exist_ok=True)
+                    full_save_path = os.path.join(save_path, new_filename)
+                    photo_file.save(full_save_path)
+                    photo_name = f"{group_folder}/{new_filename}"
+                    print(f"[DEBUG] Updated student photo saved: {full_save_path}")
 
         # Update Firebase Auth
         try:
             if password:
-                auth.update_user(student_id, email=email, display_name=display_name, password=password)
+                auth.update_user(user_id, email=email, display_name=display_name, password=password)
             else:
-                auth.update_user(student_id, email=email, display_name=display_name)
+                auth.update_user(user_id, email=email, display_name=display_name)
         except exceptions.FirebaseError as e:
-            flash(f"Error updating Auth user: {str(e)}", "error")
+            flash(f"Auth update failed: {str(e)}", "error")
             return redirect(url_for("admin_student_add"))
 
-        # Update Firestore
-        student_data = {
+        # Update main user doc
+        db.collection('users').document(user_id).update({
             'first_name': first_name,
             'last_name': last_name,
             'name': display_name,
@@ -1936,49 +2125,25 @@ def admin_student_save():
             'active': True,
             'role_type': 1,
             'photo_name': photo_name
-        }
-        db.collection('users').document(student_id).update(student_data)
-        db.collection('users').document(student_id).collection('roles').document('student').set({
-            'studentID': ''.join(random.choices("0123456789", k=6)),
-            'fk_groupcode': fk_groupcode,
-            'program': program
         })
 
-    # ---------------- Add New Student ----------------
-    else:
-        try:
-            user = auth.create_user(email=email, password=password or "password123", display_name=display_name)
-            student_id = user.uid
-        except exceptions.FirebaseError as e:
-            flash(f"Error creating Auth user: {str(e)}", "error")
-            return redirect(url_for("admin_student_add"))
-
-        if photo_file and allowed_file(photo_file.filename):
-            ext = photo_file.filename.rsplit(".", 1)[1].lower()
-            photo_name = f"{student_id}.{ext}"
-            save_path = os.path.join(UPLOAD_FOLDER, photo_name)
-            photo_file.save(save_path)
-            print(f"✅ Photo saved to: {save_path}")
+        # Update role (preserve studentID)
+        role_ref = db.collection('users').document(user_id).collection('roles').document('student')
+        role_doc = role_ref.get()
+        if role_doc.exists:
+            role_ref.update({
+                'fk_groupcode': fk_groupcode,
+                'program': program
+            })
         else:
-            photo_name = "default.jpg"  # make sure default.jpg exists in static/student_pics
+            role_ref.set({
+                'studentID': generate_student_id(),
+                'fk_groupcode': fk_groupcode,
+                'program': program
+            })
 
-        db.collection('users').document(student_id).set({
-            'user_id': student_id,
-            'first_name': first_name,
-            'last_name': last_name,
-            'name': display_name,
-            'email': email,
-            'active': True,
-            'role_type': 1,
-            'photo_name': photo_name
-        })
-        db.collection('users').document(student_id).collection('roles').document('student').set({
-            'studentID': ''.join(random.choices("0123456789", k=6)),
-            'fk_groupcode': fk_groupcode,
-            'program': program
-        })
-
-    return redirect(url_for('admin_student_add'))
+    flash("Student saved successfully!", "success")
+    return redirect(url_for("admin_student_add"))
 
 # ------------------ Upload Students via CSV ------------------
 @app.route("/admin/student_upload", methods=["POST"])
@@ -1991,8 +2156,12 @@ def admin_student_upload():
         return redirect(url_for("admin_student_add"))
 
     file = request.files["csv_file"]
+    # Only allow CSV files
+    if not file.filename.endswith('.csv'):
+        flash("Only CSV files are allowed", "error")
+        return redirect(url_for("admin_student_add"))
 
-    import csv, io, random, string
+    import csv, io
     stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
     reader = csv.DictReader(stream)
 
@@ -2006,12 +2175,9 @@ def admin_student_upload():
         if not first_name or not last_name or not email or not program:
             continue
 
-        studentID = ''.join(random.choices(string.digits, k=6))
-
-        # Auto-assign first group of the program
-        group_docs = db.collection('groups').where('fk_program', '==', program).limit(1).stream()
-        
+        # Auto-assign group
         fk_groupcode = ""
+        group_docs = db.collection('groups').where('fk_program', '==', program).limit(1).stream()
         for g in group_docs:
             fk_groupcode = g.id
             break
@@ -2023,7 +2189,9 @@ def admin_student_upload():
         except exceptions.FirebaseError:
             continue
 
-        # Save user to Firestore
+        # No photo for CSV upload
+        photo_name = ""
+
         db.collection('users').document(student_id).set({
             'user_id': student_id,
             'first_name': first_name,
@@ -2032,19 +2200,17 @@ def admin_student_upload():
             'email': email,
             'active': True,
             'role_type': 1,
-            'photo_name': f"{student_id}.jpg"
+            'photo_name': photo_name
         })
 
         db.collection('users').document(student_id).collection('roles').document('student').set({
-            'studentID': studentID,
-            'fk_groupcode': fk_groupcode,  # ⚡ group ID
+            'studentID': generate_student_id(),
+            'fk_groupcode': fk_groupcode,
             'program': program
         })
 
     flash("CSV uploaded successfully", "success")
     return redirect(url_for("admin_student_add"))
-
-
 
 # ------------------ API to get student data for edit ------------------
 @app.route("/api/student/<uid>")
@@ -2053,20 +2219,30 @@ def api_student(uid):
     if not s_doc.exists:
         return jsonify({}), 404
     s = s_doc.to_dict()
+    s["uid"] = uid
+
     role_doc = db.collection("users").document(uid).collection("roles").document("student").get()
     if role_doc.exists:
         role = role_doc.to_dict()
         s["studentID"] = role.get("studentID", "")
         s["program"] = role.get("program", "")
-        s["fk_groupcode"] = role.get("fk_groupcode", "")  # ⚡ ID
+        s["fk_groupcode"] = role.get("fk_groupcode", "")
+    else:
+        s["studentID"] = ""
+        s["program"] = ""
+        s["fk_groupcode"] = ""
+
     return jsonify(s)
 
-
-# ------------------ Serve student photos ------------------
-@app.route('/student_pics/<filename>')
+# ------------------ Serve student photos (group-based) ------------------
+@app.route("/student_pics/<path:filename>")
 def student_photo(filename):
-    return send_from_directory('student_pics', filename)
-
+    if ".." in filename or filename.startswith("/"):
+        abort(404)
+    try:
+        return send_from_directory(STUDENT_PHOTO_FOLDER, filename)
+    except FileNotFoundError:
+        abort(404)
 
 # ------------------ Delete Student ------------------
 @app.route("/admin/student/delete/<uid>", methods=["POST"])
