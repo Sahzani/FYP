@@ -93,7 +93,7 @@
       .page-title{font-size:22px;} 
       .send-application-btn{top:10px; right:10px; font-size:12px; padding:6px 12px;} 
       .attendance-table-wrapper { width:100%; }
-      .modal-content{width:95%;}
+      .modal-content{width:95%;} 
     }
   </style>
 </head>
@@ -105,6 +105,7 @@
     <div class="header-content">
       <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
       <a href="{{ url_for('student_profile') }}" class="user-info">
+        <span id="header-user-name">{{ full_name or 'Student' }}</span>
         <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="User Profile">
       </a>
     </div>

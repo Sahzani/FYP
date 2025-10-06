@@ -192,8 +192,7 @@ def home():
     return render_template("combinePage/Login.html")  # login page
 
 
-
-# ------------------student Dashboards ------------------
+# ------------------ Student Dashboard ------------------
 from datetime import datetime
 from flask import render_template, session, redirect, url_for
 
@@ -202,22 +201,30 @@ def student_dashboard():
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
-    uid = session.get("user_id")  # 🔹 now uses user_id instead of user
+    uid = session.get("user_id")
     if not uid:
         return redirect(url_for("home"))
 
-    # Get student data
-    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
-    student_data = None
-    for doc in student_doc:
-        student_data = doc.to_dict()
-        break
-
+    # ✅ Query the 'users' collection (not 'students')
+    user_doc = db.collection("users").document(uid).get()
     full_name = "Student"
-    if student_data:
-        first = student_data.get("firstName", "")
-        last = student_data.get("lastName", "")
-        full_name = f"{first} {last}".strip() or "Student"
+
+    if user_doc.exists:
+        user_data = user_doc.to_dict()
+        # Prefer the pre-built 'name' field if available
+        if "name" in user_data and user_data["name"].strip():
+            full_name = user_data["name"].strip()
+        else:
+            # Fallback to first_name + last_name
+            first = user_data.get("first_name", "").strip()
+            last = user_data.get("last_name", "").strip()
+            if first and last:
+                full_name = f"{first} {last}"
+            elif first:
+                full_name = first
+            elif last:
+                full_name = last
+            # else remains "Student"
 
     # Attendance stats
     attendance_docs = db.collection("attendance").where("student_id", "==", uid).stream()
@@ -288,7 +295,7 @@ def student_dashboard():
         stats_late=late,
         attendance_streak=streak,
         notification_message=notification,
-        today_status=today_status,
+        today_status=today_status,  
         today_note=today_note,
         status_color=status_color,
         status_icon=status_icon
@@ -505,40 +512,77 @@ def admin_dashboard():
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")
 def student_attendance():
-    if 'user' not in session:
-        return redirect(url_for('login'))
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
 
-    user_id = session['user']['uid']
+    uid = session.get("user_id")
+    if not uid:
+        return redirect(url_for("login"))
 
-    attendance_ref = firestore.client().collection('attendance').where('student_id', '==', user_id)
-    docs = attendance_ref.stream()
+    # ✅ Fetch user's full name from Firestore 'users' collection
+    full_name = "Student"
+    user_doc = db.collection("users").document(uid).get()
+    if user_doc.exists:
+        user_data = user_doc.to_dict()
+        full_name = user_data.get("name", "Student").strip() or "Student"
 
-    records = []
-    total = 0
-    present = 0
-    absent = 0
+    try:
+        attendance_ref = db.collection('attendance').where('student_id', '==', uid)
+        docs = attendance_ref.stream()
 
-    for doc in docs:
-        data = doc.to_dict()
-        records.append(data)
+        records = []
+        total = 0
+        present = 0
+        absent = 0
 
-        total += 1
-        if data.get('status') == 'Present':
-            present += 1
-        elif data.get('status') == 'Absent':
-            absent += 1
+        for doc in docs:
+            data = doc.to_dict()
+            
+            # Normalize fields
+            raw_date = data.get('date', '')
+            try:
+                display_date = datetime.strptime(raw_date, '%Y-%m-%d').strftime('%b %d, %Y')
+            except:
+                display_date = raw_date or 'Invalid Date'
 
-    percentage = (present / total * 100) if total > 0 else 0
+            status = data.get('status', 'Unknown')
+            if status == 'Present':
+                present += 1
+            elif status == 'Absent':
+                absent += 1
+            total += 1
 
-    return render_template(
-        "student/S_History.html",
-        records=records,
-        present=present,
-        absent=absent,
-        total=total,
-        percentage=round(percentage, 2)
-    )
+            records.append({
+                'date': display_date,
+                'time': data.get('time', '-'),
+                'subject': data.get('subject', '-'),
+                'status': status,
+                'remarks': data.get('remarks', '-')
+            })
 
+        percentage = round((present / total * 100), 2) if total > 0 else 0
+
+        return render_template(
+            "student/S_History.html",
+            records=records,
+            present=present,
+            absent=absent,
+            total=total,
+            percentage=percentage,
+            full_name=full_name  # ✅ Now uses Firestore name
+        )
+
+    except Exception as e:
+        print(f"Error fetching attendance: {e}")
+        return render_template(
+            "student/S_History.html",
+            records=[],
+            present=0,
+            absent=0,
+            total=0,
+            percentage=0,
+            full_name=full_name  # ✅ Consistent fallback
+        )
 # ------------------ Student Schedule Page ------------------
 @app.route("/student/schedule")
 def student_schedule():
@@ -607,21 +651,11 @@ def student_absentapp():
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
-    user = session.get("user")
-    if not user:
-        return render_template(
-            "student/S_AbsentApp.html",
-            records=[],
-            student=None,
-            full_name=None,
-            uid=None,
-            student_ID=None,
-            group_code=None
-        )
+    uid = session.get("user_id")
+    if not uid:
+        return redirect(url_for("login"))
 
-    uid = user.get("uid")
-
-    # Fetch full user data from "users" collection
+    # ✅ Fetch full user data from "users" collection
     user_doc = db.collection("users").document(uid).get()
     user_data = user_doc.to_dict() if user_doc.exists else None
 
@@ -629,12 +663,14 @@ def student_absentapp():
         flash("User not found.", "danger")
         return redirect(url_for("home"))
 
-    # Combine firstName + lastName
-    first_name = user_data.get("firstName", "")
-    last_name = user_data.get("lastName", "")
-    full_name = f"{first_name} {last_name}".strip()
+    # ✅ Use the existing 'name' field (or fallback to first_name + last_name)
+    full_name = user_data.get("name", "").strip()
+    if not full_name:
+        first_name = user_data.get("first_name", "").strip()
+        last_name = user_data.get("last_name", "").strip()
+        full_name = f"{first_name} {last_name}".strip() or "Student"
 
-   # Student subcollection (roles → student)
+    # Student subcollection (roles → student)
     student_doc = db.collection("users").document(uid).collection("roles").document("student").get()
     student_data = student_doc.to_dict() if student_doc.exists else {}
     student_ID = student_data.get("studentID", "")
@@ -648,11 +684,11 @@ def student_absentapp():
 
     # ---------- Handle POST (create or edit) ----------
     if request.method == "POST":
-        record_id = request.form.get("record_id")  # hidden field for edits
+        record_id = request.form.get("record_id")
         reason = request.form.get("reason")
         start_date = request.form.get("start_date")
         end_date = request.form.get("end_date")
-        file = request.files.get("file")  # get uploaded file
+        file = request.files.get("file")
 
         if not reason or not start_date or not end_date:
             flash("Please fill in all fields.", "danger")
@@ -661,7 +697,7 @@ def student_absentapp():
         data = {
             "student_id": uid,
             "studentID": student_ID,
-            "full_name": full_name,
+            "full_name": full_name,  # ✅ Now uses correct name
             "reason": reason,
             "start_date": start_date,
             "end_date": end_date,
@@ -684,13 +720,11 @@ def student_absentapp():
                 data["file_name"] = filename
                 data["file_type"] = mime_type
                 data["file_data"] = f"data:{mime_type};base64,{file_base64}"
-
-                print(f"[DEBUG] File uploaded: {filename} ({len(file_bytes)} bytes)")
             except Exception as e:
                 print("[ERROR] Failed to encode file:", e)
                 flash("Failed to process uploaded file.", "danger")
 
-            # ---------- Save / Update Firestore ----------
+        # ---------- Save / Update Firestore ----------
         try:
             if record_id:
                 db.collection("absenceRecords").document(record_id).update(data)
@@ -704,8 +738,7 @@ def student_absentapp():
 
         return redirect(url_for("student_absentapp"))
 
-    # ---------- Handle GET ----------
-
+    # ---------- Handle GET (AJAX fetch) ----------
     if request.args.get("fetch") == "1":
         records = []
         try:
@@ -713,9 +746,6 @@ def student_absentapp():
             for doc in records_ref.stream():
                 rec = doc.to_dict()
                 rec["id"] = doc.id
-
-                # Calculate duration
-                from datetime import datetime
                 try:
                     start = datetime.strptime(rec["start_date"], "%Y-%m-%d")
                     end = datetime.strptime(rec["end_date"], "%Y-%m-%d")
@@ -724,21 +754,19 @@ def student_absentapp():
                     rec["end_date"] = end.strftime("%Y-%m-%d")
                 except:
                     rec["duration_days"] = "-"
-
                 rec["status_class"] = rec.get("status", "").lower().replace(" ", "-")
                 records.append(rec)
         except Exception as e:
             print("[ERROR] Failed to fetch records:", e)
         return jsonify({"records": records})
 
-    # Normal GET: render template
+    # ---------- Normal GET: render template ----------
     records = []
     try:
         records_ref = db.collection("absenceRecords").where("student_id", "==", uid)
         for doc in records_ref.stream():
             rec = doc.to_dict()
             rec["id"] = doc.id
-            from datetime import datetime
             try:
                 start = datetime.strptime(rec["start_date"], "%Y-%m-%d")
                 end = datetime.strptime(rec["end_date"], "%Y-%m-%d")
@@ -755,7 +783,7 @@ def student_absentapp():
         "student/S_AbsentApp.html",
         records=records,
         student=student_data,
-        full_name=full_name,
+        full_name=full_name,      # ✅ Correct full name
         uid=uid,
         student_ID=student_ID,
         group_code=group_code
