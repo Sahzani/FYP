@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort,string
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 from datetime import timedelta
@@ -1846,74 +1846,6 @@ def teacher_profile():
     return render_template("teacher/T_Profile.html", profile=profile)
 
 
-
-# Helper to generate a unique studentID
-def generate_student_id():
-    return "STU" + str(random.randint(1000, 9999))  # simple random ID
-# ------------------ Admin Student Add Page ------------------
-@app.route("/admin/student_add")
-def admin_student_add():
-    # Fetch all programs
-    programs_docs = db.collection("programs").stream()
-    programs = []
-    for doc in programs_docs:
-        p = doc.to_dict()
-        p["docId"] = doc.id
-        programs.append(p)
-
-    # Fetch all groups
-    groups_docs = db.collection("groups").stream()
-    groups = []
-    for doc in groups_docs:
-        g = doc.to_dict()
-        g["docId"] = doc.id
-        groups.append(g)
-
-    # Fetch all students
-    students_docs = db.collection("users").where("role_type", "==", 1).stream()
-    students = []
-
-    for doc in students_docs:
-        s = doc.to_dict()
-        s["uid"] = doc.id
-
-        # Fetch student role info
-        role_doc = db.collection("users").document(s["uid"]).collection("roles").document("student").get()
-        if role_doc.exists:
-            role = role_doc.to_dict()
-            s["studentID"] = role.get("studentID", "")
-            s["fk_groupcode"] = role.get("fk_groupcode", "")
-            s["program"] = role.get("program", "")
-        else:
-            s["studentID"] = ""
-            s["fk_groupcode"] = ""
-            s["program"] = ""
-
-        # Group name from document ID
-        if s["fk_groupcode"]:
-            group_doc = db.collection("groups").document(s["fk_groupcode"]).get()
-            s["groupName"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
-        else:
-            s["groupName"] = ""
-
-        # Program name
-        if s.get("program"):
-            program_doc = db.collection("programs").document(s["program"]).get()
-            s["programName"] = program_doc.to_dict().get("programName", "") if program_doc.exists else ""
-        else:
-            s["programName"] = ""
-
-        # Include photo
-        s["photo_name"] = s.get("photo_name", "")
-
-        students.append(s)
-
-    return render_template(
-        "admin/A_Student-Add.html",
-        programs=programs,
-        groups=groups,
-        students=students
-    )
 
 # ------------------ Admin Student Add/Edit ------------------
 
