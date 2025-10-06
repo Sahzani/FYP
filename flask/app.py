@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
-import string
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 from datetime import timedelta
 from werkzeug.utils import secure_filename
 from firebase_admin import auth, exceptions
 import firebase_admin, random
+import string
 from flask import send_from_directory
+from flask_mail import Mail, Message
 import os
 
 
@@ -32,6 +33,16 @@ firebase_admin.initialize_app(cred)
 # Create clients for Firestore
 db = firestore.client()
 
+# Flask-Mail Configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'your_email@gmail.com'  # Replace with your email
+app.config['MAIL_PASSWORD'] = 'your_email_password'   # Replace with your email password
+app.config['MAIL_DEFAULT_SENDER'] = 'your_email@gmail.com'
+
+mail = Mail(app)
 
 # ------------------ Context Processor for Teacher Profile ------------------
 @app.context_processor
@@ -145,6 +156,11 @@ def login():
             return redirect(url_for("home"))
 
         user_data = user_doc.to_dict()
+        if user_data.get('is_first_login', True):  # Check if it's the first login
+            session['user_id'] = uid
+            return redirect(url_for('change_password'))
+
+        user_data = user_doc.to_dict()
         role_type = user_data.get("role_type")
 
         if role_type == 1:
@@ -192,6 +208,38 @@ def login():
 def home():
     return render_template("combinePage/Login.html")  # login page
 
+@app.route("/change_password", methods=["GET", "POST"])
+def change_password():
+    if 'user_id' not in session:
+        return redirect(url_for('home'))  # Redirect to login page if not logged in
+
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+
+        if new_password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return render_template('combinePage/Change password.html')
+
+        try:
+            # Update password in Firebase Auth
+            user_id = session['user_id']
+            auth.update_user(user_id, password=new_password)
+
+            # Update Firestore to mark first login as complete
+            db.collection('users').document(user_id).update({'is_first_login': False})
+
+            # Flash success message
+            flash('Password changed successfully! Please log in with your new password.', 'success')
+
+            # Redirect to login page
+            return redirect(url_for('home'))
+
+        except Exception as e:
+            flash(f'Error changing password: {str(e)}', 'error')
+            return render_template('combinePage/Change password.html')
+
+    return render_template('combinePage/Change password.html')
 
 # ------------------ Student Dashboard ------------------
 from datetime import datetime
@@ -302,6 +350,48 @@ def student_dashboard():
         status_icon=status_icon
     )
     
+# ------------------ Email Function ------------------
+def send_email_to_student(student_email, username, password):
+    """Send an email with login credentials to the student."""
+    try:
+        msg = Message(
+            subject="Your Login Credentials for iAttend",
+            recipients=[student_email],
+        )
+        msg.body = f"""
+        Hello,
+
+        You have been registered on iAttend. Here are your login credentials:
+        Username: {username}
+        Password: {password}
+
+        Please log in and change your password immediately.
+
+        Regards,
+        Admin
+        """
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
+    
+# ------------------ Admin - Send Email with Credentials ------------------
+@app.route('/admin/send_email', methods=['POST'])
+def send_email():
+    """Admin sends an email to the student."""
+    student_email = request.form['email']
+    username = request.form['username']
+    password = request.form['password']
+
+    # Send email
+    if send_email_to_student(student_email, username, password):
+        flash('Email sent successfully!', 'success')
+    else:
+        flash('Failed to send email. Please try again.', 'error')
+
+    return redirect(url_for('admin_dashboard'))
+
 # ------------------ Teacher Dashboard ------------------
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
@@ -1847,6 +1937,74 @@ def teacher_profile():
     return render_template("teacher/T_Profile.html", profile=profile)
 
 
+
+# Helper to generate a unique studentID
+def generate_student_id():
+    return "STU" + str(random.randint(1000, 9999))  # simple random ID
+# ------------------ Admin Student Add Page ------------------
+@app.route("/admin/student_add")
+def admin_student_add():
+    # Fetch all programs
+    programs_docs = db.collection("programs").stream()
+    programs = []
+    for doc in programs_docs:
+        p = doc.to_dict()
+        p["docId"] = doc.id
+        programs.append(p)
+
+    # Fetch all groups
+    groups_docs = db.collection("groups").stream()
+    groups = []
+    for doc in groups_docs:
+        g = doc.to_dict()
+        g["docId"] = doc.id
+        groups.append(g)
+
+    # Fetch all students
+    students_docs = db.collection("users").where("role_type", "==", 1).stream()
+    students = []
+
+    for doc in students_docs:
+        s = doc.to_dict()
+        s["uid"] = doc.id
+
+        # Fetch student role info
+        role_doc = db.collection("users").document(s["uid"]).collection("roles").document("student").get()
+        if role_doc.exists:
+            role = role_doc.to_dict()
+            s["studentID"] = role.get("studentID", "")
+            s["fk_groupcode"] = role.get("fk_groupcode", "")
+            s["program"] = role.get("program", "")
+        else:
+            s["studentID"] = ""
+            s["fk_groupcode"] = ""
+            s["program"] = ""
+
+        # Group name from document ID
+        if s["fk_groupcode"]:
+            group_doc = db.collection("groups").document(s["fk_groupcode"]).get()
+            s["groupName"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
+        else:
+            s["groupName"] = ""
+
+        # Program name
+        if s.get("program"):
+            program_doc = db.collection("programs").document(s["program"]).get()
+            s["programName"] = program_doc.to_dict().get("programName", "") if program_doc.exists else ""
+        else:
+            s["programName"] = ""
+
+        # Include photo
+        s["photo_name"] = s.get("photo_name", "")
+
+        students.append(s)
+
+    return render_template(
+        "admin/A_Student-Add.html",
+        programs=programs,
+        groups=groups,
+        students=students
+    )
 
 # ------------------ Admin Student Add/Edit ------------------
 
