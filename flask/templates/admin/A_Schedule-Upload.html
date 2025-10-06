@@ -15,11 +15,71 @@ body { font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg,
 header {
   position: fixed; top:0; left:0; right:0; height:60px; background:#fff;
   box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center;
-  padding-left:20px; font-family:'Nunito', sans-serif; font-weight:700;
+  padding:0 20px; font-family:'Nunito', sans-serif; font-weight:700;
   font-size:22px; color:#212529; z-index:1002;
+  justify-content: space-between;
 }
 #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
-.header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
+.header-content { display:flex; align-items:center; }
+.header-title { flex:1; text-align:center; }
+
+/* Profile Dropdown */
+.profile-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.profile-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #4154F1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  margin-left: 15px;
+}
+.profile-info {
+  margin-left: 10px;
+  text-align: right;
+}
+.profile-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #212529;
+}
+.profile-role {
+  font-size: 12px;
+  color: #6c757d;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  min-width: 200px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  z-index: 1003;
+  overflow: hidden;
+}
+.dropdown-content a {
+  display: block;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: #212529;
+  transition: background 0.2s;
+}
+.dropdown-content a:hover {
+  background: #f8f9fa;
+}
+.dropdown-content.show {
+  display: block;
+}
 
 /* ========== SIDEBAR ========== */
 .sidebar {
@@ -69,6 +129,7 @@ th{background:#f8f7ff; font-weight:600;}
   .sidebar { left:-260px; }
   .sidebar.active { left:0; }
   .main-content { margin-left:0 !important; }
+  .profile-info { display: none; }
 }
 
         /* ==== Breadcrumb ==== */
@@ -98,7 +159,23 @@ th{background:#f8f7ff; font-weight:600;}
 
 <header>
   <span id="menu-toggle">&#9776;</span>
-  <div class="header-content">iAttend Admin</div>
+  <div class="header-content">
+    <div class="header-title">iAttend Admin</div>
+  </div>
+  
+  <!-- Profile Dropdown -->
+  <div class="profile-dropdown" id="profileDropdown">
+    <div class="profile-icon">A</div>
+    <div class="profile-info">
+      <div class="profile-name">admin</div>
+      <div class="profile-role">Administrator</div>
+    </div>
+    <div class="dropdown-content" id="profileMenu">
+      <a href="{{ url_for('admin_profile') }}"><i class="fas fa-user"></i> Profile</a>
+      <a href="{{ url_for('admin_settings') }}"><i class="fas fa-cog"></i> Settings</a>
+      <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </div>
 </header>
 
 <!-- ========== SIDEBAR ========== -->
@@ -145,7 +222,7 @@ th{background:#f8f7ff; font-weight:600;}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>
     <a class="sidebar-link {% if request.endpoint == 'admin_summary' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
-    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    <!-- Removed Logout from sidebar since it's in profile dropdown -->
   </div>
 </div>
 
@@ -338,6 +415,19 @@ document.querySelectorAll('.sidebar-dropdown .dropdown-toggle').forEach(drop => 
   });
 });
 
+// Profile dropdown toggle
+document.getElementById('profileDropdown').addEventListener('click', function(e) {
+  e.stopPropagation();
+  document.getElementById('profileMenu').classList.toggle('show');
+});
+
+// Close dropdown when clicking outside
+window.addEventListener('click', function(e) {
+  if (!document.getElementById('profileDropdown').contains(e.target)) {
+    document.getElementById('profileMenu').classList.remove('show');
+  }
+});
+
 // DOM elements
 const teacherSelect = document.getElementById('fk_teacher');
 const programNameInput = document.getElementById('fk_program_name');
@@ -417,9 +507,22 @@ teacherSelect.addEventListener('change', () => {
         populateSelect(moduleSelect, modules, 'docId', 'moduleName');
     }
 });
+
+// Tab switching function
+function switchTab(tabName) {
+  // Update active tab
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  // Show/hide content
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.style.display = 'none';
+  });
+  document.getElementById(tabName).style.display = 'block';
+}
 </script>
-
-
 
 </body>
 </html>
