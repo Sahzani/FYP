@@ -10,7 +10,6 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
   <style>
-    /* Reset & Body */
     * {
       margin: 0;
       padding: 0;
@@ -24,7 +23,6 @@
       background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
     }
 
-    /* Header */
     header {
       position: fixed;
       top: 0;
@@ -56,7 +54,6 @@
       object-fit: cover;
     }
 
-    /* Sidebar */
     .sidebar {
       position: fixed;
       top: 60px;
@@ -106,7 +103,6 @@
       font-weight: 600;
     }
 
-    /* Main content */
     .main-content {
       margin-left: 260px;
       padding: 100px 30px 30px;
@@ -122,7 +118,6 @@
       margin-bottom: 10px;
     }
 
-    /* Cards */
     .card {
       background: #fff;
       padding: 20px;
@@ -131,7 +126,6 @@
       margin-bottom: 20px;
     }
 
-    /* Attendance Table */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -172,7 +166,7 @@
     <a href="#">iAttend</a>
     <a href="#" class="user-info">
       <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
+      <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher">
     </a>
   </header>
 
@@ -195,30 +189,26 @@
 
     <div class="sidebar-section">
       <div class="sidebar-section-title">Manage</div>
-      <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}"><i class="fas fa-calendar"></i><span>Class
-          Schedule</span></a>
-      <a class="sidebar-link" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules &
-          Rooms</span></a>
-      <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i
-          class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
-          <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}"><i class="fas fa-address-card"></i><span>Individual Attendance</span></a>
+      <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}"><i class="fas fa-calendar"></i><span>Class Schedule</span></a>
+      <a class="sidebar-link" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Rooms</span></a>
+      <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
+      <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}"><i class="fas fa-address-card"></i><span>Individual Attendance</span></a>
     </div>
 
     {% if profile.is_gc %}
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Group Coordinator</div>
-    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
-      <i class="fas fa-users-cog"></i><span>Manage Group</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
-      <i class="fas fa-file-alt"></i><span>Group Report</span>
-    </a>
-  </div>
-  {% endif %}
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Group Coordinator</div>
+      <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
+        <i class="fas fa-users-cog"></i><span>Manage Group</span>
+      </a>
+      <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
+        <i class="fas fa-file-alt"></i><span>Group Report</span>
+      </a>
+    </div>
+    {% endif %}
 
     <div class="sidebar-section">
-      <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i
-          class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+      <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
     </div>
   </div>
 
@@ -263,6 +253,7 @@
               <th>Status</th>
               <th>Group</th>
               <th>Program</th>
+              <th>Module</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -281,8 +272,10 @@
     const attendanceTable = document.getElementById('attendance-table').querySelector("tbody");
     const WEBCAM_URL = "{{ webcam_url }}";
 
+    let scheduleId = "";
+
     startBtn.addEventListener('click', () => {
-      const scheduleId = scheduleSelect.value.trim();
+      scheduleId = scheduleSelect.value.trim();
       if (!scheduleId) { alert("Please select a class first!"); return; }
       fetch(`${WEBCAM_URL}/start_camera`, {
         method: "POST",
@@ -307,22 +300,63 @@
         .then(res => res.json())
         .then(data => {
           attendanceTable.innerHTML = "";
-          data.forEach(student => {
+          if (!data.students || data.students.length === 0) {
+            attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">No students found</td></tr>`;
+            return;
+          }
+          data.students.forEach(student => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-
-          <td>${student.name}</td>
-          <td>${student.email || "-"}</td>
-          <td>${student.time || "-"}</td>
-          <td class="status-${student.status}">${student.status}</td>
-          <td>${student.group || "-"}</td>
-          <td>${student.program || "-"}</td>
-        `;
+              <td>${student.name}</td>
+              <td>${student.email || "-"}</td>
+              <td>${student.time || "-"}</td>
+              <td>
+                <select class="status-select" data-student-id="${student.id}" data-schedule-id="${scheduleId}">
+                  <option value="Present" ${student.status === "Present" ? "selected" : ""}>Present</option>
+                  <option value="Absent" ${student.status === "Absent" ? "selected" : ""}>Absent</option>
+                  <option value="Late" ${student.status === "Late" ? "selected" : ""}>Late</option>
+                </select>
+              </td>
+              <td>${student.group || "-"}</td>
+              <td>${student.program || "-"}</td>
+              <td>${student.module || "-"}</td>
+            `;
             attendanceTable.appendChild(tr);
           });
         })
-        .catch(err => console.error("Failed to fetch attendance:", err));
+        .catch(err => {
+          console.error("Failed to fetch attendance:", err);
+          attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
+        });
     }
+
+    // Auto-save when status changes
+    document.addEventListener("change", function(e) {
+      if (e.target.classList.contains("status-select")) {
+        const studentId = e.target.dataset.studentId;
+        const scheduleId = e.target.dataset.scheduleId;
+        const status = e.target.value;
+
+        fetch("/mark_attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            schedule_id: scheduleId,
+            student_id: studentId,
+            status: status
+          })
+        })
+        .then(res => {
+          if (res.ok) {
+            e.target.style.backgroundColor = "#d1fae5";
+            setTimeout(() => e.target.style.backgroundColor = "", 500);
+          } else {
+            alert("Failed to update attendance");
+          }
+        })
+        .catch(err => console.error("Save failed:", err));
+      }
+    });
   </script>
 
 </body>

@@ -117,6 +117,7 @@ td.status-Absent { color: red; font-weight:600; }
           <th>Email</th>
           <th>Group</th>
           <th>Program</th>
+          <th>Modules</th>
           <th>Time</th>
           <th>Status</th>
         </tr>
@@ -162,6 +163,7 @@ async function loadAttendance() {
         <td>${rec.email || '-'}</td>
         <td>${rec.group || '-'}</td>
         <td>${rec.program || '-'}</td>
+        <td>${rec.module || '-'}</td>
         <td>${rec.time || '-'}</td>
         <td class="status-${rec.status}">${rec.status}</td>
       </tr>
