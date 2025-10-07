@@ -508,6 +508,23 @@ def admin_dashboard():
         return render_template("admin/A_Homepage.html")
     return redirect(url_for("home"))
 
+@app.route("/admin/profile")
+def admin_profile():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+    
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+    
+    user_doc = db.collection("users").document(user_id).get()
+    if not user_doc.exists:
+        return redirect(url_for("login"))
+    
+    user_data = user_doc.to_dict()
+    user_data["docId"] = user_doc.id
+
+    return render_template("admin/A_Profile.html", user=user_data)
 
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")
@@ -2505,6 +2522,12 @@ def admin_schedules():
     if session.get("role") != "admin":
         return redirect(url_for("home"))
 
+    # Get current admin from session (assuming you store user data there)
+    current_admin = {
+        "firstName": session.get("firstName", ""),
+        "lastName": session.get("lastName", "")
+    }
+
     # Fetch supporting data
     programs = {p.id: {**p.to_dict(), "docId": p.id} for p in db.collection("programs").stream()}
     groups = {g.id: {**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream()}
@@ -2617,7 +2640,8 @@ def admin_schedules():
         teachers=teachers,
         schedules=schedules,
         teacher_assignments=teacher_assignments,
-        mlmodules=mlmodules
+        mlmodules=mlmodules,
+        current_admin=current_admin 
     )
 
 # ------------------ Save/Add/Edit Schedule ------------------
