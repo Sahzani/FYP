@@ -37,6 +37,10 @@ header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; b
 .main-content { margin-left:260px; padding:100px 30px 30px; transition:margin-left 0.3s ease; font-family:'Poppins',sans-serif; }
 .sidebar.collapsed ~ .main-content { margin-left:80px; }
 
+.breadcrumb { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
+.breadcrumb .section { color:#989797; }
+.breadcrumb .current { color:#444; }
+
 .card { background:#fff; padding:1rem; border-radius:1rem; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:1.5rem; }
 .table-scroll { overflow-x:auto; }
 th, td { padding:10px; font-size:14px; border-bottom:1px solid #ddd; }
@@ -88,7 +92,7 @@ canvas { max-height:250px; }
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}">
       <i class="fas fa-calendar-alt"></i><span>Absences Application</span>
     </a>
-        <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}">
+    <a class="sidebar-link active" href="{{ url_for('teacher_individual_summary') }}">
       <i class="fas fa-address-card"></i><span>Individual Attendance</span>
     </a>
   </div>
@@ -114,7 +118,14 @@ canvas { max-height:250px; }
 
 <!-- Main -->
 <div class="main-content">
-  <h1 class="text-2xl font-bold mb-6">Monthly Attendance Summary</h1>
+  <!-- Page Title + Breadcrumb -->
+  <h2 style="font-family:'Poppins',sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px;">
+    Monthly Attendance Summary
+  </h2>
+  <div class="breadcrumb">
+    <span class="section">Dashboard</span> / 
+    <span class="current">Individual Attendance</span>
+  </div>
 
   <!-- Search Form -->
   <div class="card">
