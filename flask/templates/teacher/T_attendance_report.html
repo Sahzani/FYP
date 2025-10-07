@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iAttend - Attendance Report</title>
+  <!-- ✅ Fixed CDN URLs (no extra spaces) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
 
   <style>
     * {
@@ -142,47 +142,33 @@
       background: #f0f0f0;
     }
 
-    td.status-Present {
-      color: green;
-      font-weight: 600;
-    }
-
-    td.status-Late {
-      color: orange;
-      font-weight: 600;
-    }
-
-    td.status-Absent {
-      color: red;
-      font-weight: 600;
-    }
+    .status-Present { color: green; font-weight: 600; }
+    .status-Late { color: orange; font-weight: 600; }
+    .status-Absent { color: red; font-weight: 600; }
   </style>
 </head>
 
 <body>
-
   <!-- Header -->
   <header>
     <a href="#">iAttend</a>
     <a href="#" class="user-info">
       <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher">
+      <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher" />
     </a>
   </header>
 
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-section">
-      <a class="sidebar-link {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}"
-        href="{{ url_for('teacher_dashboard') }}">
+      <a class="sidebar-link {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}" href="{{ url_for('teacher_dashboard') }}">
         <i class="fas fa-home"></i><span>Dashboard</span>
       </a>
     </div>
 
     <div class="sidebar-section">
       <div class="sidebar-section-title">Reports</div>
-      <a class="sidebar-link {% if request.endpoint == 'teacher_attendance' %}active{% endif %}"
-        href="{{ url_for('teacher_attendance') }}">
+      <a class="sidebar-link {% if request.endpoint == 'teacher_attendance' %}active{% endif %}" href="{{ url_for('teacher_attendance') }}">
         <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
       </a>
     </div>
@@ -214,28 +200,57 @@
 
   <!-- Main Content -->
   <div class="main-content">
-
-    <!-- Select Class -->
+    <!-- Enhanced Filter Section -->
     <div class="card">
       <h2>Select Class</h2>
-      <form id="attendance-form" class="flex flex-wrap gap-3 items-center">
-        <label for="schedule">Class:</label>
-        <select id="schedule" class="border rounded-md p-2">
-          <option value="">-- Choose --</option>
-          {% for s in schedules %}
-          <option value="{{ s['docId'] }}">{{ s.get('programName','-') }} | {{ s.get('groupName','-') }} | {{
-            s.get('moduleName','-') }} | {{ s.get('day','-') }}</option>
-          {% endfor %}
-        </select>
-        <button type="button" id="startCamera" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Start Camera</button>
-      </form>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Program -->
+        <div>
+          <label class="block text-sm font-medium mb-1">Program</label>
+          <select id="filter-program" class="w-full border rounded-md p-2">
+            <option value="">All Programs</option>
+            {% for p in programs %}
+            <option value="{{ p }}">{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Group -->
+        <div>
+          <label class="block text-sm font-medium mb-1">Group</label>
+          <select id="filter-group" class="w-full border rounded-md p-2" disabled>
+            <option value="">All Groups</option>
+          </select>
+        </div>
+
+        <!-- Module -->
+        <div>
+          <label class="block text-sm font-medium mb-1">Module</label>
+          <select id="filter-module" class="w-full border rounded-md p-2" disabled>
+            <option value="">All Modules</option>
+          </select>
+        </div>
+
+        <!-- Day -->
+        <div>
+          <label class="block text-sm font-medium mb-1">Day</label>
+          <select id="filter-day" class="w-full border rounded-md p-2" disabled>
+            <option value="">All Days</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <button type="button" id="apply-filters" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Apply Filters</button>
+        <button type="button" id="reset-filters" class="ml-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg">Reset</button>
+      </div>
     </div>
 
     <!-- Live Camera Feed -->
-    <div class="card" id="video-container" style="display:none;">
+    <div class="card" id="video-container" style="display: none;">
       <h2>Live Camera</h2>
       <div class="flex justify-center">
-        <img id="webcam-feed" src="" alt="Camera Feed" class="rounded-md border max-w-md w-full">
+        <img id="webcam-feed" src="" alt="Camera Feed" class="rounded-md border max-w-md w-full" />
       </div>
       <button id="stopCamera" class="px-4 py-2 bg-red-600 text-white rounded-lg mt-3">Stop Camera</button>
     </div>
@@ -260,23 +275,99 @@
         </table>
       </div>
     </div>
-
   </div>
 
-  <script>
-    const startBtn = document.getElementById('startCamera');
-    const stopBtn = document.getElementById('stopCamera');
-    const videoContainer = document.getElementById('video-container');
-    const webcamFeed = document.getElementById('webcam-feed');
-    const scheduleSelect = document.getElementById('schedule');
-    const attendanceTable = document.getElementById('attendance-table').querySelector("tbody");
-    const WEBCAM_URL = "{{ webcam_url }}";
+  <!-- ✅ Safe JSON data -->
+  <script id="schedules-data" type="application/json">{{ schedules | tojson }}</script>
 
+  <script>
+    const WEBCAM_URL = "{{ webcam_url }}";
+    const allSchedules = JSON.parse(document.getElementById('schedules-data').textContent);
     let scheduleId = "";
 
-    startBtn.addEventListener('click', () => {
-      scheduleId = scheduleSelect.value.trim();
-      if (!scheduleId) { alert("Please select a class first!"); return; }
+    const videoContainer = document.getElementById('video-container');
+    const webcamFeed = document.getElementById('webcam-feed');
+    const attendanceTable = document.querySelector('#attendance-table tbody');
+
+    // ✅ Fixed populateDropdown: preserves selection
+    function populateDropdown(id, values) {
+      const select = document.getElementById(id);
+      const current = select.value;
+
+      select.innerHTML = '<option value="">All</option>';
+      const uniqueValues = [...new Set(values)].filter(v => v && v !== "-").sort();
+      uniqueValues.forEach(val => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        select.appendChild(opt);
+      });
+
+      if (uniqueValues.includes(current)) {
+        select.value = current;
+      } else {
+        select.value = "";
+      }
+    }
+
+    function updateFilters() {
+      const program = document.getElementById('filter-program').value;
+      const group = document.getElementById('filter-group').value;
+      const module = document.getElementById('filter-module').value;
+      const day = document.getElementById('filter-day').value;
+
+      let filtered = allSchedules;
+      if (program) filtered = filtered.filter(s => s.programName === program);
+      if (group) filtered = filtered.filter(s => s.groupName === group);
+      if (module) filtered = filtered.filter(s => s.moduleName === module);
+      if (day) filtered = filtered.filter(s => s.day === day);
+
+      const groups = filtered.map(s => s.groupName).filter(Boolean);
+      const modules = filtered.map(s => s.moduleName).filter(Boolean);
+      const days = filtered.map(s => s.day).filter(Boolean);
+
+      populateDropdown('filter-group', groups);
+      populateDropdown('filter-module', modules);
+      populateDropdown('filter-day', days);
+
+      document.getElementById('filter-group').disabled = groups.length === 0;
+      document.getElementById('filter-module').disabled = modules.length === 0;
+      document.getElementById('filter-day').disabled = days.length === 0;
+
+      window.filteredSchedules = filtered;
+    }
+
+    document.getElementById('filter-program').addEventListener('change', updateFilters);
+    document.getElementById('filter-group').addEventListener('change', updateFilters);
+    document.getElementById('filter-module').addEventListener('change', updateFilters);
+    document.getElementById('filter-day').addEventListener('change', updateFilters);
+
+    document.getElementById('apply-filters').addEventListener('click', () => {
+      const filtered = window.filteredSchedules || allSchedules;
+      if (filtered.length === 0) {
+        alert("No classes match your filters.");
+        return;
+      }
+      if (filtered.length === 1) {
+        scheduleId = filtered[0].docId;
+        startCameraWithSchedule(scheduleId);
+      } else {
+        alert("Multiple classes match. Please refine filters.");
+      }
+    });
+
+    document.getElementById('reset-filters').addEventListener('click', () => {
+      document.getElementById('filter-program').value = '';
+      document.getElementById('filter-group').value = '';
+      document.getElementById('filter-module').value = '';
+      document.getElementById('filter-day').value = '';
+      updateFilters();
+    });
+
+    updateFilters(); // Initialize
+
+    // === CAMERA & ATTENDANCE ===
+    function startCameraWithSchedule(scheduleId) {
       fetch(`${WEBCAM_URL}/start_camera`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -286,9 +377,9 @@
         webcamFeed.src = `${WEBCAM_URL}/video_feed`;
         fetchAttendance(scheduleId);
       }).catch(err => console.error("Failed to start camera:", err));
-    });
+    }
 
-    stopBtn.addEventListener('click', () => {
+    document.getElementById('stopCamera').addEventListener('click', () => {
       fetch(`${WEBCAM_URL}/stop_camera`).then(() => {
         videoContainer.style.display = "none";
         webcamFeed.src = "";
@@ -305,9 +396,10 @@
             return;
           }
           data.students.forEach(student => {
+            const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
             const tr = document.createElement("tr");
             tr.innerHTML = `
-              <td>${student.name}</td>
+              <td>${student.name || "Unknown Student"}</td>
               <td>${student.email || "-"}</td>
               <td>${student.time || "-"}</td>
               <td>
@@ -319,7 +411,7 @@
               </td>
               <td>${student.group || "-"}</td>
               <td>${student.program || "-"}</td>
-              <td>${student.module || "-"}</td>
+              <td>${moduleName}</td>
             `;
             attendanceTable.appendChild(tr);
           });
@@ -330,7 +422,6 @@
         });
     }
 
-    // Auto-save when status changes
     document.addEventListener("change", function(e) {
       if (e.target.classList.contains("status-select")) {
         const studentId = e.target.dataset.studentId;
@@ -358,7 +449,5 @@
       }
     });
   </script>
-
 </body>
-
 </html>

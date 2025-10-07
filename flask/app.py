@@ -10,6 +10,7 @@ from flask import send_from_directory
 import os
 
 
+
 # For webcam page
 camera_process = None
 WEBCAM_PATH = r"C:\Users\Acer\Desktop\FYP\flask\camera\webcam.py"
@@ -1274,14 +1275,33 @@ def mark_present():
     if not sched_doc.exists:
         return jsonify({"error": "Schedule not found"}), 404
     sched = sched_doc.to_dict()
-    module_id = sched.get("fk_module")
-    group_id = sched.get("fk_group")
-    program_id = sched.get("fk_program")
 
-    # Fetch student role data
-    role_doc = db.collection("users").document(student_id).collection("roles").document("student").get()
-    if not role_doc.exists:
-        return jsonify({"error": "Student role not found"}), 404
+    # Get IDs
+    module_id = sched.get("fk_module", "").strip()
+    group_id = sched.get("fk_group", "").strip()
+    program_id = sched.get("fk_program", "").strip()
+    day = sched.get("day", "Unknown")
+
+    # 🔥 Fetch NAMES (not just IDs)
+    module_name = "Unknown Module"
+    if module_id:
+        module_doc = db.collection("mlmodule").document(module_id).get()
+        if module_doc.exists:
+            module_name = module_doc.to_dict().get("moduleName", "Unknown Module")
+
+    group_name = group_id  # or fetch from groups if you store group names separately
+    program_name = "Unknown Program"
+    if program_id:
+        prog_doc = db.collection("programs").document(program_id).get()
+        if prog_doc.exists:
+            program_name = prog_doc.to_dict().get("programName", "Unknown Program")
+
+    # Optional: validate student
+    student_doc = db.collection("users").document(student_id).get()
+    if not student_doc.exists:
+        return jsonify({"error": "Student not found"}), 404
+    student_data = student_doc.to_dict()
+    student_name = f"{student_data.get('first_name', '')} {student_data.get('last_name', '')}".strip() or "Unknown Student"
 
     today_str = datetime.now().strftime("%Y-%m-%d")
 
@@ -1291,20 +1311,23 @@ def mark_present():
         "status": "Present",
         "timestamp": datetime.now(),
         "date": today_str,
-        "group": group_id,
-        "program": program_id,
-        "module": module_id  # ✅ STORE MODULE
+        "group": group_name,        # ✅ Human-readable
+        "program": program_name,    # ✅ Human-readable
+        "module": module_name,      # ✅ Human-readable (not ID!)
+        "name": student_name,
+        "day": day
     }
 
-    # Save in hierarchical structure: attendance/<schedule_id>/<date>/<student_id>
-    db.collection("attendance") \
-      .document(schedule_id) \
-      .collection(today_str) \
-      .document(student_id) \
-      .set(att_data)
-
-    return jsonify({"success": True})
-
+    try:
+        db.collection("attendance") \
+          .document(schedule_id) \
+          .collection(today_str) \
+          .document(student_id) \
+          .set(att_data)
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"[ERROR] Save attendance failed: {e}")
+        return jsonify({"error": "Failed to save"}), 500
 
 #------------------- Teacher Attendance Report ------------------
 
@@ -1313,17 +1336,15 @@ from datetime import datetime
 
 @app.route("/teacher/attendance")
 def teacher_attendance():
-    # Only teachers allowed
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
     teacher_id = str(session.get("user_id")).strip()
 
-    # ------------------ Fetch teacher profile ------------------
+    # Fetch teacher profile
     teacher_doc = db.collection("users").document(teacher_id).get()
     if teacher_doc.exists:
         profile = teacher_doc.to_dict()
-        # Ensure keys exist
         profile.setdefault("firstName", "Teacher")
         profile.setdefault("lastName", "")
         profile.setdefault("photo_url", "https://placehold.co/40x40/b8c6ff/ffffff?text=T")
@@ -1336,42 +1357,65 @@ def teacher_attendance():
             "is_gc": False
         }
 
-    # ------------------ Fetch schedules for this teacher ------------------
+    # 🔥 Fetch all supporting collections FIRST
+    groups = {g.id: g.to_dict() for g in db.collection("groups").stream()}
+    programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
+    mlmodules = {m.id: m.to_dict() for m in db.collection("mlmodule").stream()}
+
+    # Fetch schedules
     schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
     schedules = []
     for doc in schedules_docs:
         s = doc.to_dict()
         s['docId'] = doc.id
 
-        # Group name
-        group_doc = db.collection("groups").document(s.get("fk_group", "")).get()
-        s["groupName"] = group_doc.to_dict().get("groupName") if group_doc.exists else "-"
+        # === Group ===
+        raw_group = s.get('fk_group', '').strip()
+        group_id = raw_group.split('/')[-1] if '/' in raw_group else raw_group
+        group = groups.get(group_id, {})
+        s['groupName'] = group.get('groupName') or group.get('groupCode', 'Unknown Group')
 
-        # Program name
-        program_doc = db.collection("programs").document(s.get("fk_program", "")).get()
-        s["programName"] = program_doc.to_dict().get("programName") if program_doc.exists else "-"
+        # === Program ===
+        raw_program = s.get('fk_program', '').strip()
+        program_id = raw_program.split('/')[-1] if '/' in raw_program else raw_program
+        program = programs.get(program_id, {})
+        s['programName'] = program.get('programName', 'Unknown Program')
 
-        # Module name
-        module_doc = db.collection("modules").document(s.get("fk_module", "")).get()
-        s["moduleName"] = module_doc.to_dict().get("moduleName") if module_doc.exists else "-"
+        # === Module ===
+        raw_module = s.get('fk_module', '').strip()
+        module_id = raw_module.split('/')[-1] if '/' in raw_module else raw_module
+        module = mlmodules.get(module_id, {})
+        s['moduleName'] = module.get('moduleName', 'Unknown Module')
 
+        s['day'] = s.get('day', 'Unknown')
         schedules.append(s)
+        print("=== SCHEDULES DEBUG ===")
+        for s in schedules:
+            print(f"Program: {s.get('programName')}, Group: {s.get('groupName')}, Module: {s.get('moduleName')}, Day: {s.get('day')}")
+            
+    # ✅ Now extract unique lists for filters
+    programs_list = sorted({s["programName"] for s in schedules if s["programName"] != "Unknown Program"})
+    groups_list = sorted({s["groupName"] for s in schedules if s["groupName"] != "Unknown Group"})
+    modules_list = sorted({s["moduleName"] for s in schedules if s["moduleName"] != "Unknown Module"})
+    days_list = sorted({s["day"] for s in schedules if s["day"] != "Unknown"})
 
-    # ------------------ Render template ------------------
     return render_template(
         "teacher/T_attendance_report.html",
         profile=profile,
         schedules=schedules,
+        programs=programs_list,
+        groups=groups_list,
+        modules=modules_list,
+        days=days_list,
         webcam_url="http://127.0.0.1:5001"
     )
-
 #------------------ API to get attendance data ------------------
 from flask import jsonify
 from datetime import datetime
 
 @app.route("/api/attendance/<schedule_id>")
 def api_attendance(schedule_id):
-    """Return live attendance for all students in a schedule, optimized for face detection."""
+    """Return live attendance for all students in a schedule."""
     
     try:
         # 1️⃣ Fetch schedule
@@ -1379,14 +1423,16 @@ def api_attendance(schedule_id):
         if not sched_doc.exists:
             return jsonify({"error": "Schedule not found"}), 404
         sched = sched_doc.to_dict()
+        
         group_id = sched.get("fk_group", "").strip()
         teacher_id = sched.get("fk_teacher", "").strip()
         module_id = sched.get("fk_module", "").strip()
+        day = sched.get("day", "Unknown")  # ✅ Get day directly
         
         if not group_id:
             return jsonify({"error": "Invalid schedule group"}), 400
 
-        # 🔥 FIX: Use 'mlmodule' collection (not 'modules')
+        # 🔥 FIX: Use 'mlmodule' collection
         module_name = "-"
         if module_id:
             module_doc = db.collection("mlmodule").document(module_id).get()
@@ -1412,9 +1458,10 @@ def api_attendance(schedule_id):
                 continue
                 
             role_data = role_doc.to_dict()
-            student_group = role_data.get("fk_groupcode", "").strip()
+            student_group = role_data.get("fk_groupcode", "").strip()  # ← This is the ID!
             
-            if student_group != group_id:
+            # ✅ Compare group ID (not full path) — matches your data!
+            if student_group != group_id:  # ✅ They are both IDs now!
                 continue
 
             student_name = f"{first_name} {last_name}".strip()
@@ -1437,9 +1484,9 @@ def api_attendance(schedule_id):
                 "name": student_name,
                 "email": student_email,
                 "studentID": studentID,
-                "group": group_id,
+                "group": group_id,          # ✅ Save group ID (for consistency)
                 "program": program_name,
-                "module": module_name,  # ✅ Include module name
+                "module": module_name,      # ✅ Include module name
                 "photo_url": photo_url,
                 "first_name": first_name,
                 "last_name": last_name
@@ -1490,7 +1537,8 @@ def api_attendance(schedule_id):
                 "module_id": module_id,
                 "module_name": module_name,
                 "teacher_id": teacher_id,
-                "total_students": len(result)
+                "total_students": len(result),
+                "day": day  # ✅ Add day to context
             }
         }
 
