@@ -53,6 +53,7 @@ header {
   font-size: 26px;
 }
 
+/* User profile hover effect */
 header a.user-info {
   display: flex;
   align-items: center;
@@ -60,6 +61,18 @@ header a.user-info {
   text-decoration: none;
   color: #444;
   font-weight: 600;
+  transition: all 0.2s ease;
+  padding: 0;               /* no padding normally */
+  border-radius: 0;         /* no rounded corners normally */
+  background: transparent;  /* transparent normally */
+  box-shadow: none;         /* no shadow normally */
+}
+
+header a.user-info:hover {
+  padding: 4px 12px;        
+  border-radius: 12px;      
+  background: #f8f1e5;      
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 header a.user-info img {
