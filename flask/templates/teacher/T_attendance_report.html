@@ -4,158 +4,221 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iAttend - Attendance Report</title>
-  <!-- ✅ Fixed CDN URLs (no extra spaces) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
 
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-    html,
-    body {
-      height: 100%;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-    }
+html, body {
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(180deg, #f7ecd7 0%, #f8f1e5 35%, #fbfaf7 100%);
+  overflow-x: hidden;
+}
 
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: #fff;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      z-index: 1000;
-    }
+/* Header */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 1000;
+}
 
-    header a.user-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: #444;
-      font-weight: 600;
-    }
+#menu-toggle {
+  font-size: 28px;
+  margin-right: 15px;
+  cursor: pointer;
+}
 
-    header a.user-info img {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
 
-    .sidebar {
-      position: fixed;
-      top: 60px;
-      left: 0;
-      width: 240px;
-      height: calc(100% - 60px);
-      background: #FFEED3;
-      padding: 15px 0;
-      overflow: hidden;
-      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08);
-      transition: width 0.3s ease;
-    }
+.header-content a.title {
+  text-decoration: none;
+  color: #444;
+  font-weight: 700;
+  font-size: 26px;
+}
 
-    .sidebar-section {
-      margin-bottom: 25px;
-    }
+header a.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #444;
+  font-weight: 600;
+}
 
-    .sidebar-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #5D5FEF;
-      margin-bottom: 10px;
-      padding-left: 10px;
-    }
+header a.user-info img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 15px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 500;
-      color: #1A237E;
-      transition: all 0.2s;
-    }
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 250px;
+  height: calc(100% - 60px);
+  background: #f8f1e5;
+  padding: 15px 0;
+  box-shadow: 2px 0 15px rgba(0,0,0,0.08);
+  border-top-right-radius: 12px;
+  transition: all 0.3s ease;
+  overflow-y: auto;
+  z-index: 999;
+}
 
-    .sidebar-link i {
-      width: 18px;
-      text-align: center;
-    }
+.sidebar-section { margin-bottom: 25px; padding: 0 15px; }
+.sidebar-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6b7280;
+  margin-bottom: 10px;
+  padding-left: 10px;
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #2C2C2C;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+.sidebar-link i { width: 18px; text-align: center; }
+.sidebar-link.active, .sidebar-link:hover {
+  background: #eadbbf;
+  color: #1F2937;
+  font-weight: 600;
+}
 
-    .sidebar-link.active,
-    .sidebar-link:hover {
-      background: rgba(255, 255, 255, 0.6);
-      color: #4154F1;
-      font-weight: 600;
-    }
+/* Collapsed Sidebar */
+.sidebar.collapsed {
+  width: 70px;
+  padding: 15px 0;
+  overflow: hidden;
+}
+.sidebar.collapsed .sidebar-section-title,
+.sidebar.collapsed .sidebar-link span {
+  display: none;
+}
 
-    .main-content {
-      margin-left: 260px;
-      padding: 100px 30px 30px;
-      height: 100vh;
-      overflow-y: auto;
-      transition: margin-left 0.3s ease;
-    }
+/* Main Content */
+.main-content {
+  margin-left: 260px;
+  padding: 100px 30px 30px;
+  min-height: 100vh;
+  overflow-y: auto;
+  transition: margin-left 0.3s ease;
+  background: transparent; /* keep background transparent to highlight floating cards */
+}
+.main-content.expanded {
+  margin-left: 80px;
+}
 
-    h2 {
-      font-size: 24px;
-      font-weight: 500;
-      color: #444;
-      margin-bottom: 10px;
-    }
+h2 { font-size: 24px; font-weight: 500; color: #444; margin-bottom: 10px; }
 
-    .card {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-      margin-bottom: 20px;
-    }
+/* Floating Cards */
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* stronger shadow for floating effect */
+  margin-bottom: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
 
-    th,
-    td {
-      padding: 12px;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
+/* Attendance Table */
+#attendance-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
 
-    th {
-      background: #f0f0f0;
-    }
+#attendance-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8f1e5;
+  z-index: 10;
+  padding: 12px;
+  font-weight: 600;
+  color: #2C2C2C;
+}
 
-    .status-Present { color: green; font-weight: 600; }
-    .status-Late { color: orange; font-weight: 600; }
-    .status-Absent { color: red; font-weight: 600; }
-  </style>
+/* Rounded corners for header */
+#attendance-table thead th:first-child { border-top-left-radius: 12px; }
+#attendance-table thead th:last-child { border-top-right-radius: 12px; }
+
+#attendance-table tbody td {
+  border-top: 1px solid #ddd;
+  padding: 12px;
+}
+
+/* Row hover effect */
+#attendance-table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
+
+/* Status dropdown colors */
+.status-select {
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 4px 6px;
+  min-width: 80px;
+  color: #1F2937;
+  border: 1px solid #ddd;
+}
+.status-Present { background-color: #d1fae5; color: green; }
+.status-Late { background-color: #fff7d1; color: orange; }
+.status-Absent { background-color: #fee2e2; color: red; }
+
+@media (max-width: 768px) {
+  .sidebar { left: -260px; }
+  .sidebar.collapsed { left: 0; width: 250px; }
+  .main-content { margin-left: 0; }
+  .main-content.expanded { margin-left: 0; }
+}
+</style>
+
 </head>
 
 <body>
   <!-- Header -->
   <header>
-    <a href="#">iAttend</a>
-    <a href="#" class="user-info">
-      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher" />
-    </a>
+    <span id="menu-toggle">&#9776;</span>
+    <div class="header-content">
+      <a href="#" class="title">iAttend</a>
+      <a href="#" class="user-info">
+        <span>{{ profile.firstName }} {{ profile.lastName }}</span>
+        <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher" />
+      </a>
+    </div>
   </header>
 
   <!-- Sidebar -->
@@ -184,12 +247,8 @@
     {% if profile.is_gc %}
     <div class="sidebar-section">
       <div class="sidebar-section-title">Group Coordinator</div>
-      <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
-        <i class="fas fa-users-cog"></i><span>Manage Group</span>
-      </a>
-      <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
-        <i class="fas fa-file-alt"></i><span>Group Report</span>
-      </a>
+      <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}"><i class="fas fa-users-cog"></i><span>Manage Group</span></a>
+      <a class="sidebar-link" href="{{ url_for('gc_group_report') }}"><i class="fas fa-file-alt"></i><span>Group Report</span></a>
     </div>
     {% endif %}
 
@@ -200,38 +259,29 @@
 
   <!-- Main Content -->
   <div class="main-content">
-    <!-- Enhanced Filter Section -->
+    <!-- Filter Section -->
     <div class="card">
       <h2>Select Class</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Program -->
         <div>
           <label class="block text-sm font-medium mb-1">Program</label>
           <select id="filter-program" class="w-full border rounded-md p-2">
             <option value="">All Programs</option>
-            {% for p in programs %}
-            <option value="{{ p }}">{{ p }}</option>
-            {% endfor %}
+            {% for p in programs %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
           </select>
         </div>
-
-        <!-- Group -->
         <div>
           <label class="block text-sm font-medium mb-1">Group</label>
           <select id="filter-group" class="w-full border rounded-md p-2" disabled>
             <option value="">All Groups</option>
           </select>
         </div>
-
-        <!-- Module -->
         <div>
           <label class="block text-sm font-medium mb-1">Module</label>
           <select id="filter-module" class="w-full border rounded-md p-2" disabled>
             <option value="">All Modules</option>
           </select>
         </div>
-
-        <!-- Day -->
         <div>
           <label class="block text-sm font-medium mb-1">Day</label>
           <select id="filter-day" class="w-full border rounded-md p-2" disabled>
@@ -239,7 +289,6 @@
           </select>
         </div>
       </div>
-
       <div class="mt-4">
         <button type="button" id="apply-filters" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Apply Filters</button>
         <button type="button" id="reset-filters" class="ml-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg">Reset</button>
@@ -277,37 +326,33 @@
     </div>
   </div>
 
-  <!-- ✅ Safe JSON data -->
   <script id="schedules-data" type="application/json">{{ schedules | tojson }}</script>
 
   <script>
+    // Hamburger toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+    });
+
     const WEBCAM_URL = "{{ webcam_url }}";
     const allSchedules = JSON.parse(document.getElementById('schedules-data').textContent);
     let scheduleId = "";
-
     const videoContainer = document.getElementById('video-container');
     const webcamFeed = document.getElementById('webcam-feed');
     const attendanceTable = document.querySelector('#attendance-table tbody');
 
-    // ✅ Fixed populateDropdown: preserves selection
     function populateDropdown(id, values) {
       const select = document.getElementById(id);
       const current = select.value;
-
       select.innerHTML = '<option value="">All</option>';
       const uniqueValues = [...new Set(values)].filter(v => v && v !== "-").sort();
-      uniqueValues.forEach(val => {
-        const opt = document.createElement('option');
-        opt.value = val;
-        opt.textContent = val;
-        select.appendChild(opt);
-      });
-
-      if (uniqueValues.includes(current)) {
-        select.value = current;
-      } else {
-        select.value = "";
-      }
+      uniqueValues.forEach(val => { const opt = document.createElement('option'); opt.value = val; opt.textContent = val; select.appendChild(opt); });
+      if (uniqueValues.includes(current)) select.value = current; else select.value = "";
     }
 
     function updateFilters() {
@@ -315,25 +360,17 @@
       const group = document.getElementById('filter-group').value;
       const module = document.getElementById('filter-module').value;
       const day = document.getElementById('filter-day').value;
-
       let filtered = allSchedules;
       if (program) filtered = filtered.filter(s => s.programName === program);
       if (group) filtered = filtered.filter(s => s.groupName === group);
       if (module) filtered = filtered.filter(s => s.moduleName === module);
       if (day) filtered = filtered.filter(s => s.day === day);
-
-      const groups = filtered.map(s => s.groupName).filter(Boolean);
-      const modules = filtered.map(s => s.moduleName).filter(Boolean);
-      const days = filtered.map(s => s.day).filter(Boolean);
-
-      populateDropdown('filter-group', groups);
-      populateDropdown('filter-module', modules);
-      populateDropdown('filter-day', days);
-
-      document.getElementById('filter-group').disabled = groups.length === 0;
-      document.getElementById('filter-module').disabled = modules.length === 0;
-      document.getElementById('filter-day').disabled = days.length === 0;
-
+      populateDropdown('filter-group', filtered.map(s => s.groupName));
+      populateDropdown('filter-module', filtered.map(s => s.moduleName));
+      populateDropdown('filter-day', filtered.map(s => s.day));
+      document.getElementById('filter-group').disabled = !filtered.some(s => s.groupName);
+      document.getElementById('filter-module').disabled = !filtered.some(s => s.moduleName);
+      document.getElementById('filter-day').disabled = !filtered.some(s => s.day);
       window.filteredSchedules = filtered;
     }
 
@@ -344,16 +381,9 @@
 
     document.getElementById('apply-filters').addEventListener('click', () => {
       const filtered = window.filteredSchedules || allSchedules;
-      if (filtered.length === 0) {
-        alert("No classes match your filters.");
-        return;
-      }
-      if (filtered.length === 1) {
-        scheduleId = filtered[0].docId;
-        startCameraWithSchedule(scheduleId);
-      } else {
-        alert("Multiple classes match. Please refine filters.");
-      }
+      if (filtered.length === 0) { alert("No classes match your filters."); return; }
+      if (filtered.length === 1) { scheduleId = filtered[0].docId; startCameraWithSchedule(scheduleId); }
+      else alert("Multiple classes match. Please refine filters.");
     });
 
     document.getElementById('reset-filters').addEventListener('click', () => {
@@ -364,62 +394,39 @@
       updateFilters();
     });
 
-    updateFilters(); // Initialize
+    updateFilters();
 
-    // === CAMERA & ATTENDANCE ===
     function startCameraWithSchedule(scheduleId) {
-      fetch(`${WEBCAM_URL}/start_camera`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `schedule=${encodeURIComponent(scheduleId)}`
-      }).then(() => {
-        videoContainer.style.display = "block";
-        webcamFeed.src = `${WEBCAM_URL}/video_feed`;
-        fetchAttendance(scheduleId);
-      }).catch(err => console.error("Failed to start camera:", err));
+      fetch(`${WEBCAM_URL}/start_camera`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `schedule=${encodeURIComponent(scheduleId)}` })
+      .then(() => { videoContainer.style.display = "block"; webcamFeed.src = `${WEBCAM_URL}/video_feed`; fetchAttendance(scheduleId); })
+      .catch(err => console.error("Failed to start camera:", err));
     }
 
     document.getElementById('stopCamera').addEventListener('click', () => {
-      fetch(`${WEBCAM_URL}/stop_camera`).then(() => {
-        videoContainer.style.display = "none";
-        webcamFeed.src = "";
-      }).catch(err => console.error("Failed to stop camera:", err));
+      fetch(`${WEBCAM_URL}/stop_camera`).then(() => { videoContainer.style.display = "none"; webcamFeed.src = ""; })
+      .catch(err => console.error("Failed to stop camera:", err));
     });
 
     function fetchAttendance(scheduleId) {
-      fetch(`/api/attendance/${scheduleId}`)
-        .then(res => res.json())
-        .then(data => {
-          attendanceTable.innerHTML = "";
-          if (!data.students || data.students.length === 0) {
-            attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">No students found</td></tr>`;
-            return;
-          }
-          data.students.forEach(student => {
-            const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${student.name || "Unknown Student"}</td>
-              <td>${student.email || "-"}</td>
-              <td>${student.time || "-"}</td>
-              <td>
-                <select class="status-select" data-student-id="${student.id}" data-schedule-id="${scheduleId}">
-                  <option value="Present" ${student.status === "Present" ? "selected" : ""}>Present</option>
-                  <option value="Absent" ${student.status === "Absent" ? "selected" : ""}>Absent</option>
-                  <option value="Late" ${student.status === "Late" ? "selected" : ""}>Late</option>
-                </select>
-              </td>
-              <td>${student.group || "-"}</td>
-              <td>${student.program || "-"}</td>
-              <td>${moduleName}</td>
-            `;
-            attendanceTable.appendChild(tr);
-          });
-        })
-        .catch(err => {
-          console.error("Failed to fetch attendance:", err);
-          attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
+      fetch(`/api/attendance/${scheduleId}`).then(res => res.json()).then(data => {
+        attendanceTable.innerHTML = "";
+        if (!data.students || data.students.length === 0) {
+          attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">No students found</td></tr>`;
+          return;
+        }
+        data.students.forEach(student => {
+          const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${student.name || "Unknown Student"}</td><td>${student.email || "-"}</td><td>${student.time || "-"}</td>
+          <td><select class="status-select status-${student.status}" data-student-id="${student.id}" data-schedule-id="${scheduleId}">
+            <option value="Present" ${student.status === "Present" ? "selected" : ""}>Present</option>
+            <option value="Absent" ${student.status === "Absent" ? "selected" : ""}>Absent</option>
+            <option value="Late" ${student.status === "Late" ? "selected" : ""}>Late</option>
+          </select></td>
+          <td>${student.group || "-"}</td><td>${student.program || "-"}</td><td>${moduleName}</td>`;
+          attendanceTable.appendChild(tr);
         });
+      }).catch(err => { console.error("Failed to fetch attendance:", err); attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`; });
     }
 
     document.addEventListener("change", function(e) {
@@ -427,24 +434,12 @@
         const studentId = e.target.dataset.studentId;
         const scheduleId = e.target.dataset.scheduleId;
         const status = e.target.value;
-
+        e.target.className = `status-select status-${status}`;
         fetch("/mark_attendance", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            schedule_id: scheduleId,
-            student_id: studentId,
-            status: status
-          })
-        })
-        .then(res => {
-          if (res.ok) {
-            e.target.style.backgroundColor = "#d1fae5";
-            setTimeout(() => e.target.style.backgroundColor = "", 500);
-          } else {
-            alert("Failed to update attendance");
-          }
-        })
+          body: new URLSearchParams({ schedule_id: scheduleId, student_id: studentId, status: status })
+        }).then(res => { if(res.ok){ e.target.style.backgroundColor = "#d1fae5"; setTimeout(() => e.target.style.backgroundColor = "", 500); } else { alert("Failed to update attendance"); } })
         .catch(err => console.error("Save failed:", err));
       }
     });
