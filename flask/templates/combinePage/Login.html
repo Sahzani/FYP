@@ -121,7 +121,7 @@
       <button type="submit">Log in</button>
     </form>
 
-    <a href="#" class="forgot-password">Forgot password?</a>
+    <a href="{{ url_for('forgot_password') }}" class="forgot-password">Forgot password?</a>
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}

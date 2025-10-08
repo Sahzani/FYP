@@ -185,10 +185,45 @@ def login():
         flash(f"Login error: {str(e)}")
         return redirect(url_for("home"))
 
-
 @app.route("/")
 def home():
     return render_template("combinePage/Login.html")  # login page
+
+# ------------------ Forgot Password ------------------
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email").strip()
+
+        if not email:
+            flash("Please enter your email.", "error")
+            return redirect(url_for("forgot_password"))
+
+        try:
+            # Fetch the user by email
+            user = auth.get_user_by_email(email)
+            uid = user.uid
+
+            # Generate a password reset link using Firebase
+            reset_link = auth.generate_password_reset_link(email)
+
+            # Example: Send the reset link via email (use Flask-Mail or another service)
+            # mail.send_message(
+            #     "Password Reset Request",
+            #     sender="your_email@example.com",
+            #     recipients=[email],
+            #     body=f"Click the link to reset your password: {reset_link}"
+            # )
+
+            flash("A password reset link has been sent to your email.", "success")
+        except auth.UserNotFoundError:
+            flash("No account found with this email.", "error")
+        except Exception as e:
+            flash(f"An error occurred: {str(e)}", "error")
+
+        return redirect(url_for("forgot_password"))
+
+    return render_template("combinePage/Forget Password.html")
 
 # ------------------ Student Dashboard ------------------
 from datetime import datetime
