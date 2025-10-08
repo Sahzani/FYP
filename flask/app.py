@@ -1566,23 +1566,77 @@ def api_attendance(schedule_id):
                 "last_name": last_name
             })
 
-        # 3️⃣ Fetch today's attendance
-        today_str = datetime.now().strftime("%Y-%m-%d")
-        att_ref = db.collection("attendance").document(schedule_id).collection(today_str).stream()
-        attendance_records = {}
-        for doc in att_ref:
-            att = doc.to_dict()
-            att_time = "-"
-            if att.get("timestamp"):
-                ts = att["timestamp"]
-                if hasattr(ts, "astimezone"):
-                    att_time = ts.astimezone().strftime("%H:%M")
+       # 3️⃣ Fetch today's attendance AND determine if student is Late
+            from datetime import datetime
+
+            today = datetime.now().date()
+            today_str = today.strftime("%Y-%m-%d")
+
+            # Get scheduled start time from the schedule document
+            start_time_str = sched.get("start_time", "00:00").strip()
+            try:
+                class_start = datetime.strptime(start_time_str, "%H:%M").time()
+                scheduled_start = datetime.combine(today, class_start)
+            except Exception:
+                # Fallback if start_time is missing or invalid
+                scheduled_start = datetime.combine(today, datetime.min.time())
+
+            # Fetch attendance records
+            att_ref = db.collection("attendance").document(schedule_id).collection(today_str).stream()
+            attendance_records = {}
+
+            for doc in att_ref:
+                att = doc.to_dict()
+                student_id = doc.id
+                att_time = "-"
+                status = "Absent"  # default
+
+                if att.get("timestamp"):
+                    ts = att["timestamp"]
+                    
+                    # Handle Firestore Timestamp
+                    if hasattr(ts, "astimezone"):
+                        att_dt = ts.astimezone()
+                    else:
+                        # Try to parse string timestamp (e.g., ISO format)
+                        try:
+                            att_dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                            if att_dt.tzinfo is None:
+                                from datetime import timezone
+                                att_dt = att_dt.replace(tzinfo=timezone.utc)
+                        except:
+                            att_dt = None
+
+                    if att_dt:
+                        # Make scheduled_start timezone-aware if needed
+                        if scheduled_start.tzinfo is None and att_dt.tzinfo is not None:
+                            from datetime import timezone
+                            scheduled_start = scheduled_start.replace(tzinfo=timezone.utc)
+                        elif scheduled_start.tzinfo is not None and att_dt.tzinfo is None:
+                            att_dt = att_dt.replace(tzinfo=scheduled_start.tzinfo)
+
+                        # Calculate minutes difference
+                        diff = att_dt - scheduled_start
+                        minutes_late = diff.total_seconds() / 60
+
+                        # Determine status
+                        if minutes_late <= 15:
+                            status = "Present"
+                        elif minutes_late <= 30:
+                            status = "Late"
+                        else:
+                            status = "Absent"  # or "Late" if you want to count very late as still "Late"
+
+                        att_time = att_dt.strftime("%H:%M")
+                    else:
+                        status = "Absent"
                 else:
-                    att_time = str(ts)
-            attendance_records[doc.id] = {
-                "status": att.get("status", "Present"),
-                "time": att_time
-            }
+                    status = "Absent"
+
+                attendance_records[student_id] = {
+                    "status": status,
+                    "time": att_time
+                }
 
         # 4️⃣ Build final response
         result = []
