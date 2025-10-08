@@ -2,68 +2,85 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>iAttend - Teacher Schedule</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>iAttend - Class Schedule</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
 
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; font-family: 'Poppins', sans-serif; background: linear-gradient(180deg,#f7ecd7 0%,#f8f1e5 35%,#fbfaf7 100%); overflow-x:hidden; }
+
+/* Header */
+header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.08); display:flex; align-items:center; padding:0 20px; z-index:1000; }
 #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
-.header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
-.user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; text-decoration: none; }
-.user-info:hover { background:#f0f0f0; }
-.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-.user-info span { font-size:16px; font-weight:600; color:#444; }
+.header-content { display:flex; justify-content:space-between; align-items:center; width:100%; }
+.header-content a.title { text-decoration:none; color:#444; font-weight:700; font-size:26px; }
+header a.user-info { display:flex; align-items:center; gap:10px; text-decoration:none; color:#444; font-weight:600; }
+header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
 
 /* Sidebar */
-.sidebar { position: fixed; top:60px; left:0; width:267px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden;}
-.sidebar.collapsed { width:70px; }
-.sidebar-section { margin-bottom:25px; padding:0 15px; }
-.sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
-.sidebar.collapsed .sidebar-section-title { opacity:0; }
-.sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
-.sidebar.collapsed .sidebar-link span { display:none; }
+.sidebar {
+  position: fixed;
+  top: 60px;
+  bottom: 0;
+  left: 0;
+  width: 250px;
+  background: #f8f1e5;
+  padding: 15px 0;
+  box-shadow: 2px 0 15px rgba(0,0,0,0.08);
+  border-top-right-radius: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 999;
+}
+.sidebar-section { margin-bottom:15px; padding:0 15px; flex-shrink:0; }
+.sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#6b7280; margin-bottom:10px; padding-left:10px; }
+.sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#2C2C2C; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
 .sidebar-link i { width:18px; text-align:center; }
-.sidebar-link:hover { background: rgba(255,255,255,0.5); transform: translateX(4px);}
-.sidebar-link.active { background: rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
+.sidebar-link.active, .sidebar-link:hover { background:#eadbbf; color:#1F2937; font-weight:600; }
 
-/* Main content */
-.main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease; font-family:'Nunito',sans-serif; height:100vh; overflow-y:auto; }
-.sidebar.collapsed ~ .main { margin-left:80px; }
+/* Collapsed Sidebar */
+.sidebar.collapsed { width:70px; padding:15px 0; overflow:hidden; }
+.sidebar.collapsed .sidebar-section-title, .sidebar.collapsed .sidebar-link span { display:none; }
 
-/* Card & Table */
-.card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:30px; font-family:'Poppins',sans-serif; }
-.card h2 { font-family:'Poppins',sans-serif; margin-bottom:15px; }
+/* Main Content */
+.main-content { margin-left:260px; padding:100px 30px 30px; min-height:100vh; overflow-y:auto; transition:margin-left 0.3s ease; background:transparent; }
+.main-content.expanded { margin-left:80px; }
 
-table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; }
-th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
-th { font-weight:600; text-transform:uppercase; font-size:13px; }
+/* Cards */
+.card { background:#fff; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); margin-bottom:20px; transition:transform 0.2s, box-shadow 0.2s; }
+.card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
+.card h2 { font-size:24px; font-weight:500; color:#444; margin-bottom:10px; }
 
-.timetable-cell {
-  min-height: 60px;
-  vertical-align: top;
-  padding: 8px;
+/* Tables */
+.table-wrapper { overflow-x:auto; }
+table { width:100%; border-collapse: collapse; table-layout: fixed; text-align:center; } /* Center all content */
+thead th { position:sticky; top:0; background:#f8f1e5; z-index:10; padding:12px 8px; font-weight:600; color:#2C2C2C; text-align:center; }
+thead th:first-child { border-top-left-radius:12px; }
+thead th:last-child { border-top-right-radius:12px; }
+tbody td { border-top:1px solid #ddd; padding:12px 8px; word-wrap:break-word; text-align:center; }
+tbody tr:hover { background:#fef9f0; transition:background 0.2s; }
+
+/* Timetable */
+.timetable-cell { min-height:60px; vertical-align:top; padding:8px; text-align:center; }
+.timetable-class { background:#f0f7ff; border-radius:6px; padding:6px; margin-bottom:4px; font-size:12px; text-align:center; }
+.timetable-class:last-child { margin-bottom:0; }
+
+/* Responsive */
+@media (max-width:768px) {
+  .sidebar { left:-260px; }
+  .sidebar.collapsed { left:0; width:250px; }
+  .main-content { margin-left:0; padding:100px 15px 30px; }
+  .main-content.expanded { margin-left:0; }
+  table, thead, tbody, th, td, tr { display:block; }
+  thead tr { display:none; }
+  td { padding-left:50%; position:relative; text-align:left; }
+  td::before { content:attr(data-label); position:absolute; left:12px; top:12px; font-weight:600; font-size:12px; color:#555; }
+  .timetable-cell { min-height:auto; }
 }
-.timetable-class {
-  background: #f0f7ff;
-  border-radius: 6px;
-  padding: 6px;
-  margin-bottom: 4px;
-  font-size: 12px;
-}
-.timetable-class:last-child {
-  margin-bottom: 0;
-}
-
-.page-title { font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
-.breadcrumb { font-size:14px; font-weight:600; margin-bottom:30px; }
-.breadcrumb .section { color:#989797; }
-.breadcrumb .current { color:#444; }
 </style>
 </head>
 
@@ -71,37 +88,28 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
     <a href="{{ url_for('teacher_profile') }}" class="user-info">
       <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=T" alt="Teacher">
+      <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher" />
     </a>
   </div>
 </header>
 
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
-      <i class="fas fa-home"></i><span>Dashboard</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
-      <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}"><i class="fas fa-chart-bar"></i><span>Attendance Report</span></a>
   </div>
 
-  <!-- Manage -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
-    <a class="sidebar-link active" href="{{ url_for('teacher_schedules') }}">
-      <i class="fas fa-calendar"></i><span>Class Schedule</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
-      <i class="fas fa-book"></i><span>My Modules & Rooms</span>
-    </a>
+    <a class="sidebar-link active" href="{{ url_for('teacher_schedules') }}"><i class="fas fa-calendar"></i><span>Class Schedule</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Rooms</span></a>
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absence Application</span></a>
     <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}"><i class="fas fa-address-card"></i><span>Individual Attendance</span></a>
   </div>
@@ -109,110 +117,99 @@ th { font-weight:600; text-transform:uppercase; font-size:13px; }
   {% if profile.is_gc %}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
-    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
-      <i class="fas fa-users-cog"></i><span>Manage Group</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
-      <i class="fas fa-file-alt"></i><span>Group Report</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}"><i class="fas fa-users-cog"></i><span>Manage Group</span></a>
+    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}"><i class="fas fa-file-alt"></i><span>Group Report</span></a>
   </div>
   {% endif %}
 
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
-      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
-<div class="main">
-  <h1 class="page-title">Class Schedule</h1>
-  <div class="breadcrumb"><span class="section">Manage</span> / <span class="current">Class Schedule</span></div>
-
-  <!-- Existing List Table -->
+<div class="main-content">
+  <!-- Schedule Table Card -->
   <div class="card">
     <h2>Schedule Table</h2>
-    <table id="schedule-table">
-      <thead>
-        <tr>
-          <th>Group</th>
-          <th>Module</th>
-          <th>Day</th>
-          <th>Start Time</th>
-          <th>End Time</th>
-          <th>Room</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% if schedules %}
-          {% for s in schedules %}
-            <tr>
-              <td>{{ s.groupName }}</td>
-              <td>{{ s.moduleName }}</td>
-              <td>{{ s.day }}</td>
-              <td>{{ s.startTime }}</td>
-              <td>{{ s.endTime }}</td>
-              <td>{{ s.room }}</td>
-            </tr>
-          {% endfor %}
-        {% else %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
           <tr>
-            <td colspan="6" class="text-center">No schedules found.</td>
+            <th>Group</th>
+            <th>Module</th>
+            <th>Day</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Room</th>
           </tr>
-        {% endif %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {% if schedules %}
+            {% for s in schedules %}
+            <tr>
+              <td data-label="Group">{{ s.groupName }}</td>
+              <td data-label="Module">{{ s.moduleName }}</td>
+              <td data-label="Day">{{ s.day }}</td>
+              <td data-label="Start Time">{{ s.startTime }}</td>
+              <td data-label="End Time">{{ s.endTime }}</td>
+              <td data-label="Room">{{ s.room }}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="6" class="text-center py-4">No schedules found.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
   </div>
 
-<!-- Timetable View -->
-<div class="card">
-  <h2>Timetable View</h2>
-  <div style="overflow-x:auto;">
-    <table class="w-full">
-      <thead>
-        <tr class="bg-gray-50">
-          <th class="p-3 text-left">Time</th>
-          {% for day in ["Monday","Tuesday","Wednesday","Thursday","Friday"] %}
-            <th class="p-3 text-center">{{ day }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% set unique_times = schedules | map(attribute='startTime') | unique | list | sort %}
-        {% for time in unique_times %}
-        <tr class="border-b">
-          <td class="p-3 font-medium">{{ time }}</td>
-          {% for day in ["Monday","Tuesday","Wednesday","Thursday","Friday"] %}
-            <td class="timetable-cell p-3 align-top">
-              {% set classes = schedules 
-                               | selectattr("day", "equalto", day) 
-                               | selectattr("startTime", "equalto", time) 
-                               | list %}
-              {% if classes %}
-                {% for cls in classes %}
+  <!-- Timetable Card -->
+  <div class="card">
+    <h2>Timetable View</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            {% for day in ["Monday","Tuesday","Wednesday","Thursday","Friday"] %}
+              <th>{{ day }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% set unique_times = schedules | map(attribute='startTime') | unique | list | sort %}
+          {% for time in unique_times %}
+          <tr>
+            <td data-label="Time">{{ time }}</td>
+            {% for day in ["Monday","Tuesday","Wednesday","Thursday","Friday"] %}
+              <td class="timetable-cell" data-label="{{ day }}">
+                {% set classes = schedules | selectattr("day","equalto",day) | selectattr("startTime","equalto",time) | list %}
+                {% if classes %}
+                  {% for cls in classes %}
                   <div class="timetable-class">
                     <strong>{{ cls.moduleName }}</strong><br>
                     {{ cls.groupName }} • {{ cls.room }}<br>
                     {{ cls.startTime }}–{{ cls.endTime }}
                   </div>
-                {% endfor %}
-              {% else %}
-                <span class="text-gray-400">—</span>
-              {% endif %}
-            </td>
+                  {% endfor %}
+                {% else %}
+                  <span class="text-gray-400">—</span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
           {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
-
 
 <script>
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
-menuToggle.addEventListener('click',()=>{ sidebar.classList.toggle('collapsed'); });
+const mainContent = document.querySelector('.main-content');
+menuToggle.addEventListener('click',()=>{ sidebar.classList.toggle('collapsed'); mainContent.classList.toggle('expanded'); });
 </script>
 
 </body>
