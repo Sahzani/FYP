@@ -40,3 +40,15 @@ document.getElementById("loginBtn").addEventListener("click", () => {
       alert("❌ Error: " + error.message);
     });
 });
+
+// --- PASSWORD MODAL FUNCTIONALITY ---
+const changePasswordButton = document.getElementById('changePasswordButton');
+const passwordModal = document.getElementById('passwordModal');
+const closeModalButton = document.getElementById('closeModal');
+const cancelButton = document.getElementById('cancelButton');
+
+if (changePasswordButton && passwordModal && closeModalButton && cancelButton) {
+  changePasswordButton.addEventListener('click', () => passwordModal.classList.add('open'));
+  closeModalButton.addEventListener('click', () => passwordModal.classList.remove('open'));
+  cancelButton.addEventListener('click', () => passwordModal.classList.remove('open'));
+}
