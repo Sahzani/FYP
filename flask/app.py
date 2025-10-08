@@ -225,6 +225,46 @@ def forgot_password():
 
     return render_template("combinePage/Forget Password.html")
 
+
+# ------------------ Reset Password ------------------
+@app.route("/reset_password/<student_id>", methods=["GET", "POST"])
+def reset_password(student_id):
+    if request.method == "GET":
+        # Render the reset password form
+        return render_template("combinePage/ResetPassword.html", student_id=student_id)
+
+    # Handle the form submission
+    new_password = request.form.get("newPassword")
+    confirm_password = request.form.get("confirmPassword")
+
+    if not new_password or not confirm_password:
+        flash("Please fill all password fields.", "error")
+        return redirect(url_for("reset_password", student_id=student_id))
+
+    if new_password != confirm_password:
+        flash("Passwords do not match.", "error")
+        return redirect(url_for("reset_password", student_id=student_id))
+
+    try:
+        # Fetch the user by student ID
+        student_doc = db.collection("users").where("studentID", "==", student_id).limit(1).stream()
+        user_doc = next(student_doc, None)
+
+        if not user_doc:
+            flash("Invalid student ID.", "error")
+            return redirect(url_for("change_password_page"))
+
+        user_data = user_doc.to_dict()
+        uid = user_doc.id
+
+        # Update the password in Firebase Auth
+        auth.update_user(uid, password=new_password)
+        flash("Password reset successfully!", "success")
+        return redirect(url_for("home"))
+    except Exception as e:
+        flash(f"Failed to reset password: {str(e)}", "error")
+        return redirect(url_for("reset_password", student_id=student_id))
+
 # ------------------ Student Dashboard ------------------
 from datetime import datetime
 from flask import render_template, session, redirect, url_for
