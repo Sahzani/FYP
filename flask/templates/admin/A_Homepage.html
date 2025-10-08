@@ -173,24 +173,7 @@ p { font-family:'Nunito',sans-serif; font-size:14px; font-weight:600; margin-bot
       <canvas id="attendanceChart" height="150"></canvas>
     </div>
   </div>
-
-  <!-- Email Form -->
-  <div class="card" style="margin-top:1.5rem;">
-    <h3 style="margin-bottom:10px">Send Student Credentials</h3>
-    <form action="{{ url_for('send_email') }}" method="POST">
-      <label for="email">Student Email:</label>
-      <input type="email" id="email" name="email" placeholder="Enter student email" required />
-
-      <label for="username">Username:</label>
-      <input type="text" id="username" name="username" placeholder="Enter username" required />
-
-      <label for="password">Password:</label>
-      <input type="text" id="password" name="password" placeholder="Enter password" required />
-
-      <button type="submit">Send Email</button>
-    </form>
-  </div>
-
+  
   <!-- Notifications -->
   <div class="grid-container-lg-2 grid-container card-spacing">
     <div class="card" style="background-color:#F6F8FE; display:flex;align-items:flex-start;gap:1rem;">
@@ -367,3 +350,11 @@ generateCalendar();
 
 </body>
 </html>
+
+<!-- ========== 
+total student buang,total teacher buang 
+present today, absent today buat today jadi month
+calender buat cam teacher punya
+yang chart (ambil dari attendance log)
+notification buang 
+========== -->
