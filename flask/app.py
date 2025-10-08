@@ -381,6 +381,9 @@ def student_dashboard():
     )
     
 # ------------------ Teacher Dashboard ------------------
+from datetime import datetime
+from flask import session, redirect, url_for, render_template
+
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
     # Ensure teacher is logged in
@@ -397,20 +400,20 @@ def teacher_dashboard():
     profile = {}
     if profile_doc.exists:
         user_data = profile_doc.to_dict()
-        full_name = user_data.get("name", "Teacher")
-        parts = full_name.split(" ", 1)
 
-        # ------------------ Check if GC ------------------
+        # Fetch firstName and lastName from Firestore
+        first_name = user_data.get("firstName", "Teacher")
+        last_name = user_data.get("lastName", "")
+
+        # Check if teacher is a group coordinator
         role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
-        is_gc = False
-        if role_doc.exists:
-            is_gc = role_doc.to_dict().get("isCoordinator", False)
+        is_gc = role_doc.exists and role_doc.to_dict().get("isCoordinator", False)
 
         profile = {
             "role": user_data.get("role", "Teacher"),
-            "firstName": parts[0],
-            "lastName": parts[1] if len(parts) > 1 else "",
-            "profile_pic": user_data.get(
+            "firstName": first_name,
+            "lastName": last_name,
+            "photo_url": user_data.get(
                 "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
             ),
             "is_gc": is_gc
@@ -420,7 +423,7 @@ def teacher_dashboard():
             "role": "Teacher",
             "firstName": "Teacher",
             "lastName": "",
-            "profile_pic": "",
+            "photo_url": "https://placehold.co/140x140/E9E9E9/333333?text=T",
             "is_gc": False
         }
 
@@ -434,11 +437,9 @@ def teacher_dashboard():
         group_code = s.get("fk_groupcode")
         module_code = s.get("fk_module")
 
-        # Skip schedules with missing fields
         if not group_code or not module_code:
             continue
 
-        # Fetch group and module names safely
         group_doc = db.collection("groups").document(group_code).get()
         module_doc = db.collection("modules").document(module_code).get()
         s["group_name"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
@@ -453,7 +454,6 @@ def teacher_dashboard():
     for schedule in schedules:
         group_code = schedule.get("fk_groupcode")
         module_code = schedule.get("fk_module")
-
         if not group_code or not module_code:
             continue
 
