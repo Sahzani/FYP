@@ -9,13 +9,10 @@ import firebase_admin, random
 from flask import send_from_directory
 import os
 
-
-
 # For webcam page
 camera_process = None
 WEBCAM_PATH = r"C:\Users\Acer\Desktop\FYP\flask\camera\webcam.py"
 app = Flask(__name__, static_folder="student_pics")
-
 
 # ------------------ Flask Setup ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -192,7 +189,6 @@ def login():
 @app.route("/")
 def home():
     return render_template("combinePage/Login.html")  # login page
-
 
 # ------------------ Student Dashboard ------------------
 from datetime import datetime
@@ -852,7 +848,6 @@ def edit_absent_record(record_id):
 
     return redirect(url_for("student_absentapp"))
 
-
 # ------------------ Student Profile ------------------
 @app.route("/student/profile")
 def student_profile():
@@ -898,8 +893,6 @@ def student_profile():
     }
 
     return render_template("student/S_Profile.html", profile=profile)
-
-
 
 # ------------------ Student Edit Profile ------------------
 @app.route("/student/editprofile", methods=["GET", "POST"])
@@ -962,42 +955,42 @@ def student_editprofile():
     }
 
     return render_template("student/S_EditProfile.html", profile=profile)
+
 # ------------------ Change Password for student ------------------
-@app.route("/student/change_password", methods=["POST"])
+@app.route("/student/change_password", methods=["GET", "POST"])
 def student_change_password():
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
-    user = session.get("user")
-    if not user:
-        return redirect(url_for("home"))
+    if request.method == "POST":
+        new_password = request.form.get("newPassword")
+        confirm_password = request.form.get("confirmPassword")
 
-    uid = user.get("uid")
-    current_password = request.form.get("currentPassword")
-    new_password = request.form.get("newPassword")
-    confirm_password = request.form.get("confirmPassword")
+        if not new_password or not confirm_password:
+            flash("Please fill in all fields.", "error")
+            return redirect(url_for("student_change_password"))
 
-    if not current_password or not new_password or not confirm_password:
-        flash("Please fill all password fields.", "error")
-        return redirect(url_for("student_editprofile"))
+        if new_password != confirm_password:
+            flash("Passwords do not match.", "error")
+            return redirect(url_for("student_change_password"))
 
-    if new_password != confirm_password:
-        flash("New password and confirmation do not match.", "error")
-        return redirect(url_for("student_EditProfile"))
+        try:
+            user = session.get("user")
+            if user:
+                auth.update_user(user["uid"], password=new_password)
+                flash("Password changed successfully!", "success")
+        except Exception as e:
+            flash(f"Error changing password: {str(e)}", "error")
 
-    # TODO: Implement password verification and update using Firebase Auth
-    # For example:
-    # auth.update_user(uid, password=new_password)
+        return redirect(url_for("student_dashboard"))
 
-    flash("Password changed successfully!", "success")
-    return redirect(url_for("student_editprofile"))
+    return render_template("combinePage/Change password.html")
 
 @app.route("/student/contact")
 def student_contact():
     if session.get("role") == "student":
         return render_template("student/S_ContactUs.html")
     return redirect(url_for("home"))
-
 
 # ------------------ Teacher Pages ------------------
 @app.route("/teacher/class_list")
@@ -1916,7 +1909,34 @@ def teacher_profile():
 
     return render_template("teacher/T_Profile.html", profile=profile)
 
+@app.route("/teacher/change_password", methods=["GET", "POST"])
+def teacher_change_password():
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
 
+    if request.method == "POST":
+        new_password = request.form.get("newPassword")
+        confirm_password = request.form.get("confirmPassword")
+
+        if not new_password or not confirm_password:
+            flash("Please fill in all fields.", "error")
+            return redirect(url_for("teacher_change_password"))
+
+        if new_password != confirm_password:
+            flash("Passwords do not match.", "error")
+            return redirect(url_for("teacher_change_password"))
+
+        try:
+            user = session.get("user")
+            if user:
+                auth.update_user(user["uid"], password=new_password)
+                flash("Password changed successfully!", "success")
+        except Exception as e:
+            flash(f"Error changing password: {str(e)}", "error")
+
+        return redirect(url_for("teacher_dashboard"))
+
+    return render_template("combinePage/Change password.html")
 
 # ------------------ Admin Student Add/Edit ------------------
 
