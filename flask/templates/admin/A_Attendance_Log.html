@@ -10,44 +10,94 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
 <style>
+/* ========== RESET & BASE ========== */
 * { margin:0; padding:0; box-sizing:border-box; }
-html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
+html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
+
+/* ========== HEADER ========== */
+header {
+  position: fixed; top:0; left:0; right:0; height:60px; background:#fff;
+  box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center;
+  padding-left:20px; font-family:'Nunito', sans-serif; font-weight:700;
+  font-size:26px; color:#212529; z-index:1002;
+}
 #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
 .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
-.user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; cursor:pointer; text-decoration: none; }
+.user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; text-decoration: none; }
+.user-info:hover { background:#f0f0f0; }
 .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
 .user-info span { font-size:16px; font-weight:600; color:#444; }
 
-.sidebar { position: fixed; top:60px; left:0; width:267px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden;}
-.sidebar.collapsed { width:70px; }
+/* ========== SIDEBAR ========== */
+.sidebar {
+  position: fixed; top:60px; left:0; width:240px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
+  padding-top:15px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
+  transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px;
+}
+.sidebar.collapsed { width:70px; overflow:hidden; }
 .sidebar-section { margin-bottom:25px; padding:0 15px; }
 .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
 .sidebar.collapsed .sidebar-section-title { opacity:0; }
 .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
-.sidebar.collapsed .sidebar-link span { display:none; }
 .sidebar-link i { width:18px; text-align:center; }
-.sidebar-link:hover { background: rgba(255,255,255,0.5); transform: translateX(4px);}
-.sidebar-link.active { background: rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
+.sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
+.sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
 
-.main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease; font-family:'Nunito',sans-serif; height:100vh; overflow-y:auto; }
+/* Dropdown (if needed later) */
+.sidebar-dropdown { display:flex; flex-direction:column; }
+.dropdown-menu { display:none; flex-direction:column; padding-left:20px; }
+.sidebar-dropdown.active .dropdown-menu { display:flex; }
+.sidebar-dropdown .dropdown-toggle i:last-child {
+  margin-left:auto;
+  transition: transform 0.3s;
+}
+.sidebar-dropdown.active .dropdown-toggle i:last-child {
+  transform: rotate(180deg);
+}
+
+/* ========== MAIN CONTENT ========== */
+.main { 
+  margin-left:260px; padding:100px 30px 30px; 
+  min-height:100vh; transition:margin-left 0.3s ease; 
+  font-family:'Nunito',sans-serif; height:100vh; overflow-y:auto; 
+}
 .sidebar.collapsed ~ .main { margin-left:80px; }
 
-.card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:30px; font-family:'Poppins',sans-serif; }
-.card h2 { font-family:'Poppins',sans-serif; margin-bottom:15px; }
+/* ========== CARD & TABLE ========== */
+.card { 
+  background:#fff; padding:30px; border-radius:12px; 
+  box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:30px; 
+  font-family:'Poppins',sans-serif; 
+}
+.card h2 { 
+  font-family:'Poppins',sans-serif; margin-bottom:15px; 
+  font-size:22px; font-weight:600; color:#333;
+}
 
-table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; }
-th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
-th { font-weight:600; text-transform:uppercase; font-size:13px; }
-
-.page-title { font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
-.breadcrumb { font-size:14px; font-weight:600; margin-bottom:30px; }
+.page-title { 
+  font-size:28px; font-weight:500; color:#444; margin-bottom:10px; 
+}
+.breadcrumb { 
+  font-size:14px; font-weight:600; margin-bottom:30px; 
+}
 .breadcrumb .section { color:#989797; }
 .breadcrumb .current { color:#444; }
 
+table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; }
+th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
+th { font-weight:600; text-transform:uppercase; font-size:13px; color:#555; }
+
+/* Status Colors */
 td.status-Present { color: green; font-weight:600; }
 td.status-Late { color: orange; font-weight:600; }
 td.status-Absent { color: red; font-weight:600; }
+
+/* ========== MOBILE ========== */
+@media (max-width:768px){
+  .sidebar { left:-260px; width:240px; position:fixed; top:60px; height:calc(100% - 60px); z-index:1001; transition:left 0.3s ease; }
+  .sidebar.active { left:0; }
+  .main { margin-left:0 !important; }
+}
 </style>
 </head>
 
@@ -63,6 +113,7 @@ td.status-Absent { color: red; font-weight:600; }
   </div>
 </header>
 
+<!-- FULL SIDEBAR FROM DASHBOARD -->
 <div class="sidebar">
   <div class="sidebar-section">
     <a class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
@@ -71,13 +122,43 @@ td.status-Absent { color: red; font-weight:600; }
   </div>
 
   <div class="sidebar-section">
-    <div class="sidebar-section-title">Logs</div>
-    <a class="sidebar-link {% if request.endpoint == 'admin_attendance_log' %}active{% endif %}" href="{{ url_for('admin_attendance_log') }}">
-      <i class="fas fa-history"></i><span>Attendance Logs</span>
+    <div class="sidebar-section-title">Management</div>
+    <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %}" href="{{ url_for('admin_student_add') }}">
+      <i class="fas fa-user-graduate"></i><span>Add Students</span>
     </a>
+    <div class="sidebar-dropdown">
+      <a class="sidebar-link dropdown-toggle">
+        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
+      </a>
+      <div class="dropdown-menu">
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_assign' %}active{% endif %}" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules</span></a>
+      </div>
+    </div>
+    <a class="sidebar-link {% if request.endpoint == 'admin_modules' %}active{% endif %}" href="{{ url_for('admin_modules') }}">
+      <i class="fas fa-book"></i><span>Modules</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">System</div>
+    <a class="sidebar-link {% if request.endpoint == 'admin_rooms' %}active{% endif %}" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
+    <a class="sidebar-link {% if request.endpoint == 'admin_schedules' %}active{% endif %}" href="{{ url_for('admin_schedules') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Logs</div>
+    <a class="sidebar-link {% if request.endpoint == 'admin_attendance_log' %}active{% endif %}" href="{{ url_for('admin_attendance_log') }}"><i class="fas fa-history"></i><span>Attendance Logs</span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Attendance</div>
+    <a class="sidebar-link {% if request.endpoint == 'admin_summary' %}active{% endif %}" href="{{ url_for('admin_summary') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
+    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
+<!-- MAIN CONTENT -->
 <div class="main">
   <h1 class="page-title">Attendance Log</h1>
   <div class="breadcrumb"><span class="section">Reports</span> / <span class="current">Attendance Log</span></div>
@@ -123,36 +204,51 @@ td.status-Absent { color: red; font-weight:600; }
         </tr>
       </thead>
       <tbody id="attendanceTableBody">
-        <tr><td colspan="7" class="text-center py-4">Select filters to load records</td></tr>
+        <tr><td colspan="8" class="text-center py-4">Select filters to load records</td></tr>
       </tbody>
     </table>
   </div>
 </div>
 
 <script>
+// Sidebar toggle
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
-menuToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+menuToggle.addEventListener('click', () => {
+  if (window.innerWidth <= 768) {
+    sidebar.classList.toggle('active');
+  } else {
+    sidebar.classList.toggle('collapsed');
+  }
+});
 
+// Dropdown toggle (optional)
+document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+  toggle.addEventListener('click', e => {
+    e.preventDefault();
+    toggle.parentElement.classList.toggle('active');
+  });
+});
+
+// Attendance logic (unchanged)
 const filterForm = document.getElementById('filterForm');
 const tableBody = document.getElementById('attendanceTableBody');
 const programSelect = document.getElementById("programSelect");
 const groupSelect = document.getElementById("groupSelect");
 const moduleSelect = document.getElementById("moduleSelect");
 
-// Load attendance
 async function loadAttendance() {
   const formData = new FormData(filterForm);
   const params = new URLSearchParams(formData).toString();
 
-  tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">Loading...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">Loading...</td></tr>`;
 
   try {
     const res = await fetch(`/api/admin/attendance_filtered?${params}`);
     const data = await res.json();
 
     if (!data || data.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No records found</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">No records found</td></tr>`;
       return;
     }
 
@@ -168,14 +264,12 @@ async function loadAttendance() {
         <td class="status-${rec.status}">${rec.status}</td>
       </tr>
     `).join('');
-
   } catch (err) {
     console.error(err);
-    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">Error loading data</td></tr>`;
   }
 }
 
-// Update groups & modules when program changes
 async function updateGroupsAndModules() {
   const program_id = programSelect.value;
   groupSelect.innerHTML = `<option value="">Loading...</option>`;
@@ -197,7 +291,6 @@ async function updateGroupsAndModules() {
   data.modules.forEach(m => moduleSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`);
 }
 
-// Event listeners
 document.addEventListener('DOMContentLoaded', () => loadAttendance());
 filterForm.addEventListener('submit', e => { e.preventDefault(); loadAttendance(); });
 programSelect.addEventListener('change', updateGroupsAndModules);
