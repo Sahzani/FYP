@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
+from flask import Flask, g, render_template, request, redirect, url_for, session, flash, jsonify, abort
 import string
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
@@ -3769,6 +3769,17 @@ def api_schedule(student_id):
     sched_id, sched = schedules_list[0]
     return jsonify({"schedule_id": sched_id, **sched})
 
+import time
+
+@app.before_request
+def start_timer():
+    g.start = time.time()
+
+@app.after_request
+def log_request(response):
+    duration = round(time.time() - g.start, 2)
+    print(f"⏱️ {request.path} took {duration}s")
+    return response
 
 # ------------------ API Endpoints for Schedules ------------------
 @app.route("/api/schedules")
@@ -3791,4 +3802,4 @@ def logout():
 
 # ------------------ Run Flask ------------------
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    app.run(debug=False, port=8000)
