@@ -193,38 +193,44 @@ def home():
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
-        email = request.form.get("email").strip()
+        email = request.form.get("email", "").strip()
 
         if not email:
             flash("Please enter your email.", "error")
             return redirect(url_for("forgot_password"))
 
         try:
-            # Fetch the user by email
-            user = auth.get_user_by_email(email)
-            uid = user.uid
+            # 🔍 Check if email exists in Firestore
+            user_docs = db.collection("users").where("email", "==", email).limit(1).stream()
+            user_doc = next(user_docs, None)
 
-            # Generate a password reset link using Firebase
+            if not user_doc:
+                flash("No account found with this email.", "error")
+                return redirect(url_for("forgot_password"))
+
+            # ✅ Email found → Generate Firebase reset link
             reset_link = auth.generate_password_reset_link(email)
 
-            # Example: Send the reset link via email (use Flask-Mail or another service)
-            # mail.send_message(
-            #     "Password Reset Request",
-            #     sender="your_email@example.com",
-            #     recipients=[email],
-            #     body=f"Click the link to reset your password: {reset_link}"
-            # )
+            # 🖨️ Print to your Flask terminal console
+            print("===========================================")
+            print(f"✅ Password reset link generated for: {email}")
+            print(f"🔗 {reset_link}")
+            print("===========================================")
 
-            flash("A password reset link has been sent to your email.", "success")
+            # ✅ Show clickable link in browser (for testing)
+            flash(f"A password reset link has been generated for {email}.", "success")
+            flash(f"Click here to reset: {reset_link}", "info")
+
+            return redirect(url_for("forgot_password"))
+
         except auth.UserNotFoundError:
-            flash("No account found with this email.", "error")
+            flash("No Firebase Auth account found for this email.", "error")
         except Exception as e:
             flash(f"An error occurred: {str(e)}", "error")
 
         return redirect(url_for("forgot_password"))
 
     return render_template("combinePage/Forget Password.html")
-
 
 # ------------------ Reset Password ------------------
 @app.route("/reset_password/<student_id>", methods=["GET", "POST"])
