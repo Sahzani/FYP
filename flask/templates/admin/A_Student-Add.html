@@ -69,44 +69,71 @@
   </div>
 </header>
 
-<!-- Sidebar -->
+<!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
   <div class="sidebar-section">
     <a class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
+
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
-    <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %}" href="{{ url_for('admin_student_add') }}">
-      <i class="fas fa-user-graduate"></i><span>Add Students</span>
+
+    <!-- Students -->
+    <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %} active" href="{{ url_for('admin_student_add') }}">
+      <i class="fas fa-user-graduate"></i><span>Students</span>
     </a>
+
+    <!-- Teachers (Dropdown) -->
     <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_add','admin_teacher_assign'] %}active{% endif %}">
       <a class="sidebar-link dropdown-toggle">
         <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
       </a>
       <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}">Add Teacher</a>
-        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_assign' %}active{% endif %}" href="{{ url_for('admin_teacher_assign') }}">Assign Modules</a>
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_assign' %}active{% endif %}" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules</span></a>
       </div>
     </div>
+
+    <!-- Programs -->
+    <a class="sidebar-link {% if request.endpoint == 'admin_programs' %}active{% endif %}" href="{{ url_for('admin_programs') }}">
+      <i class="fas fa-layer-group"></i><span>Programs</span>
+    </a>
+
+    <!-- Groups -->
+    <a class="sidebar-link {% if request.endpoint == 'admin_groups' %}active{% endif %}" href="{{ url_for('admin_groups') }}">
+      <i class="fas fa-users"></i><span>Groups</span>
+    </a>
+
+    <!-- Modules -->
     <a class="sidebar-link {% if request.endpoint == 'admin_modules' %}active{% endif %}" href="{{ url_for('admin_modules') }}">
       <i class="fas fa-book"></i><span>Modules</span>
     </a>
   </div>
+
   <div class="sidebar-section">
     <div class="sidebar-section-title">System</div>
-    <a class="sidebar-link {% if request.endpoint == 'admin_rooms' %}active{% endif %}" href="{{ url_for('admin_rooms') }}"><i class="fas fa-door-open"></i><span>Rooms & Cameras</span></a>
-    <a class="sidebar-link {% if request.endpoint == 'admin_schedules' %}active{% endif %}" href="{{ url_for('admin_schedules') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
+    <a class="sidebar-link {% if request.endpoint == 'admin_schedules' %}active{% endif %}" href="{{ url_for('admin_schedules') }}">
+      <i class="fas fa-file-upload"></i><span>Upload Schedules</span>
+    </a>
   </div>
+
   <div class="sidebar-section">
     <div class="sidebar-section-title">Logs</div>
-    <a class="sidebar-link {% if request.endpoint == 'admin_attendance_log' %}active{% endif %}" href="{{ url_for('admin_attendance_log') }}"><i class="fas fa-history"></i><span>Attendance Logs</span></a>
+    <a class="sidebar-link {% if request.endpoint == 'admin_attendance_log' %}active{% endif %}" href="{{ url_for('admin_attendance_log') }}">
+      <i class="fas fa-history"></i><span>Attendance Logs</span>
+    </a>
   </div>
+
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>
-    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
-    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    <a class="sidebar-link {% if request.endpoint == 'admin_summary' %}active{% endif %}" href="{{ url_for('admin_summary') }}">
+      <i class="fas fa-chart-line"></i><span>Summary</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('logout') }}">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
   </div>
 </div>
 
