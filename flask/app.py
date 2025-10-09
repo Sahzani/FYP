@@ -3028,58 +3028,95 @@ def admin_schedule_upload_csv():
 
 
 ## ------------------ Admin Attendance Log Page ------------------
-from flask import session, redirect, url_for, render_template, request, jsonify
-from datetime import datetime, timedelta
+from datetime import datetime
+from flask import session, redirect, url_for, render_template, request
 
-@app.route('/admin/attendance_log/')
-@app.route('/admin/attendance_log/<schedule_id>')
-def admin_attendance_log(schedule_id=None):
+@app.route("/admin/attendance_log")
+def admin_attendance_log():
     if session.get("role") != "admin":
         return redirect(url_for("home"))
 
-    # Fetch all schedules
-    schedules_docs = db.collection("schedules").stream()
-    schedules = []
-    for doc in schedules_docs:
+    # Get filter date (default: today)
+    selected_date = request.args.get("date", datetime.now().strftime("%Y-%m-%d"))
+
+    # Fetch all supporting data
+    groups = {g.id: g.to_dict().get("groupCode", g.id) for g in db.collection("groups").stream()}
+    programs = {p.id: p.to_dict().get("programName", p.id) for p in db.collection("programs").stream()}
+    modules = {m.id: m.to_dict().get("moduleName", m.id) for m in db.collection("mlmodule").stream()}
+
+    # Build relationship maps for cascading filters
+    program_to_groups = {}
+    group_to_modules = {}
+
+    # Fetch ALL schedules to build relationships + attendance
+    all_schedules = []
+    schedules = db.collection("schedules").stream()
+    for doc in schedules:
         s = doc.to_dict()
-        s['docId'] = doc.id
+        s["id"] = doc.id
+        all_schedules.append(s)
 
-        # Group name
-        group_doc = db.collection("groups").document(s.get("fk_group", "")).get()
-        s["groupName"] = group_doc.to_dict().get("groupName") if group_doc.exists else "-"
+        prog_id = s.get("fk_program", "").strip()
+        group_id = s.get("fk_group", "").strip()
+        mod_id = s.get("fk_module", "").strip()
 
-        # Program name
-        program_doc = db.collection("programs").document(s.get("fk_program", "")).get()
-        s["programName"] = program_doc.to_dict().get("programName") if program_doc.exists else "-"
+        prog_name = programs.get(prog_id, "Unknown Program")
+        group_name = groups.get(group_id, "Unknown Group")
+        mod_name = modules.get(mod_id, "Unknown Module")
 
-        # Module name
-        module_doc = db.collection("modules").document(s.get("fk_module", "")).get()
-        s["moduleName"] = module_doc.to_dict().get("moduleName") if module_doc.exists else "-"
+        # Build program → groups
+        if prog_name not in program_to_groups:
+            program_to_groups[prog_name] = set()
+        program_to_groups[prog_name].add(group_name)
 
-        schedules.append(s)
+        # Build group → modules
+        if group_name not in group_to_modules:
+            group_to_modules[group_name] = set()
+        group_to_modules[group_name].add(mod_name)
 
-    # Fetch all groups for filter
-    groups_docs = db.collection("groups").stream()
-    groups = [{"id": g.id, "name": g.to_dict().get("groupName") or g.to_dict().get("groupCode", "-")} for g in groups_docs]
+    # Convert sets to sorted lists
+    program_to_groups = {k: sorted(v) for k, v in program_to_groups.items()}
+    group_to_modules = {k: sorted(v) for k, v in group_to_modules.items()}
 
-    # Fetch all programs for filter
-    programs_docs = db.collection("programs").stream()
-    programs = [{"id": p.id, "name": p.to_dict().get("programName", "-")} for p in programs_docs]
+    # Now fetch attendance records for the selected date
+    attendance_records = []
+    for sched in all_schedules:
+        schedule_id = sched["id"]
+        try:
+            att_docs = db.collection("attendance").document(schedule_id).collection(selected_date).stream()
+            for att_doc in att_docs:
+                att = att_doc.to_dict()
+                student_id = att_doc.id
 
-    # Fetch all modules for filter
-    modules_docs = db.collection("modules").stream()
-    modules = [{"id": m.id, "name": m.to_dict().get("moduleName", "-")} for m in modules_docs]
+                # Get student name
+                student_name = "Unknown Student"
+                student_doc = db.collection("users").document(student_id).get()
+                if student_doc.exists:
+                    s_data = student_doc.to_dict()
+                    student_name = f"{s_data.get('first_name', '')} {s_data.get('last_name', '')}".strip() or "Unknown Student"
+
+                # Enrich with context
+                att["student_name"] = student_name
+                att["program"] = programs.get(sched.get("fk_program", ""), "Unknown Program")
+                att["group"] = groups.get(sched.get("fk_group", ""), "Unknown Group")
+                att["module"] = modules.get(sched.get("fk_module", ""), "Unknown Module")
+                att["date"] = selected_date
+
+                attendance_records.append(att)
+        except Exception as e:
+            print(f"[WARN] Error reading attendance for {schedule_id}: {e}")
+
+    # Sort by timestamp (newest first)
+    attendance_records.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
 
     return render_template(
         "admin/A_Attendance_Log.html",
-        profile=session.get("profile"),
-        schedules=schedules,
-        schedule_id=schedule_id,
-        groups=groups,
-        programs=programs,
-        modules=modules
+        records=attendance_records,
+        all_programs=sorted(program_to_groups.keys()),
+        program_to_groups=program_to_groups,
+        group_to_modules=group_to_modules,
+        selected_date=selected_date
     )
-
 
 # ------------------ API: Admin Attendance Log ------------------
 @app.route("/api/admin/attendance_log/<schedule_id>")
