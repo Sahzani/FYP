@@ -163,6 +163,13 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; color:#3a
 .input-group i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none; }
 .filter-container input, .filter-container select { padding: 8px 12px; padding-left: 32px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; }
 .filter-container input:focus, .filter-container select:focus { border-color: #5D5FEF; box-shadow: 0 0 0 2px rgba(93, 95, 239, 0.2); }
+
+/* Spinner animation */
+  .loader {
+    border-top-color: transparent;
+    border-left-color: transparent;
+    border-bottom-color: transparent;
+  }
 </style>
 </head>
 <body>
@@ -268,241 +275,295 @@ const backBtn = document.getElementById('backBtn');
 const modal = document.getElementById('editModal');
 const modalStudent = document.getElementById('modalStudent');
 const statusSelect = document.getElementById('statusSelect');
-let currentEdit = { groupCode:null, student:null, dateValue:null };
+const notificationDiv = document.getElementById('notificationDiv');
+
+let currentEdit = { scheduleID: null, studentID: null, studentName: null, dateValue: null };
+let currentFilters = { search: '', status: '', date: selectedDate || '' };
+let attendanceCache = {}; // Cache fetched attendance
+
+// --- Notification ---
+function showNotification(message, type='success') {
+    notificationDiv.textContent = message;
+    notificationDiv.className = `notification ${type}`;
+    notificationDiv.classList.add('show');
+    setTimeout(() => notificationDiv.classList.remove('show'), 2500);
+}
 
 // --- Render Modules ---
 function renderModules() {
-  modulesContainer.innerHTML = '';
-  modulesData.forEach(m => {
-    const card = document.createElement('div');
-    card.className = 'bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
-    card.innerHTML = `
-      <div class="flex items-center mb-3">
-        <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mr-3">
-          <i class="fas fa-book text-xl"></i>
-        </div>
-        <h2 class="text-lg font-semibold">${m.moduleName}</h2>
-      </div>
-      <p class="text-sm text-gray-500">${m.groups.length} group(s)</p>
-    `;
-    card.addEventListener('click', () => showModuleDetails(m));
-    modulesContainer.appendChild(card);
-  });
+    modulesContainer.innerHTML = '';
+    modulesData.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
+        card.innerHTML = `
+          <div class="flex items-center mb-3">
+            <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mr-3">
+              <i class="fas fa-book text-xl"></i>
+            </div>
+            <h2 class="text-lg font-semibold">${m.moduleName}</h2>
+          </div>
+          <p class="text-sm text-gray-500">${m.groups.length} group(s)</p>
+        `;
+        card.addEventListener('click', () => showModuleDetails(m));
+        modulesContainer.appendChild(card);
+    });
 }
 
-// --- Show Module Details ---
+// --- Module Details ---
 function showModuleDetails(module) {
-  modulesContainer.classList.add('hidden');
-  moduleDetailsDiv.classList.remove('hidden');
-  moduleTitle.textContent = module.moduleName;
-  renderGroups(module.groups);
+    modulesContainer.classList.add('hidden');
+    moduleDetailsDiv.classList.remove('hidden');
+    moduleTitle.textContent = module.moduleName;
+    renderGroups(module.groups);
 }
 
 // --- Render Groups ---
 function renderGroups(groupCodes) {
-  groupsContainer.innerHTML = '';
-  groupCodes.forEach(code => {
-    const g = groupsData[code];
-    if(!g) return;
+    groupsContainer.innerHTML = '';
+    groupCodes.forEach(code => {
+        const g = groupsData[code];
+        if (!g) return;
 
-    const groupCard = document.createElement('div');
-    groupCard.className = 'bg-white p-4 rounded-2xl shadow hover:shadow-lg transition cursor-pointer group-card';
-    groupCard.style.maxWidth = '400px';
-    groupCard.innerHTML = `
-      <div class="flex items-center gap-3">
-        <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 flex-shrink-0">
-          <i class="fas fa-users text-xl"></i>
-        </div>
-        <div class="flex-1">
-          <h3 class="text-lg font-semibold mb-1">${g.groupName}</h3>
-          <p class="text-sm text-gray-500 mb-2">${g.day} ${g.time} | Room: ${g.room}</p>
-          <p class="text-sm text-gray-500 mb-0">${g.students.length} student(s)</p>
-        </div>
-      </div>
-    `;
-    groupCard.addEventListener('click', () => showStudentAttendance(code));
-    groupsContainer.appendChild(groupCard);
-  });
+        const groupCard = document.createElement('div');
+        groupCard.className = 'bg-white p-4 rounded-2xl shadow hover:shadow-lg transition cursor-pointer group-card';
+        groupCard.style.maxWidth = '400px';
+        groupCard.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 flex-shrink-0">
+              <i class="fas fa-users text-xl"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold mb-1">${g.groupName}</h3>
+              <p class="text-sm text-gray-500 mb-2">${g.day} ${g.time} | Room: ${g.room}</p>
+              <p class="text-sm text-gray-500 mb-0">${g.students.length} student(s)</p>
+            </div>
+          </div>
+        `;
+        groupCard.addEventListener('click', () => showStudentAttendance(code));
+        groupsContainer.appendChild(groupCard);
+    });
 }
 
 // --- Show Student Attendance ---
-function showStudentAttendance(groupCode) {
-  const g = groupsData[groupCode];
-  groupsContainer.innerHTML = '';
-  moduleTitle.textContent = `${g.groupName} - ${g.day} ${g.time} (${g.room})`;
+async function showStudentAttendance(groupCode) {
+    const g = groupsData[groupCode];
+    groupsContainer.innerHTML = '';
+    moduleTitle.textContent = `${g.groupName} - ${g.day} ${g.time} (${g.room})`;
 
-  const filterDiv = document.createElement('div');
-  filterDiv.className = 'filter-container mb-4';
-  filterDiv.innerHTML = `
-    <div class="input-group mb-2">
-      <i class="fas fa-search"></i>
-      <input id="searchInput" placeholder="Search student...">
-    </div>
-    <div class="flex gap-2 mb-4">
-      <input type="text" id="dateFilter" placeholder="Select Date (YYYY-MM-DD)">
-      <select id="statusFilter" class="ml-2">
-        <option value="">All Status</option>
-        <option value="Present">Present</option>
-        <option value="Absent">Absent</option>
-        <option value="Late">Late</option>
-        <option value="Not Marked">Not Marked</option>
-      </select>
-    </div>
-  `;
-  groupsContainer.appendChild(filterDiv);
-
-  const fp = flatpickr("#dateFilter", {
-    dateFormat: "Y-m-d",
-    defaultDate: selectedDate || new Date(),
-    onChange: function(selectedDates, dateStr) {
-      renderTable(dateStr);
-    }
-  });
-
-  function renderTable(dateValue) {
-    const oldTable = document.getElementById('attendanceTable');
-    if(oldTable) oldTable.remove();
-    const oldSummary = document.getElementById('summaryDiv');
-    if(oldSummary) oldSummary.remove();
-    const oldNotif = document.getElementById('notifDiv');
-    if(oldNotif) oldNotif.remove();
-
-    const notifDiv = document.createElement('div');
-    notifDiv.id = 'notifDiv';
-    if(!g.students.length){
-      notifDiv.className='notification';
-      notifDiv.textContent='No students found in this group.';
-      groupsContainer.appendChild(notifDiv);
-    }
-
-    const summaryDiv = document.createElement('div');
-    summaryDiv.className = 'summary-grid mb-4';
-    summaryDiv.id = 'summaryDiv';
-    const statusCounts = { Present:0, Absent:0, Late:0, "Not Marked":0 };
-
-    g.students.forEach(s => {
-      let att = s.attendance.find(a => a.date === dateValue);
-      if(!att){
-        att = { date: dateValue, status: "Not Marked", timestamp: null };
-        s.attendance.push(att);
-      }
-      s.currentStatus = att.status;
-      if(statusCounts[s.currentStatus] !== undefined) statusCounts[s.currentStatus]++;
-    });
-
-    const icons = { Present:'fa-check-circle', Absent:'fa-times-circle', Late:'fa-clock', "Not Marked":'fa-question-circle' };
-    Object.keys(statusCounts).forEach(status => {
-      const card = document.createElement('div');
-      card.className = 'summary-card p-4 rounded-2xl shadow flex flex-col items-center justify-center';
-      card.innerHTML = `
-        <div class="w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-2">
-          <i class="fas ${icons[status]}"></i>
-        </div>
-        <p class="text-sm font-semibold">${status}</p>
-        <p class="text-lg font-bold">${statusCounts[status]}</p>
-      `;
-      summaryDiv.appendChild(card);
-    });
-    groupsContainer.appendChild(summaryDiv);
-
-    const tableWrapper = document.createElement('div');
-    tableWrapper.className='bg-white p-4 rounded-2xl shadow overflow-x-auto table-scroll w-full';
-    tableWrapper.id='attendanceTable';
-    tableWrapper.innerHTML = `
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="bg-gray-100"><th>Name</th><th>Status</th><th>Action</th></tr>
-        </thead>
-        <tbody>
-          ${g.students.map(s=>`
-            <tr class="border-b hover:bg-gray-50">
-              <td>${s.name}</td>
-              <td class="status-${s.currentStatus.replace(' ','')}">${s.currentStatus}</td>
-              <td>
-                <button class="edit-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600" data-student="${s.name}">Edit</button>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
+    // --- Filters ---
+    const filterDiv = document.createElement('div');
+    filterDiv.className = 'filter-container mb-4';
+    filterDiv.innerHTML = `
+      <div class="input-group mb-2">
+        <i class="fas fa-search"></i>
+        <input id="searchInput" placeholder="Search student..." value="${currentFilters.search}">
+      </div>
+      <div class="flex gap-2 mb-4">
+        <input type="text" id="dateFilter" placeholder="Select Date (YYYY-MM-DD)" value="${currentFilters.date}">
+        <select id="statusFilter" class="ml-2">
+          <option value="">All Status</option>
+          <option value="Present">Present</option>
+          <option value="Absent">Absent</option>
+          <option value="Late">Late</option>
+          <option value="Not Marked">Not Marked</option>
+        </select>
+      </div>
     `;
-    groupsContainer.appendChild(tableWrapper);
+    groupsContainer.appendChild(filterDiv);
 
-    tableWrapper.querySelectorAll('.edit-btn').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        const student = btn.dataset.student;
-        currentEdit={groupCode, student, dateValue};
-        modalStudent.textContent = student;
-        const s = g.students.find(st=>st.name===student);
-        const att = s.attendance.find(a=>a.date===dateValue);
-        statusSelect.value = att.status;
-        modal.classList.add('show');
-        document.querySelector('.modal-content').classList.add('show');
-      });
+    flatpickr("#dateFilter", {
+        dateFormat: "Y-m-d",
+        defaultDate: currentFilters.date || new Date(),
+        onChange: (selectedDates, dateStr) => {
+            currentFilters.date = dateStr;
+            renderTable(groupCode);
+        }
     });
 
-    const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
-    function applyFilters(){
-      const search = searchInput.value.toLowerCase();
-      const filter = statusFilter.value;
-      tableWrapper.querySelectorAll('tbody tr').forEach(tr=>{
-        const name = tr.querySelector('td:first-child').textContent.toLowerCase();
-        const status = tr.querySelector('td:nth-child(2)').textContent;
-        tr.style.display = (name.includes(search) && (!filter || status===filter)) ? '' : 'none';
-      });
-    }
-    searchInput.addEventListener('input', applyFilters);
-    statusFilter.addEventListener('change', applyFilters);
-  }
+    statusFilter.value = currentFilters.status;
+    document.getElementById('searchInput').addEventListener('input', e => {
+        currentFilters.search = e.target.value;
+        renderTable(groupCode);
+    });
+    statusFilter.addEventListener('change', e => {
+        currentFilters.status = e.target.value;
+        renderTable(groupCode);
+    });
 
-  renderTable(fp.input.value);
+    // --- Render Table ---
+    async function renderTable(groupCode) {
+        const dateValue = currentFilters.date;
+        groupsContainer.querySelectorAll('#attendanceTable, #summaryDiv, #notifDiv').forEach(el => el.remove());
+        if (filterDiv) groupsContainer.appendChild(filterDiv);
+
+        if (!g.students.length) {
+            const notifDiv = document.createElement('div');
+            notifDiv.id = 'notifDiv';
+            notifDiv.className = 'notification';
+            notifDiv.textContent = 'No students found in this group.';
+            groupsContainer.appendChild(notifDiv);
+            return;
+        }
+
+        // --- Table wrapper with loading overlay ---
+        const tableWrapper = document.createElement('div');
+        tableWrapper.id = 'attendanceTable';
+        tableWrapper.className = 'bg-white p-4 rounded-2xl shadow overflow-x-auto table-scroll w-full relative';
+        tableWrapper.innerHTML = `
+          <div id="tableLoading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 z-10">
+            <i class="fas fa-spinner fa-spin text-indigo-500 text-2xl mr-2"></i>
+            <span class="text-gray-700 font-medium">Loading data...</span>
+          </div>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-100"><th>Name</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        `;
+        groupsContainer.appendChild(tableWrapper);
+        const tbody = tableWrapper.querySelector('tbody');
+        const loadingOverlay = tableWrapper.querySelector('#tableLoading');
+
+        try {
+            if (!attendanceCache[dateValue]) {
+                const res = await fetch(`/api/attendance/${groupCode}?date=${dateValue}`);
+                const data = await res.json();
+                attendanceCache[dateValue] = data.students;
+            }
+
+            const studentsWithStatus = g.students.map(s => {
+                const att = attendanceCache[dateValue].find(a => a.studentDocID === s.id);
+                return { id: s.id, name: s.name, status: att ? att.status : "Not Marked" };
+            });
+
+            const filteredStudents = studentsWithStatus.filter(s => {
+                const searchMatch = s.name.toLowerCase().includes(currentFilters.search.toLowerCase());
+                const statusMatch = currentFilters.status ? s.status === currentFilters.status : true;
+                return searchMatch && statusMatch;
+            });
+
+            // --- Summary ---
+            const summaryDiv = document.createElement('div');
+            summaryDiv.id = 'summaryDiv';
+            summaryDiv.className = 'summary-grid mb-4';
+            const statusCounts = { Present: 0, Absent: 0, Late: 0, "Not Marked": 0 };
+            studentsWithStatus.forEach(s => statusCounts[s.status]++);
+            const icons = { Present: 'fa-check-circle', Absent: 'fa-times-circle', Late: 'fa-clock', "Not Marked": 'fa-question-circle' };
+            Object.keys(statusCounts).forEach(st => {
+                const card = document.createElement('div');
+                card.className = 'summary-card p-4 rounded-2xl shadow flex flex-col items-center justify-center';
+                card.innerHTML = `
+                  <div class="w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-2">
+                    <i class="fas ${icons[st]}"></i>
+                  </div>
+                  <p class="text-sm font-semibold">${st}</p>
+                  <p class="text-lg font-bold">${statusCounts[st]}</p>
+                `;
+                summaryDiv.appendChild(card);
+            });
+            groupsContainer.insertBefore(summaryDiv, tableWrapper);
+
+            tbody.innerHTML = filteredStudents.map(s => `
+                <tr class="border-b hover:bg-gray-50">
+                  <td>${s.name}</td>
+                  <td class="status-${s.status.replace(' ','')}">${s.status}</td>
+                  <td>
+                    <button class="edit-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600" data-id="${s.id}" data-name="${s.name}">Edit</button>
+                  </td>
+                </tr>
+            `).join('');
+
+            // --- Edit buttons ---
+            tableWrapper.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentEdit = {
+                        scheduleID: groupCode,
+                        studentID: btn.dataset.id,
+                        studentName: btn.dataset.name,
+                        dateValue
+                    };
+                    modalStudent.textContent = btn.dataset.name;
+                    const s = studentsWithStatus.find(st => st.id === btn.dataset.id);
+                    statusSelect.value = s.status;
+                    modal.classList.add('show');
+                    document.querySelector('.modal-content').classList.add('show');
+                });
+            });
+
+        } catch (err) {
+            console.error(err);
+            const notifDiv = document.createElement('div');
+            notifDiv.id = 'notifDiv';
+            notifDiv.className = 'notification';
+            notifDiv.textContent = 'Failed to load attendance data.';
+            groupsContainer.appendChild(notifDiv);
+        } finally {
+            loadingOverlay.remove(); // remove spinner overlay
+        }
+    }
+
+    renderTable(groupCode);
 }
 
-document.querySelector('.btn-cancel').addEventListener('click',()=>{
-  modal.classList.remove('show');
-  document.querySelector('.modal-content').classList.remove('show');
-});
-document.querySelector('.btn-save').addEventListener('click',()=>{
-  const {groupCode, student, dateValue} = currentEdit;
-  const s = groupsData[groupCode].students.find(st=>st.name===student);
-  if(s){
-    const attIndex = s.attendance.findIndex(a=>a.date===dateValue);
-    if(attIndex>=0){
-      s.attendance[attIndex].status = statusSelect.value;
-    } else {
-      s.attendance.push({ date: dateValue, status: statusSelect.value, timestamp: new Date().toISOString() });
-    }
-  }
-  showStudentAttendance(currentEdit.groupCode);
-  modal.classList.remove('show');
-  document.querySelector('.modal-content').classList.remove('show');
-});
-document.querySelector('.btn-reset').addEventListener('click',()=>{
-  const {groupCode, student, dateValue} = currentEdit;
-  const s = groupsData[groupCode].students.find(st=>st.name===student);
-  if(s){
-    const attIndex = s.attendance.findIndex(a=>a.date===dateValue);
-    if(attIndex>=0){
-      s.attendance[attIndex].status = "Not Marked";
-    } else {
-      s.attendance.push({ date: dateValue, status: "Not Marked", timestamp: new Date().toISOString() });
-    }
-  }
-  showStudentAttendance(currentEdit.groupCode);
-  modal.classList.remove('show');
-  document.querySelector('.modal-content').classList.remove('show');
+// --- Modal actions ---
+document.querySelector('.btn-cancel').addEventListener('click', () => {
+    modal.classList.remove('show');
+    document.querySelector('.modal-content').classList.remove('show');
 });
 
-backBtn.addEventListener('click',()=>{
-  moduleDetailsDiv.classList.add('hidden');
-  modulesContainer.classList.remove('hidden');
+document.querySelector('.btn-save').addEventListener('click', async () => {
+    const { scheduleID, studentID, dateValue } = currentEdit;
+    const status = statusSelect.value;
+    try {
+        await fetch(`/api/attendance/${scheduleID}/${studentID}`, {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: dateValue, status })
+        });
+        if (attendanceCache[dateValue]) {
+            const idx = attendanceCache[dateValue].findIndex(a => a.studentDocID === studentID);
+            if (idx >= 0) attendanceCache[dateValue][idx].status = status;
+        }
+        renderTable(scheduleID);
+        showNotification("Status updated successfully!");
+    } catch (err) { console.error(err); showNotification("Failed to update status", 'error'); }
+    modal.classList.remove('show');
+    document.querySelector('.modal-content').classList.remove('show');
 });
 
-document.getElementById('menu-toggle').addEventListener('click',()=>document.querySelector('.sidebar').classList.toggle('collapsed'));
+document.querySelector('.btn-reset').addEventListener('click', async () => {
+    const { scheduleID, studentID, dateValue } = currentEdit;
+    try {
+        await fetch(`/api/attendance/${scheduleID}/${studentID}`, {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: dateValue, status: "Not Marked" })
+        });
+        if (attendanceCache[dateValue]) {
+            const idx = attendanceCache[dateValue].findIndex(a => a.studentDocID === studentID);
+            if (idx >= 0) attendanceCache[dateValue][idx].status = "Not Marked";
+        }
+        renderTable(scheduleID);
+        showNotification("Status reset successfully!");
+    } catch (err) { console.error(err); showNotification("Failed to reset status", 'error'); }
+    modal.classList.remove('show');
+    document.querySelector('.modal-content').classList.remove('show');
+});
+
+// --- Back & Sidebar ---
+backBtn.addEventListener('click', () => {
+    moduleDetailsDiv.classList.add('hidden');
+    modulesContainer.classList.remove('hidden');
+});
+document.getElementById('menu-toggle').addEventListener('click', () => {
+    document.querySelector('.sidebar').classList.toggle('collapsed');
+});
 
 renderModules();
 </script>
+
 
 </body>
 </html>

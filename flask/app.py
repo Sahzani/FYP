@@ -1080,6 +1080,7 @@ def teacher_class_list():
         return redirect(url_for("home"))
     return render_template("teacher/T_class_list.html")
 
+
 # ------------------ Teacher modules, groups, and attendance ------------------
 @app.route("/teacher_modules")
 def teacher_modules():
@@ -1094,27 +1095,20 @@ def teacher_modules():
     if not teacher_id:
         return redirect(url_for("login"))
 
-    # ------------------ Profile for header & GC check ------------------
+    # ------------------ Profile ------------------
     teacher_doc = db.collection("users").document(teacher_id).get()
     profile = {}
     if teacher_doc.exists:
         data = teacher_doc.to_dict()
-
-        # Use firstName and lastName directly
         first_name = data.get("firstName", "Teacher")
         last_name = data.get("lastName", "")
-
-        # Check if GC
         role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
         is_gc = role_doc.to_dict().get("isCoordinator", False) if role_doc.exists else False
-
         profile = {
             "firstName": first_name,
             "lastName": last_name,
             "role": data.get("role", "Teacher"),
-            "profile_pic": data.get(
-                "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
-            ),
+            "profile_pic": data.get("photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"),
             "is_gc": is_gc
         }
     else:
@@ -1143,7 +1137,7 @@ def teacher_modules():
     module_ids = list({s["fk_module"] for s in schedules})
     group_ids = list({s["fk_group"] for s in schedules})
 
-    # ------------------ Fetch module & group info ------------------
+    # ------------------ Fetch modules & groups ------------------
     modules_ref = db.collection("mlmodule").where("__name__", "in", module_ids).stream()
     modules = {m.id: m.to_dict() for m in modules_ref}
 
@@ -1159,10 +1153,8 @@ def teacher_modules():
     for stu_doc in students_ref:
         stu = stu_doc.to_dict()
         student_id = stu_doc.id
-
         role_doc = db.collection("users").document(student_id).collection("roles").document("student").get()
         fk_groupcode = role_doc.to_dict().get("fk_groupcode", "") if role_doc.exists else ""
-
         if fk_groupcode in students_by_group:
             students_by_group[fk_groupcode].append({
                 "id": student_id,
@@ -1170,26 +1162,23 @@ def teacher_modules():
                 "attendance": []
             })
 
-    # ------------------ Fetch all attendance ------------------
-    attendance_ref = db.collection("attendance").stream()
+    # ------------------ Fetch attendance by schedule ------------------
     available_dates = set()
-
-    for att_doc in attendance_ref:
-        attendance_doc_id = att_doc.id
-        for date_col in db.collection("attendance").document(attendance_doc_id).collections():
+    for sched in schedules:
+        schedule_id = sched["id"]
+        att_collections = db.collection("attendance").document(schedule_id).collections()
+        for date_col in att_collections:
             date_str = date_col.id
             available_dates.add(date_str)
             for stu_att_doc in date_col.stream():
                 stu_att = stu_att_doc.to_dict()
                 student_id = stu_att_doc.id
-                group_code = stu_att.get("group")
                 status = stu_att.get("status", "Not Marked")
                 timestamp = stu_att.get("timestamp", None)
-
+                group_code = sched.get("fk_group")
                 if group_code in students_by_group:
                     for s in students_by_group[group_code]:
                         if s["id"] == student_id:
-                            # Only add if not already present
                             if not any(a["date"] == date_str for a in s["attendance"]):
                                 s["attendance"].append({
                                     "date": date_str,
@@ -1199,10 +1188,8 @@ def teacher_modules():
 
     available_dates = sorted(list(available_dates))
     selected_date = request.args.get("date") or None
-    if selected_date and selected_date not in available_dates:
-        selected_date = None
 
-    # ------------------ Fill missing attendance for selected date only ------------------
+    # Fill missing attendance for selected date
     if selected_date:
         for group_students in students_by_group.values():
             for s in group_students:
@@ -1213,15 +1200,14 @@ def teacher_modules():
                         "timestamp": None
                     })
 
-    # Sort attendance per student
+    # Sort attendance
     for group_students in students_by_group.values():
         for s in group_students:
             s["attendance"].sort(key=lambda x: x["date"])
 
-    # ------------------ Assemble modules & groups ------------------
+    # Assemble modules & groups
     modules_data = []
     groups_data = {}
-
     for sched in schedules:
         mod_id = sched["fk_module"]
         g_id = sched["fk_group"]
@@ -1264,6 +1250,93 @@ def teacher_modules():
         available_dates=available_dates,
         selected_date=selected_date
     )
+
+# ------------------ API: Get attendance for group/date with absence count ------------------
+@app.route("/api/attendance/<group_code>")
+def get_group_attendance(group_code):
+    date_str = request.args.get("date")
+    if not date_str:
+        return jsonify({"students": []})
+
+    # Get all students in this group
+    students_ref = db.collection("users").where("role_type", "==", 1).stream()
+    students = []
+    for stu_doc in students_ref:
+        stu = stu_doc.to_dict()
+        student_id = stu_doc.id
+        role_doc = db.collection("users").document(student_id).collection("roles").document("student").get()
+        if role_doc.exists and role_doc.to_dict().get("fk_groupcode") == group_code:
+            students.append({
+                "studentDocID": student_id,
+                "name": stu.get("name", "Student")
+            })
+
+    # Get all schedules for this group
+    schedules_ref = list(db.collection("schedules").where("fk_group", "==", group_code).stream())
+    monthly_absences = {s["studentDocID"]: 0 for s in students}
+
+    students_data = []
+    for stu in students:
+        student_id = stu["studentDocID"]
+        status_today = "Not Marked"
+        absence_count = 0
+
+        for sched in schedules_ref:
+            sched_id = sched.id
+            # Today's attendance
+            att_doc = db.collection("attendance").document(sched_id).collection(date_str).document(student_id).get()
+            if att_doc.exists:
+                status_today = att_doc.to_dict().get("status", status_today)
+            # Monthly absence count
+            month_prefix = date_str[:7]  # YYYY-MM
+            att_month = db.collection("attendance").document(sched_id).collections()
+            for col in att_month:
+                if col.id.startswith(month_prefix):
+                    stu_att_doc = col.document(student_id).get()
+                    if stu_att_doc.exists and stu_att_doc.to_dict().get("status") == "Absent":
+                        absence_count += 1
+
+        students_data.append({
+            "studentDocID": student_id,
+            "name": stu["name"],
+            "status": status_today,
+            "absenceCount": absence_count
+        })
+
+    return jsonify({"students": students_data})
+
+# ------------------ API: Update attendance ------------------
+@app.route("/api/attendance/<group_code>/<student_doc_id>", methods=["POST"])
+def update_attendance(group_code, student_doc_id):
+    data = request.get_json()
+    date_str = data.get("date")
+    status = data.get("status")
+
+    if not date_str or not status:
+        return jsonify({"success": False, "message": "Missing date or status"}), 400
+
+    # --- Fetch first schedule for the group ---
+    schedules_ref = db.collection("schedules").where("fk_group", "==", group_code).stream()
+    schedule_id = None
+    for sched in schedules_ref:
+        schedule_id = sched.id
+        break
+
+    if not schedule_id:
+        return jsonify({"success": False, "message": "Schedule not found"}), 404
+
+    try:
+        att_ref = db.collection("attendance").document(schedule_id).collection(date_str).document(student_doc_id)
+        att_ref.set({
+            "group": group_code,
+            "status": status,
+            "timestamp": firestore.SERVER_TIMESTAMP
+        }, merge=True)
+
+        return jsonify({"success": True, "message": "Attendance updated"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 
 # ------------------ Teacher marks attendance (form-based) ------------------
 @app.route("/mark_attendance", methods=["POST"])
