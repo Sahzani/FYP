@@ -175,28 +175,27 @@
 
             <div class="card password-change-card">
                 <h2>Password Change</h2>
-                <a href="{{ url_for('change_password_page') }}" class="btn btn-primary">Change Password</a>
+                <a href="{{ url_for('teacher_change_password') }}" class="btn btn-primary">Change Password</a>
             </div>
         </div>
     </div>
 
     <!-- Password Modal -->
     <div id="passwordModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close-btn" id="closeModal">&times;</span>
-            <h2>Change Password</h2>
-            <form id="password-form" class="password-form-content">
-                <div class="form-group"><label>Current Password</label><input type="password" id="currentPassword" required></div>
-                <div class="form-group"><label>New Password</label><input type="password" id="newPassword" required></div>
-                <div class="form-group"><label>Confirm Password</label><input type="password" id="confirmPassword" required></div>
-                <div id="messageBox" class="status-message"></div>
-                <div class="card-actions">
-                    <button type="button" id="cancelButton" class="btn btn-secondary">Cancel</button>
-                    <button type="submit" id="submitButton" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
+    <div class="modal-content">
+        <span class="modal-close-btn" id="closeModal">&times;</span>
+        <h2>Change Password</h2>
+        <form id="password-form" method="POST" action="{{ url_for('teacher_change_password') }}">
+            <div class="form-group"><label>Current Password</label><input type="password" name="currentPassword" required></div>
+            <div class="form-group"><label>New Password</label><input type="password" name="newPassword" required></div>
+            <div class="form-group"><label>Confirm Password</label><input type="password" name="confirmPassword" required></div>
+            <div class="card-actions">
+                <button type="button" class="btn btn-secondary" id="cancelButton">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
     </div>
+</div>
 
     <script type="module">
         /* Firebase + JS logic remains fully unchanged */

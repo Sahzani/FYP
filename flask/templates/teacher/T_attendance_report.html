@@ -1,188 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iAttend - Attendance Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
 
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-    html,
-    body {
-      height: 100%;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%);
-    }
+html, body {
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(180deg, #f7ecd7 0%, #f8f1e5 35%, #fbfaf7 100%);
+  overflow-x: hidden;
+}
 
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: #fff;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      z-index: 1000;
-    }
+/* Header */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 1000;
+}
 
-    header a.user-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: #444;
-      font-weight: 600;
-    }
+#menu-toggle {
+  font-size: 28px;
+  margin-right: 15px;
+  cursor: pointer;
+}
 
-    header a.user-info img {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
 
-    .sidebar {
-      position: fixed;
-      top: 60px;
-      left: 0;
-      width: 240px;
-      height: calc(100% - 60px);
-      background: #FFEED3;
-      padding: 15px 0;
-      overflow: hidden;
-      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08);
-      transition: width 0.3s ease;
-    }
+.header-content a.title {
+  text-decoration: none;
+  color: #444;
+  font-weight: 700;
+  font-size: 26px;
+}
 
-    .sidebar-section {
-      margin-bottom: 25px;
-    }
+/* User profile hover effect */
+header a.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #444;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  padding: 0;               /* no padding normally */
+  border-radius: 0;         /* no rounded corners normally */
+  background: transparent;  /* transparent normally */
+  box-shadow: none;         /* no shadow normally */
+}
 
-    .sidebar-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #5D5FEF;
-      margin-bottom: 10px;
-      padding-left: 10px;
-    }
+header a.user-info:hover {
+  padding: 4px 12px;        
+  border-radius: 12px;      
+  background: #f8f1e5;      
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
 
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 15px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 500;
-      color: #1A237E;
-      transition: all 0.2s;
-    }
+header a.user-info img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 
-    .sidebar-link i {
-      width: 18px;
-      text-align: center;
-    }
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 250px;
+  height: calc(100% - 60px);
+  background: #f8f1e5;
+  padding: 15px 0;
+  box-shadow: 2px 0 15px rgba(0,0,0,0.08);
+  border-top-right-radius: 12px;
+  transition: all 0.3s ease;
+  overflow-y: auto;
+  z-index: 999;
+}
 
-    .sidebar-link.active,
-    .sidebar-link:hover {
-      background: rgba(255, 255, 255, 0.6);
-      color: #4154F1;
-      font-weight: 600;
-    }
+.sidebar-section { margin-bottom: 25px; padding: 0 15px; }
+.sidebar-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6b7280;
+  margin-bottom: 10px;
+  padding-left: 10px;
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #2C2C2C;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+.sidebar-link i { width: 18px; text-align: center; }
+.sidebar-link.active, .sidebar-link:hover {
+  background: #eadbbf;
+  color: #1F2937;
+  font-weight: 600;
+}
 
-    .main-content {
-      margin-left: 260px;
-      padding: 100px 30px 30px;
-      height: 100vh;
-      overflow-y: auto;
-      transition: margin-left 0.3s ease;
-    }
+/* Collapsed Sidebar */
+.sidebar.collapsed {
+  width: 70px;
+  padding: 15px 0;
+  overflow: hidden;
+}
+.sidebar.collapsed .sidebar-section-title,
+.sidebar.collapsed .sidebar-link span {
+  display: none;
+}
 
-    h2 {
-      font-size: 24px;
-      font-weight: 500;
-      color: #444;
-      margin-bottom: 10px;
-    }
+/* Main Content */
+.main-content {
+  margin-left: 260px;
+  padding: 100px 30px 30px;
+  min-height: 100vh;
+  overflow-y: auto;
+  transition: margin-left 0.3s ease;
+  background: transparent; /* keep background transparent to highlight floating cards */
+}
+.main-content.expanded {
+  margin-left: 80px;
+}
 
-    .card {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-      margin-bottom: 20px;
-    }
+h2 { font-size: 24px; font-weight: 500; color: #444; margin-bottom: 10px; }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+/* Floating Cards */
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* stronger shadow for floating effect */
+  margin-bottom: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
 
-    th,
-    td {
-      padding: 12px;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
 
-    th {
-      background: #f0f0f0;
-    }
+/* Attendance Table */
+#attendance-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
 
-    td.status-Present {
-      color: green;
-      font-weight: 600;
-    }
+#attendance-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8f1e5;
+  z-index: 10;
+  padding: 12px;
+  font-weight: 600;
+  color: #2C2C2C;
+}
 
-    td.status-Late {
-      color: orange;
-      font-weight: 600;
-    }
+/* Rounded corners for header */
+#attendance-table thead th:first-child { border-top-left-radius: 12px; }
+#attendance-table thead th:last-child { border-top-right-radius: 12px; }
 
-    td.status-Absent {
-      color: red;
-      font-weight: 600;
-    }
-  </style>
+#attendance-table tbody td {
+  border-top: 1px solid #ddd;
+  padding: 12px;
+}
+
+/* Row hover effect */
+#attendance-table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
+
+/* Status dropdown colors */
+.status-select {
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 4px 6px;
+  min-width: 80px;
+  color: #1F2937;
+  border: 1px solid #ddd;
+}
+.status-Present { background-color: #d1fae5; color: green; }
+.status-Late { background-color: #fff7d1; color: orange; }
+.status-Absent { background-color: #fee2e2; color: red; }
+
+@media (max-width: 768px) {
+  .sidebar { left: -260px; }
+  .sidebar.collapsed { left: 0; width: 250px; }
+  .main-content { margin-left: 0; }
+  .main-content.expanded { margin-left: 0; }
+}
+</style>
+
 </head>
 
 <body>
-
   <!-- Header -->
   <header>
-    <a href="#">iAttend</a>
-    <a href="#" class="user-info">
-      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher">
-    </a>
+    <span id="menu-toggle">&#9776;</span>
+    <div class="header-content">
+      <a href="#" class="title">iAttend</a>
+      <a href="#" class="user-info">
+        <span>{{ profile.firstName }} {{ profile.lastName }}</span>
+        <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher" />
+      </a>
+    </div>
   </header>
 
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-section">
-      <a class="sidebar-link {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}"
-        href="{{ url_for('teacher_dashboard') }}">
+      <a class="sidebar-link {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}" href="{{ url_for('teacher_dashboard') }}">
         <i class="fas fa-home"></i><span>Dashboard</span>
       </a>
     </div>
 
     <div class="sidebar-section">
       <div class="sidebar-section-title">Reports</div>
-      <a class="sidebar-link {% if request.endpoint == 'teacher_attendance' %}active{% endif %}"
-        href="{{ url_for('teacher_attendance') }}">
+      <a class="sidebar-link {% if request.endpoint == 'teacher_attendance' %}active{% endif %}" href="{{ url_for('teacher_attendance') }}">
         <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
       </a>
     </div>
@@ -198,12 +260,8 @@
     {% if profile.is_gc %}
     <div class="sidebar-section">
       <div class="sidebar-section-title">Group Coordinator</div>
-      <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
-        <i class="fas fa-users-cog"></i><span>Manage Group</span>
-      </a>
-      <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
-        <i class="fas fa-file-alt"></i><span>Group Report</span>
-      </a>
+      <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}"><i class="fas fa-users-cog"></i><span>Manage Group</span></a>
+      <a class="sidebar-link" href="{{ url_for('gc_group_report') }}"><i class="fas fa-file-alt"></i><span>Group Report</span></a>
     </div>
     {% endif %}
 
@@ -214,28 +272,47 @@
 
   <!-- Main Content -->
   <div class="main-content">
-
-    <!-- Select Class -->
+    <!-- Filter Section -->
     <div class="card">
       <h2>Select Class</h2>
-      <form id="attendance-form" class="flex flex-wrap gap-3 items-center">
-        <label for="schedule">Class:</label>
-        <select id="schedule" class="border rounded-md p-2">
-          <option value="">-- Choose --</option>
-          {% for s in schedules %}
-          <option value="{{ s['docId'] }}">{{ s.get('programName','-') }} | {{ s.get('groupName','-') }} | {{
-            s.get('moduleName','-') }} | {{ s.get('day','-') }}</option>
-          {% endfor %}
-        </select>
-        <button type="button" id="startCamera" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Start Camera</button>
-      </form>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Program</label>
+          <select id="filter-program" class="w-full border rounded-md p-2">
+            <option value="">All Programs</option>
+            {% for p in programs %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Group</label>
+          <select id="filter-group" class="w-full border rounded-md p-2" disabled>
+            <option value="">All Groups</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Module</label>
+          <select id="filter-module" class="w-full border rounded-md p-2" disabled>
+            <option value="">All Modules</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Day</label>
+          <select id="filter-day" class="w-full border rounded-md p-2" disabled>
+            <option value="">All Days</option>
+          </select>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="button" id="apply-filters" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Apply Filters</button>
+        <button type="button" id="reset-filters" class="ml-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg">Reset</button>
+      </div>
     </div>
 
     <!-- Live Camera Feed -->
-    <div class="card" id="video-container" style="display:none;">
+    <div class="card" id="video-container" style="display: none;">
       <h2>Live Camera</h2>
       <div class="flex justify-center">
-        <img id="webcam-feed" src="" alt="Camera Feed" class="rounded-md border max-w-md w-full">
+        <img id="webcam-feed" src="" alt="Camera Feed" class="rounded-md border max-w-md w-full" />
       </div>
       <button id="stopCamera" class="px-4 py-2 bg-red-600 text-white rounded-lg mt-3">Stop Camera</button>
     </div>
@@ -260,105 +337,125 @@
         </table>
       </div>
     </div>
-
   </div>
 
+  <script id="schedules-data" type="application/json">{{ schedules | tojson }}</script>
+
   <script>
-    const startBtn = document.getElementById('startCamera');
-    const stopBtn = document.getElementById('stopCamera');
-    const videoContainer = document.getElementById('video-container');
-    const webcamFeed = document.getElementById('webcam-feed');
-    const scheduleSelect = document.getElementById('schedule');
-    const attendanceTable = document.getElementById('attendance-table').querySelector("tbody");
-    const WEBCAM_URL = "{{ webcam_url }}";
+    // Hamburger toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
 
-    let scheduleId = "";
-
-    startBtn.addEventListener('click', () => {
-      scheduleId = scheduleSelect.value.trim();
-      if (!scheduleId) { alert("Please select a class first!"); return; }
-      fetch(`${WEBCAM_URL}/start_camera`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `schedule=${encodeURIComponent(scheduleId)}`
-      }).then(() => {
-        videoContainer.style.display = "block";
-        webcamFeed.src = `${WEBCAM_URL}/video_feed`;
-        fetchAttendance(scheduleId);
-      }).catch(err => console.error("Failed to start camera:", err));
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
     });
 
-    stopBtn.addEventListener('click', () => {
-      fetch(`${WEBCAM_URL}/stop_camera`).then(() => {
-        videoContainer.style.display = "none";
-        webcamFeed.src = "";
-      }).catch(err => console.error("Failed to stop camera:", err));
+    const WEBCAM_URL = "{{ webcam_url }}";
+    const allSchedules = JSON.parse(document.getElementById('schedules-data').textContent);
+    let scheduleId = "";
+    const videoContainer = document.getElementById('video-container');
+    const webcamFeed = document.getElementById('webcam-feed');
+    const attendanceTable = document.querySelector('#attendance-table tbody');
+
+    function populateDropdown(id, values) {
+      const select = document.getElementById(id);
+      const current = select.value;
+      select.innerHTML = '<option value="">All</option>';
+      const uniqueValues = [...new Set(values)].filter(v => v && v !== "-").sort();
+      uniqueValues.forEach(val => { const opt = document.createElement('option'); opt.value = val; opt.textContent = val; select.appendChild(opt); });
+      if (uniqueValues.includes(current)) select.value = current; else select.value = "";
+    }
+
+    function updateFilters() {
+      const program = document.getElementById('filter-program').value;
+      const group = document.getElementById('filter-group').value;
+      const module = document.getElementById('filter-module').value;
+      const day = document.getElementById('filter-day').value;
+      let filtered = allSchedules;
+      if (program) filtered = filtered.filter(s => s.programName === program);
+      if (group) filtered = filtered.filter(s => s.groupName === group);
+      if (module) filtered = filtered.filter(s => s.moduleName === module);
+      if (day) filtered = filtered.filter(s => s.day === day);
+      populateDropdown('filter-group', filtered.map(s => s.groupName));
+      populateDropdown('filter-module', filtered.map(s => s.moduleName));
+      populateDropdown('filter-day', filtered.map(s => s.day));
+      document.getElementById('filter-group').disabled = !filtered.some(s => s.groupName);
+      document.getElementById('filter-module').disabled = !filtered.some(s => s.moduleName);
+      document.getElementById('filter-day').disabled = !filtered.some(s => s.day);
+      window.filteredSchedules = filtered;
+    }
+
+    document.getElementById('filter-program').addEventListener('change', updateFilters);
+    document.getElementById('filter-group').addEventListener('change', updateFilters);
+    document.getElementById('filter-module').addEventListener('change', updateFilters);
+    document.getElementById('filter-day').addEventListener('change', updateFilters);
+
+    document.getElementById('apply-filters').addEventListener('click', () => {
+      const filtered = window.filteredSchedules || allSchedules;
+      if (filtered.length === 0) { alert("No classes match your filters."); return; }
+      if (filtered.length === 1) { scheduleId = filtered[0].docId; startCameraWithSchedule(scheduleId); }
+      else alert("Multiple classes match. Please refine filters.");
+    });
+
+    document.getElementById('reset-filters').addEventListener('click', () => {
+      document.getElementById('filter-program').value = '';
+      document.getElementById('filter-group').value = '';
+      document.getElementById('filter-module').value = '';
+      document.getElementById('filter-day').value = '';
+      updateFilters();
+    });
+
+    updateFilters();
+
+    function startCameraWithSchedule(scheduleId) {
+      fetch(`${WEBCAM_URL}/start_camera`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `schedule=${encodeURIComponent(scheduleId)}` })
+      .then(() => { videoContainer.style.display = "block"; webcamFeed.src = `${WEBCAM_URL}/video_feed`; fetchAttendance(scheduleId); })
+      .catch(err => console.error("Failed to start camera:", err));
+    }
+
+    document.getElementById('stopCamera').addEventListener('click', () => {
+      fetch(`${WEBCAM_URL}/stop_camera`).then(() => { videoContainer.style.display = "none"; webcamFeed.src = ""; })
+      .catch(err => console.error("Failed to stop camera:", err));
     });
 
     function fetchAttendance(scheduleId) {
-      fetch(`/api/attendance/${scheduleId}`)
-        .then(res => res.json())
-        .then(data => {
-          attendanceTable.innerHTML = "";
-          if (!data.students || data.students.length === 0) {
-            attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">No students found</td></tr>`;
-            return;
-          }
-          data.students.forEach(student => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${student.name}</td>
-              <td>${student.email || "-"}</td>
-              <td>${student.time || "-"}</td>
-              <td>
-                <select class="status-select" data-student-id="${student.id}" data-schedule-id="${scheduleId}">
-                  <option value="Present" ${student.status === "Present" ? "selected" : ""}>Present</option>
-                  <option value="Absent" ${student.status === "Absent" ? "selected" : ""}>Absent</option>
-                  <option value="Late" ${student.status === "Late" ? "selected" : ""}>Late</option>
-                </select>
-              </td>
-              <td>${student.group || "-"}</td>
-              <td>${student.program || "-"}</td>
-              <td>${student.module || "-"}</td>
-            `;
-            attendanceTable.appendChild(tr);
-          });
-        })
-        .catch(err => {
-          console.error("Failed to fetch attendance:", err);
-          attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
+      fetch(`/api/attendance/${scheduleId}`).then(res => res.json()).then(data => {
+        attendanceTable.innerHTML = "";
+        if (!data.students || data.students.length === 0) {
+          attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">No students found</td></tr>`;
+          return;
+        }
+        data.students.forEach(student => {
+          const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${student.name || "Unknown Student"}</td><td>${student.email || "-"}</td><td>${student.time || "-"}</td>
+          <td><select class="status-select status-${student.status}" data-student-id="${student.id}" data-schedule-id="${scheduleId}">
+            <option value="Present" ${student.status === "Present" ? "selected" : ""}>Present</option>
+            <option value="Absent" ${student.status === "Absent" ? "selected" : ""}>Absent</option>
+            <option value="Late" ${student.status === "Late" ? "selected" : ""}>Late</option>
+          </select></td>
+          <td>${student.group || "-"}</td><td>${student.program || "-"}</td><td>${moduleName}</td>`;
+          attendanceTable.appendChild(tr);
         });
+      }).catch(err => { console.error("Failed to fetch attendance:", err); attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`; });
     }
 
-    // Auto-save when status changes
     document.addEventListener("change", function(e) {
       if (e.target.classList.contains("status-select")) {
         const studentId = e.target.dataset.studentId;
         const scheduleId = e.target.dataset.scheduleId;
         const status = e.target.value;
-
+        e.target.className = `status-select status-${status}`;
         fetch("/mark_attendance", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            schedule_id: scheduleId,
-            student_id: studentId,
-            status: status
-          })
-        })
-        .then(res => {
-          if (res.ok) {
-            e.target.style.backgroundColor = "#d1fae5";
-            setTimeout(() => e.target.style.backgroundColor = "", 500);
-          } else {
-            alert("Failed to update attendance");
-          }
-        })
+          body: new URLSearchParams({ schedule_id: scheduleId, student_id: studentId, status: status })
+        }).then(res => { if(res.ok){ e.target.style.backgroundColor = "#d1fae5"; setTimeout(() => e.target.style.backgroundColor = "", 500); } else { alert("Failed to update attendance"); } })
         .catch(err => console.error("Save failed:", err));
       }
     });
   </script>
-
 </body>
-
 </html>
