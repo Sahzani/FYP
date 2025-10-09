@@ -85,7 +85,7 @@
     td.status-Late { color: orange; font-weight:600; } 
     td.status-Absent { color: red; font-weight:600; }
 
-    /* Filter form layout without Tailwind */
+    /* Filter form layout */
     .filter-form {
       display: flex;
       flex-wrap: wrap;
@@ -137,12 +137,10 @@
     <div class="sidebar-section">
       <div class="sidebar-section-title">Management</div>
 
-      <!-- Students -->
       <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %}" href="{{ url_for('admin_student_add') }}">
         <i class="fas fa-user-graduate"></i><span>Students</span>
       </a>
 
-      <!-- Teachers (Dropdown) - FIXED -->
       <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_add','admin_teacher_assign'] %}active{% endif %}">
         <a class="sidebar-link dropdown-toggle" href="#" onclick="event.preventDefault();">
           <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
@@ -153,17 +151,14 @@
         </div>
       </div>
 
-      <!-- Programs -->
       <a class="sidebar-link {% if request.endpoint == 'admin_programs' %}active{% endif %}" href="{{ url_for('admin_programs') }}">
         <i class="fas fa-layer-group"></i><span>Programs</span>
       </a>
 
-      <!-- Groups -->
       <a class="sidebar-link {% if request.endpoint == 'admin_groups' %}active{% endif %}" href="{{ url_for('admin_groups') }}">
         <i class="fas fa-users"></i><span>Groups</span>
       </a>
 
-      <!-- Modules -->
       <a class="sidebar-link {% if request.endpoint == 'admin_modules' %}active{% endif %}" href="{{ url_for('admin_modules') }}">
         <i class="fas fa-book"></i><span>Modules</span>
       </a>
@@ -211,14 +206,20 @@
 
         <select name="group_id" id="groupSelect">
           <option value="">All Groups</option>
+          {% for g in groups %}
+          <option value="{{ g.id }}">{{ g.name }}</option>
+          {% endfor %}
         </select>
 
         <select name="module_id" id="moduleSelect">
           <option value="">All Modules</option>
+          {% for m in modules %}
+          <option value="{{ m.id }}">{{ m.name }}</option>
+          {% endfor %}
         </select>
 
         <input type="date" name="start" value="{{ request.args.get('start','') }}">
-        <button type="submit">Load</button>
+        <button type="button" onclick="loadAttendance()">Load</button>
       </form>
     </div>
 
@@ -228,104 +229,89 @@
       <table>
         <thead>
           <tr>
-            <th>Date</th>
+            <th>Student ID</th>
             <th>Name</th>
             <th>Email</th>
             <th>Group</th>
             <th>Program</th>
-            <th>Modules</th>
-            <th>Time</th>
+            <th>Module</th>
             <th>Status</th>
+            <th>Time</th>
           </tr>
         </thead>
         <tbody id="attendanceTableBody">
-          <tr><td colspan="8" class="text-center py-4">Select filters to load records</td></tr>
+          <tr><td colspan="8" class="text-center py-4">Select filters and click Load to view records</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
   <script>
-    // Sidebar toggle
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    menuToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-
-    // Teachers dropdown toggle - FIXED
-    document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-      toggle.addEventListener('click', e => {
-        e.preventDefault();
-        toggle.parentElement.classList.toggle('active');
-      });
+    // Prevent form submission (we use button click)
+    document.getElementById('filterForm').addEventListener('submit', function(e) {
+      e.preventDefault();
     });
 
-    // Attendance log functionality
-    const filterForm = document.getElementById('filterForm');
-    const tableBody = document.getElementById('attendanceTableBody');
-    const programSelect = document.getElementById("programSelect");
-    const groupSelect = document.getElementById("groupSelect");
-    const moduleSelect = document.getElementById("moduleSelect");
+    function loadAttendance() {
+    const programSelect = document.getElementById('programSelect');
+    const groupSelect = document.getElementById('groupSelect');
+    const moduleSelect = document.getElementById('moduleSelect');
+    const startDateInput = document.querySelector('input[name="start"]');
 
-    async function loadAttendance() {
-      const formData = new FormData(filterForm);
-      const params = new URLSearchParams(formData).toString();
+    const programId = programSelect ? programSelect.value : '';
+    const groupId = groupSelect ? groupSelect.value : '';
+    const moduleId = moduleSelect ? moduleSelect.value : '';
+    const startDate = startDateInput ? startDateInput.value : '';
 
-      tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">Loading...</td></tr>`;
+    // Build URL with all filters
+    let url = `/api/admin/attendance_log/filter?`;
+    const params = [];
+    if (programId) params.push(`program_id=${encodeURIComponent(programId)}`);
+    if (groupId) params.push(`group_id=${encodeURIComponent(groupId)}`);
+    if (moduleId) params.push(`module_id=${encodeURIComponent(moduleId)}`);
+    if (startDate) params.push(`start=${encodeURIComponent(startDate)}`);
+    url += params.join('&');
 
-      try {
-        const res = await fetch(`/api/admin/attendance_filtered?${params}`);
-        const data = await res.json();
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('attendanceTableBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8">No records found for selected filters.</td></tr>`;
+                return;
+            }
 
-        if (!data || data.length === 0) {
-          tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">No records found</td></tr>`;
-          return;
+            tbody.innerHTML = '';
+            data.forEach(record => {
+                const row = document.createElement('tr');
+                const statusClass = `status-${record.status}`;
+                row.innerHTML = `
+                    <td>${record.studentID}</td>
+                    <td>${record.name}</td>
+                    <td>${record.email}</td>
+                    <td>${record.group}</td>
+                    <td>${record.program}</td>
+                    <td>${record.module}</td>
+                    <td class="${statusClass}">${record.status}</td>
+                    <td>${record.time}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(err => {
+            console.error("Error loading attendance:", err);
+            document.getElementById('attendanceTableBody').innerHTML = `<tr><td colspan="8">Failed to load data. Check console.</td></tr>`;
+        });
+}
+
+    // Optional: Auto-load if schedule_id is present
+    document.addEventListener('DOMContentLoaded', function() {
+        const scheduleId = '{{ schedule_id }}';
+        if (scheduleId && scheduleId !== 'None' && scheduleId !== '') {
+            // Optionally auto-load, or wait for user click
+            // loadAttendance();
         }
-
-        tableBody.innerHTML = data.map(rec => `
-          <tr>
-            <td>${rec.date || '-'}</td>
-            <td>${rec.name || '-'}</td>
-            <td>${rec.email || '-'}</td>
-            <td>${rec.group || '-'}</td>
-            <td>${rec.program || '-'}</td>
-            <td>${rec.module || '-'}</td>
-            <td>${rec.time || '-'}</td>
-            <td class="status-${rec.status}">${rec.status}</td>
-          </tr>
-        `).join('');
-
-      } catch (err) {
-        console.error(err);
-        tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">Error loading data</td></tr>`;
-      }
-    }
-
-    async function updateGroupsAndModules() {
-      const program_id = programSelect.value;
-      groupSelect.innerHTML = `<option value="">Loading...</option>`;
-      moduleSelect.innerHTML = `<option value="">Loading...</option>`;
-
-      if (!program_id) {
-        groupSelect.innerHTML = `<option value="">All Groups</option>`;
-        moduleSelect.innerHTML = `<option value="">All Modules</option>`;
-        return;
-      }
-
-      const res = await fetch(`/api/admin/filters?program_id=${program_id}`);
-      const data = await res.json();
-
-      groupSelect.innerHTML = `<option value="">All Groups</option>`;
-      data.groups.forEach(g => groupSelect.innerHTML += `<option value="${g.id}">${g.name}</option>`);
-
-      moduleSelect.innerHTML = `<option value="">All Modules</option>`;
-      data.modules.forEach(m => moduleSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => loadAttendance());
-    filterForm.addEventListener('submit', e => { e.preventDefault(); loadAttendance(); });
-    programSelect.addEventListener('change', updateGroupsAndModules);
-    groupSelect.addEventListener('change', loadAttendance);
-    moduleSelect.addEventListener('change', loadAttendance);
+    });
   </script>
 </body>
 </html>
