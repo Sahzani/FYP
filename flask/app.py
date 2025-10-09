@@ -1489,8 +1489,7 @@ from datetime import datetime
 
 @app.route("/api/attendance/<schedule_id>")
 def api_attendance(schedule_id):
-    """Return live attendance for all students in a schedule."""
-    
+    """Return live attendance for all students in a schedule with auto status (Present/Late/Absent)."""
     try:
         # 1️⃣ Fetch schedule
         sched_doc = db.collection("schedules").document(schedule_id).get()
@@ -1501,18 +1500,18 @@ def api_attendance(schedule_id):
         group_id = sched.get("fk_group", "").strip()
         teacher_id = sched.get("fk_teacher", "").strip()
         module_id = sched.get("fk_module", "").strip()
-        day = sched.get("day", "Unknown")  # ✅ Get day directly
+        day = sched.get("day", "Unknown")
+        start_time_str = sched.get("start_time", "00:00").strip()
         
         if not group_id:
             return jsonify({"error": "Invalid schedule group"}), 400
 
-        # 🔥 FIX: Use 'mlmodule' collection
+        # 🔥 CORRECT: Use 'mlmodule' (as used in your other routes)
         module_name = "-"
         if module_id:
             module_doc = db.collection("mlmodule").document(module_id).get()
             if module_doc.exists:
-                module_dict = module_doc.to_dict()
-                module_name = module_dict.get("moduleName", "-")
+                module_name = module_doc.to_dict().get("moduleName", "-")
 
         # 2️⃣ Fetch students in this group
         students = []
@@ -1532,10 +1531,9 @@ def api_attendance(schedule_id):
                 continue
                 
             role_data = role_doc.to_dict()
-            student_group = role_data.get("fk_groupcode", "").strip()  # ← This is the ID!
+            student_group = role_data.get("fk_groupcode", "").strip()
             
-            # ✅ Compare group ID (not full path) — matches your data!
-            if student_group != group_id:  # ✅ They are both IDs now!
+            if student_group != group_id:
                 continue
 
             student_name = f"{first_name} {last_name}".strip()
@@ -1547,8 +1545,7 @@ def api_attendance(schedule_id):
             if program_id:
                 program_doc = db.collection("programs").document(program_id).get()
                 if program_doc.exists:
-                    program_dict = program_doc.to_dict()
-                    program_name = program_dict.get("programName", "-")
+                    program_name = program_doc.to_dict().get("programName", "-")
             
             photo_name = s.get("photo_name", "")
             photo_url = f"/student_pics/{photo_name}" if photo_name else ""
@@ -1558,87 +1555,68 @@ def api_attendance(schedule_id):
                 "name": student_name,
                 "email": student_email,
                 "studentID": studentID,
-                "group": group_id,          # ✅ Save group ID (for consistency)
+                "group": group_id,
                 "program": program_name,
-                "module": module_name,      # ✅ Include module name
+                "module": module_name,
                 "photo_url": photo_url,
                 "first_name": first_name,
                 "last_name": last_name
             })
 
-       # 3️⃣ Fetch today's attendance AND determine if student is Late
-            from datetime import datetime
+        # 3️⃣ Determine scheduled class start time (naive = local time)
+        today = datetime.now().date()
+        today_str = today.strftime("%Y-%m-%d")
 
-            today = datetime.now().date()
-            today_str = today.strftime("%Y-%m-%d")
+        try:
+            class_start_time = datetime.strptime(start_time_str, "%H:%M").time()
+            scheduled_start = datetime.combine(today, class_start_time)  # naive datetime
+        except Exception:
+            scheduled_start = datetime.combine(today, datetime.min.time())
 
-            # Get scheduled start time from the schedule document
-            start_time_str = sched.get("start_time", "00:00").strip()
-            try:
-                class_start = datetime.strptime(start_time_str, "%H:%M").time()
-                scheduled_start = datetime.combine(today, class_start)
-            except Exception:
-                # Fallback if start_time is missing or invalid
-                scheduled_start = datetime.combine(today, datetime.min.time())
+        # 4️⃣ Fetch today's attendance records
+        att_ref = db.collection("attendance").document(schedule_id).collection(today_str).stream()
+        attendance_records = {}
 
-            # Fetch attendance records
-            att_ref = db.collection("attendance").document(schedule_id).collection(today_str).stream()
-            attendance_records = {}
+        for doc in att_ref:
+            att = doc.to_dict()
+            student_id = doc.id
+            att_time = "-"
+            status = "Absent"
 
-            for doc in att_ref:
-                att = doc.to_dict()
-                student_id = doc.id
-                att_time = "-"
-                status = "Absent"  # default
+            ts = att.get("timestamp")
+            if ts:
+                # Handle Firestore Timestamp or ISO string
+                if hasattr(ts, "astimezone"):
+                    att_dt = ts.astimezone().replace(tzinfo=None)  # convert to naive local time
+                else:
+                    try:
+                        att_dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                        if att_dt.tzinfo is not None:
+                            att_dt = att_dt.astimezone().replace(tzinfo=None)
+                    except Exception:
+                        att_dt = None
 
-                if att.get("timestamp"):
-                    ts = att["timestamp"]
-                    
-                    # Handle Firestore Timestamp
-                    if hasattr(ts, "astimezone"):
-                        att_dt = ts.astimezone()
-                    else:
-                        # Try to parse string timestamp (e.g., ISO format)
-                        try:
-                            att_dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
-                            if att_dt.tzinfo is None:
-                                from datetime import timezone
-                                att_dt = att_dt.replace(tzinfo=timezone.utc)
-                        except:
-                            att_dt = None
+                if att_dt:
+                    diff_seconds = (att_dt - scheduled_start).total_seconds()
+                    minutes_late = diff_seconds / 60
 
-                    if att_dt:
-                        # Make scheduled_start timezone-aware if needed
-                        if scheduled_start.tzinfo is None and att_dt.tzinfo is not None:
-                            from datetime import timezone
-                            scheduled_start = scheduled_start.replace(tzinfo=timezone.utc)
-                        elif scheduled_start.tzinfo is not None and att_dt.tzinfo is None:
-                            att_dt = att_dt.replace(tzinfo=scheduled_start.tzinfo)
-
-                        # Calculate minutes difference
-                        diff = att_dt - scheduled_start
-                        minutes_late = diff.total_seconds() / 60
-
-                        # Determine status
-                        if minutes_late <= 15:
-                            status = "Present"
-                        elif minutes_late <= 30:
-                            status = "Late"
-                        else:
-                            status = "Absent"  # or "Late" if you want to count very late as still "Late"
-
-                        att_time = att_dt.strftime("%H:%M")
+                    if minutes_late <= 15:
+                        status = "Present"
+                    elif minutes_late <= 30:
+                        status = "Late"
                     else:
                         status = "Absent"
-                else:
-                    status = "Absent"
 
-                attendance_records[student_id] = {
-                    "status": status,
-                    "time": att_time
-                }
+                    att_time = att_dt.strftime("%H:%M")
+                # else: keep status = "Absent"
+            # else: no timestamp → status remains "Absent"
 
-        # 4️⃣ Build final response
+            attendance_records[student_id] = {
+                "status": status,
+                "time": att_time
+            }
+
+        # 5️⃣ Build final response
         result = []
         for s in students:
             att = attendance_records.get(s["id"])
@@ -1650,7 +1628,7 @@ def api_attendance(schedule_id):
                 "time": att["time"] if att else "-",
                 "group": s["group"],
                 "program": s["program"],
-                "module": s["module"],  # ✅ Send module to frontend
+                "module": s["module"],
                 "studentID": s["studentID"],
                 "photo_url": s["photo_url"],
                 "first_name": s["first_name"],
@@ -1666,7 +1644,7 @@ def api_attendance(schedule_id):
                 "module_name": module_name,
                 "teacher_id": teacher_id,
                 "total_students": len(result),
-                "day": day  # ✅ Add day to context
+                "day": day
             }
         }
 
