@@ -137,7 +137,7 @@ def mark_attendance(student_id):
 # ===== Camera Loop =====
 def camera_loop():
     global latest_frame, camera_running
-    cam = cv2.VideoCapture(1)
+    cam = cv2.VideoCapture(0)
     while camera_running:
         ret, frame = cam.read()
         if not ret:
