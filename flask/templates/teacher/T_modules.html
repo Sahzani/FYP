@@ -107,17 +107,21 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
 .sidebar.collapsed ~ .main { margin-left:80px; }
 
 /* Table compact styles */
-table { width:100%; border-collapse:collapse; }
-thead { position: sticky; top:0; background:#f1f3f6; z-index:10; }
-table th, table td { padding:8px 12px; font-size:14px; border-radius:4px; text-align:left; }
-tr:hover { background:#f9f9f9; }
-td.status-Present { color: green; font-weight: 600; }
-td.status-Absent { color: red; font-weight: 600; }
-td.status-Late { color: orange; font-weight: 600; }
-td.status-NotMarked { color: gray; font-weight: 600; }
-.edit-btn { cursor:pointer; font-size:12px; padding:4px 8px; border-radius:6px; transition:0.2s; }
-.edit-btn:hover { transform:scale(1.05); }
-h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; }
+table { width:100%; border-collapse:collapse; background:#ffffff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); overflow:hidden; }
+table thead th { position:sticky; top:0; background:#f8f1e5; color:#2C2C2C; font-weight:600; padding:12px 14px; z-index:10; }
+table th, table td { padding:10px 14px; font-size:14px; text-align:left; border-bottom:1px solid #eee; }
+table thead th:first-child { border-top-left-radius:12px; }
+table thead th:last-child { border-top-right-radius:12px; }
+table tbody tr:hover { background:#f8f1e5; color:#2C2C2C; transition:background 0.2s, color 0.2s; }
+
+td.status-Present { color:#4caf50; font-weight:600; }
+td.status-Absent { color:#e74c3c; font-weight:600; }
+td.status-Late { color:#f39c12; font-weight:600; }
+td.status-NotMarked { color:#999; font-weight:600; }
+.edit-btn { cursor:pointer; font-size:12px; padding:6px 10px; border-radius:8px; background:#f1f3f6; transition:all 0.2s; color:#333; border:none; }
+.edit-btn:hover { background:#e4e2dd; transform:scale(1.05); }
+h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; color:#3a3a3a; }
+
 
 /* Scrollable table container */
 .table-scroll { overflow-x:auto; }
