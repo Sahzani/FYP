@@ -71,9 +71,6 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
 }
 .main-content.expanded { margin-left:80px; }
 
-/* Breadcrumb & Headings */
-.breadcrumb { font-size:14px; font-weight:500; margin-bottom:30px; color:#6b7280; }
-.breadcrumb .current { color:#444; }
 
 /* Cards */
 .card {
@@ -85,20 +82,14 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
 .card h2 { font-size:20px; font-weight:600; color:#444; margin-bottom:10px; }
 
 /* Tables */
-.table-scroll { overflow-x:auto; }
-table {
-  width:100%; border-collapse:collapse; text-align:center; table-layout:fixed;
-}
-thead th {
-  position:sticky; top:0; background:#f8f1e5;
-  z-index:10; padding:12px 8px; font-weight:600;
-  color:#2C2C2C; text-align:center;
-}
-tbody td {
-  border-top:1px solid #ddd; padding:12px 8px;
-  word-wrap:break-word; text-align:center;
-}
-tbody tr:hover { background:#fef9f0; transition:background 0.2s; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; text-align: center; }
+thead th { font-weight: 600; font-size: 14px; color: #2C2C2C; background-color: #f8f1e5; padding: 12px; text-align: center; position: sticky; top: 0; z-index: 10; }
+thead th:first-child { border-top-left-radius: 12px; }
+thead th:last-child { border-top-right-radius: 12px; }
+tbody td { padding: 12px 8px; border-top: 1px solid #e0e0e0; word-wrap: break-word; text-align: center; }
+tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
+
 
 /* Status colors */
 td.status-Present { color:#16a34a; font-weight:600; }
@@ -135,7 +126,7 @@ td.status-Late { color:#ea580c; font-weight:600; }
     <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
     <a href="{{ url_for('teacher_profile') }}" class="user-info">
       <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher">
+      <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
     </a>
   </div>
 </header>

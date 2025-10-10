@@ -487,7 +487,7 @@ def teacher_individual_summary():
         return redirect(url_for("home"))
 
     teacher_id = session.get("user_id")
-    if not teacher_id:
+    if not teacher_id:                     
         return redirect(url_for("home"))
 
     # -------- Teacher profile --------
@@ -495,7 +495,7 @@ def teacher_individual_summary():
     profile = teacher_doc.to_dict() if teacher_doc.exists else {}
     profile.setdefault("firstName", "Teacher")
     profile.setdefault("lastName", "")
-    profile.setdefault("photo_url", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+    profile.setdefault("photo_name", "uploads/default_teacher.png")
 
     # -------- GC flag --------
     roles_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
