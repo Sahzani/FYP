@@ -485,6 +485,7 @@ def teacher_dashboard():
     )
 
 #------------------ Teacher - view students Individual attendance ------------------
+#------------------ Teacher - view students Individual attendance ------------------
 @app.route("/teacher/individual_summary", methods=["GET"])
 def teacher_individual_summary():
     if session.get("role") != "teacher":
@@ -494,50 +495,35 @@ def teacher_individual_summary():
     if not teacher_id:
         return redirect(url_for("home"))
 
-    # -------- Fetch teacher profile --------
+    # -------- Teacher profile --------
     teacher_doc = db.collection("users").document(teacher_id).get()
     profile = teacher_doc.to_dict() if teacher_doc.exists else {}
     profile.setdefault("firstName", "Teacher")
     profile.setdefault("lastName", "")
     profile.setdefault("photo_url", "https://placehold.co/140x140/E9E9E9/333333?text=T")
 
-    # ✅ Ensure GC flag exists and stored in session
+    # -------- GC flag --------
     roles_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
-    if roles_doc.exists:
-        roles_data = roles_doc.to_dict()
-        # Try multiple possible keys just in case
-        profile["is_gc"] = (
-            roles_data.get("is_gc")
-            or roles_data.get("gc")
-            or roles_data.get("isGroupCoordinator")
-            or False
-        )
-    else:
-        profile["is_gc"] = False
+    profile["is_gc"] = roles_doc.to_dict().get("isCoordinator", False) if roles_doc.exists else False
 
-    session["is_gc"] = profile["is_gc"]  # ✅ keep it for other pages
-
-    # -------- Get filter values --------
+    # -------- Filters --------
     student_id = request.args.get("student_id")
     month = request.args.get("month", type=int)
     year = request.args.get("year", type=int)
 
-    # -------- Get students taught by this teacher --------
-    students = []
+    # -------- Students taught by this teacher --------
     schedules = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
     group_ids = {s.to_dict().get("fk_group") for s in schedules if s.to_dict().get("fk_group")}
 
+    students = []
     users_ref = db.collection("users").where("role_type", "==", 1).stream()
     for u in users_ref:
         udata = u.to_dict()
         role_doc = db.collection("users").document(u.id).collection("roles").document("student").get()
         if role_doc.exists:
-            role_data = role_doc.to_dict()
-            if role_data.get("fk_groupcode") in group_ids:
-                students.append({
-                    "id": u.id,
-                    "name": udata.get("name", "Student")
-                })
+            rdata = role_doc.to_dict()
+            if rdata.get("fk_groupcode") in group_ids:
+                students.append({"id": u.id, "name": udata.get("name", "Student")})
 
     summary = {}
     chart_labels = []
@@ -545,22 +531,34 @@ def teacher_individual_summary():
 
     # -------- Attendance summary --------
     if student_id and month and year:
-        attendance_ref = db.collection("attendance").where("student_id", "==", student_id).stream()
         stats_by_module = {}
 
-        for doc in attendance_ref:
-            att = doc.to_dict()
-            date_str = att.get("date", "")
-            if not date_str:
-                continue
+        # Loop through each schedule the teacher owns
+        schedules_ref = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+        for sched_doc in schedules_ref:
+            sched = sched_doc.to_dict()
+            schedule_id = sched_doc.id
+            module_id = sched.get("fk_module")
 
-            try:
-                att_date = datetime.strptime(date_str[:10], "%Y-%m-%d")
-            except:
-                continue
+            # Loop through all date subcollections
+            date_collections = db.collection("attendance").document(schedule_id).collections()
+            for date_col in date_collections:
+                date_str = date_col.id
+                try:
+                    att_date = datetime.strptime(date_str, "%Y-%m-%d")
+                except:
+                    continue
 
-            if att_date.month == month and att_date.year == year:
-                module_id = att.get("schedule_id") or "Unknown"
+                # Match month/year
+                if att_date.month != month or att_date.year != year:
+                    continue
+
+                # Fetch this student's attendance for that date
+                stu_doc = date_col.document(student_id).get()
+                if not stu_doc.exists:
+                    continue
+
+                att = stu_doc.to_dict()
                 status = att.get("status", "Unknown")
 
                 if module_id not in stats_by_module:
@@ -569,8 +567,9 @@ def teacher_individual_summary():
                 if status in stats_by_module[module_id]:
                     stats_by_module[module_id][status] += 1
 
+        # Convert module IDs → names
         for mid, stats in stats_by_module.items():
-            module_doc = db.collection("modules").document(mid).get()
+            module_doc = db.collection("mlmodule").document(mid).get()
             module_name = module_doc.to_dict().get("moduleName", "Unknown Module") if module_doc.exists else "Unknown Module"
 
             total = stats["Present"] + stats["Absent"] + stats["Late"]
@@ -586,7 +585,6 @@ def teacher_individual_summary():
             chart_labels.append(module_name)
             chart_percents.append(percent)
 
-    # ✅ Always pass profile and GC status
     return render_template(
         "teacher/T_individual_summary.html",
         profile=profile,
