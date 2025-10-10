@@ -499,7 +499,23 @@ def teacher_individual_summary():
     profile = teacher_doc.to_dict() if teacher_doc.exists else {}
     profile.setdefault("firstName", "Teacher")
     profile.setdefault("lastName", "")
-    profile.setdefault("profile_pic", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+    profile.setdefault("photo_url", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+
+    # ✅ Ensure GC flag exists and stored in session
+    roles_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
+    if roles_doc.exists:
+        roles_data = roles_doc.to_dict()
+        # Try multiple possible keys just in case
+        profile["is_gc"] = (
+            roles_data.get("is_gc")
+            or roles_data.get("gc")
+            or roles_data.get("isGroupCoordinator")
+            or False
+        )
+    else:
+        profile["is_gc"] = False
+
+    session["is_gc"] = profile["is_gc"]  # ✅ keep it for other pages
 
     # -------- Get filter values --------
     student_id = request.args.get("student_id")
@@ -527,6 +543,7 @@ def teacher_individual_summary():
     chart_labels = []
     chart_percents = []
 
+    # -------- Attendance summary --------
     if student_id and month and year:
         attendance_ref = db.collection("attendance").where("student_id", "==", student_id).stream()
         stats_by_module = {}
@@ -569,6 +586,7 @@ def teacher_individual_summary():
             chart_labels.append(module_name)
             chart_percents.append(percent)
 
+    # ✅ Always pass profile and GC status
     return render_template(
         "teacher/T_individual_summary.html",
         profile=profile,
@@ -3023,6 +3041,12 @@ def admin_schedule_delete(schedule_id):
 
 
 # ------------------ CSV Upload ------------------
+import os
+import csv
+from datetime import datetime
+from werkzeug.utils import secure_filename
+
+# Add this near the top of your app.py if not already present
 UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"csv"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -3041,36 +3065,147 @@ def admin_schedule_upload_csv():
 
     file = request.files["file"]
     if file and allowed_file(file.filename):
-        if not os.path.exists(app.config["UPLOAD_FOLDER"]):
-            os.makedirs(app.config["UPLOAD_FOLDER"])
-
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], secure_filename(file.filename))
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
         file.save(filepath)
 
-        import csv  # Make sure csv is imported
+        # --- Preload reference data ---
+        # Teachers: fullName (lower) → docId
+        teachers = {}
+        for doc in db.collection("users").where("role_type", "==", 2).stream():
+            t_data = doc.to_dict()
+            if not t_data.get("firstName"):
+                continue
+            full_name = f"{t_data.get('firstName', '')} {t_data.get('lastName', '')}".strip().lower()
+            teachers[full_name] = doc.id
 
-        with open(filepath, newline="", encoding="utf-8") as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                db.collection("schedules").add({
-                    "fk_program": row["program"],
-                    "fk_group": row["group"],
-                    "fk_module": row["module"],
-                    "fk_teacher": row["teacher"],
-                    "day": row["day"],
-                    "start_time": row["start_time"],
-                    "end_time": row["end_time"],
-                    "room": row["room"]
-                })
+        # Groups: groupCode → docId
+        groups = {}
+        for doc in db.collection("groups").stream():
+            g_data = doc.to_dict()
+            if g_data.get("groupCode"):
+                groups[g_data["groupCode"].strip()] = doc.id
 
-        flash("CSV uploaded successfully!", "success")
+        # mlmodule: (group_code, moduleName) → docId
+        mlmodule_map = {}
+        for doc in db.collection("mlmodule").stream():
+            ml = doc.to_dict()
+            group_code = ml.get("group_code", "").strip()
+            module_name = ml.get("moduleName", "").strip()
+            if group_code and module_name:
+                mlmodule_map[(group_code, module_name)] = doc.id
+
+        # Group → Program mapping
+        group_to_program = {}
+        for doc in db.collection("groups").stream():
+            g_data = doc.to_dict()
+            if g_data.get("groupCode") and g_data.get("fk_program"):
+                group_to_program[g_data["groupCode"].strip()] = g_data["fk_program"]
+
+        # --- Process CSV ---
+        VALID_DAYS = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}
+        success_count = 0
+        error_rows = []
+
+        try:
+            with open(filepath, newline="", encoding="utf-8") as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row_num, row in enumerate(reader, start=2):  # Start at 2 (header + 1st data row)
+                    try:
+                        # Extract and normalize
+                        teacher_name = row.get("Teacher Name", "").strip()
+                        group_code = row.get("Group", "").strip()
+                        module_name = row.get("Module", "").strip()
+                        day = row.get("Day", "").strip()
+                        start_time = row.get("Start Time", "").strip()
+                        end_time = row.get("End Time", "").strip()
+                        room = row.get("Room", "").strip()
+
+                        # Validate required fields
+                        if not all([teacher_name, group_code, module_name, day, start_time, end_time, room]):
+                            error_rows.append(f"Row {row_num}: Missing required field(s)")
+                            continue
+
+                        # Normalize teacher name
+                        teacher_key = teacher_name.lower()
+                        fk_teacher = teachers.get(teacher_key)
+                        if not fk_teacher:
+                            error_rows.append(f"Row {row_num}: Teacher '{teacher_name}' not found")
+                            continue
+
+                        # Validate group
+                        fk_group = groups.get(group_code)
+                        if not fk_group:
+                            error_rows.append(f"Row {row_num}: Group '{group_code}' not found")
+                            continue
+
+                        # Validate module
+                        fk_module = mlmodule_map.get((group_code, module_name))
+                        if not fk_module:
+                            error_rows.append(f"Row {row_num}: Module '{module_name}' not assigned to group '{group_code}'")
+                            continue
+
+                        # Get program
+                        fk_program = group_to_program.get(group_code)
+                        if not fk_program:
+                            error_rows.append(f"Row {row_num}: Program not found for group '{group_code}'")
+                            continue
+
+                        # Validate day
+                        if day not in VALID_DAYS:
+                            error_rows.append(f"Row {row_num}: Invalid day '{day}' (must be Mon-Fri)")
+                            continue
+
+                        # Normalize time to HH:MM
+                        try:
+                            start_dt = datetime.strptime(start_time, "%H:%M")
+                            end_dt = datetime.strptime(end_time, "%H:%M")
+                            start_time = start_dt.strftime("%H:%M")
+                            end_time = end_dt.strftime("%H:%M")
+                        except ValueError:
+                            error_rows.append(f"Row {row_num}: Invalid time format (use HH:MM, e.g., 09:00)")
+                            continue
+
+                        # Save to Firestore
+                        db.collection("schedules").add({
+                            "fk_program": fk_program,
+                            "fk_group": fk_group,
+                            "fk_module": fk_module,
+                            "fk_teacher": fk_teacher,
+                            "day": day,
+                            "start_time": start_time,
+                            "end_time": end_time,
+                            "room": room
+                        })
+                        success_count += 1
+
+                    except Exception as e:
+                        error_rows.append(f"Row {row_num}: Unexpected error - {str(e)}")
+                        continue
+
+        except Exception as e:
+            flash(f"CSV processing failed: {str(e)}", "error")
+            os.remove(filepath)
+            return redirect(url_for("admin_schedules"))
+
+        # Clean up
+        os.remove(filepath)
+
+        # Flash results
+        if success_count > 0:
+            flash(f"✅ Successfully uploaded {success_count} schedule(s).", "success")
+        if error_rows:
+            for msg in error_rows[:5]:  # Show first 5 errors to avoid spam
+                flash(msg, "warning")
+            if len(error_rows) > 5:
+                flash(f"... and {len(error_rows) - 5} more errors.", "warning")
+
+        return redirect(url_for("admin_schedules"))
+
     else:
-        flash("Invalid file type!", "error")
+        flash("Invalid file type! Please upload a .csv file.", "error")
+        return redirect(url_for("admin_schedules"))
 
-    return redirect(url_for("admin_schedules"))
-
-## ------------------ Admin Attendance Log Page ------------------
 # ------------------ Admin Attendance Log Page ------------------
 from datetime import datetime
 from flask import session, redirect, url_for, render_template, request
