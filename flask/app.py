@@ -1985,7 +1985,6 @@ def gc_group_report():
 # ------------------ Teacher Profile ------------------
 @app.route("/teacher/profile")
 def teacher_profile():
-    # Ensure teacher is logged in
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
@@ -1995,39 +1994,42 @@ def teacher_profile():
 
     teacher_uid = user.get("uid")
 
-    # ------------------ Fetch teacher profile ------------------
-    profile_doc = db.collection("users").document(teacher_uid).get()
+    # Fetch main teacher document
+    teacher_doc = db.collection("users").document(teacher_uid).get()
     profile = {}
-    if profile_doc.exists:
-        user_data = profile_doc.to_dict()
+    if teacher_doc.exists:
+        data = teacher_doc.to_dict()
 
-        # Fetch firstName, lastName, nickname, phone
-        first_name = user_data.get("firstName", "Teacher")
-        last_name = user_data.get("lastName", "")
-        nickname = user_data.get("nickname", "-")
-        phone = user_data.get("phone", "-")
-        teacher_id = user_data.get("teacherID", "-")
+        # Basic info
+        profile["firstName"] = data.get("firstName", "Teacher")
+        profile["lastName"] = data.get("lastName", "")
+        profile["nickname"] = data.get("nickname", "-")
+        profile["teacher_id"] = data.get("teacherID", "-")
+        profile["email"] = user.get("email", "-")
+        profile["phone"] = data.get("phone", "-")
+        profile["photo_url"] = data.get(
+            "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
+        )
 
-        # Check if teacher is a group coordinator
+        # Roles info
         role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
-        is_gc = role_doc.exists and role_doc.to_dict().get("isCoordinator", False)
-
-        profile = {
-            "role": user_data.get("role", "Teacher"),
-            "firstName": first_name,
-            "lastName": last_name,
-            "nickname": nickname,
-            "teacher_id": teacher_id,
-            "email": user.get("email", "-"),
-            "phone": phone,
-            "photo_url": user_data.get(
-                "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
-            ),
-            "is_gc": is_gc
-        }
+        if role_doc.exists:
+            role = role_doc.to_dict()
+            profile["is_gc"] = role.get("isCoordinator", False)
+            profile["program"] = role.get("program", "")
+            profile["groupId"] = role.get("groupId", "")
+            profile["groupCode"] = role.get("groupCode", "")
+            profile["intake"] = role.get("intake", "")
+            profile["teacher_id"] = role.get("teacherID", "-") 
+        else:
+            profile["is_gc"] = False
+            profile["program"] = ""
+            profile["groupId"] = ""
+            profile["groupCode"] = ""
+            profile["intake"] = ""
+            profile["teacher_id"] = "-"
     else:
         profile = {
-            "role": "Teacher",
             "firstName": "Teacher",
             "lastName": "",
             "nickname": "-",
@@ -2035,12 +2037,16 @@ def teacher_profile():
             "email": user.get("email", "-"),
             "phone": "-",
             "photo_url": "https://placehold.co/140x140/E9E9E9/333333?text=T",
-            "is_gc": False
+            "is_gc": False,
+            "program": "",
+            "groupId": "",
+            "groupCode": "",
+            "intake": ""
         }
 
     return render_template("teacher/T_Profile.html", profile=profile)
 
-
+# ------------------ Teacher Change Password ------------------
 @app.route("/teacher/change_password", methods=["GET", "POST"])
 def teacher_change_password():
     if session.get("role") != "teacher":
@@ -2069,6 +2075,75 @@ def teacher_change_password():
         return redirect(url_for("teacher_dashboard"))
 
     return render_template("combinePage/Change password.html")
+
+
+# ------------------ Teacher Edit Profile ------------------
+from flask import request, flash
+
+@app.route("/teacher/profile/edit", methods=["GET", "POST"])
+def teacher_edit_profile():
+    # Ensure teacher is logged in
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("home"))
+
+    teacher_uid = user.get("uid")
+
+    # Fetch current profile data
+    teacher_doc = db.collection("users").document(teacher_uid).get()
+    profile = {}
+    if teacher_doc.exists:
+        data = teacher_doc.to_dict()
+        profile["firstName"] = data.get("firstName", "Teacher")
+        profile["lastName"] = data.get("lastName", "")
+        profile["nickname"] = data.get("nickname", "-")
+        profile["email"] = user.get("email", "-")
+        profile["phone"] = data.get("phone", "-")
+        profile["photo_url"] = data.get(
+            "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
+        )
+
+        # Fetch teacherID from roles
+        role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
+        if role_doc.exists:
+            role = role_doc.to_dict()
+            profile["teacher_id"] = role.get("teacherID", "-")
+        else:
+            profile["teacher_id"] = "-"
+    else:
+        profile = {
+            "firstName": "Teacher",
+            "lastName": "",
+            "nickname": "-",
+            "email": user.get("email", "-"),
+            "phone": "-",
+            "photo_url": "https://placehold.co/140x140/E9E9E9/333333?text=T",
+            "teacher_id": "-"
+        }
+
+    if request.method == "POST":
+        # Get form data
+        first_name = request.form.get("firstName", "").strip()
+        last_name = request.form.get("lastName", "").strip()
+        nickname = request.form.get("nickname", "").strip()
+        phone = request.form.get("phone", "").strip()
+
+        # Update Firestore
+        db.collection("users").document(teacher_uid).update({
+            "firstName": first_name,
+            "lastName": last_name,
+            "nickname": nickname,
+            "phone": phone
+        })
+
+        flash("Profile updated successfully!", "success")
+        return redirect(url_for("teacher_profile"))
+
+    return render_template("teacher/T_EditProfile.html", profile=profile)
+
 
 # ------------------ Admin Student Add/Edit ------------------
 
