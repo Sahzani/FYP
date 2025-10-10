@@ -2,185 +2,63 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>iAttend - My Modules & Groups</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>iAttend - My Modules</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
 
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(180deg,#f7ecd7 0%,#f8f1e5 35%,#fbfaf7 100%); overflow-x:hidden; }
-
-/* Header */
 header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.08); display:flex; align-items:center; padding:0 20px; z-index:1000; }
 #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; transition: color 0.3s; }
 #menu-toggle:hover { color:#4154F1; }
+
 .header-content { display:flex; justify-content:space-between; align-items:center; width:100%; }
-.header-content a.title { text-decoration:none; color:#444; font-weight:700; font-size:26px; transition: color 0.3s; }
-.header-content a.title:hover { color:#4154F1; }
-/* User profile hover effect */
-header a.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: #444;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  padding: 0;               /* no padding normally */
-  border-radius: 0;         /* no rounded corners normally */
-  background: transparent;  /* transparent normally */
-  box-shadow: none;         /* no shadow normally */
-}
-
-header a.user-info:hover {
-  padding: 4px 12px;        
-  border-radius: 12px;      
-  background: #f8f1e5;      
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
+.header-content a.title { text-decoration:none; color:#444; font-weight:700; font-size:26px; }
+header a.user-info { display:flex; align-items:center; gap:10px; text-decoration:none; color:#444; font-weight:600; transition: all 0.2s ease; padding:0; border-radius:0; background:transparent; box-shadow:none; }
+header a.user-info:hover { padding:4px 12px; border-radius:12px; background:#f8f1e5; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
 header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+.header-content a.title:hover { color:#4154F1; }
 
+.sidebar { position:fixed; top:60px; left:0; width:250px; height:calc(100% - 60px); background:#f8f1e5; padding:15px 0; box-shadow:2px 0 15px rgba(0,0,0,0.08); border-top-right-radius:12px; transition: all 0.3s ease; overflow-y:auto; z-index:999; }
+.sidebar-section { margin-bottom:25px; padding:0 15px; }
+.sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#6b7280; margin-bottom:10px; padding-left:10px; }
+.sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#2C2C2C; text-decoration:none; transition: all 0.25s ease; white-space:nowrap; }
+.sidebar-link i { width:18px; text-align:center; }
+.sidebar-link.active, .sidebar-link:hover { background:#eadbbf; color:#1F2937; font-weight:600; }
+.sidebar.collapsed { width:70px; padding:15px 0; overflow:hidden; }
+.sidebar.collapsed .sidebar-section-title, .sidebar.collapsed .sidebar-link span { display:none; }
 
-/* Sidebar */
-.sidebar {
-  position: fixed;
-  top: 60px;
-  left: 0;
-  width: 250px;
-  height: calc(100% - 60px);
-  background: #f8f1e5;
-  padding: 15px 0;
-  box-shadow: 2px 0 15px rgba(0,0,0,0.08);
-  border-top-right-radius: 12px;
-  transition: all 0.3s ease;
-  overflow-y: auto;
-  z-index: 999;
-}
+.main-content { margin-left:260px; padding:100px 30px 30px; min-height:100vh; overflow-y:auto; transition:margin-left 0.3s ease; background:transparent; }
+.main-content.expanded { margin-left:80px; }
 
-.sidebar-section { margin-bottom: 25px; padding: 0 15px; }
-.sidebar-section-title {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #6b7280;
-  margin-bottom: 10px;
-  padding-left: 10px;
-}
-.sidebar-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 15px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 500;
-  color: #2C2C2C;
-  text-decoration: none;
-  transition: all 0.25s ease;
-  white-space: nowrap;
-}
-.sidebar-link i { width: 18px; text-align: center; }
-.sidebar-link.active, .sidebar-link:hover {
-  background: #eadbbf;
-  color: #1F2937;
-  font-weight: 600;
-}
+.card { background:#fff; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); margin-bottom:20px; transition:transform 0.2s, box-shadow 0.2s; }
+.card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
+.card h2 { font-size:24px; font-weight:500; color:#444; margin-bottom:10px; }
 
-/* Collapsed Sidebar */
-.sidebar.collapsed {
-  width: 70px;
-  padding: 15px 0;
-  overflow: hidden;
-}
-.sidebar.collapsed .sidebar-section-title,
-.sidebar.collapsed .sidebar-link span {
-  display: none;
-}
+.table-wrapper { overflow-x:auto; }
+table { width:100%; border-collapse: collapse; table-layout: fixed; text-align:center; }
+thead th { position:sticky; top:0; background:#f8f1e5; z-index:10; padding:12px 8px; font-weight:600; color:#2C2C2C; text-align:center; }
+tbody td { border-top:1px solid #ddd; padding:12px 8px; word-wrap:break-word; text-align:center; }
+tbody tr:hover { background:#fef9f0; transition:background 0.2s; }
 
-/* Main */
-.main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease;}
-.sidebar.collapsed ~ .main { margin-left:80px; }
+.btn-attendance { display:inline-block; padding:6px 12px; background:#4f46e5; color:#fff; border-radius:6px; font-weight:500; text-decoration:none; transition:all 0.2s ease; }
+.btn-attendance:hover { background:#3730a3; }
 
-/* Table compact styles */
-table { width:100%; border-collapse:collapse; background:#ffffff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); overflow:hidden; }
-table thead th { position:sticky; top:0; background:#f8f1e5; color:#2C2C2C; font-weight:600; padding:12px 14px; z-index:10; }
-table th, table td { padding:10px 14px; font-size:14px; text-align:left; border-bottom:1px solid #eee; }
-table thead th:first-child { border-top-left-radius:12px; }
-table thead th:last-child { border-top-right-radius:12px; }
-table tbody tr:hover { background:#f8f1e5; color:#2C2C2C; transition:background 0.2s, color 0.2s; }
-
-td.status-Present { color:#4caf50; font-weight:600; }
-td.status-Absent { color:#e74c3c; font-weight:600; }
-td.status-Late { color:#f39c12; font-weight:600; }
-td.status-NotMarked { color:#999; font-weight:600; }
-.edit-btn { cursor:pointer; font-size:12px; padding:6px 10px; border-radius:8px; background:#f1f3f6; transition:all 0.2s; color:#333; border:none; }
-.edit-btn:hover { background:#e4e2dd; transform:scale(1.05); }
-h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; color:#3a3a3a; }
-
-
-/* Scrollable table container */
-.table-scroll { overflow-x:auto; }
-
-/* Attendance summary cards */
-.summary-card {
-  background: #fff;
-  padding: 1rem;
-  border-radius: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.summary-card i { font-size:1.25rem; }
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-
-/* Modal */
-.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:10000; }
-.modal-content { background:#fff; padding:20px 25px; border-radius:12px; width:320px; text-align:center; transform:translateY(-50px); transition:transform 0.3s ease; }
-.modal.show { display:flex; }
-.modal-content.show { transform:translateY(0); }
-.modal button { margin:5px; padding:6px 12px; border:none; border-radius:8px; font-weight:600; cursor:pointer; }
-.btn-save { background:#4154F1; color:#fff; }
-.btn-cancel { background:#ccc; color:#000; }
-.btn-reset { background:#f87171; color:#fff; }
-
-/* Attendance notifications */
-.notification { background:#fff3cd; color:#856404; padding:10px 15px; border:1px solid #ffeeba; border-radius:8px; margin-bottom:10px; font-size:14px; }
-.filter-container { margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
-.input-group { position: relative; }
-.input-group i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none; }
-.filter-container input, .filter-container select { padding: 8px 12px; padding-left: 32px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; }
-.filter-container input:focus, .filter-container select:focus { border-color: #5D5FEF; box-shadow: 0 0 0 2px rgba(93, 95, 239, 0.2); }
-
-/* Spinner animation */
-  .loader {
-    border-top-color: transparent;
-    border-left-color: transparent;
-    border-bottom-color: transparent;
-  }
+@media (max-width:768px) { .sidebar { left:-260px; } .sidebar.collapsed { left:0; width:250px; } .main-content { margin-left:0; padding:100px 15px 30px; } .main-content.expanded { margin-left:0; } table, thead, tbody, th, td, tr { display:block; } thead tr { display:none; } td { padding-left:50%; position:relative; text-align:left; } td::before { content:attr(data-label); position:absolute; left:12px; top:12px; font-weight:600; font-size:12px; color:#555; } }
 </style>
 </head>
-<body>
 
+<body>
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
     <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
     <a href="{{ url_for('teacher_profile') }}" class="user-info">
       <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="{{ profile.profile_pic or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher">
+      <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher" />
     </a>
   </div>
 </header>
@@ -189,381 +67,84 @@ h2.module-title { font-size:22px; font-weight:700; margin-bottom:16px; color:#3a
   <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
+
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
     <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}"><i class="fas fa-chart-bar"></i><span>Attendance Report</span></a>
   </div>
+
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
     <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}"><i class="fas fa-calendar"></i><span>Class Schedule</span></a>
     <a class="sidebar-link active" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Groups</span></a>
-    <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absence Application</span></a>
     <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}"><i class="fas fa-address-card"></i><span>Individual Attendance</span></a>
   </div>
 
   {% if profile.is_gc %}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
-    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
-      <i class="fas fa-users-cog"></i><span>Manage Group</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
-      <i class="fas fa-file-alt"></i><span>Group Report</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}"><i class="fas fa-users-cog"></i><span>Manage Group</span></a>
+    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}"><i class="fas fa-file-alt"></i><span>Group Report</span></a>
   </div>
   {% endif %}
 
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
-      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
-<!-- Main Content -->
-<div class="main">
-  <div class="flex justify-between items-center mb-6">
-    <div>
-      <h2 class="text-2xl font-semibold text-gray-800 mb-1">My Modules</h2>
-      <div class="breadcrumb text-sm text-gray-600 mb-4">
-      <span class="section">Manage</span> / <span class="current">My Modules & Groups</span></div>
+<div class="main-content" id="main-content">
+  <h2 class="text-2xl font-semibold text-gray-800 mb-1">Manage Modules & Groups</h2>
+  <div class="breadcrumb text-sm text-gray-600 mb-4">
+    <span class="section">Manage</span> / <span class="current">Modules & Groups</span>
+  </div>
+
+  {% for module in modules %}
+  <div class="card">
+    <h2>{{ module.moduleName }}</h2>
+
+    <div class="table-wrapper mt-4">
+      <table>
+        <thead>
+          <tr>
+            <th>Group Name</th>
+            <th>Day</th>
+            <th>Time</th>
+            <th>Room</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in module.groups %}
+          <tr>
+            <td data-label="Group Name">{{ group.groupName }}</td>
+            <td data-label="Day">{{ group.day }}</td>
+            <td data-label="Time">{{ group.time }}</td>
+            <td data-label="Room">{{ group.room }}</td>
+            <td data-label="Action">
+              <a
+                href="{{ url_for('studattendance', module_id=module.id, group_id=group.id, schedule_id=group.scheduleID) }}"
+                class="inline-block px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition"
+              >
+                View Attendance
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
-
-  <!-- Modules Grid -->
-  <div id="modulesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-
-  <!-- Module Details -->
-  <div id="moduleDetails" class="hidden">
-    <button id="backBtn" class="mb-4 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400">← Back</button>
-    <h2 id="moduleTitle" class="module-title mb-4"></h2>
-    <div id="groupsContainer" class="flex flex-col gap-6"></div>
-  </div>
-
-  <!-- Modal -->
-  <div id="editModal" class="modal">
-    <div class="modal-content">
-      <h3>Edit Attendance</h3>
-      <p id="modalStudent"></p>
-      <select id="statusSelect" class="mb-4 w-full border border-gray-300 rounded px-2 py-1">
-        <option value="Present">Present</option>
-        <option value="Absent">Absent</option>
-        <option value="Late">Late</option>
-        <option value="Not Marked">Not Marked</option>
-      </select>
-      <div>
-        <button class="btn-save">Save</button>
-        <button class="btn-reset">Reset</button>
-        <button class="btn-cancel">Cancel</button>
-      </div>
-    </div>
-  </div>
-
+  {% endfor %}
 </div>
+
 
 <script>
-const modulesData = {{ modules_data|tojson }};
-const groupsData = {{ groups_data|tojson }};
-const selectedDate = "{{ selected_date or '' }}";
-
-const modulesContainer = document.getElementById('modulesContainer');
-const moduleDetailsDiv = document.getElementById('moduleDetails');
-const moduleTitle = document.getElementById('moduleTitle');
-const groupsContainer = document.getElementById('groupsContainer');
-const backBtn = document.getElementById('backBtn');
-
-const modal = document.getElementById('editModal');
-const modalStudent = document.getElementById('modalStudent');
-const statusSelect = document.getElementById('statusSelect');
-const notificationDiv = document.getElementById('notificationDiv');
-
-let currentEdit = { scheduleID: null, studentID: null, studentName: null, dateValue: null };
-let currentFilters = { search: '', status: '', date: selectedDate || '' };
-let attendanceCache = {}; // Cache fetched attendance
-
-// --- Notification ---
-function showNotification(message, type='success') {
-    notificationDiv.textContent = message;
-    notificationDiv.className = `notification ${type}`;
-    notificationDiv.classList.add('show');
-    setTimeout(() => notificationDiv.classList.remove('show'), 2500);
-}
-
-// --- Render Modules ---
-function renderModules() {
-    modulesContainer.innerHTML = '';
-    modulesData.forEach(m => {
-        const card = document.createElement('div');
-        card.className = 'bg-white p-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer';
-        card.innerHTML = `
-          <div class="flex items-center mb-3">
-            <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 mr-3">
-              <i class="fas fa-book text-xl"></i>
-            </div>
-            <h2 class="text-lg font-semibold">${m.moduleName}</h2>
-          </div>
-          <p class="text-sm text-gray-500">${m.groups.length} group(s)</p>
-        `;
-        card.addEventListener('click', () => showModuleDetails(m));
-        modulesContainer.appendChild(card);
-    });
-}
-
-// --- Module Details ---
-function showModuleDetails(module) {
-    modulesContainer.classList.add('hidden');
-    moduleDetailsDiv.classList.remove('hidden');
-    moduleTitle.textContent = module.moduleName;
-    renderGroups(module.groups);
-}
-
-// --- Render Groups ---
-function renderGroups(groupCodes) {
-    groupsContainer.innerHTML = '';
-    groupCodes.forEach(code => {
-        const g = groupsData[code];
-        if (!g) return;
-
-        const groupCard = document.createElement('div');
-        groupCard.className = 'bg-white p-4 rounded-2xl shadow hover:shadow-lg transition cursor-pointer group-card';
-        groupCard.style.maxWidth = '400px';
-        groupCard.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 flex-shrink-0">
-              <i class="fas fa-users text-xl"></i>
-            </div>
-            <div class="flex-1">
-              <h3 class="text-lg font-semibold mb-1">${g.groupName}</h3>
-              <p class="text-sm text-gray-500 mb-2">${g.day} ${g.time} | Room: ${g.room}</p>
-              <p class="text-sm text-gray-500 mb-0">${g.students.length} student(s)</p>
-            </div>
-          </div>
-        `;
-        groupCard.addEventListener('click', () => showStudentAttendance(code));
-        groupsContainer.appendChild(groupCard);
-    });
-}
-
-// --- Show Student Attendance ---
-async function showStudentAttendance(groupCode) {
-    const g = groupsData[groupCode];
-    groupsContainer.innerHTML = '';
-    moduleTitle.textContent = `${g.groupName} - ${g.day} ${g.time} (${g.room})`;
-
-    // --- Filters ---
-    const filterDiv = document.createElement('div');
-    filterDiv.className = 'filter-container mb-4';
-    filterDiv.innerHTML = `
-      <div class="input-group mb-2">
-        <i class="fas fa-search"></i>
-        <input id="searchInput" placeholder="Search student..." value="${currentFilters.search}">
-      </div>
-      <div class="flex gap-2 mb-4">
-        <input type="text" id="dateFilter" placeholder="Select Date (YYYY-MM-DD)" value="${currentFilters.date}">
-        <select id="statusFilter" class="ml-2">
-          <option value="">All Status</option>
-          <option value="Present">Present</option>
-          <option value="Absent">Absent</option>
-          <option value="Late">Late</option>
-          <option value="Not Marked">Not Marked</option>
-        </select>
-      </div>
-    `;
-    groupsContainer.appendChild(filterDiv);
-
-    flatpickr("#dateFilter", {
-        dateFormat: "Y-m-d",
-        defaultDate: currentFilters.date || new Date(),
-        onChange: (selectedDates, dateStr) => {
-            currentFilters.date = dateStr;
-            renderTable(groupCode);
-        }
-    });
-
-    const statusFilter = document.getElementById('statusFilter');
-    statusFilter.value = currentFilters.status;
-    document.getElementById('searchInput').addEventListener('input', e => {
-        currentFilters.search = e.target.value;
-        renderTable(groupCode);
-    });
-    statusFilter.addEventListener('change', e => {
-        currentFilters.status = e.target.value;
-        renderTable(groupCode);
-    });
-
-    // --- Render Table ---
-    async function renderTable(groupCode) {
-        const dateValue = currentFilters.date;
-        groupsContainer.querySelectorAll('#attendanceTable, #summaryDiv, #notifDiv').forEach(el => el.remove());
-        if (filterDiv) groupsContainer.appendChild(filterDiv);
-
-        if (!g.students.length) {
-            const notifDiv = document.createElement('div');
-            notifDiv.id = 'notifDiv';
-            notifDiv.className = 'notification';
-            notifDiv.textContent = 'No students found in this group.';
-            groupsContainer.appendChild(notifDiv);
-            return;
-        }
-
-        // --- Table wrapper with loading overlay ---
-        const tableWrapper = document.createElement('div');
-        tableWrapper.id = 'attendanceTable';
-        tableWrapper.className = 'bg-white p-4 rounded-2xl shadow overflow-x-auto table-scroll w-full relative';
-        tableWrapper.innerHTML = `
-          <div id="tableLoading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 z-10">
-            <i class="fas fa-spinner fa-spin text-indigo-500 text-2xl mr-2"></i>
-            <span class="text-gray-700 font-medium">Loading data...</span>
-          </div>
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="bg-gray-100"><th>Name</th><th>Status</th><th>Action</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        `;
-        groupsContainer.appendChild(tableWrapper);
-        const tbody = tableWrapper.querySelector('tbody');
-        const loadingOverlay = tableWrapper.querySelector('#tableLoading');
-
-        try {
-            if (!attendanceCache[dateValue]) {
-                const res = await fetch(`/api/attendance/${groupCode}?date=${dateValue}`);
-                const data = await res.json();
-                attendanceCache[dateValue] = data.students;
-            }
-
-            const studentsWithStatus = g.students.map(s => {
-                const att = attendanceCache[dateValue].find(a => a.studentDocID === s.id);
-                return { id: s.id, name: s.name, status: att ? att.status : "Not Marked" };
-            });
-
-            const filteredStudents = studentsWithStatus.filter(s => {
-                const searchMatch = s.name.toLowerCase().includes(currentFilters.search.toLowerCase());
-                const statusMatch = currentFilters.status ? s.status === currentFilters.status : true;
-                return searchMatch && statusMatch;
-            });
-
-            // --- Summary ---
-            const summaryDiv = document.createElement('div');
-            summaryDiv.id = 'summaryDiv';
-            summaryDiv.className = 'summary-grid mb-4';
-            const statusCounts = { Present: 0, Absent: 0, Late: 0, "Not Marked": 0 };
-            studentsWithStatus.forEach(s => statusCounts[s.status]++);
-            const icons = { Present: 'fa-check-circle', Absent: 'fa-times-circle', Late: 'fa-clock', "Not Marked": 'fa-question-circle' };
-            Object.keys(statusCounts).forEach(st => {
-                const card = document.createElement('div');
-                card.className = 'summary-card p-4 rounded-2xl shadow flex flex-col items-center justify-center';
-                card.innerHTML = `
-                  <div class="w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-2">
-                    <i class="fas ${icons[st]}"></i>
-                  </div>
-                  <p class="text-sm font-semibold">${st}</p>
-                  <p class="text-lg font-bold">${statusCounts[st]}</p>
-                `;
-                summaryDiv.appendChild(card);
-            });
-            groupsContainer.insertBefore(summaryDiv, tableWrapper);
-
-            tbody.innerHTML = filteredStudents.map(s => `
-                <tr class="border-b hover:bg-gray-50">
-                  <td>${s.name}</td>
-                  <td class="status-${s.status.replace(' ','')}">${s.status}</td>
-                  <td>
-                    <button class="edit-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600" data-id="${s.id}" data-name="${s.name}">Edit</button>
-                  </td>
-                </tr>
-            `).join('');
-
-            // --- Edit buttons ---
-            tableWrapper.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    currentEdit = {
-                        scheduleID: groupCode,
-                        studentID: btn.dataset.id,
-                        studentName: btn.dataset.name,
-                        dateValue
-                    };
-                    modalStudent.textContent = btn.dataset.name;
-                    const s = studentsWithStatus.find(st => st.id === btn.dataset.id);
-                    statusSelect.value = s.status;
-                    modal.classList.add('show');
-                    document.querySelector('.modal-content').classList.add('show');
-                });
-            });
-
-        } catch (err) {
-            console.error(err);
-            const notifDiv = document.createElement('div');
-            notifDiv.id = 'notifDiv';
-            notifDiv.className = 'notification';
-            notifDiv.textContent = 'Failed to load attendance data.';
-            groupsContainer.appendChild(notifDiv);
-        } finally {
-            loadingOverlay.remove(); // remove spinner overlay
-        }
-    }
-
-    renderTable(groupCode);
-}
-
-// --- Modal actions ---
-document.querySelector('.btn-cancel').addEventListener('click', () => {
-    modal.classList.remove('show');
-    document.querySelector('.modal-content').classList.remove('show');
-});
-
-document.querySelector('.btn-save').addEventListener('click', async () => {
-    const { scheduleID, studentID, dateValue } = currentEdit;
-    const status = statusSelect.value;
-    try {
-        await fetch(`/api/attendance/${scheduleID}/${studentID}`, {
-            method: "POST",
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: dateValue, status })
-        });
-        if (attendanceCache[dateValue]) {
-            const idx = attendanceCache[dateValue].findIndex(a => a.studentDocID === studentID);
-            if (idx >= 0) attendanceCache[dateValue][idx].status = status;
-        }
-        renderTable(scheduleID);
-        showNotification("Status updated successfully!");
-    } catch (err) { console.error(err); showNotification("Failed to update status", 'error'); }
-    modal.classList.remove('show');
-    document.querySelector('.modal-content').classList.remove('show');
-});
-
-document.querySelector('.btn-reset').addEventListener('click', async () => {
-    const { scheduleID, studentID, dateValue } = currentEdit;
-    try {
-        await fetch(`/api/attendance/${scheduleID}/${studentID}`, {
-            method: "POST",
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: dateValue, status: "Not Marked" })
-        });
-        if (attendanceCache[dateValue]) {
-            const idx = attendanceCache[dateValue].findIndex(a => a.studentDocID === studentID);
-            if (idx >= 0) attendanceCache[dateValue][idx].status = "Not Marked";
-        }
-        renderTable(scheduleID);
-        showNotification("Status reset successfully!");
-    } catch (err) { console.error(err); showNotification("Failed to reset status", 'error'); }
-    modal.classList.remove('show');
-    document.querySelector('.modal-content').classList.remove('show');
-});
-
-// --- Back & Sidebar ---
-backBtn.addEventListener('click', () => {
-    moduleDetailsDiv.classList.add('hidden');
-    modulesContainer.classList.remove('hidden');
-});
-document.getElementById('menu-toggle').addEventListener('click', () => {
-    document.querySelector('.sidebar').classList.toggle('collapsed');
-});
-
-renderModules();
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+const mainContent = document.querySelector('.main-content');
+menuToggle.addEventListener('click', ()=>{ sidebar.classList.toggle('collapsed'); mainContent.classList.toggle('expanded'); });
 </script>
-
-
 </body>
 </html>
