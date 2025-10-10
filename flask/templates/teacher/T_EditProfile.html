@@ -186,87 +186,100 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
     <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
     <a href="{{ url_for('teacher_profile') }}" class="user-info">
       <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher" />
+      <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
     </a>
   </div>
 </header>
 
 <!-- Main content -->
 <div class="main-content" style="font-family:'Nunito',sans-serif;">
-    <div class="profile-sections">
+  <div class="profile-sections">
 
-        <!-- Profile Card -->
-        <div class="card user-profile-card">
-            <h2 style="font-family:'Poppins',sans-serif; font-weight:600; color:#4154F1;">Edit Teacher Profile</h2>
-            <div class="profile-content">
-                <!-- Profile Picture -->
-                <div class="profile-pic-container">
-                    <img id="user-profile-pic" 
-                         src="{{ profile.photo_url or 'https://placehold.co/120x120/E9E9E9/333333?text=Teacher' }}" 
-                         alt="Profile Picture">
-                    <input type="file" id="profile-pic-upload" style="display:none;">
-                    <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
-                </div>
+    <!-- Profile Card -->
+    <div class="card user-profile-card">
+      <h2 style="font-family:'Poppins',sans-serif; font-weight:600; color:#4154F1;">Edit Teacher Profile</h2>
+      <div class="profile-content">
 
-                <!-- Profile Form -->
-                <form id="profile-form" class="profile-details">
-                    <div class="form-group">
-                        <label for="first-name-input">First Name</label>
-                        <input type="text" id="first-name-input" value="{{ profile.firstName }}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="last-name-input">Last Name</label>
-                        <input type="text" id="last-name-input" value="{{ profile.lastName }}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="nickname-input">Nickname</label>
-                        <input type="text" id="nickname-input" value="{{ profile.nickname }}">
-                    </div>
-                    <div class="form-group">
-                        <label for="phone-input">Phone Number</label>
-                        <input type="text" id="phone-input" value="{{ profile.phone }}">
-                    </div>
-                    <div class="form-group">
-                        <label for="email-input">Email</label>
-                        <input type="email" id="email-input" value="{{ profile.email }}" disabled>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Card Actions -->
-            <div class="card-actions">
-                <button id="cancel-profile-btn" class="btn btn-secondary">Cancel</button>
-                <button id="save-profile-btn" class="btn btn-primary">Save Changes</button>
-            </div>
-
-            <!-- Status Message -->
-            <div id="profile-status-message" class="status-message"></div>
+        <!-- Profile Picture -->
+        <div class="profile-pic-container">
+          <img id="user-profile-pic" 
+               src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" 
+               alt="Profile Picture">
+          <input type="file" id="profile-pic-upload" name="profile_pic" style="display:none;">
+          <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
         </div>
 
-        <!-- Password Change Card -->
-        <div class="card password-change-card">
-            <h2 style="font-family:'Poppins',sans-serif; font-weight:600; color:#4154F1;">Password Change</h2>
-            <p style="font-family:'Nunito',sans-serif; font-size:14px; color:#555; margin-bottom:15px;">
-                For security reasons, you can change your password here.
-            </p>
-            <a href="{{ url_for('teacher_change_password') }}" class="btn btn-primary" style="text-decoration: none;">Change Password</a>
+        <!-- Profile Form -->
+        <form id="profile-form" class="profile-details" method="POST" action="{{ url_for('teacher_edit_profile') }}" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="first-name-input">First Name</label>
+            <input type="text" id="first-name-input" value="{{ profile.firstName }}" disabled>
+          </div>
+          <div class="form-group">
+            <label for="last-name-input">Last Name</label>
+            <input type="text" id="last-name-input" value="{{ profile.lastName }}" disabled>
+          </div>
+          <div class="form-group">
+            <label for="nickname-input">Nickname</label>
+            <input type="text" name="nickname" id="nickname-input" value="{{ profile.nickname }}">
+          </div>
+          <div class="form-group">
+            <label for="phone-input">Phone Number</label>
+            <input type="text" name="phone" id="phone-input" value="{{ profile.phone }}">
+          </div>
+          <div class="form-group">
+            <label for="email-input">Email</label>
+            <input type="email" id="email-input" value="{{ profile.email }}" disabled>
+          </div>
 
-        </div>
-
+          <!-- Card Actions -->
+          <div class="card-actions">
+            <button type="submit" name="action" value="cancel" class="btn btn-secondary">Cancel</button>
+            <button type="submit" name="action" value="save" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
     </div>
+
+    <!-- Password Change Card -->
+    <div class="card password-change-card">
+      <h2 style="font-family:'Poppins',sans-serif; font-weight:600; color:#4154F1;">Password Change</h2>
+      <p style="font-family:'Nunito',sans-serif; font-size:14px; color:#555; margin-bottom:15px;">
+        For security reasons, you can change your password here.
+      </p>
+      <a href="{{ url_for('teacher_change_password') }}" class="btn btn-primary" style="text-decoration:none;">Change Password</a>
+    </div>
+
+  </div>
 </div>
-
-
-
 
 <script>
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 const mainContent = document.querySelector('.main-content');
-menuToggle.addEventListener('click', ()=>{ sidebar.classList.toggle('collapsed'); mainContent.classList.toggle('expanded'); });
-</script>
 
-   
+// Sidebar toggle
+menuToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+  mainContent.classList.toggle('expanded');
+});
+
+// Profile picture preview immediately when selected
+const profilePicInput = document.getElementById('profile-pic-upload');
+const profilePicImg = document.getElementById('user-profile-pic');
+
+profilePicInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(file && file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      profilePicImg.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    profilePicInput.value = ''; // Reset if not an image
+  }
+});
 </script>
 </body>
 </html>

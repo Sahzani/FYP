@@ -2076,7 +2076,9 @@ def teacher_change_password():
 
 
 # ------------------ Teacher Edit Profile ------------------
-from flask import request, flash
+from flask import request, redirect, url_for, session, flash, render_template
+from werkzeug.utils import secure_filename
+import os
 
 @app.route("/teacher/profile/edit", methods=["GET", "POST"])
 def teacher_edit_profile():
@@ -2088,59 +2090,61 @@ def teacher_edit_profile():
     if not user:
         return redirect(url_for("home"))
 
-    teacher_uid = user.get("uid")
-
-    # Fetch current profile data
-    teacher_doc = db.collection("users").document(teacher_uid).get()
+    uid = user.get("uid")
+    teacher_doc = db.collection("users").document(uid).get()
     profile = {}
+
+    # Fetch existing profile data
     if teacher_doc.exists:
         data = teacher_doc.to_dict()
         profile["firstName"] = data.get("firstName", "Teacher")
         profile["lastName"] = data.get("lastName", "")
-        profile["nickname"] = data.get("nickname", "-")
+        profile["nickname"] = data.get("nickname", "")
+        profile["phone"] = data.get("phone", "")
         profile["email"] = user.get("email", "-")
-        profile["phone"] = data.get("phone", "-")
-        profile["photo_url"] = data.get(
-            "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
-        )
-
-        # Fetch teacherID from roles
-        role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
-        if role_doc.exists:
-            role = role_doc.to_dict()
-            profile["teacher_id"] = role.get("teacherID", "-")
-        else:
-            profile["teacher_id"] = "-"
+        profile["photo_name"] = data.get("photo_name", "/static/uploads/default_teacher.png")
     else:
         profile = {
             "firstName": "Teacher",
             "lastName": "",
-            "nickname": "-",
+            "nickname": "",
+            "phone": "",
             "email": user.get("email", "-"),
-            "phone": "-",
-            "photo_url": "https://placehold.co/140x140/E9E9E9/333333?text=T",
-            "teacher_id": "-"
+            "photo_name": "/static/uploads/default_teacher.png"
         }
 
     if request.method == "POST":
-        # Get form data
-        first_name = request.form.get("firstName", "").strip()
-        last_name = request.form.get("lastName", "").strip()
+        action = request.form.get("action")
+        if action == "cancel":
+            return redirect(url_for("teacher_profile"))
+
         nickname = request.form.get("nickname", "").strip()
         phone = request.form.get("phone", "").strip()
 
-        # Update Firestore
-        db.collection("users").document(teacher_uid).update({
-            "firstName": first_name,
-            "lastName": last_name,
-            "nickname": nickname,
-            "phone": phone
-        })
+        update_data = {"nickname": nickname, "phone": phone}
 
+        # Handle profile picture upload
+        profile_pic = request.files.get("profile_pic")
+        if profile_pic and profile_pic.filename != "":
+            if profile_pic.mimetype.startswith("image/"):  # ensure it's an image
+                filename = secure_filename(profile_pic.filename)
+                upload_folder = os.path.join(app.root_path, "static", "uploads", "teacher_profiles", uid)
+                os.makedirs(upload_folder, exist_ok=True)
+                file_path = os.path.join(upload_folder, filename)
+                profile_pic.save(file_path)
+
+                # Save relative path in Firestore
+                update_data["photo_name"] = f"uploads/teacher_profiles/{uid}/{filename}"
+            else:
+                flash("Please upload a valid image file.", "error")
+
+        # Update Firestore
+        db.collection("users").document(uid).update(update_data)
         flash("Profile updated successfully!", "success")
-        return redirect(url_for("teacher_profile"))
+        return redirect(url_for("teacher_edit_profile"))
 
     return render_template("teacher/T_EditProfile.html", profile=profile)
+
 
 
 # ------------------ Admin Student Add/Edit ------------------
