@@ -68,76 +68,28 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
 .sidebar.collapsed .sidebar-section-title, .sidebar.collapsed .sidebar-link span { display: none; }
 
 /* Main Content */
-.main-content { margin-left:260px; padding:100px 30px 30px; min-height:100vh; overflow-y:auto; transition:margin-left 0.3s ease; background:transparent; }
+.main-content { margin-left:260px; padding:100px 30px 50px; min-height:100vh; background:transparent; display:flex; justify-content:center; }
 .main-content.expanded { margin-left:80px; }
 
-/* Profile Card */
-.profile-card {
-  max-width: 900px;
-  margin: auto;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.05);
-  padding: 40px 30px;
-  text-align: center;
-}
-.profile-card img {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 15px;
-  border: 4px solid #4154F1;
-}
-.profile-name { font-size: 26px; font-weight: 600; color: #4154F1; margin-bottom: 30px; }
+.profile-card { max-width:950px;width:100%;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 15px 30px rgba(0,0,0,0.05);padding:50px 40px 20px 40px;text-align:center;box-sizing:border-box;transition:transform 0.3s ease,box-shadow 0.3s ease; }
+.profile-card:hover { transform:translateY(-6px);box-shadow:0 20px 40px rgba(0,0,0,0.15); }
+.profile-card img { width:160px;height:160px;border-radius:50%;object-fit:cover;margin-bottom:20px;border:4px solid #4154F1; }
+.profile-name { font-size:28px;font-weight:600;color:#4154F1;margin-bottom:35px; }
+.info-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:25px;justify-items:center;width:100%; }
+.info-item { background:#fdfdfd;border-radius:12px;padding:20px 25px;box-shadow:0 3px 12px rgba(0,0,0,0.05);display:flex;align-items:center;gap:15px;width:100%;max-width:250px;transition:transform 0.3s ease,box-shadow 0.3s ease;text-align:left; }
+.info-item:hover { transform:translateY(-6px);box-shadow:0 8px 20px rgba(0,0,0,0.12); }
+.info-item i { color:#4154F1;font-size:22px; }
+.info-text { display:flex;flex-direction:column; }
+.info-label { font-size:13px;font-weight:600;color:#888;margin-bottom:4px; }
+.info-value { font-size:16px;font-weight:500;color:#333; }
+.info-item.phone { grid-column:1/-1;justify-self:center;text-align:center;max-width:250px;width:100%; }
+.edit-btn { display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background-color:#4154F1;color:#fff;font-weight:600;border-radius:8px;text-decoration:none;margin-top:35px;transition:all 0.3s ease; }
+.edit-btn i { transition:transform 0.3s ease; }
+.edit-btn:hover { background-color:#3a4cd0;transform:translateY(-2px); }
+.edit-btn:hover i { transform:rotate(20deg); }
+@media(max-width:768px){ .main-content { margin-left:0;padding:20px 15px; } .profile-card { padding:30px 20px; } .profile-card img { width:120px;height:120px; } .profile-name { font-size:24px;margin-bottom:25px; } .info-grid { grid-template-columns:1fr;gap:20px;justify-items:center; } .info-item { flex-direction:column;align-items:center;gap:10px;text-align:center;max-width:100%; } .info-item.phone { width:100%; max-width:100%; } }
 
-/* Info Grid */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  justify-items: center;
-  text-align: left;
-}
-.info-item {
-  background: #fdfdfd;
-  border-radius: 10px;
-  padding: 15px 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  max-width: 400px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.info-item:hover { transform: translateY(-6px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
-.info-item i { color: #4154F1; font-size: 20px; }
-.info-text { display: flex; flex-direction: column; }
-.info-label { font-size: 13px; font-weight: 600; color: #888; margin-bottom: 3px; }
-.info-value { font-size: 15px; font-weight: 500; color: #333; }
 
-/* Edit Button */
-.edit-btn {
-  display: inline-block;
-  margin-top: 30px;
-  padding: 12px 24px;
-  background-color: #4154F1;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.3s;
-  text-decoration: none;
-}
-.edit-btn:hover { background-color: #3a4cd0; }
-
-@media(max-width:768px){
-  .main-content { margin-left: 0; padding: 90px 15px; }
-  .info-grid { grid-template-columns: 1fr; justify-items: center; }
-}
 </style>
 </head>
 <body>
@@ -204,6 +156,7 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
           <div class="info-value">{{ profile.teacher_id }}</div>
         </div>
       </div>
+
       <div class="info-item">
         <i class="fas fa-user"></i>
         <div class="info-text">
@@ -211,6 +164,7 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
           <div class="info-value">{{ profile.nickname }}</div>
         </div>
       </div>
+
       <div class="info-item">
         <i class="fas fa-envelope"></i>
         <div class="info-text">
@@ -218,7 +172,8 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
           <div class="info-value">{{ profile.email }}</div>
         </div>
       </div>
-      <div class="info-item">
+
+      <div class="info-item phone">
         <i class="fas fa-phone"></i>
         <div class="info-text">
           <div class="info-label">Phone Number</div>
@@ -228,10 +183,11 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
     </div>
 
     <a href="{{ url_for('teacher_edit_profile') }}" class="edit-btn">
-  <i class="fas fa-edit"></i> Edit Profile
-</a>
+      <i class="fas fa-edit"></i> Edit Profile
+    </a>
   </div>
 </div>
+
 
 <script>
 // Toggle sidebar
