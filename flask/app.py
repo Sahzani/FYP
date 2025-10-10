@@ -398,35 +398,31 @@ def teacher_dashboard():
 
     # ------------------ Fetch teacher profile ------------------
     profile_doc = db.collection("users").document(teacher_uid).get()
-    profile = {}
+    profile = {
+        "role": "Teacher",
+        "firstName": "Teacher",
+        "lastName": "",
+        "photo_name": "uploads/default_teacher.png",
+        "is_gc": False
+    }
+
     if profile_doc.exists:
         user_data = profile_doc.to_dict()
 
-        # Fetch firstName and lastName from Firestore
         first_name = user_data.get("firstName", "Teacher")
         last_name = user_data.get("lastName", "")
+        photo_name = user_data.get("photo_name", "uploads/default_teacher.png")
 
         # Check if teacher is a group coordinator
         role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
         is_gc = role_doc.exists and role_doc.to_dict().get("isCoordinator", False)
 
-        profile = {
-            "role": user_data.get("role", "Teacher"),
+        profile.update({
             "firstName": first_name,
             "lastName": last_name,
-            "photo_url": user_data.get(
-                "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
-            ),
+            "photo_name": photo_name,
             "is_gc": is_gc
-        }
-    else:
-        profile = {
-            "role": "Teacher",
-            "firstName": "Teacher",
-            "lastName": "",
-            "photo_url": "https://placehold.co/140x140/E9E9E9/333333?text=T",
-            "is_gc": False
-        }
+        })
 
     # ------------------ Fetch schedules ------------------
     schedules = []
@@ -484,7 +480,6 @@ def teacher_dashboard():
         current_schedule=None
     )
 
-#------------------ Teacher - view students Individual attendance ------------------
 #------------------ Teacher - view students Individual attendance ------------------
 @app.route("/teacher/individual_summary", methods=["GET"])
 def teacher_individual_summary():
