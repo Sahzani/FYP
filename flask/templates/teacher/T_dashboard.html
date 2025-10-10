@@ -267,16 +267,26 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
   </div>
 
   <!-- Notifications -->
-  <div class="grid-container-lg-2 grid-container card-spacing">
-    <div class="notification-card">
-      <div class="notification-icon"><i class="fas fa-bell"></i></div>
-      <div class="notification-content">
-        <div class="notification-title">Pending Absence Requests</div>
-        <div class="notification-text">You have <strong>3 pending absence requests</strong> that need your review.</div>
-        <button class="notification-btn" onclick="window.location.href='{{ url_for('teacher_manage_absent') }}'">Review Requests</button>
-      </div>
+<div class="grid-container-lg-2 grid-container card-spacing">
+  <div class="notification-card">
+    <div class="notification-icon"><i class="fas fa-bell"></i></div>
+    <div class="notification-content">
+      <div class="notification-title">Pending Absence Requests</div>
+
+      {% if pending_count > 0 %}
+        <div class="notification-text">
+          You have <strong>{{ pending_count }} pending absence request{% if pending_count > 1 %}s{% endif %}</strong> that need your review.
+        </div>
+        <a href="{{ url_for('teacher_manage_absent') }}" class="notification-btn">Review Requests</a>
+          Review Requests
+        </button>
+      {% else %}
+        <div class="notification-text">No pending absence requests at the moment.</div>
+      {% endif %}
+
     </div>
   </div>
+</div>
 
   <!-- Low Attendance Students -->
   <div class="card low-attendance-card">

@@ -471,13 +471,36 @@ def teacher_dashboard():
         "absent": total_absent
     }
 
+    # ------------------ Pending Absence Requests ------------------
+    # Get all group codes managed by this teacher
+    group_codes = []
+    role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
+    if role_doc.exists:
+        role_data = role_doc.to_dict()
+        group_code = role_data.get("groupCode")  # exact Firestore field name
+        if group_code:
+            group_codes.append(group_code)
+
+    pending_count = 0
+    for group_code in group_codes:
+        pending_query = db.collection("absenceRecords") \
+            .where("status", "==", "In Progress") \
+            .where("group_code", "==", group_code)
+        
+        # Debug: print all matched records
+        for doc in pending_query.stream():
+            print("Pending Absence:", doc.id, doc.to_dict())
+            pending_count += 1
+
+
     # ------------------ Render template ------------------
     return render_template(
         "teacher/T_dashboard.html",
         stats=stats,
         schedules=schedules,
         profile=profile,
-        current_schedule=None
+        current_schedule=None,
+        pending_count=pending_count
     )
 
 #------------------ Teacher - view students Individual attendance ------------------
