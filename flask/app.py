@@ -1406,13 +1406,13 @@ def teacher_attendance():
         profile = teacher_doc.to_dict()
         profile.setdefault("firstName", "Teacher")
         profile.setdefault("lastName", "")
-        profile.setdefault("photo_url", "https://placehold.co/40x40/b8c6ff/ffffff?text=T")
+        profile.setdefault("photo_name", "uploads/default_teacher.png")
         profile.setdefault("is_gc", False)
     else:
         profile = {
             "firstName": "Teacher",
             "lastName": "",
-            "photo_url": "https://placehold.co/40x40/b8c6ff/ffffff?text=T",
+            "photo_name": "uploads/default_teacher.png",
             "is_gc": False
         }
 

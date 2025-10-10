@@ -218,7 +218,7 @@
       <a href="#" class="title">iAttend</a>
       <a href="#" class="user-info">
         <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-        <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher" />
+        <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
       </a>
     </div>
   </header>
