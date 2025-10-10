@@ -6,85 +6,370 @@
   <title>Admin - Attendance Log</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+
   <style>
+    /* Reset & Body */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: 'Poppins', sans-serif; background: linear-gradient(180deg, #f7ecd7 0%, #f8f1e5 35%, #fbfaf7 100%); overflow-x: hidden; }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 1000;
+    }
+    #menu-toggle {
+      font-size: 28px;
+      margin-right: 15px;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    #menu-toggle:hover { color: #4154F1; }
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .header-content a.title {
+      text-decoration: none;
+      color: #444;
+      font-weight: 700;
+      font-size: 26px;
+      transition: color 0.3s;
+    }
+    .header-content a.title:hover { color: #4154F1; }
+
+    header a.user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #444;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    header a.user-info:hover {
+      padding: 4px 12px;
+      border-radius: 12px;
+      background: #f8f1e5;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    header a.user-info img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 250px;
+      height: calc(100% - 60px);
+      background: #f8f1e5;
+      padding: 15px 0;
+      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.08);
+      border-top-right-radius: 12px;
+      transition: all 0.3s ease;
+      overflow-y: auto;
+      z-index: 999;
+    }
+    .sidebar-section { margin-bottom: 25px; padding: 0 15px; }
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6b7280;
+      margin-bottom: 10px;
+      padding-left: 10px;
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 15px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #2C2C2C;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .sidebar-link i { width: 18px; text-align: center; }
+    .sidebar-link.active, .sidebar-link:hover {
+      background: #eadbbf;
+      color: #1F2937;
+      font-weight: 600;
+    }
+
+    /* Collapsed Sidebar */
+    .sidebar.collapsed {
+      width: 70px;
+      padding: 15px 0;
+      overflow: hidden;
+    }
+    .sidebar.collapsed .sidebar-section-title,
+    .sidebar.collapsed .sidebar-link span {
+      display: none;
+    }
+
+    /* Dropdown */
+    .sidebar-dropdown .dropdown-menu {
+      display: none;
+      margin-left: 20px;
+      margin-top: 4px;
+    }
+    .sidebar-dropdown.active .dropdown-menu {
+      display: block;
+    }
+    .sidebar-dropdown .dropdown-toggle::after {
+      content: "\f078";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      margin-left: auto;
+      font-size: 12px;
+    }
+    .sidebar-dropdown.active .dropdown-toggle::after {
+      content: "\f077";
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      min-height: 100vh;
+      overflow-y: auto;
+      transition: margin-left 0.3s ease;
+      background: transparent;
+    }
+    .main-content.expanded {
+      margin-left: 80px;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      display: inline-block;
+      min-width: 70px;
+      text-align: center;
+    }
     .status-Present { background-color: #d1fae5; color: green; }
     .status-Late { background-color: #fff7d1; color: orange; }
     .status-Absent { background-color: #fee2e2; color: red; }
-    .status-badge {
-      padding: 4px 10px; border-radius: 6px; font-weight: 600;
-      display: inline-block; min-width: 70px; text-align: center;
+
+    /* Card */
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Table */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th {
+      background: #f8f1e5;
+      font-weight: 600;
+      color: #2C2C2C;
+    }
+    tr:hover { background: #fef9f0; }
+
+    @media (max-width: 768px) {
+      .sidebar { left: -260px; }
+      .sidebar.active { left: 0; }
+      .sidebar.collapsed { left: 0; width: 250px; }
+      .main-content { margin-left: 0; }
+      .main-content.expanded { margin-left: 0; }
     }
   </style>
 </head>
-<body class="bg-gray-100">
-  <div class="max-w-7xl mx-auto p-6">
-    <h1 class="text-2xl font-bold mb-6">Attendance Log</h1>
+<body>
 
-    <!-- Filters -->
-    <div class="bg-white p-4 rounded-lg shadow mb-6">
-      <form id="filter-form" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div>
-          <label class="block text-sm font-medium mb-1">Date</label>
-          <input type="date" name="date" value="{{ selected_date }}" class="w-full border rounded p-2" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Program</label>
-          <select name="program" id="program" class="w-full border rounded p-2">
-            <option value="">All Programs</option>
-            {% for p in all_programs %}
-              <option value="{{ p }}">{{ p }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Group</label>
-          <select name="group" id="group" class="w-full border rounded p-2" disabled>
-            <option value="">Select Program</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Module</label>
-          <select name="module" id="module" class="w-full border rounded p-2" disabled>
-            <option value="">Select Group</option>
-          </select>
-        </div>
-        <div class="flex items-end">
-          <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">Apply</button>
-        </div>
-      </form>
+<!-- Header -->
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="{{ url_for('admin_dashboard') }}" class="title">iAttend</a>
+    <a href="#" class="user-info">
+      <span>Admin User</span>
+      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=A" alt="Admin">
+    </a>
+  </div>
+</header>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+      <i class="fas fa-home"></i><span>Dashboard</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Management</div>
+
+    <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %}" href="{{ url_for('admin_student_add') }}">
+      <i class="fas fa-user-graduate"></i><span>Students</span>
+    </a>
+
+    <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_add','admin_teacher_assign'] %}active{% endif %}">
+      <a class="sidebar-link dropdown-toggle">
+        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span>
+      </a>
+      <div class="dropdown-menu">
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}">
+          <span>Add Teacher</span>
+        </a>
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_assign' %}active{% endif %}" href="{{ url_for('admin_teacher_assign') }}">
+          <span>Assign Modules</span>
+        </a>
+      </div>
     </div>
 
-    <!-- Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+    <a class="sidebar-link {% if request.endpoint == 'admin_programs' %}active{% endif %}" href="{{ url_for('admin_programs') }}">
+      <i class="fas fa-layer-group"></i><span>Programs</span>
+    </a>
+
+    <a class="sidebar-link {% if request.endpoint == 'admin_groups' %}active{% endif %}" href="{{ url_for('admin_groups') }}">
+      <i class="fas fa-users"></i><span>Groups</span>
+    </a>
+
+    <a class="sidebar-link {% if request.endpoint == 'admin_modules' %}active{% endif %}" href="{{ url_for('admin_modules') }}">
+      <i class="fas fa-book"></i><span>Modules</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">System</div>
+    <a class="sidebar-link {% if request.endpoint == 'admin_schedules' %}active{% endif %}" href="{{ url_for('admin_schedules') }}">
+      <i class="fas fa-file-upload"></i><span>Upload Schedules</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Logs</div>
+    <a class="sidebar-link {% if request.endpoint == 'admin_attendance_log' %}active{% endif %}" href="{{ url_for('admin_attendance_log') }}">
+      <i class="fas fa-history"></i><span>Attendance Logs</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Attendance</div>
+    <a class="sidebar-link {% if request.endpoint == 'admin_summary' %}active{% endif %}" href="{{ url_for('admin_summary') }}">
+      <i class="fas fa-chart-line"></i><span>Summary</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('logout') }}">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <h2 class="text-2xl font-bold mb-6">Attendance Log</h2>
+
+  <!-- Filters -->
+  <div class="card">
+    <form id="filter-form" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <input type="hidden" name="program" value="{{ selected_program }}">
+      <input type="hidden" name="group" value="{{ selected_group }}">
+      <input type="hidden" name="module" value="{{ selected_module }}">
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Date</label>
+        <input type="date" name="date" value="{{ selected_date }}" class="w-full border rounded p-2" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Program</label>
+        <select name="program" id="program" class="w-full border rounded p-2">
+          <option value="">Select Program</option>
+          {% for p in all_programs %}
+            <option value="{{ p }}" {% if p == selected_program %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Group</label>
+        <select name="group" id="group" class="w-full border rounded p-2" disabled>
+          <option value="">Select Program First</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Module</label>
+        <select name="module" id="module" class="w-full border rounded p-2" disabled>
+          <option value="">Select Group First</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">Apply</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="table-container">
+      <table>
+        <thead>
           <tr>
-            <th class="px-4 py-2 text-left">Student</th>
-            <th class="px-4 py-2 text-left">Group</th>
-            <th class="px-4 py-2 text-left">Program</th>
-            <th class="px-4 py-2 text-left">Module</th>
-            <th class="px-4 py-2 text-left">Time</th>
-            <th class="px-4 py-2 text-left">Status</th>
+            <th>Student</th>
+            <th>Group</th>
+            <th>Program</th>
+            <th>Module</th>
+            <th>Time</th>
+            <th>Status</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
+        <tbody>
           {% if records %}
             {% for r in records %}
               <tr>
-                <td class="px-4 py-2">{{ r.student_name }}</td>
-                <td class="px-4 py-2">{{ r.group }}</td>
-                <td class="px-4 py-2">{{ r.program }}</td>
-                <td class="px-4 py-2">{{ r.module }}</td>
-                <td class="px-4 py-2">{{ r.time if r.time else '-' }}</td>
-                <td class="px-4 py-2">
-                  <span class="status-badge status-{{ r.status }}">{{ r.status }}</span>
-                </td>
+                <td>{{ r.student_name }}</td>
+                <td>{{ r.group }}</td>
+                <td>{{ r.program }}</td>
+                <td>{{ r.module }}</td>
+                <td>{{ r.time }}</td>
+                <td><span class="status-badge status-{{ r.status }}">{{ r.status }}</span></td>
               </tr>
             {% endfor %}
+          {% elif selected_program or selected_group or selected_module %}
+            <tr>
+              <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                No attendance records found.
+              </td>
+            </tr>
           {% else %}
             <tr>
               <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                No attendance records found for this date.
+                Please select at least one filter to view attendance.
               </td>
             </tr>
           {% endif %}
@@ -92,50 +377,84 @@
       </table>
     </div>
   </div>
+</div>
 
-  <!-- Data for JS -->
-  <script id="program-to-groups" type="application/json">{{ program_to_groups | tojson }}</script>
-  <script id="group-to-modules" type="application/json">{{ group_to_modules | tojson }}</script>
+<!-- Data for JS -->
+<script id="program-to-groups" type="application/json">{{ program_to_groups | tojson }}</script>
+<script id="group-to-modules" type="application/json">{{ group_to_modules | tojson }}</script>
 
-  <script>
-    const programToGroups = JSON.parse(document.getElementById('program-to-groups').textContent);
-    const groupToModules = JSON.parse(document.getElementById('group-to-modules').textContent);
+<script>
+  // Toggle sidebar
+  document.getElementById('menu-toggle').addEventListener('click', () => {
+    const sidebar = document.querySelector('.sidebar');
+    if (window.innerWidth <= 768) {
+      sidebar.classList.toggle('active');
+    } else {
+      sidebar.classList.toggle('collapsed');
+    }
+    document.querySelector('.main-content').classList.toggle('expanded');
+  });
 
-    const programSelect = document.getElementById('program');
-    const groupSelect = document.getElementById('group');
-    const moduleSelect = document.getElementById('module');
-
-    programSelect.addEventListener('change', () => {
-      const program = programSelect.value;
-      groupSelect.innerHTML = '<option value="">Select Group</option>';
-      moduleSelect.innerHTML = '<option value="">Select Group First</option>';
-      groupSelect.disabled = !program;
-      moduleSelect.disabled = true;
-
-      if (program && programToGroups[program]) {
-        programToGroups[program].forEach(group => {
-          const opt = document.createElement('option');
-          opt.value = group;
-          opt.textContent = group;
-          groupSelect.appendChild(opt);
-        });
-      }
+  // Dropdown toggle
+  document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+    toggle.addEventListener('click', e => {
+      e.preventDefault();
+      toggle.parentElement.classList.toggle('active');
     });
+  });
 
-    groupSelect.addEventListener('change', () => {
-      const group = groupSelect.value;
-      moduleSelect.innerHTML = '<option value="">Select Module</option>';
-      moduleSelect.disabled = !group;
+  // Dynamic filters
+  const programToGroups = JSON.parse(document.getElementById('program-to-groups').textContent);
+  const groupToModules = JSON.parse(document.getElementById('group-to-modules').textContent);
 
-      if (group && groupToModules[group]) {
-        groupToModules[group].forEach(module => {
-          const opt = document.createElement('option');
-          opt.value = module;
-          opt.textContent = module;
-          moduleSelect.appendChild(opt);
-        });
-      }
-    });
-  </script>
+  const programSelect = document.getElementById('program');
+  const groupSelect = document.getElementById('group');
+  const moduleSelect = document.getElementById('module');
+  const form = document.getElementById('filter-form');
+
+  programSelect.addEventListener('change', () => {
+    const program = programSelect.value;
+    groupSelect.innerHTML = '<option value="">Select Group</option>';
+    moduleSelect.innerHTML = '<option value="">Select Group First</option>';
+    groupSelect.disabled = !program;
+    moduleSelect.disabled = true;
+
+    if (program && programToGroups[program]) {
+      programToGroups[program].forEach(group => {
+        const opt = document.createElement('option');
+        opt.value = group;
+        opt.textContent = group;
+        groupSelect.appendChild(opt);
+      });
+    }
+    form.querySelector('[name="group"]').value = '';
+    form.querySelector('[name="module"]').value = '';
+  });
+
+  groupSelect.addEventListener('change', () => {
+    const group = groupSelect.value;
+    moduleSelect.innerHTML = '<option value="">Select Module</option>';
+    moduleSelect.disabled = !group;
+
+    if (group && groupToModules[group]) {
+      groupToModules[group].forEach(module => {
+        const opt = document.createElement('option');
+        opt.value = module;
+        opt.textContent = module;
+        moduleSelect.appendChild(opt);
+      });
+    }
+    form.querySelector('[name="module"]').value = '';
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    form.querySelector('[name="program"]').value = programSelect.value;
+    form.querySelector('[name="group"]').value = groupSelect.value;
+    form.querySelector('[name="module"]').value = moduleSelect.value;
+    form.submit();
+  });
+</script>
+
 </body>
 </html>
