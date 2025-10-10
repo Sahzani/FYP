@@ -498,7 +498,23 @@ def teacher_individual_summary():
     profile = teacher_doc.to_dict() if teacher_doc.exists else {}
     profile.setdefault("firstName", "Teacher")
     profile.setdefault("lastName", "")
-    profile.setdefault("profile_pic", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+    profile.setdefault("photo_url", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+
+    # ✅ Ensure GC flag exists and stored in session
+    roles_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
+    if roles_doc.exists:
+        roles_data = roles_doc.to_dict()
+        # Try multiple possible keys just in case
+        profile["is_gc"] = (
+            roles_data.get("is_gc")
+            or roles_data.get("gc")
+            or roles_data.get("isGroupCoordinator")
+            or False
+        )
+    else:
+        profile["is_gc"] = False
+
+    session["is_gc"] = profile["is_gc"]  # ✅ keep it for other pages
 
     # -------- Get filter values --------
     student_id = request.args.get("student_id")
@@ -526,6 +542,7 @@ def teacher_individual_summary():
     chart_labels = []
     chart_percents = []
 
+    # -------- Attendance summary --------
     if student_id and month and year:
         attendance_ref = db.collection("attendance").where("student_id", "==", student_id).stream()
         stats_by_module = {}
@@ -568,6 +585,7 @@ def teacher_individual_summary():
             chart_labels.append(module_name)
             chart_percents.append(percent)
 
+    # ✅ Always pass profile and GC status
     return render_template(
         "teacher/T_individual_summary.html",
         profile=profile,
