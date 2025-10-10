@@ -101,7 +101,7 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
     <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
     <a href="{{ url_for('teacher_profile') }}" class="user-info">
       <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="{{ profile.photo_url or 'https://placehold.co/40x40/4154F1/ffffff?text=T' }}" alt="Teacher">
+      <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
     </a>
   </div>
 </header>
@@ -145,7 +145,7 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
 <!-- Main Content -->
 <div class="main-content">
   <div class="profile-card">
-    <img src="{{ profile.photo_url or 'https://placehold.co/140x140/4154F1/ffffff?text=T' }}" alt="Profile Picture">
+    <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
     <div class="profile-name">{{ profile.firstName }} {{ profile.lastName }}</div>
 
     <div class="info-grid">

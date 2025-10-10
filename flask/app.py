@@ -2005,9 +2005,8 @@ def teacher_profile():
         profile["teacher_id"] = data.get("teacherID", "-")
         profile["email"] = user.get("email", "-")
         profile["phone"] = data.get("phone", "-")
-        profile["photo_url"] = data.get(
-            "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
-        )
+        profile["photo_name"] = data.get("photo_name", "uploads/default_teacher.png")
+    
 
         # Roles info
         role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
@@ -2034,7 +2033,7 @@ def teacher_profile():
             "teacher_id": "-",
             "email": user.get("email", "-"),
             "phone": "-",
-            "photo_url": "https://placehold.co/140x140/E9E9E9/333333?text=T",
+            "photo_name": "uploads/default_teacher.png" ,
             "is_gc": False,
             "program": "",
             "groupId": "",
