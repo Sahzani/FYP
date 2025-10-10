@@ -1119,7 +1119,7 @@ def teacher_modules():
             "firstName": first_name,
             "lastName": last_name,
             "role": data.get("role", "Teacher"),
-            "photo_url": data.get("photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"),
+            "photo_name": data.get("photo_name", "uploads/default_teacher.png"),
             "is_gc": is_gc
         }
 
@@ -1199,12 +1199,25 @@ def studattendance():
         last_name = data.get("lastName", "")
         role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
         is_gc = role_doc.to_dict().get("isCoordinator", False) if role_doc.exists else False
+
+        # Ensure photo_name always has a valid value
+        photo_name = data.get("photo_name")
+        if not photo_name or photo_name in ["None", None, ""]:
+            photo_name = "uploads/default_teacher.png"
+
         profile = {
             "firstName": first_name,
             "lastName": last_name,
             "role": data.get("role", "Teacher"),
-            "photo_url": data.get("photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"),
+            "photo_name": photo_name,
             "is_gc": is_gc
+        }
+    else:
+        profile = {
+            "firstName": "Teacher",
+            "lastName": "",
+            "photo_name": "uploads/default_teacher.png",
+            "is_gc": False
         }
 
     # ------------------ Query params ------------------
@@ -1268,6 +1281,7 @@ def studattendance():
         notifications=notifications
     )
 
+# ------------------ Teacher updates attendance for a student ------------------
 @app.route("/update_attendance", methods=["POST"])
 def update_attendance():
     if session.get("role") != "teacher":
@@ -1281,7 +1295,7 @@ def update_attendance():
     status = request.form.get("status")
 
     if not all([student_id, schedule_id, module_id, group_id, date, status]):
-        flash("Incomplete data. Attendance not updated.")
+
         return redirect(url_for("studattendance", module_id=module_id, group_id=group_id, schedule_id=schedule_id, date=date))
 
     # ------------------ Fetch student info ------------------
