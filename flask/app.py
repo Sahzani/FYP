@@ -2141,7 +2141,6 @@ def allowed_file(filename):
 
 def generate_student_id():
     return "STU" + ''.join(random.choices(string.digits, k=4))  # e.g., STU5829
-# ------------------ Admin Student Add Page ------------------
 
 # ------------------ Admin Student Add Page ------------------
 @app.route("/admin/student_add")
@@ -2149,10 +2148,15 @@ def admin_student_add():
     # Fetch all programs
     programs_docs = db.collection("programs").stream()
     programs = []
+    program_options = []  # <-- NEW: for CSV template
     for doc in programs_docs:
         p = doc.to_dict()
         p["docId"] = doc.id
         programs.append(p)
+        program_options.append({
+            "id": doc.id,
+            "name": p.get("programName", doc.id)
+        })
 
     # Fetch all groups
     groups_docs = db.collection("groups").stream()
@@ -2205,7 +2209,8 @@ def admin_student_add():
         "admin/A_Student-Add.html",
         programs=programs,
         groups=groups,
-        students=students
+        students=students,
+        program_options=program_options
     )
 
 # ------------------ Save (Add/Edit) Student ------------------
@@ -2365,21 +2370,23 @@ def admin_student_upload():
         return redirect(url_for("admin_student_add"))
 
     file = request.files["csv_file"]
-    # Only allow CSV files
     if not file.filename.endswith('.csv'):
         flash("Only CSV files are allowed", "error")
         return redirect(url_for("admin_student_add"))
 
     import csv, io
+
     stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
     reader = csv.DictReader(stream)
 
+    success_count = 0
     for row in reader:
-        first_name = row.get("first_name")
-        last_name = row.get("last_name")
-        email = row.get("email")
-        password = row.get("password") or "password123"
-        program = row.get("program")
+        first_name = row.get("first_name", "").strip()
+        last_name = row.get("last_name", "").strip()
+        email = row.get("email", "").strip()
+        password = row.get("password", "").strip() or "password123"
+        program = row.get("program", "").strip()
+        photo_filename = row.get("photo", "").strip()  # 👈 NEW: Get photo filename
 
         if not first_name or not last_name or not email or not program:
             continue
@@ -2398,9 +2405,22 @@ def admin_student_upload():
         except exceptions.FirebaseError:
             continue
 
-        # No photo for CSV upload
+        # 👇 Handle photo from filename (if provided)
         photo_name = ""
+        if photo_filename:
+            # Use the filename as-is, but ensure it's safe
+            ext = photo_filename.split('.')[-1].lower() if '.' in photo_filename else 'jpg'
+            if ext in {"png", "jpg", "jpeg"}:
+                # Save under group folder with first name as filename
+                new_filename = f"{first_name}.{ext}"
+                group_folder = fk_groupcode or "default"
+                save_path = os.path.join(STUDENT_PHOTO_FOLDER, group_folder)
+                os.makedirs(save_path, exist_ok=True)
+                # We'll assume the photo file is uploaded separately or pre-existing
+                # For now, we just record the filename
+                photo_name = f"{group_folder}/{new_filename}"
 
+        # Save main user doc
         db.collection('users').document(student_id).set({
             'user_id': student_id,
             'first_name': first_name,
@@ -2409,16 +2429,19 @@ def admin_student_upload():
             'email': email,
             'active': True,
             'role_type': 1,
-            'photo_name': photo_name
+            'photo_name': photo_name  # 👈 Save photo path
         })
 
+        # Save role data
         db.collection('users').document(student_id).collection('roles').document('student').set({
             'studentID': generate_student_id(),
             'fk_groupcode': fk_groupcode,
             'program': program
         })
 
-    flash("CSV uploaded successfully", "success")
+        success_count += 1
+
+    flash(f"CSV uploaded successfully. Added {success_count} students.", "success")
     return redirect(url_for("admin_student_add"))
 
 # ------------------ API to get student data for edit ------------------
@@ -2466,18 +2489,6 @@ def admin_student_delete(uid):
         flash(f"Error deleting student: {str(e)}", "error")
     return redirect(url_for("admin_student_add"))
 
-#--------------------student list -----------------------
-@app.route("/admin/student_list")
-def admin_student_list():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Student-List.html")
-    return redirect(url_for("home"))
-
-@app.route("/admin/student_assign")
-def admin_student_assign():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Student-Assign.html")
-    return redirect(url_for("home"))
 
 # ------------------ Admin teacher add ------------------
 @app.route("/admin/teacher_add")
