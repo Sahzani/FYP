@@ -1221,7 +1221,6 @@ def studattendance():
     selected_date = request.args.get("date") or datetime.today().strftime("%Y-%m-%d")
 
     if not (module_id and group_id and schedule_id):
-        flash("Missing module/group/schedule information.")
         return redirect(url_for("teacher_modules"))
 
     # ------------------ Get schedule info ------------------
@@ -1322,7 +1321,6 @@ def update_attendance():
     att_ref = db.collection("attendance").document(schedule_id).collection(date).document(student_id)
     att_ref.set(attendance_data, merge=True)
 
-    flash(f"Attendance updated for {student_name}.")
     return redirect(url_for("studattendance", module_id=module_id, group_id=group_id, schedule_id=schedule_id, date=date))
 
 # ------------------ Teacher Mark Present via API (for face detection) ------------------
@@ -1987,6 +1985,7 @@ def gc_group_report():
 # ------------------ Teacher Profile ------------------
 @app.route("/teacher/profile")
 def teacher_profile():
+    # Ensure teacher is logged in
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
@@ -1994,27 +1993,53 @@ def teacher_profile():
     if not user:
         return redirect(url_for("home"))
 
-    uid = user.get("uid")
+    teacher_uid = user.get("uid")
 
-    teacher_doc = db.collection("teachers").where("uid", "==", uid).limit(1).stream()
-    teacher_data = None
-    for doc in teacher_doc:
-        teacher_data = doc.to_dict()
-        break
+    # ------------------ Fetch teacher profile ------------------
+    profile_doc = db.collection("users").document(teacher_uid).get()
+    profile = {}
+    if profile_doc.exists:
+        user_data = profile_doc.to_dict()
 
-    if not teacher_data:
-        flash("Teacher data not found.")
-        return redirect(url_for("teacher_dashboard"))
+        # Fetch firstName, lastName, nickname, phone
+        first_name = user_data.get("firstName", "Teacher")
+        last_name = user_data.get("lastName", "")
+        nickname = user_data.get("nickname", "-")
+        phone = user_data.get("phone", "-")
+        teacher_id = user_data.get("teacherID", "-")
 
-    profile = {
-        "name": teacher_data.get("name", "Teacher"),
-        "teacher_id": teacher_data.get("teacherID", "-"),
-        "department": teacher_data.get("department", "-"),
-        "email": user.get("email", "-"),
-        "profile_pic": teacher_data.get("profilePic", "https://placehold.co/140x140/E9E9E9/333333?text=T")
-    }
+        # Check if teacher is a group coordinator
+        role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
+        is_gc = role_doc.exists and role_doc.to_dict().get("isCoordinator", False)
+
+        profile = {
+            "role": user_data.get("role", "Teacher"),
+            "firstName": first_name,
+            "lastName": last_name,
+            "nickname": nickname,
+            "teacher_id": teacher_id,
+            "email": user.get("email", "-"),
+            "phone": phone,
+            "photo_url": user_data.get(
+                "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
+            ),
+            "is_gc": is_gc
+        }
+    else:
+        profile = {
+            "role": "Teacher",
+            "firstName": "Teacher",
+            "lastName": "",
+            "nickname": "-",
+            "teacher_id": "-",
+            "email": user.get("email", "-"),
+            "phone": "-",
+            "photo_url": "https://placehold.co/140x140/E9E9E9/333333?text=T",
+            "is_gc": False
+        }
 
     return render_template("teacher/T_Profile.html", profile=profile)
+
 
 @app.route("/teacher/change_password", methods=["GET", "POST"])
 def teacher_change_password():
