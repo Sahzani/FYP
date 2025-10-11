@@ -4,13 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iAttend - Teachers</title>
-  <!-- Optional: You can keep Tailwind if you want, but your student page doesn't use it via CDN in practice -->
-  <!-- We'll replicate the styles manually as in your student page -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
   <style>
-    /* Match background gradient from student page */
+    /* Match background gradient from attendance log */
     html, body {
       height: 100%;
       font-family: 'Poppins', sans-serif;
@@ -45,15 +44,15 @@
       align-items: center;
       width: 100%;
     }
-    .header-content .title {
+    .header-content a.title {
       text-decoration: none;
       color: #444;
       font-weight: 700;
       font-size: 26px;
     }
-    .header-content .title:hover { color: #4154F1; }
+    .header-content a.title:hover { color: #4154F1; }
 
-    header .user-info {
+    header a.user-info {
       display: flex;
       align-items: center;
       gap: 10px;
@@ -64,11 +63,11 @@
       border-radius: 12px;
       transition: all 0.2s ease;
     }
-    header .user-info:hover {
+    header a.user-info:hover {
       background: #f8f1e5;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
-    header .user-info img {
+    header a.user-info img {
       width: 36px;
       height: 36px;
       border-radius: 50%;
@@ -260,23 +259,16 @@
       margin-right: 10px;
     }
 
-    /* Table */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th {
-      background-color: #f8f7ff;
-      text-align: left;
-      padding: 12px;
-      font-weight: 500;
-    }
-    td {
-      padding: 12px;
-      border-top: 1px solid #ddd;
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { left: -260px; }
+      .sidebar.active { left: 0; }
+      .sidebar.collapsed { left: 0; width: 250px; }
+      .main-content { margin-left: 0; }
+      .sidebar.collapsed ~ .main-content { margin-left: 0; }
     }
 
-    /* Breadcrumb */
+    /* Breadcrumb styling */
     .breadcrumb {
       font-family: 'Poppins', sans-serif;
       font-size: 14px;
@@ -330,15 +322,6 @@
     input:checked + .slider:before {
       transform: translateX(20px);
     }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .sidebar { left: -260px; }
-      .sidebar.active { left: 0; }
-      .sidebar.collapsed { left: 0; width: 250px; }
-      .main-content { margin-left: 0; padding-top: 80px; }
-      .sidebar.collapsed ~ .main-content { margin-left: 0; }
-    }
   </style>
 </head>
 <body>
@@ -348,8 +331,8 @@
   <div class="header-content">
     <a href="{{ url_for('admin_dashboard') }}" class="title">iAttend</a>
     <a href="#" class="user-info">
-      <span>Admin</span>
-      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin">
+      <span>Admin User</span>
+      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=A" alt="Admin">
     </a>
   </div>
 </header>
@@ -364,7 +347,6 @@
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
-
     <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %}" href="{{ url_for('admin_student_add') }}">
       <i class="fas fa-user-graduate"></i><span>Students</span>
     </a>
@@ -374,7 +356,7 @@
         <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span>
       </a>
       <div class="dropdown-menu">
-        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %} active" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
         <a class="sidebar-link {% if request.endpoint == 'admin_teacher_assign' %}active{% endif %}" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules</span></a>
       </div>
     </div>
@@ -412,11 +394,12 @@
 </div>
 
 <div class="main-content">
-  <h2 class="text-2xl font-bold mb-4">Add Teacher</h2>
+  <h2 class="text-2xl font-bold mb-4">Add Teachers</h2>
   <div class="text-sm font-medium text-gray-600 mb-6">
-    <span class="text-gray-500">Management</span> / <span class="text-gray-800">Teachers</span> / <span class="text-gray-900">Add Teacher</span>
+    <span class="text-gray-500">Management</span> / <span class="text-gray-800">Add Teachers</span>
   </div>
 
+  <!-- Buttons on the right -->
   <div class="flex justify-end gap-3 mb-5">
     <button class="action-btn edit-btn" onclick="openAddModal()">
       <i class="fas fa-plus"></i> Add Teacher
@@ -426,12 +409,73 @@
     </button>
   </div>
 
-  <!-- Hidden upload form -->
-  <form id="uploadForm" method="POST" action="{{ url_for('admin_teacher_upload') }}" enctype="multipart/form-data" style="display:none;">
-    <input type="file" id="uploadFile" name="csv_file" accept=".csv" onchange="this.form.submit()">
-  </form>
+  <!-- CSV Template Download -->
+  <div class="text-sm text-gray-600 mb-4">
+    <a href="#" onclick="downloadTeacherCSVTemplate(); return false;" class="text-blue-600 underline">
+      Download CSV template
+    </a>
+  </div>
 
-  <div class="card">
+<!-- Program Reference Table -->
+<div class="mt-4">
+  <h3 class="text-sm font-medium text-gray-700 mb-2">Program Reference (use ID in CSV)</h3>
+  <div class="text-xs bg-gray-50 p-2 rounded">
+    <table class="min-w-full">
+      <thead>
+        <tr class="text-left text-gray-600">
+          <th>Program Name</th>
+          <th class="pl-4">CSV Value (ID)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in programs %}
+        <tr>
+          <td>{{ p.programName }}</td>
+          <td class="pl-4 font-mono text-blue-600">{{ p.docId }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Group Reference Table -->
+<div class="mt-4">
+  <h3 class="text-sm font-medium text-gray-700 mb-2">Group Reference (use ID in CSV for coordinators)</h3>
+  <div class="text-xs bg-gray-50 p-2 rounded">
+    <table class="min-w-full">
+      <thead>
+        <tr class="text-left text-gray-600">
+          <th>Group Code</th>
+          <th class="pl-4">Intake</th>
+          <th class="pl-4">CSV Value (ID)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in groups %}
+        <tr>
+          <td>{{ g.groupCode }}</td>
+          <td>{{ g.intake }}</td>
+          <td class="pl-4 font-mono text-blue-600">{{ g.id }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+  <!-- CSV Notes -->
+  <div class="mt-4 text-xs text-gray-500">
+    <p><strong>CSV Format:</strong></p>
+    <ul class="list-disc pl-5 mt-1">
+      <li>Columns: <code>first_name,last_name,email,password,teacher_id,program,is_coordinator,group_id</code></li>
+      <li><code>is_coordinator</code>: Use <code>1</code> for yes, <code>0</code> for no.</li>
+      <li><code>group_id</code> is required only if <code>is_coordinator=1</code>.</li>
+    </ul>
+  </div>
+
+  <!-- Teachers Table -->
+  <div class="card mt-6">
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead>
@@ -470,7 +514,135 @@
   </div>
 </div>
 
-<!-- Add/Edit Teacher Modal -->
+<!-- Hidden data for JS -->
+<script id="program-options" type="application/json">
+  {{ programs | tojson }}
+</script>
+<script id="group-options" type="application/json">
+  {{ groups | tojson }}
+</script>
+
+<script>
+  // Sidebar toggle
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  menuToggle.addEventListener('click', () => {
+    if (window.innerWidth <= 768) {
+      sidebar.classList.toggle('active');
+    } else {
+      sidebar.classList.toggle('collapsed');
+    }
+    document.querySelector('.main-content').classList.toggle('expanded');
+  });
+
+  // Dropdown toggle
+  document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+    toggle.addEventListener('click', e => {
+      e.preventDefault();
+      toggle.parentElement.classList.toggle('active');
+    });
+  });
+
+  // Modal functions
+  function openAddModal(){
+    document.getElementById('modalTitle').innerText = "Add Teacher";
+    document.getElementById('formTeacherId').value = "";
+    document.getElementById('formFirstName').value = "";
+    document.getElementById('formLastName').value = "";
+    document.getElementById('formEmail').value = "";
+    document.getElementById('formPassword').value = "";
+    document.getElementById('formProgram').selectedIndex = 0;
+    document.getElementById('formIsCoordinator').checked = false;
+    document.getElementById('formGroup').value = "";
+    document.getElementById('teacherModal').classList.add('show');
+  }
+
+  function openEditModal(uid){
+    fetch(`/api/teacher/${uid}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('modalTitle').innerText = "Edit Teacher";
+        document.getElementById('formTeacherId').value = uid;
+        document.getElementById('formFirstName').value = data.firstName;
+        document.getElementById('formLastName').value = data.lastName;
+        document.getElementById('formEmail').value = data.email;
+        document.getElementById('formPassword').value = "";
+        document.getElementById('formProgram').value = data.program;
+        document.getElementById('formIsCoordinator').checked = data.isCoordinator;
+        document.getElementById('formGroup').value = data.fk_groupId || "";
+        document.getElementById('teacherModal').classList.add('show');
+
+        // Update group dropdown visibility
+        toggleGroupDropdown();
+      });
+  }
+
+  function closeTeacherModal(){
+    document.getElementById('teacherModal').classList.remove('show');
+  }
+
+  function toggleGroupDropdown() {
+    const isCoordinator = document.getElementById('formIsCoordinator').checked;
+    const groupLabel = document.getElementById('formGroupLabel');
+    const groupSelect = document.getElementById('formGroup');
+
+    if (isCoordinator) {
+      groupLabel.style.display = "block";
+      groupSelect.style.display = "block";
+    } else {
+      groupLabel.style.display = "none";
+      groupSelect.style.display = "none";
+      groupSelect.value = ""; // clear selection if unchecked
+    }
+  }
+
+  function openDeleteModal(uid) {
+    if(confirm("Are you sure you want to delete this teacher?")){
+      fetch(`/admin/teacher/delete/${uid}`, { method: "POST" })
+        .then(() => location.reload());
+    }
+  }
+
+  // Dynamic CSV Template Download
+  function downloadTeacherCSVTemplate() {
+    const programOptions = JSON.parse(document.getElementById('program-options').textContent);
+    const groupOptions = JSON.parse(document.getElementById('group-options').textContent);
+
+    if (programOptions.length === 0 || groupOptions.length === 0) {
+      alert("Please ensure programs and groups exist before uploading teachers.");
+      return;
+    }
+
+    // Use first 2 programs as examples
+    const prog = programOptions[0];
+    const group = groupOptions[0];
+
+    const examples = [
+      `John,Doe,john.doe@example.com,password123,T1001,${prog.docId},0,`,
+      `Jane,Smith,jane.smith@example.com,password123,T1002,${prog.docId},1,${group.id}`
+    ].join('\n');
+
+    const template = `first_name,last_name,email,password,teacher_id,program,is_coordinator,group_id
+${examples}`;
+
+    const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'teachers_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+</script>
+
+<!-- Hidden upload form -->
+<form id="uploadForm" method="POST" action="{{ url_for('admin_teacher_upload') }}" enctype="multipart/form-data" style="display:none;">
+  <input type="file" id="uploadFile" name="csv_file" accept=".csv" onchange="this.form.submit()">
+</form>
+
+<!-- Teacher Modal -->
 <div id="teacherModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -478,7 +650,7 @@
       <span class="close text-2xl cursor-pointer" onclick="closeTeacherModal()">&times;</span>
     </div>
     <div class="modal-body">
-      <form id="teacherForm" method="POST" action="{{ url_for('admin_teacher_save') }}">
+      <form id="teacherForm" method="POST" action="{{ url_for('admin_teacher_save') }}" enctype="multipart/form-data">
         <input type="hidden" id="formTeacherId" name="userId">
 
         <label for="formFirstName">First Name:</label>
@@ -530,98 +702,6 @@
     </div>
   </div>
 </div>
-
-<script>
-  // Sidebar toggle
-  const menuToggle = document.getElementById('menu-toggle');
-  const sidebar = document.querySelector('.sidebar');
-  menuToggle.addEventListener('click', () => {
-    if (window.innerWidth <= 768) {
-      sidebar.classList.toggle('active');
-    } else {
-      sidebar.classList.toggle('collapsed');
-    }
-  });
-
-  // Dropdown toggle
-  document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-    toggle.addEventListener('click', e => {
-      e.preventDefault();
-      toggle.parentElement.classList.toggle('active');
-    });
-  });
-
-  function toggleGroupDropdown() {
-    const isCoordinator = document.getElementById('formIsCoordinator').checked;
-    const groupLabel = document.getElementById('formGroupLabel');
-    const groupSelect = document.getElementById('formGroup');
-
-    if (isCoordinator) {
-      groupLabel.style.display = "block";
-      groupSelect.style.display = "block";
-    } else {
-      groupLabel.style.display = "none";
-      groupSelect.style.display = "none";
-      groupSelect.value = "";
-    }
-  }
-
-  function openAddModal() {
-    document.getElementById('modalTitle').innerText = "Add Teacher";
-    document.getElementById('formTeacherId').value = "";
-    document.getElementById('formFirstName').value = "";
-    document.getElementById('formLastName').value = "";
-    document.getElementById('formEmail').value = "";
-    document.getElementById('formPassword').value = "";
-    document.getElementById('formTeacherID').value = "";
-    document.getElementById('formProgram').selectedIndex = 0;
-    document.getElementById('formIsCoordinator').checked = false;
-    toggleGroupDropdown();
-    document.getElementById('teacherModal').classList.add('show');
-  }
-
-  function openEditModal(uid) {
-    fetch(`/api/teacher/${uid}`)
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('modalTitle').innerText = "Edit Teacher";
-        document.getElementById('formTeacherId').value = uid;
-        document.getElementById('formFirstName').value = data.firstName;
-        document.getElementById('formLastName').value = data.lastName;
-        document.getElementById('formEmail').value = data.email;
-        document.getElementById('formPassword').value = "";
-        document.getElementById('formTeacherID').value = data.teacherID;
-        document.getElementById('formProgram').value = data.program;
-        document.getElementById('formIsCoordinator').checked = data.isCoordinator;
-        document.getElementById('formGroup').value = data.fk_groupId || "";
-        toggleGroupDropdown();
-        document.getElementById('teacherModal').classList.add('show');
-      });
-  }
-
-  function closeTeacherModal() {
-    document.getElementById('teacherModal').classList.remove('show');
-  }
-
-  function openDeleteModal(uid) {
-    if (confirm("Are you sure you want to delete this teacher?")) {
-      fetch(`/admin/teacher/delete/${uid}`, { method: 'POST' })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            alert('Teacher deleted successfully!');
-            const row = document.querySelector(`button[onclick="openDeleteModal('${uid}')"]`).closest('tr');
-            if (row) row.remove();
-          } else {
-            alert('Error: ' + (data.error || 'Unknown'));
-          }
-        })
-        .catch(err => {
-          alert('Error: ' + err);
-        });
-    }
-  }
-</script>
 
 </body>
 </html>
