@@ -30,6 +30,7 @@ camera_running = False
 current_schedule = None  # Stores selected schedule
 
 API_URL = "http://127.0.0.1:8000"  # URL of app.py
+API_URL = "http://128.199.107.48:8000/"  # Production server
 
 # ===== Wait for API =====
 def wait_for_api(url, timeout=30):
@@ -137,7 +138,7 @@ def mark_attendance(student_id):
 # ===== Camera Loop =====
 def camera_loop():
     global latest_frame, camera_running
-    cam = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(2)
     while camera_running:
         ret, frame = cam.read()
         if not ret:
