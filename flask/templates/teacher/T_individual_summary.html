@@ -154,7 +154,7 @@ td.status-Late { color:#ea580c; font-weight:600; }
     <a class="sidebar-link {% if request.endpoint == 'teacher_individual_summary' %}active{% endif %}" href="{{ url_for('teacher_individual_summary') }}"><i class="fas fa-address-card"></i><span>Individual Attendance</span></a>
   </div>
 
-  {% if True %}
+   {% if profile.is_gc %}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
     <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}"><i class="fas fa-users-cog"></i><span>Manage Group</span></a>
