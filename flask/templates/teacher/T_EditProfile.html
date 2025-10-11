@@ -1,117 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>iAttend Teacher Profile</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); overflow:hidden; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iAttend Teacher Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<style>
+/* -------------------- Global -------------------- */
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { 
+    height:100%; 
+    font-family:'Poppins',sans-serif; 
+    background: linear-gradient(180deg,#f7ecd7 0%,#f8f1e5 35%,#fbfaf7 100%); 
+    overflow-x:hidden; 
+}
 
-        /* Header */
-        header {
-            position: fixed; top:0; left:0; right:0; height:60px; background:#fff;
-            box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px;
-            font-family:'Nunito', sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000;
-        }
-        #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
-        .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
-        .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; transition:0.2s; border-radius:8px; cursor:pointer; }
-        .user-info:hover { background:#f0f0f0; }
-        .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-        .user-info span { font-size:16px; font-weight:600; color:#444; }
+/* -------------------- Header -------------------- */
+header {
+    position:fixed; top:0; left:0; right:0; height:60px; background:#fff; 
+    box-shadow:0 6px 20px rgba(0,0,0,0.08); display:flex; align-items:center; padding:0 20px; z-index:1000;
+}
+#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; transition: color 0.3s; }
+#menu-toggle:hover { color:#4154F1; }
 
-        /* Sidebar */
-        .sidebar { position: fixed; top:60px; left:0; width:267px; height: calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); transition: width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden;}
-        .sidebar.collapsed { width:70px; }
-        .sidebar-section { margin-bottom:25px; padding:0 15px; }
-        .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
-        .sidebar.collapsed .sidebar-section-title { opacity:0; }
-        .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
-        .sidebar.collapsed .sidebar-link span { display:none; }
-        .sidebar-link i { width:18px; text-align:center; }
-        .sidebar-link:hover { background: rgba(255,255,255,0.5); transform: translateX(4px);}
-        .sidebar-link.active { background: rgba(255,255,255,0.7); color:#4154F1; font-weight:600; }
+.header-content { display:flex; justify-content:space-between; align-items:center; width:100%; }
+.header-content a.title { text-decoration:none; color:#444; font-weight:700; font-size:26px; transition:color 0.3s; }
+.header-content a.title:hover { color:#4154F1; }
 
-        /* Main content */
-        .main {
-            margin-left:260px; padding:100px 30px 30px; font-family:'Nunito', sans-serif; transition:margin-left 0.3s ease;
-            height:100vh; overflow-y:auto;
-        }
-        .sidebar.collapsed ~ .main { margin-left:80px; }
+header a.user-info {
+    display:flex; align-items:center; gap:10px; text-decoration:none; color:#444; font-weight:600; 
+    transition: all 0.2s ease; padding:0; border-radius:0; background:transparent; box-shadow:none;
+}
+header a.user-info:hover {
+    padding:4px 12px; border-radius:12px; background:#f8f1e5; box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
 
-        .profile-sections { display:flex; flex-direction:column; gap:30px; max-width:900px; margin:0 auto; }
+/* -------------------- Sidebar -------------------- */
+.sidebar {
+    position:fixed; top:60px; left:0; width:250px; height:calc(100% - 60px); 
+    background:#f8f1e5; padding:15px 0; box-shadow:2px 0 15px rgba(0,0,0,0.08); border-top-right-radius:12px; 
+    transition: all 0.3s ease; overflow-y:auto; z-index:999;
+}
+.sidebar-section { margin-bottom:25px; padding:0 15px; }
+.sidebar-section-title {
+    font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#6b7280; margin-bottom:10px; padding-left:10px;
+}
+.sidebar-link {
+    display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; 
+    font-size:15px; font-weight:500; color:#2C2C2C; text-decoration:none; transition: all 0.25s ease; white-space:nowrap;
+}
+.sidebar-link i { width:18px; text-align:center; }
+.sidebar-link.active, .sidebar-link:hover { background:#eadbbf; color:#1F2937; font-weight:600; }
+.sidebar.collapsed { width:70px; padding:15px 0; overflow:hidden; }
+.sidebar.collapsed .sidebar-section-title,
+.sidebar.collapsed .sidebar-link span { display:none; }
 
-        .page-title { font-family:'Poppins', sans-serif; font-size:28px; font-weight:500; color:#444; margin-bottom:10px; }
-        .breadcrumb { font-family:'Nunito', sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
-        .breadcrumb .section { color:#989797; }
-        .breadcrumb .current { color:#444444; }
+/* -------------------- Main Content -------------------- */
+.main-content {
+    margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif;
+    transition:margin-left 0.3s ease; height:100vh; overflow-y:auto;
+}
+.sidebar.collapsed ~ .main-content { margin-left:80px; }
 
-        .card {
-            background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card:hover { transform: translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
+/* -------------------- Profile Sections -------------------- */
+.profile-sections { display:flex; flex-direction:column; gap:30px; max-width:900px; margin:0 auto; }
 
-        .card h2 { margin-top:0; margin-bottom:20px; font-family:'Nunito',sans-serif; font-weight:600; font-size:24px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
+/* -------------------- Card -------------------- */
+.card {
+    background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover { transform: translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
+.card h2 {
+    margin-top:0; margin-bottom:20px; font-family:'Nunito',sans-serif; font-weight:600; font-size:24px; 
+    color:#012970; border-bottom:1px solid #eee; padding-bottom:10px;
+}
 
-        .text-red-500 { color:#ef4444; }
+/* -------------------- Profile Content -------------------- */
+.profile-content { display:flex; gap:40px; align-items:flex-start; }
+.profile-pic-container { position:relative; width:120px; height:120px; flex-shrink:0; transition: transform 0.3s ease; }
+.profile-pic-container:hover { transform: scale(1.05); }
+.profile-pic-container img { width:100%; height:100%; border-radius:50%; object-fit:cover; border:2px solid #ddd; transition: border 0.3s ease; }
+.profile-pic-container:hover img { border:2px solid #4154F1; }
+.edit-icon { position:absolute; bottom:0; right:0; background:#4154F1; color:#fff; padding:8px; border-radius:50%; cursor:pointer; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background 0.3s ease; }
+.edit-icon:hover { background:#0d29e9; }
 
-        .profile-content { display:flex; gap:40px; align-items:flex-start; }
-        .profile-pic-container { position:relative; width:120px; height:120px; flex-shrink:0; transition: transform 0.3s ease; }
-        .profile-pic-container:hover { transform: scale(1.05); }
-        .profile-pic-container img { width:100%; height:100%; border-radius:50%; object-fit:cover; border:2px solid #ddd; transition: border 0.3s ease; }
-        .profile-pic-container:hover img { border:2px solid #4154F1; }
-        .edit-icon { position:absolute; bottom:0; right:0; background:#4154F1; color:#fff; padding:8px; border-radius:50%; cursor:pointer; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background 0.3s ease; }
-        .edit-icon:hover { background:#0d29e9; }
+.profile-details { flex-grow:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); gap:20px; }
+.form-group { display:flex; flex-direction:column; }
+.form-group label { font-size:14px; color:#555; margin-bottom:5px; font-weight:600; }
+.form-group input {
+    padding:10px 12px; border:1px solid #ddd; border-radius:5px; background:#fcfcfc; font-size:15px; font-family:'Open Sans',sans-serif; transition:0.3s;
+}
+.form-group input:focus { border-color:#4154F1; box-shadow:0 0 5px rgba(65,84,241,0.4); outline:none; }
+.form-group input:disabled { background:#f5f5f5; color:#777; cursor:not-allowed; }
 
-        .profile-details { flex-grow:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); gap:20px; }
-        .form-group { display:flex; flex-direction:column; }
-        .form-group label { font-size:14px; color:#555; margin-bottom:5px; font-weight:600; }
-        .form-group input {
-            padding:10px 12px; border:1px solid #ddd; border-radius:5px; background:#fcfcfc; font-size:15px; font-family:'Open Sans',sans-serif; transition:0.3s;
-        }
-        .form-group input:focus { border-color:#4154F1; box-shadow:0 0 5px rgba(65,84,241,0.4); outline:none; }
-        .form-group input:disabled { background:#f5f5f5; color:#777; cursor:not-allowed; }
+/* -------------------- Buttons & Actions -------------------- */
+.card-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:30px; }
+.btn { padding:10px 20px; border-radius:5px; cursor:pointer; border:none; font-weight:600; font-family:'Nunito',sans-serif; transition: all 0.3s ease; }
+.btn-primary { background:#4154F1; color:white; }
+.btn-primary:hover { background:#0d29e9; transform: translateY(-2px); }
+.btn-secondary { background:#6c757d; color:white; }
+.btn-secondary:hover { background:#5a6268; transform: translateY(-2px); }
 
-        .password-form-content { display:flex; flex-direction:column; gap:20px; max-width:400px; }
+/* -------------------- Status Message -------------------- */
+.status-message { margin-top:15px; font-size:14px; font-family:'Open Sans',sans-serif; font-style:italic; color:#333; }
 
-        .card-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:30px; }
-        .btn { padding:10px 20px; border-radius:5px; cursor:pointer; border:none; font-weight:600; font-family:'Nunito',sans-serif; transition: all 0.3s ease; }
-        .btn-primary { background:#4154F1; color:white; }
-        .btn-primary:hover { background:#0d29e9; transform: translateY(-2px); }
-        .btn-secondary { background:#6c757d; color:white; }
-        .btn-secondary:hover { background:#5a6268; transform: translateY(-2px); }
+/* -------------------- Modal -------------------- */
+.modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; opacity:0; visibility:hidden; transition:0.3s; }
+.modal.open { opacity:1; visibility:visible; }
+.modal-content { background:#fff; padding:30px; border-radius:12px; box-shadow:0 5px 20px rgba(0,0,0,0.3); width:90%; max-width:500px; position:relative; transform:translateY(-20px); transition: transform 0.3s ease; }
+.modal.open .modal-content { transform:translateY(0); }
+.modal-close-btn { position:absolute; top:15px; right:15px; font-size:24px; cursor:pointer; color:#aaa; transition: color 0.3s; }
+.modal-close-btn:hover { color:#333; }
 
-        .status-message { margin-top:15px; font-size:14px; font-family:'Open Sans',sans-serif; font-style:italic; color:#333; }
+/* -------------------- Responsive -------------------- */
+@media(max-width:992px) {
+    .profile-content { flex-direction:column; align-items:center; text-align:center; }
+    .profile-details { grid-template-columns:1fr; }
+}
+</style>
 
-        .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; opacity:0; visibility:hidden; transition:0.3s; }
-        .modal.open { opacity:1; visibility:visible; }
-        .modal-content { background:#fff; padding:30px; border-radius:12px; box-shadow:0 5px 20px rgba(0,0,0,0.3); width:90%; max-width:500px; position:relative; transform:translateY(-20px); transition: transform 0.3s ease; }
-        .modal.open .modal-content { transform:translateY(0); }
-        .modal-close-btn { position:absolute; top:15px; right:15px; font-size:24px; cursor:pointer; color:#aaa; transition: color 0.3s; }
-        .modal-close-btn:hover { color:#333; }
-
-        @media(max-width:992px) {
-            .profile-content { flex-direction:column; align-items:center; text-align:center; }
-            .profile-details { grid-template-columns:1fr; }
-        }
-    </style>
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <span id="menu-toggle">&#9776;</span>
-        <div class="header-content">
-            <a href="T_dashboard.html" style="text-decoration: none; color: inherit;">iAttend</a>
-            <a href="T_profile.html" class="user-info">
-                <span id="header-user-name">Loading...</span>
-                <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=T" alt="User Profile Picture">
-            </a>
-        </div>
-    </header>
+<!-- Header -->
+<header>
+    <span id="menu-toggle">&#9776;</span>
+    <div class="header-content">
+        <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration: none; color: inherit;">iAttend</a>
+        <a href="{{ url_for('teacher_profile') }}" class="user-info">
+            <span id="header-user-name">Loading...</span>
+            <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=T" alt="User Profile Picture">
+        </a>
+    </div>
+</header>
 
 <!-- Sidebar -->
 <div class="sidebar">
@@ -128,7 +151,6 @@
     </a>
   </div>
 
-    <!-- Manage -->
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
     <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}">
@@ -137,8 +159,18 @@
     <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
       <i class="fas fa-book"></i><span>My Modules & Rooms</span>
     </a>
-       <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
+    <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}">
+      <i class="fas fa-calendar-alt"></i><span>Absences Application</span>
+    </a>
+
   </div>
+  {% if profile.is_gc %}
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Group Coordinator</div>
+    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}"><i class="fas fa-users-cog"></i><span>Manage Group</span></a>
+    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}"><i class="fas fa-file-alt"></i><span>Group Report</span></a>
+  </div>
+  {% endif %}
 
   <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
@@ -147,58 +179,107 @@
   </div>
 </div>
 
-    <!-- Main content -->
-    <div class="main">
-        <div class="profile-sections">
-            <div class="card user-profile-card">
-                <h2>Edit Teacher Profile</h2>
-                <div class="profile-content">
-                    <div class="profile-pic-container">
-                        <img id="user-profile-pic" src="https://placehold.co/120x120/E9E9E9/333333?text=Teacher" alt="Profile Picture">
-                        <input type="file" id="profile-pic-upload" style="display:none;">
-                        <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
-                    </div>
-                    <form id="profile-form" class="profile-details">
-                        <div class="form-group"><label>First Name</label><input type="text" id="first-name-input" disabled></div>
-                        <div class="form-group"><label>Last Name</label><input type="text" id="last-name-input" disabled></div>
-                        <div class="form-group"><label>Nickname</label><input type="text" id="nickname-input"></div>
-                        <div class="form-group"><label>Phone Number</label><input type="text" id="phone-input"></div>
-                        <div class="form-group"><label>Email</label><input type="email" id="email-input" disabled></div>
-                    </form>
-                </div>
-                <div class="card-actions">
-                    <button id="cancel-profile-btn" class="btn btn-secondary">Cancel</button>
-                    <button id="save-profile-btn" class="btn btn-primary">Save Changes</button>
-                </div>
-                <div id="profile-status-message" class="status-message"></div>
-            </div>
+<!-- Header -->
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
+    <a href="{{ url_for('teacher_profile') }}" class="user-info">
+      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
+      <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
+    </a>
+  </div>
+</header>
 
-            <div class="card password-change-card">
-                <h2>Password Change</h2>
-                <a href="{{ url_for('teacher_change_password') }}" class="btn btn-primary">Change Password</a>
-            </div>
+<!-- Main content -->
+<div class="main-content" style="font-family:'Nunito',sans-serif;">
+  <div class="profile-sections">
+
+    <!-- Profile Card -->
+    <div class="card user-profile-card">
+      <h2 style="font-family:'Poppins',sans-serif; font-weight:600; color:#4154F1;">Edit Teacher Profile</h2>
+      <div class="profile-content">
+
+        <!-- Profile Picture -->
+        <div class="profile-pic-container">
+          <img id="user-profile-pic" 
+               src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" 
+               alt="Profile Picture">
+          <input type="file" id="profile-pic-upload" name="profile_pic" style="display:none;">
+          <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
         </div>
+
+        <!-- Profile Form -->
+        <form id="profile-form" class="profile-details" method="POST" action="{{ url_for('teacher_edit_profile') }}" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="first-name-input">First Name</label>
+            <input type="text" id="first-name-input" value="{{ profile.firstName }}" disabled>
+          </div>
+          <div class="form-group">
+            <label for="last-name-input">Last Name</label>
+            <input type="text" id="last-name-input" value="{{ profile.lastName }}" disabled>
+          </div>
+          <div class="form-group">
+            <label for="nickname-input">Nickname</label>
+            <input type="text" name="nickname" id="nickname-input" value="{{ profile.nickname }}">
+          </div>
+          <div class="form-group">
+            <label for="phone-input">Phone Number</label>
+            <input type="text" name="phone" id="phone-input" value="{{ profile.phone }}">
+          </div>
+          <div class="form-group">
+            <label for="email-input">Email</label>
+            <input type="email" id="email-input" value="{{ profile.email }}" disabled>
+          </div>
+
+          <!-- Card Actions -->
+          <div class="card-actions">
+            <button type="submit" name="action" value="cancel" class="btn btn-secondary">Cancel</button>
+            <button type="submit" name="action" value="save" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <!-- Password Modal -->
-    <div id="passwordModal" class="modal">
-    <div class="modal-content">
-        <span class="modal-close-btn" id="closeModal">&times;</span>
-        <h2>Change Password</h2>
-        <form id="password-form" method="POST" action="{{ url_for('teacher_change_password') }}">
-            <div class="form-group"><label>Current Password</label><input type="password" name="currentPassword" required></div>
-            <div class="form-group"><label>New Password</label><input type="password" name="newPassword" required></div>
-            <div class="form-group"><label>Confirm Password</label><input type="password" name="confirmPassword" required></div>
-            <div class="card-actions">
-                <button type="button" class="btn btn-secondary" id="cancelButton">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Changes</button>
-            </div>
-        </form>
+    <!-- Password Change Card -->
+    <div class="card password-change-card">
+      <h2 style="font-family:'Poppins',sans-serif; font-weight:600; color:#4154F1;">Password Change</h2>
+      <p style="font-family:'Nunito',sans-serif; font-size:14px; color:#555; margin-bottom:15px;">
+        For security reasons, you can change your password here.
+      </p>
+      <a href="{{ url_for('teacher_change_password') }}" class="btn btn-primary" style="text-decoration:none;">Change Password</a>
     </div>
+
+  </div>
 </div>
 
-    <script type="module">
-        /* Firebase + JS logic remains fully unchanged */
-    </script>
+<script>
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+const mainContent = document.querySelector('.main-content');
+
+// Sidebar toggle
+menuToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+  mainContent.classList.toggle('expanded');
+});
+
+// Profile picture preview immediately when selected
+const profilePicInput = document.getElementById('profile-pic-upload');
+const profilePicImg = document.getElementById('user-profile-pic');
+
+profilePicInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(file && file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      profilePicImg.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    profilePicInput.value = ''; // Reset if not an image
+  }
+});
+</script>
 </body>
 </html>

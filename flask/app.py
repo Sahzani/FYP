@@ -398,35 +398,31 @@ def teacher_dashboard():
 
     # ------------------ Fetch teacher profile ------------------
     profile_doc = db.collection("users").document(teacher_uid).get()
-    profile = {}
+    profile = {
+        "role": "Teacher",
+        "firstName": "Teacher",
+        "lastName": "",
+        "photo_name": "uploads/default_teacher.png",
+        "is_gc": False
+    }
+
     if profile_doc.exists:
         user_data = profile_doc.to_dict()
 
-        # Fetch firstName and lastName from Firestore
         first_name = user_data.get("firstName", "Teacher")
         last_name = user_data.get("lastName", "")
+        photo_name = user_data.get("photo_name", "uploads/default_teacher.png")
 
         # Check if teacher is a group coordinator
         role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
         is_gc = role_doc.exists and role_doc.to_dict().get("isCoordinator", False)
 
-        profile = {
-            "role": user_data.get("role", "Teacher"),
+        profile.update({
             "firstName": first_name,
             "lastName": last_name,
-            "photo_url": user_data.get(
-                "photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"
-            ),
+            "photo_name": photo_name,
             "is_gc": is_gc
-        }
-    else:
-        profile = {
-            "role": "Teacher",
-            "firstName": "Teacher",
-            "lastName": "",
-            "photo_url": "https://placehold.co/140x140/E9E9E9/333333?text=T",
-            "is_gc": False
-        }
+        })
 
     # ------------------ Fetch schedules ------------------
     schedules = []
@@ -475,13 +471,36 @@ def teacher_dashboard():
         "absent": total_absent
     }
 
+    # ------------------ Pending Absence Requests ------------------
+    # Get all group codes managed by this teacher
+    group_codes = []
+    role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
+    if role_doc.exists:
+        role_data = role_doc.to_dict()
+        group_code = role_data.get("groupCode")  # exact Firestore field name
+        if group_code:
+            group_codes.append(group_code)
+
+    pending_count = 0
+    for group_code in group_codes:
+        pending_query = db.collection("absenceRecords") \
+            .where("status", "==", "In Progress") \
+            .where("group_code", "==", group_code)
+        
+        # Debug: print all matched records
+        for doc in pending_query.stream():
+            print("Pending Absence:", doc.id, doc.to_dict())
+            pending_count += 1
+
+
     # ------------------ Render template ------------------
     return render_template(
         "teacher/T_dashboard.html",
         stats=stats,
         schedules=schedules,
         profile=profile,
-        current_schedule=None
+        current_schedule=None,
+        pending_count=pending_count
     )
 
 #------------------ Teacher - view students Individual attendance ------------------
@@ -491,53 +510,38 @@ def teacher_individual_summary():
         return redirect(url_for("home"))
 
     teacher_id = session.get("user_id")
-    if not teacher_id:
+    if not teacher_id:                     
         return redirect(url_for("home"))
 
-    # -------- Fetch teacher profile --------
+    # -------- Teacher profile --------
     teacher_doc = db.collection("users").document(teacher_id).get()
     profile = teacher_doc.to_dict() if teacher_doc.exists else {}
     profile.setdefault("firstName", "Teacher")
     profile.setdefault("lastName", "")
-    profile.setdefault("photo_url", "https://placehold.co/140x140/E9E9E9/333333?text=T")
+    profile.setdefault("photo_name", "uploads/default_teacher.png")
 
-    # ✅ Ensure GC flag exists and stored in session
+    # -------- GC flag --------
     roles_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
-    if roles_doc.exists:
-        roles_data = roles_doc.to_dict()
-        # Try multiple possible keys just in case
-        profile["is_gc"] = (
-            roles_data.get("is_gc")
-            or roles_data.get("gc")
-            or roles_data.get("isGroupCoordinator")
-            or False
-        )
-    else:
-        profile["is_gc"] = False
+    profile["is_gc"] = roles_doc.to_dict().get("isCoordinator", False) if roles_doc.exists else False
 
-    session["is_gc"] = profile["is_gc"]  # ✅ keep it for other pages
-
-    # -------- Get filter values --------
+    # -------- Filters --------
     student_id = request.args.get("student_id")
     month = request.args.get("month", type=int)
     year = request.args.get("year", type=int)
 
-    # -------- Get students taught by this teacher --------
-    students = []
+    # -------- Students taught by this teacher --------
     schedules = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
     group_ids = {s.to_dict().get("fk_group") for s in schedules if s.to_dict().get("fk_group")}
 
+    students = []
     users_ref = db.collection("users").where("role_type", "==", 1).stream()
     for u in users_ref:
         udata = u.to_dict()
         role_doc = db.collection("users").document(u.id).collection("roles").document("student").get()
         if role_doc.exists:
-            role_data = role_doc.to_dict()
-            if role_data.get("fk_groupcode") in group_ids:
-                students.append({
-                    "id": u.id,
-                    "name": udata.get("name", "Student")
-                })
+            rdata = role_doc.to_dict()
+            if rdata.get("fk_groupcode") in group_ids:
+                students.append({"id": u.id, "name": udata.get("name", "Student")})
 
     summary = {}
     chart_labels = []
@@ -545,22 +549,34 @@ def teacher_individual_summary():
 
     # -------- Attendance summary --------
     if student_id and month and year:
-        attendance_ref = db.collection("attendance").where("student_id", "==", student_id).stream()
         stats_by_module = {}
 
-        for doc in attendance_ref:
-            att = doc.to_dict()
-            date_str = att.get("date", "")
-            if not date_str:
-                continue
+        # Loop through each schedule the teacher owns
+        schedules_ref = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+        for sched_doc in schedules_ref:
+            sched = sched_doc.to_dict()
+            schedule_id = sched_doc.id
+            module_id = sched.get("fk_module")
 
-            try:
-                att_date = datetime.strptime(date_str[:10], "%Y-%m-%d")
-            except:
-                continue
+            # Loop through all date subcollections
+            date_collections = db.collection("attendance").document(schedule_id).collections()
+            for date_col in date_collections:
+                date_str = date_col.id
+                try:
+                    att_date = datetime.strptime(date_str, "%Y-%m-%d")
+                except:
+                    continue
 
-            if att_date.month == month and att_date.year == year:
-                module_id = att.get("schedule_id") or "Unknown"
+                # Match month/year
+                if att_date.month != month or att_date.year != year:
+                    continue
+
+                # Fetch this student's attendance for that date
+                stu_doc = date_col.document(student_id).get()
+                if not stu_doc.exists:
+                    continue
+
+                att = stu_doc.to_dict()
                 status = att.get("status", "Unknown")
 
                 if module_id not in stats_by_module:
@@ -569,8 +585,9 @@ def teacher_individual_summary():
                 if status in stats_by_module[module_id]:
                     stats_by_module[module_id][status] += 1
 
+        # Convert module IDs → names
         for mid, stats in stats_by_module.items():
-            module_doc = db.collection("modules").document(mid).get()
+            module_doc = db.collection("mlmodule").document(mid).get()
             module_name = module_doc.to_dict().get("moduleName", "Unknown Module") if module_doc.exists else "Unknown Module"
 
             total = stats["Present"] + stats["Absent"] + stats["Late"]
@@ -586,7 +603,6 @@ def teacher_individual_summary():
             chart_labels.append(module_name)
             chart_percents.append(percent)
 
-    # ✅ Always pass profile and GC status
     return render_template(
         "teacher/T_individual_summary.html",
         profile=profile,
@@ -1126,7 +1142,7 @@ def teacher_modules():
             "firstName": first_name,
             "lastName": last_name,
             "role": data.get("role", "Teacher"),
-            "photo_url": data.get("photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"),
+            "photo_name": data.get("photo_name", "uploads/default_teacher.png"),
             "is_gc": is_gc
         }
 
@@ -1206,12 +1222,25 @@ def studattendance():
         last_name = data.get("lastName", "")
         role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
         is_gc = role_doc.to_dict().get("isCoordinator", False) if role_doc.exists else False
+
+        # Ensure photo_name always has a valid value
+        photo_name = data.get("photo_name")
+        if not photo_name or photo_name in ["None", None, ""]:
+            photo_name = "uploads/default_teacher.png"
+
         profile = {
             "firstName": first_name,
             "lastName": last_name,
             "role": data.get("role", "Teacher"),
-            "photo_url": data.get("photo_name", "https://placehold.co/140x140/E9E9E9/333333?text=T"),
+            "photo_name": photo_name,
             "is_gc": is_gc
+        }
+    else:
+        profile = {
+            "firstName": "Teacher",
+            "lastName": "",
+            "photo_name": "uploads/default_teacher.png",
+            "is_gc": False
         }
 
     # ------------------ Query params ------------------
@@ -1221,7 +1250,6 @@ def studattendance():
     selected_date = request.args.get("date") or datetime.today().strftime("%Y-%m-%d")
 
     if not (module_id and group_id and schedule_id):
-        flash("Missing module/group/schedule information.")
         return redirect(url_for("teacher_modules"))
 
     # ------------------ Get schedule info ------------------
@@ -1276,6 +1304,7 @@ def studattendance():
         notifications=notifications
     )
 
+# ------------------ Teacher updates attendance for a student ------------------
 @app.route("/update_attendance", methods=["POST"])
 def update_attendance():
     if session.get("role") != "teacher":
@@ -1289,7 +1318,7 @@ def update_attendance():
     status = request.form.get("status")
 
     if not all([student_id, schedule_id, module_id, group_id, date, status]):
-        flash("Incomplete data. Attendance not updated.")
+
         return redirect(url_for("studattendance", module_id=module_id, group_id=group_id, schedule_id=schedule_id, date=date))
 
     # ------------------ Fetch student info ------------------
@@ -1322,7 +1351,6 @@ def update_attendance():
     att_ref = db.collection("attendance").document(schedule_id).collection(date).document(student_id)
     att_ref.set(attendance_data, merge=True)
 
-    flash(f"Attendance updated for {student_name}.")
     return redirect(url_for("studattendance", module_id=module_id, group_id=group_id, schedule_id=schedule_id, date=date))
 
 # ------------------ Teacher Mark Present via API (for face detection) ------------------
@@ -1415,13 +1443,13 @@ def teacher_attendance():
         profile = teacher_doc.to_dict()
         profile.setdefault("firstName", "Teacher")
         profile.setdefault("lastName", "")
-        profile.setdefault("photo_url", "https://placehold.co/40x40/b8c6ff/ffffff?text=T")
+        profile.setdefault("photo_name", "uploads/default_teacher.png")
         profile.setdefault("is_gc", False)
     else:
         profile = {
             "firstName": "Teacher",
             "lastName": "",
-            "photo_url": "https://placehold.co/40x40/b8c6ff/ffffff?text=T",
+            "photo_name": "uploads/default_teacher.png",
             "is_gc": False
         }
 
@@ -1994,28 +2022,60 @@ def teacher_profile():
     if not user:
         return redirect(url_for("home"))
 
-    uid = user.get("uid")
+    teacher_uid = user.get("uid")
 
-    teacher_doc = db.collection("teachers").where("uid", "==", uid).limit(1).stream()
-    teacher_data = None
-    for doc in teacher_doc:
-        teacher_data = doc.to_dict()
-        break
+    # Fetch main teacher document
+    teacher_doc = db.collection("users").document(teacher_uid).get()
+    profile = {}
+    if teacher_doc.exists:
+        data = teacher_doc.to_dict()
 
-    if not teacher_data:
-        flash("Teacher data not found.")
-        return redirect(url_for("teacher_dashboard"))
+        # Basic info
+        profile["firstName"] = data.get("firstName", "Teacher")
+        profile["lastName"] = data.get("lastName", "")
+        profile["nickname"] = data.get("nickname", "-")
+        profile["teacher_id"] = data.get("teacherID", "-")
+        profile["email"] = user.get("email", "-")
+        profile["phone"] = data.get("phone", "-")
+        profile["photo_name"] = data.get("photo_name", "uploads/default_teacher.png")
+    
 
-    profile = {
-        "name": teacher_data.get("name", "Teacher"),
-        "teacher_id": teacher_data.get("teacherID", "-"),
-        "department": teacher_data.get("department", "-"),
-        "email": user.get("email", "-"),
-        "profile_pic": teacher_data.get("profilePic", "https://placehold.co/140x140/E9E9E9/333333?text=T")
-    }
+        # Roles info
+        role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
+        if role_doc.exists:
+            role = role_doc.to_dict()
+            profile["is_gc"] = role.get("isCoordinator", False)
+            profile["program"] = role.get("program", "")
+            profile["groupId"] = role.get("groupId", "")
+            profile["groupCode"] = role.get("groupCode", "")
+            profile["intake"] = role.get("intake", "")
+            profile["teacher_id"] = role.get("teacherID", "-") 
+        else:
+            profile["is_gc"] = False
+            profile["program"] = ""
+            profile["groupId"] = ""
+            profile["groupCode"] = ""
+            profile["intake"] = ""
+            profile["teacher_id"] = "-"
+    else:
+        profile = {
+            "firstName": "Teacher",
+            "lastName": "",
+            "nickname": "-",
+            "teacher_id": "-",
+            "email": user.get("email", "-"),
+            "phone": "-",
+            "photo_name": "uploads/default_teacher.png" ,
+            "is_gc": False,
+            "program": "",
+            "groupId": "",
+            "groupCode": "",
+            "intake": ""
+        }
 
     return render_template("teacher/T_Profile.html", profile=profile)
 
+# ------------------ Teacher Change Password ------------------
 @app.route("/teacher/change_password", methods=["GET", "POST"])
 def teacher_change_password():
     if session.get("role") != "teacher":
@@ -2044,6 +2104,79 @@ def teacher_change_password():
         return redirect(url_for("teacher_dashboard"))
 
     return render_template("combinePage/Change password.html")
+
+
+# ------------------ Teacher Edit Profile ------------------
+from flask import request, redirect, url_for, session, flash, render_template
+from werkzeug.utils import secure_filename
+import os
+
+@app.route("/teacher/profile/edit", methods=["GET", "POST"])
+def teacher_edit_profile():
+    # Ensure teacher is logged in
+    if session.get("role") != "teacher":
+        return redirect(url_for("home"))
+
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("home"))
+
+    uid = user.get("uid")
+    teacher_doc = db.collection("users").document(uid).get()
+    profile = {}
+
+    # Fetch existing profile data
+    if teacher_doc.exists:
+        data = teacher_doc.to_dict()
+        profile["firstName"] = data.get("firstName", "Teacher")
+        profile["lastName"] = data.get("lastName", "")
+        profile["nickname"] = data.get("nickname", "")
+        profile["phone"] = data.get("phone", "")
+        profile["email"] = user.get("email", "-")
+        profile["photo_name"] = data.get("photo_name", "/static/uploads/default_teacher.png")
+    else:
+        profile = {
+            "firstName": "Teacher",
+            "lastName": "",
+            "nickname": "",
+            "phone": "",
+            "email": user.get("email", "-"),
+            "photo_name": "/static/uploads/default_teacher.png"
+        }
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "cancel":
+            return redirect(url_for("teacher_profile"))
+
+        nickname = request.form.get("nickname", "").strip()
+        phone = request.form.get("phone", "").strip()
+
+        update_data = {"nickname": nickname, "phone": phone}
+
+        # Handle profile picture upload
+        profile_pic = request.files.get("profile_pic")
+        if profile_pic and profile_pic.filename != "":
+            if profile_pic.mimetype.startswith("image/"):  # ensure it's an image
+                filename = secure_filename(profile_pic.filename)
+                upload_folder = os.path.join(app.root_path, "static", "uploads", "teacher_profiles", uid)
+                os.makedirs(upload_folder, exist_ok=True)
+                file_path = os.path.join(upload_folder, filename)
+                profile_pic.save(file_path)
+
+                # Save relative path in Firestore
+                update_data["photo_name"] = f"uploads/teacher_profiles/{uid}/{filename}"
+            else:
+                flash("Please upload a valid image file.", "error")
+
+        # Update Firestore
+        db.collection("users").document(uid).update(update_data)
+        flash("Profile updated successfully!", "success")
+        return redirect(url_for("teacher_edit_profile"))
+
+    return render_template("teacher/T_EditProfile.html", profile=profile)
+
+
 
 # ------------------ Admin Student Add/Edit ------------------
 
