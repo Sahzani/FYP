@@ -30,8 +30,6 @@ camera_running = False
 current_schedule = None  # Stores selected schedule
 
 API_URL = "http://127.0.0.1:8000"  # URL of app.py
-API_URL = "http://128.199.107.48:8000"
-
 
 # ===== Wait for API =====
 def wait_for_api(url, timeout=30):
@@ -153,18 +151,31 @@ def camera_loop():
         encs = face_recognition.face_encodings(rgb_small, boxes)
 
         for enc, (top, right, bottom, left) in zip(encs, boxes):
-            matches = face_recognition.compare_faces(encodings, enc)
-            student_id = None
-            if True in matches:
-                student_id = classNames[np.argmax(matches)]
-                name = mark_attendance(student_id)
+            if not encodings:
+                name = "No Students Loaded"
+                student_id = None
+                best_distance = float('inf')
             else:
-                name = "Unknown"
+                # Compute distances to all known faces
+                face_distances = face_recognition.face_distance(encodings, enc)
+                best_match_index = np.argmin(face_distances)
+                best_distance = face_distances[best_match_index]
 
+                # Only accept match if distance is below threshold (strict)
+                if best_distance < 0.45:
+                    student_id = classNames[best_match_index]
+                    name = mark_attendance(student_id)
+                else:
+                    student_id = None
+                    name = "Unknown"
+
+            # Scale back up face locations
             top, right, bottom, left = [v * 4 for v in (top, right, bottom, left)]
             color = (0, 255, 0) if student_id else (0, 0, 255)
             cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
-            cv2.putText(frame, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+            # Show name and distance for debugging
+            label = f"{name} ({best_distance:.2f})" if student_id else name
+            cv2.putText(frame, label, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
         # Resize the frame before sending to browser
         display_frame = cv2.resize(frame, (640, 480))
@@ -260,5 +271,4 @@ def student_view():
 
 # ===== Run App =====
 if __name__ == "__main__":
-    # Don't load students at startup - load per schedule instead
     app.run(host="0.0.0.0", port=5001, debug=True)
