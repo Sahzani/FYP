@@ -640,6 +640,42 @@ def admin_profile():
 
     return render_template("admin/A_Profile.html", user=user_data)
 
+@app.route("/admin/editprofile", methods=["GET", "POST"])
+def a_editprofile():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user_ref = db.collection("users").document(user_id)
+    user_doc = user_ref.get()
+    if not user_doc.exists:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        phone = request.form.get("phone")
+        password = request.form.get("password")
+
+        update_data = {}
+        if name:
+            update_data["name"] = name
+        if phone:
+            update_data["phone"] = phone
+        if password:
+            update_data["password"] = password  # Hash this in real app
+
+        if update_data:
+            user_ref.update(update_data)
+
+        flash("Profile updated successfully!", "success")
+        return redirect(url_for("admin_profile"))
+
+    user_data = user_doc.to_dict()
+    return render_template("admin/A_EditProfile.html", user=user_data)
+
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")
 def student_attendance():

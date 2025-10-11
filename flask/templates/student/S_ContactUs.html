@@ -1,74 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Student Contact Us</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); overflow:hidden; }
-    header { position: fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center; padding-left:20px; font-family:'Nunito',sans-serif; font-weight:700; font-size:26px; color:#212529; z-index:1000; }
-    #menu-toggle { display:block; font-size:28px; margin-right:15px; cursor:pointer; }
-    .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
-    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; transition:0.2s; border-radius:8px; }
-    .user-info:hover { background:#f0f0f0; }
-    .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-    .user-info span { font-size:16px; font-weight:600; color:#444; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>iAttend - Contact Us</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
 
-    .sidebar { position: fixed; top:60px; left:0; width:240px; height:calc(100% - 60px); background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%); padding:15px 0; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif; transition:width 0.3s ease; z-index:999; border-top-right-radius:12px; overflow:hidden; }
-    .sidebar.collapsed { width:70px; }
-    .sidebar-section { margin-bottom:25px; padding:0 15px; }
-    .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
-    .sidebar.collapsed .sidebar-section-title { opacity:0; }
-    .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.3s ease; white-space:nowrap; }
-    .sidebar.collapsed .sidebar-link span { display:none; }
-    .sidebar-link i { width:18px; text-align:center; }
-    .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
-    .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(180deg,#f7ecd7 0%,#f8f1e5 35%,#fbfaf7 100%); overflow-x:hidden; }
+header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.08); display:flex; align-items:center; padding:0 20px; z-index:1000; }
+#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; transition: color 0.3s; }
+#menu-toggle:hover { color:#4154F1; }
 
-    .main { margin-left:260px; padding:100px 30px 30px; transition:margin-left 0.3s ease; height:100vh; overflow-y:auto; display:flex; flex-direction:column; align-items:center; gap:30px; }
-    .sidebar.collapsed ~ .main { margin-left:80px; }
+.header-content { display:flex; justify-content:space-between; align-items:center; width:100%; }
+.header-content a.title { text-decoration:none; color:#444; font-weight:700; font-size:26px; }
+header a.user-info { display:flex; align-items:center; gap:10px; text-decoration:none; color:#444; font-weight:600; transition: all 0.2s ease; padding:0; border-radius:0; background:transparent; box-shadow:none; }
+header a.user-info:hover { padding:4px 12px; border-radius:12px; background:#f8f1e5; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+.header-content a.title:hover { color:#4154F1; }
 
-    .card { background:#fff; padding:25px 30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); max-width:650px; width:100%; transition: transform 0.3s ease, box-shadow 0.3s ease; }
-    .card:hover { transform: translateY(-6px); box-shadow: 0 12px 25px rgba(0,0,0,0.15); }
-    .card h2 { margin-top:0; margin-bottom:20px; font-weight:600; font-size:24px; color:#012970; border-bottom:1px solid #eee; padding-bottom:10px; }
+.sidebar { position:fixed; top:60px; left:0; width:250px; height:calc(100% - 60px); background:#f8f1e5; padding:15px 0; box-shadow:2px 0 15px rgba(0,0,0,0.08); border-top-right-radius:12px; transition: all 0.3s ease; overflow-y:auto; z-index:999; }
+.sidebar-section { margin-bottom:25px; padding:0 15px; }
+.sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#6b7280; margin-bottom:10px; padding-left:10px; }
+.sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#2C2C2C; text-decoration:none; transition: all 0.25s ease; white-space:nowrap; }
+.sidebar-link i { width:18px; text-align:center; }
+.sidebar-link.active, .sidebar-link:hover { background:#eadbbf; color:#1F2937; font-weight:600; }
+.sidebar.collapsed { width:70px; padding:15px 0; overflow:hidden; }
+.sidebar.collapsed .sidebar-section-title, .sidebar.collapsed .sidebar-link span { display:none; }
 
-    .form-group { display:flex; flex-direction:column; margin-bottom:15px; }
-    .form-group label { font-size:14px; color:#555; margin-bottom:5px; font-weight:600; }
-    .form-group input, .form-group textarea { padding:10px 12px; border:1px solid #ddd; border-radius:6px; background-color:#fcfcfc; font-size:15px; width:100%; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
-    .form-group input[readonly] { background-color:#f0f0f0; cursor:not-allowed; }
-    .form-group input:hover, .form-group textarea:hover { border-color: #4154F1; box-shadow: 0 0 6px rgba(65,84,241,0.3); }
-    .form-group textarea { height:120px; resize:vertical; }
+.main-content { margin-left:260px; padding:100px 30px 30px; min-height:100vh; overflow-y:auto; transition:margin-left 0.3s ease; background:transparent; display:flex; flex-direction:column; gap:30px; }
+.main-content.expanded { margin-left:80px; }
 
-    .btn { padding:10px 20px; border-radius:6px; cursor:pointer; border:none; font-weight:600; transition:all 0.3s ease, transform 0.2s ease; }
-    .btn-primary { background:#4154F1; color:#fff; width:100%; }
-    .btn-primary:hover { background:#0d29e9; transform: scale(1.03); }
+.card { background:#fff; padding:25px 30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); transition:transform 0.2s, box-shadow 0.2s; }
+.card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
+.card h2 { font-size:24px; font-weight:500; color:#444; margin-bottom:10px; }
 
-    .social-links a { display:inline-block; margin-right:10px; position:relative; text-decoration:none; color:#1A237E; font-weight:500; transition: transform 0.2s ease, color 0.3s ease; }
-    .social-links a i { margin-right:5px; }
-    .social-links a:hover { color:#4154F1; transform: translateY(-3px); }
-    .social-links a::after { content:"Copied!"; position:absolute; top:-25px; left:50%; transform:translateX(-50%); background:#4154F1; color:#fff; font-size:12px; padding:3px 8px; border-radius:4px; opacity:0; pointer-events:none; transition:opacity 0.3s; }
-    .social-links a.copied::after { opacity:1; }
+.form-group { display:flex; flex-direction:column; margin-bottom:15px; }
+.form-group label { font-size:14px; color:#555; margin-bottom:5px; font-weight:600; }
+.form-group input, .form-group textarea { padding:10px 12px; border:1px solid #ddd; border-radius:6px; background-color:#fcfcfc; font-size:15px; width:100%; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+.form-group input[readonly] { background-color:#f0f0f0; cursor:not-allowed; }
+.form-group input:hover, .form-group textarea:hover { border-color: #4154F1; box-shadow: 0 0 6px rgba(65,84,241,0.3); }
+.form-group textarea { height:120px; resize:vertical; }
 
-    .map-container { width:100%; height:300px; border-radius:12px; overflow:hidden; margin-top:15px; box-shadow:0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
-    .map-container iframe { transition: transform 0.3s ease; }
-    .map-container:hover iframe { transform: scale(1.02); }
+.btn-primary { display:inline-block; padding:10px 20px; background:#4154F1; color:#fff; border-radius:6px; font-weight:600; text-decoration:none; transition:all 0.2s ease; }
+.btn-primary:hover { background:#3730a3; }
 
-    .map-description { margin-top:10px; font-size:14px; color:#555; }
-  </style>
+.social-links a { display:inline-block; margin-right:10px; position:relative; text-decoration:none; color:#1A237E; font-weight:500; transition: transform 0.2s ease, color 0.3s ease; }
+.social-links a i { margin-right:5px; }
+.social-links a:hover { color:#4154F1; transform: translateY(-3px); }
+.social-links a::after { content:"Copied!"; position:absolute; top:-25px; left:50%; transform:translateX(-50%); background:#4154F1; color:#fff; font-size:12px; padding:3px 8px; border-radius:4px; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+.social-links a.copied::after { opacity:1; }
+
+.map-container { width:100%; height:300px; border-radius:12px; overflow:hidden; margin-top:15px; box-shadow:0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s ease; }
+.map-container iframe { transition: transform 0.3s ease; }
+.map-container:hover iframe { transform: scale(1.02); }
+
+.map-description { margin-top:10px; font-size:14px; color:#555; }
+
+@media (max-width:768px) {
+  .sidebar {
+    left: -260px;
+    transition: left 0.3s ease;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 100px 15px 30px;
+  }
+
+  .main-content.expanded {
+    margin-left: 0;
+  }
+}
+</style>
 </head>
 <body>
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <a href="{{ url_for('student_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
-    <a href="{{ url_for('student_profile') }}">
-      <div class="user-info">
-        <span id="header-user-name">{{ full_name }}</span>
-        <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="Profile">
-      </div>
+    <a href="{{ url_for('student_dashboard') }}" class="title">iAttend</a>
+    <a href="{{ url_for('student_profile') }}" class="user-info">
+      <span>{{ full_name }}</span>
+      <img src="https://placehold.co/36x36/899BBD/ffffff?text=U" alt="Profile">
     </a>
   </div>
 </header>
@@ -76,41 +96,25 @@
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('student_dashboard') }}">
-      <i class="fas fa-home"></i><span>Dashboard</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('student_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">Academics</div>
-    <a class="sidebar-link" href="{{ url_for('student_schedule') }}">
-      <i class="fas fa-calendar-days"></i><span>My Schedule</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('student_attendance') }}">
-      <i class="fas fa-clipboard-check"></i><span>Attendance</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('student_schedule') }}"><i class="fas fa-calendar-days"></i><span>My Schedule</span></a>
+    <a class="sidebar-link" href="{{ url_for('student_attendance') }}"><i class="fas fa-clipboard-check"></i><span>Attendance</span></a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">Request</div>
-    <a class="sidebar-link" href="{{ url_for('student_absentapp') }}">
-      <i class="fas fa-file-alt"></i><span>Absence Application</span>
-    </a>
-    <a class="sidebar-link active" href="{{ url_for('student_contact') }}">
-      <i class="fas fa-envelope"></i><span>Contact Us</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('student_absentapp') }}"><i class="fas fa-file-alt"></i><span>Absence Application</span></a>
+    <a class="sidebar-link active" href="{{ url_for('student_contact') }}"><i class="fas fa-envelope"></i><span>Contact Us</span></a>
   </div>
-
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('logout') }}">
-      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
-
-<div class="main">
-  <!-- Contact Form -->
+<!-- Main Content -->
+<div class="main-content">
   <div class="card">
     <h2><i class="fas fa-paper-plane"></i> Send a Message</h2>
     <p style="font-size:14px; color:#666; margin-bottom:15px;">
@@ -131,12 +135,11 @@
         <label for="message">Message</label>
         <textarea id="message" required></textarea>
       </div>
-      <button type="submit" class="btn btn-primary">Send Message</button>
+      <button type="submit" class="btn-primary">Send Message</button>
       <div id="contact-status-message" class="status-message"></div>
     </form>
   </div>
 
-  <!-- Direct Contact Info -->
   <div class="card">
     <h2><i class="fas fa-address-card"></i> Direct Contact</h2>
     <div class="form-group">
@@ -156,7 +159,6 @@
     </div>
   </div>
 
-  <!-- Map Location -->
   <div class="card">
     <h2>Location</h2>
     <div class="map-container">
@@ -176,7 +178,28 @@
   </div>
 </div>
 
-<script type="module">
+<script>
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+const mainContent = document.querySelector('.main-content');
+
+menuToggle.addEventListener('click', () => {
+  if (window.innerWidth <= 768) {
+    // Mobile: slide sidebar in/out
+    sidebar.classList.toggle('open');
+  } else {
+    // Desktop: collapse style toggle
+    sidebar.classList.toggle('collapsed');
+    mainContent.classList.toggle('expanded');
+  }
+});
+
+
+// Fill dummy user info
+document.getElementById('name').value = "{{ full_name }}";
+document.getElementById('email').value = "{{ email }}";
+
+// Firebase Contact Form Submission
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -188,34 +211,18 @@ const firebaseConfig = {
   messagingSenderId: "63348630728",
   appId: "1:63348630728:web:5d1537bd1c6e14535171fd"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-document.getElementById('menu-toggle').addEventListener('click', () => {
-  document.querySelector('.sidebar').classList.toggle('collapsed');
-});
-
-// Fill dummy user info (for testing without login)
-// if want to use real user need to change this code to fetch from auth 
-// document.getElementById('name').value = "Test User";
-document.getElementById('email').value = "test@example.com";
-// document.getElementById('header-user-name').textContent = "Test User";
-
-// Handle contact form submission
-document.getElementById('contact-form').addEventListener('submit', async (e)=>{
+document.getElementById('contact-form').addEventListener('submit', async e => {
   e.preventDefault();
   const name = document.getElementById('name').value;
   const email = document.getElementById('email').value;
   const message = document.getElementById('message').value.trim();
   if(!message) return;
-
   try {
     await addDoc(collection(db, "contactMessages"), {
-      name: name,
-      email: email,
-      message: message,
-      timestamp: serverTimestamp()
+      name, email, message, timestamp: serverTimestamp()
     });
     const status = document.getElementById('contact-status-message');
     status.textContent = "Message sent successfully!";
