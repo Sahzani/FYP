@@ -1,104 +1,347 @@
+alum sama reference tablenya
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iAttend - Programs</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { height:100%; font-family: 'Poppins', sans-serif; background: linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-
-    /* Header */
-    header { 
-      position: fixed; top:0; left:0; right:0; height:60px; background:#fff;
-      box-shadow:0 2px 20px rgba(1,41,112,0.1); display:flex; align-items:center;
-      padding-left:20px; font-family:'Nunito', sans-serif; font-weight:700;
-      font-size:26px; color:#212529; z-index:1002;
+    /* === Global === */
+    html, body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(180deg, #f7ecd7 0%, #f8f1e5 35%, #fbfaf7 100%);
+      overflow-x: hidden;
     }
-    #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
-    .header-content { width:100%; display:flex; justify-content:space-between; align-items:center; }
-    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; text-decoration: none; color: inherit; }
-    .user-info:hover { background:#f0f0f0; }
-    .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-    .user-info span { font-size:16px; font-weight:600; color:#444; }
 
-    /* Sidebar */
+    /* === Header === */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 1000;
+    }
+    #menu-toggle {
+      font-size: 28px;
+      margin-right: 15px;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    #menu-toggle:hover { color: #4154F1; }
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .header-content a.title {
+      text-decoration: none;
+      color: #444;
+      font-weight: 700;
+      font-size: 26px;
+    }
+    .header-content a.title:hover { color: #4154F1; }
+
+    header a.user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #444;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    header a.user-info:hover {
+      background: #f8f1e5;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    header a.user-info img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* === Sidebar === */
     .sidebar {
-      position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-      padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
-      transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px;
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 250px;
+      height: calc(100% - 60px);
+      background: #f8f1e5;
+      padding: 15px 0;
+      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.08);
+      border-top-right-radius: 12px;
+      transition: all 0.3s ease;
+      overflow-y: auto;
+      z-index: 999;
     }
-    .sidebar.collapsed { width:70px; overflow:hidden; }
-    .sidebar-section { margin-bottom:25px; padding:0 15px; }
-    .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
-    .sidebar.collapsed .sidebar-section-title { opacity:0; }
-    .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
-    .sidebar-link i { width:18px; text-align:center; }
-    .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
-    .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
+    .sidebar.collapsed {
+      width: 70px;
+      overflow: hidden;
+    }
+    .sidebar.collapsed .sidebar-section-title,
+    .sidebar.collapsed .sidebar-link span {
+      display: none;
+    }
+    .sidebar-section { margin-bottom: 25px; padding: 0 15px; }
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6b7280;
+      margin-bottom: 10px;
+      padding-left: 10px;
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 15px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #2C2C2C;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .sidebar-link i { width: 18px; text-align: center; }
+    .sidebar-link.active,
+    .sidebar-link:hover {
+      background: #eadbbf;
+      color: #1F2937;
+      font-weight: 600;
+    }
 
     /* Dropdown */
-    .sidebar-dropdown { display:flex; flex-direction:column; }
-    .dropdown-menu { display:none; flex-direction:column; padding-left:20px; margin-top:5px; }
-    .sidebar-dropdown.active .dropdown-menu { display:flex; }
-    .sidebar-dropdown .dropdown-toggle i:last-child {
-      margin-left:auto;
-      transition: transform 0.3s;
+    .sidebar-dropdown .dropdown-menu {
+      display: none;
+      margin-left: 20px;
+      margin-top: 4px;
     }
-    .sidebar-dropdown.active .dropdown-toggle i:last-child {
-      transform: rotate(180deg);
+    .sidebar-dropdown.active .dropdown-menu {
+      display: block;
+    }
+    .sidebar-dropdown .dropdown-toggle::after {
+      content: "\f078";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      margin-left: auto;
+      font-size: 12px;
+    }
+    .sidebar-dropdown.active .dropdown-toggle::after {
+      content: "\f077";
     }
 
-    /* Main content */
-    .main-content { 
-      margin-left:260px; 
-      padding:100px 30px 30px; 
-      font-family:'Nunito',sans-serif; 
-      transition:margin-left 0.3s ease; 
-      height:100vh; 
-      overflow-y:auto; 
+    /* === Main Content === */
+    .main-content {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      min-height: 100vh;
+      transition: margin-left 0.3s ease;
     }
-    .sidebar.collapsed ~ .main-content { margin-left:80px; }
-
-    /* Breadcrumb */
-    .breadcrumb { 
-      font-family:'Nunito',sans-serif; 
-      font-size:14px; 
-      font-weight:600; 
-      margin-bottom:30px; 
+    .sidebar.collapsed ~ .main-content {
+      margin-left: 80px;
     }
-    .breadcrumb .section { color:#989797; }
-    .breadcrumb .current { color:#444444; }
 
-    /* Table card */
-    .card { background:#fff; padding:1.5rem; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); margin-bottom:20px; }
-    table { width:100%; border-collapse:collapse; font-family:'Poppins',sans-serif; font-size:14px; }
-    th { background-color:#f8f7ff; text-align:left; padding:12px; font-weight:500; }
-    td { padding:12px; border-top:1px solid #ddd; }
-    .action-btn { padding:5px 10px; border:none; border-radius:5px; cursor:pointer; margin-right:5px; color:white; }
-    .edit-btn { background:#1e90ff; }
-    .delete-btn { background:#ff4c4c; }
-    .upload-btn { background:#28a745; }
+    /* === Card === */
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
 
-    /* Modals */
-    .modal { display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center; }
-    .modal.show { display:flex; }
-    .modal-content { background:#fff; margin:auto; border-radius:12px; width:90%; max-width:450px; overflow:hidden; }
-    .modal-header { background: linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); padding:15px; color:white; font-family:'Poppins',sans-serif; font-size:20px; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
-    .modal-body { padding:20px; }
-    .modal label { display:block; margin:10px 0 5px; color:#012970; font-weight:600; }
-    .modal input, .modal select { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; margin-bottom:12px; }
-    .modal-buttons { text-align:right; margin-top:10px; }
-    .modal button { padding:10px 16px; border:none; border-radius:8px; cursor:pointer; font-family:'Poppins',sans-serif; font-weight:500; font-size:14px; margin-left:10px; }
-    .modal .save-btn { background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%); color:white; }
-    .modal .cancel-btn { background:#ccc; color:#000; }
+    /* === Buttons === */
+    .action-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .edit-btn { background: #1e90ff; color: white; }
+    .delete-btn { background: #ff4c4c; color: white; }
+    .upload-btn { background: #28a745; color: white; }
 
-    /* Mobile Responsive */
-    @media (max-width:768px){
-      .sidebar { left:-260px; width:240px; position:fixed; top:0; height:100%; overflow-y:auto; z-index:1001; transition:left 0.3s ease; }
-      .sidebar.active { left:0; }
-      .main-content { margin-left:0 !important; }
+    /* === Modal === */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal.show { display: flex; }
+    .modal-content {
+      background: #fff;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      overflow: hidden;
+    }
+    .modal-header {
+      background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%);
+      padding: 15px 20px;
+      color: white;
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body { padding: 20px; }
+    .modal label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+      color: #2C2C2C;
+    }
+    .modal input,
+    .modal select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .modal-buttons {
+      text-align: right;
+      margin-top: 20px;
+    }
+    .modal .save-btn {
+      background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .modal .cancel-btn {
+      background: #ccc;
+      color: #000;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    /* === Breadcrumb === */
+    .breadcrumb {
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .breadcrumb .section {
+      color: #989797;
+    }
+    .breadcrumb .current {
+      color: #444444;
+    }
+
+    /* === Responsive === */
+    @media (max-width: 768px) {
+      .sidebar { left: -260px; }
+      .sidebar.active { left: 0; }
+      .sidebar.collapsed { left: 0; width: 250px; }
+      .main-content { margin-left: 0; }
+      .sidebar.collapsed ~ .main-content { margin-left: 0; }
+    }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { background-color: #f8f7ff; text-align: left; padding: 12px; font-weight: 500; }
+    td { padding: 12px; border-top: 1px solid #ddd; }
+
+    /* Program Reference Table */
+    .program-reference {
+      background: #f8f8fa;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+    .program-reference h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #444;
+    }
+    .program-reference table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .program-reference th {
+      background: #f0f0f0;
+      text-align: left;
+      padding: 8px;
+      font-weight: 500;
+      color: #555;
+    }
+    .program-reference td {
+      padding: 8px;
+      border-top: 1px solid #eee;
+    }
+    .program-reference .csv-id {
+      font-family: monospace;
+      color: #1e90ff;
+      font-size: 12px;
+    }
+
+    /* Photo Notes */
+    .photo-notes {
+      background: #f8f8fa;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #666;
+    }
+    .photo-notes strong {
+      color: #333;
+    }
+    .photo-notes code {
+      font-family: monospace;
+      background: #eee;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 12px;
     }
   </style>
 </head>
@@ -107,8 +350,7 @@
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <a href="{{ url_for('admin_dashboard') }}" style="text-decoration:none;color:inherit;">iAttend</a>
-    <!-- Changed this to link to A_Profile.html -->
+    <a href="{{ url_for('admin_dashboard') }}" class="title">iAttend</a>
     <a href="A_Profile.html" class="user-info">
       <span id="header-user-name">Admin</span>
       <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin Profile Picture">
@@ -127,15 +369,13 @@
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
 
-    <!-- Students -->
     <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %}" href="{{ url_for('admin_student_add') }}">
       <i class="fas fa-user-graduate"></i><span>Students</span>
     </a>
 
-    <!-- Teachers (Dropdown) - FIXED -->
     <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_add','admin_teacher_assign'] %}active{% endif %}">
       <a class="sidebar-link dropdown-toggle" href="#" onclick="event.preventDefault();">
-        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
+        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span>
       </a>
       <div class="dropdown-menu">
         <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
@@ -143,17 +383,14 @@
       </div>
     </div>
 
-    <!-- Programs -->
     <a class="sidebar-link {% if request.endpoint == 'admin_programs' %}active{% endif %}" href="{{ url_for('admin_programs') }}">
       <i class="fas fa-layer-group"></i><span>Programs</span>
     </a>
 
-    <!-- Groups -->
     <a class="sidebar-link {% if request.endpoint == 'admin_groups' %}active{% endif %}" href="{{ url_for('admin_groups') }}">
       <i class="fas fa-users"></i><span>Groups</span>
     </a>
 
-    <!-- Modules -->
     <a class="sidebar-link {% if request.endpoint == 'admin_modules' %}active{% endif %}" href="{{ url_for('admin_modules') }}">
       <i class="fas fa-book"></i><span>Modules</span>
     </a>
@@ -185,36 +422,75 @@
 </div>
 
 <div class="main-content">
-  <h2>Programs</h2>
-  <div class="breadcrumb"><span class="section">Management</span> / <span class="current">Programs</span></div>
-
-  <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:15px;">
-    <button class="action-btn edit-btn" style="padding:10px 18px; font-size:16px;" onclick="openAddModal()"><i class="fas fa-plus"></i> Add Program</button>
-    <button class="action-btn upload-btn" style="padding:10px 18px; font-size:16px;" onclick="openUploadModal()"><i class="fas fa-file-csv"></i> Upload CSV</button>
+  <h2 class="text-2xl font-bold mb-4">Programs</h2>
+  <div class="breadcrumb">
+    <span class="section">Management</span> / <span class="current">Programs</span>
   </div>
 
-  <div class="card">
+  <!-- Action Buttons -->
+  <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:15px;">
+    <button class="action-btn edit-btn" onclick="openAddModal()"><i class="fas fa-plus"></i> Add Program</button>
+    <button class="action-btn upload-btn" onclick="openUploadModal()"><i class="fas fa-file-csv"></i> Upload CSV</button>
+  </div>
+
+  <!-- CSV Template Download -->
+  <div class="text-sm text-gray-600 mb-4">
+    <a href="#" onclick="downloadProgramCSVTemplate(); return false;" class="text-blue-600 underline">
+      Download CSV template
+    </a>
+  </div>
+
+  <!-- Program Reference Table -->
+  <div class="program-reference">
+    <h3>Program Reference (use ID in CSV)</h3>
     <table>
       <thead>
         <tr>
-          <th>#</th>
           <th>Program Name</th>
-          <th>Actions</th>
+          <th>CSV Value (ID)</th>
         </tr>
       </thead>
       <tbody>
         {% for program in programs %}
         <tr>
-          <td>{{ loop.index }}</td>
           <td>{{ program.programName }}</td>
-          <td>
-            <button class="action-btn edit-btn" onclick="openEditModal('{{ program.docId }}','{{ program.programName }}')">Edit</button>
-            <button class="action-btn delete-btn" onclick="openDeleteModal('{{ program.docId }}')">Delete</button>
-          </td>
+          <td class="csv-id">{{ program.docId }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+  </div>
+
+  <!-- Photo Notes (Empty for Programs, but kept for consistency) -->
+  <div class="photo-notes">
+    <strong>Photo Notes:</strong> Not applicable for programs.
+  </div>
+
+  <!-- Programs Table -->
+  <div class="card mt-6">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="bg-gray-50 text-left">
+            <th class="p-3 font-medium">#</th>
+            <th class="p-3 font-medium">Program Name</th>
+            <th class="p-3 font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for program in programs %}
+          <tr class="border-t hover:bg-gray-50">
+            <td class="p-3">{{ loop.index }}</td>
+            <td class="p-3">{{ program.programName }}</td>
+            <td class="p-3">
+              <button class="action-btn edit-btn text-xs px-2 py-1" onclick="openEditModal('{{ program.docId }}','{{ program.programName }}')">Edit</button>
+              <button class="action-btn delete-btn text-xs px-2 py-1" onclick="openDeleteModal('{{ program.docId }}')">Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -267,7 +543,7 @@
       <span class="close" onclick="closeDeleteModal()">&times;</span>
     </div>
     <div class="modal-body">
-      <p id="deleteModalBody">Are you sure you want to delete this program?</p>
+      <p>Are you sure you want to delete this program?</p>
       <form id="deleteForm" method="POST">
         <div class="modal-buttons">
           <button type="submit" class="save-btn">Delete</button>
@@ -283,14 +559,14 @@
   const menuToggle = document.getElementById('menu-toggle');
   const sidebar = document.querySelector('.sidebar');
   menuToggle.addEventListener('click', () => {
-    if(window.innerWidth <= 768) {
+    if (window.innerWidth <= 768) {
       sidebar.classList.toggle('active');
     } else {
       sidebar.classList.toggle('collapsed');
     }
   });
 
-  // Teachers dropdown toggle
+  // Dropdown toggle
   document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
     toggle.addEventListener('click', e => {
       e.preventDefault();
@@ -306,7 +582,7 @@
     document.getElementById('programModal').classList.add('show');
   }
 
-  function openEditModal(id,name){
+  function openEditModal(id, name){
     document.getElementById('modalTitle').innerText = "Edit Program";
     document.getElementById('formProgramId').value = id;
     document.getElementById('formProgramName').value = name;
@@ -330,6 +606,24 @@
   }
   function closeDeleteModal(){ 
     document.getElementById('deleteModal').classList.remove('show'); 
+  }
+
+  // CSV Template Download
+  function downloadProgramCSVTemplate() {
+    const template = `programName
+Bachelor of Computer Science
+Master of Data Analytics
+Diploma in Cybersecurity`;
+
+    const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'programs_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 </script>
 

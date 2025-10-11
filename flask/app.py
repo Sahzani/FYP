@@ -4017,27 +4017,38 @@ def admin_program_delete(program_id):
     return redirect(url_for("admin_programs"))
 
 # ------------------ Upload Programs via CSV ------------------
+# ------------------ Upload Programs via CSV ------------------
 @app.route("/admin/program/upload", methods=["POST"])
 def admin_program_upload():
     if session.get("role") != "admin":
         return redirect(url_for("home"))
 
     csv_file = request.files.get("csv_file")
-    if not csv_file:
-        flash("No CSV file selected!", "danger")
+    if not csv_file or not csv_file.filename.endswith('.csv'):
+        flash("Please upload a valid CSV file.", "danger")
         return redirect(url_for("admin_programs"))
 
     import csv, io
-    stream = io.StringIO(csv_file.stream.read().decode("UTF8"), newline=None)
+    stream = io.StringIO(csv_file.stream.read().decode("UTF-8", errors="ignore"), newline=None)
     reader = csv.DictReader(stream)
 
-    for row in reader:
-        program_name = row.get("program_name")
-        if not program_name:
-            continue
-        db.collection("programs").add({"programName": program_name})
+    if "programName" not in reader.fieldnames:
+        flash("CSV must contain a 'programName' column.", "danger")
+        return redirect(url_for("admin_programs"))
 
-    flash("CSV uploaded successfully!", "success")
+    added = 0
+    for row in reader:
+        program_name = row.get("programName", "").strip()
+        if not program_name:
+            continue  # Skip empty rows
+
+        # Optional: Avoid exact duplicates (case-sensitive)
+        # You could query Firestore, but it's costly; skip for now unless needed.
+
+        db.collection("programs").add({"programName": program_name})
+        added += 1
+
+    flash(f"Successfully uploaded {added} program(s) from CSV!", "success")
     return redirect(url_for("admin_programs"))
 
 @app.route("/api/teacher_assignment/<teacher_id>")
