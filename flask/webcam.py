@@ -30,7 +30,8 @@ camera_running = False
 current_schedule = None  # Stores selected schedule
 
 API_URL = "http://127.0.0.1:8000"  # URL of app.py
-API_URL = "http://128.199.107.48:8000/"  # Production server
+API_URL = "http://128.199.107.48:8000"
+
 
 # ===== Wait for API =====
 def wait_for_api(url, timeout=30):
