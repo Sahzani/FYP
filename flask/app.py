@@ -2596,7 +2596,6 @@ def api_get_teacher(uid):
         teacher["program"] = role.get("program", "")
         teacher["teacherID"] = role.get("teacherID", "")
         teacher["isCoordinator"] = role.get("isCoordinator", False)
-
     else:
         teacher["program"] = ""
         teacher["teacherID"] = ""
@@ -2604,22 +2603,21 @@ def api_get_teacher(uid):
 
     # --- If coordinator, fetch assigned group from gc_group ---
     teacher["fk_groupId"] = ""
-    teacher["fk_groupCode"] = ""
+    teacher["groupCode"] = ""  # Use 'groupCode', not 'fk_groupCode'
     teacher["intake"] = ""
 
-    if teacher["isCoordinator"]:
-        gc_docs = db.collection("gc_group").where("fk_users", "==", uid).stream()
-        for gc_doc in gc_docs:
+    if teacher.get("isCoordinator"):
+        gc_doc = db.collection("gc_group").document(uid).get()
+        if gc_doc.exists:
             gc_data = gc_doc.to_dict()
-            group_id = gc_data.get("fk_groupcode")
+            group_id = gc_data.get("fk_groupId")
             if group_id:
                 group_doc = db.collection("groups").document(group_id).get()
                 if group_doc.exists:
                     g = group_doc.to_dict()
-                    teacher["fk_groupId"] = group_id  # for dropdown selection
+                    teacher["fk_groupId"] = group_id
                     teacher["groupCode"] = g.get("groupCode", "")
                     teacher["intake"] = g.get("intake", "")
-            break  # only one group per coordinator
 
     # Add name fields for modal
     teacher["first_name"] = teacher.get("firstName", "")
@@ -2667,42 +2665,79 @@ def admin_teacher_upload():
     stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
     reader = csv.DictReader(stream)
 
-    for row in reader:
-        name = row.get("name")
-        email = row.get("email")
-        password = row.get("password") or "password123"
-        program = row.get("program")     # ✅ changed from course → program
-        module = row.get("module")
-        teacherID = row.get("teacherID")
+    expected_columns = {"first_name", "last_name", "email", "password", "teacher_id", "program", "is_coordinator", "group_id"}
+    if not expected_columns.issubset(set(reader.fieldnames or [])):
+        flash(f"Invalid CSV format. Required columns: {', '.join(expected_columns)}", "error")
+        return redirect(url_for("admin_teacher_add"))
 
-        if not name or not email or not teacherID:
-            continue
+    for row in reader:
+        first_name = row.get("first_name", "").strip()
+        last_name = row.get("last_name", "").strip()
+        email = row.get("email", "").strip()
+        password = row.get("password") or "password123"
+        teacher_id_csv = row.get("teacher_id", "").strip()
+        program = row.get("program", "").strip()
+        is_coordinator = row.get("is_coordinator", "0").strip() in {"1", "true", "True", "yes", "Yes"}
+        group_id = row.get("group_id", "").strip() if is_coordinator else ""
+
+        if not first_name or not last_name or not email or not teacher_id_csv:
+            continue  # Skip invalid rows
+
+        display_name = f"{first_name} {last_name}"
 
         # Create Auth user
         try:
-            user = auth.create_user(email=email, password=password, display_name=name)
-            teacher_id = user.uid
-        except exceptions.FirebaseError:
-            continue  # skip duplicates
+            user = auth.create_user(email=email, password=password, display_name=display_name)
+            teacher_uid = user.uid
+        except exceptions.FirebaseError as e:
+            # Skip if user already exists or invalid email
+            continue
 
-        # Create main Firestore doc
-        db.collection('users').document(teacher_id).set({
-            'user_id': teacher_id,
-            'name': name,
+        # Save main user doc
+        db.collection('users').document(teacher_uid).set({
+            'user_id': teacher_uid,
+            'firstName': first_name,
+            'lastName': last_name,
             'email': email,
             'active': True,
-            'role_type': 2,  # teacher role
+            'role_type': 2,
             'photo_name': ''
         })
 
-        # Create roles subcollection
-        db.collection('users').document(teacher_id).collection('roles').document('teacher').set({
-            'program': program,   # ✅ store program, not course
-            'module': module,
-            'teacherID': teacherID
-        })
+        # Save teacher role
+        role_data = {
+            'program': program,
+            'teacherID': teacher_id_csv,
+            'isCoordinator': is_coordinator
+        }
 
-    flash("CSV uploaded successfully", "success")
+        # If coordinator, add group info
+        if is_coordinator and group_id:
+            group_doc = db.collection('groups').document(group_id).get()
+            if group_doc.exists:
+                group = group_doc.to_dict()
+                role_data.update({
+                    'groupId': group_id,
+                    'groupCode': group.get('groupCode', ''),
+                    'intake': group.get('intake', '')
+                })
+
+        db.collection('users').document(teacher_uid).collection('roles').document('teacher').set(role_data)
+
+        # Handle gc_group collection
+        gc_ref = db.collection('gc_group').document(teacher_uid)
+        if is_coordinator and group_id:
+            if group_doc.exists:
+                gc_ref.set({
+                    "coordinatorId": teacher_uid,
+                    "fk_groupId": group_id,
+                    "groupCode": group.get("groupCode", ""),
+                    "intake": group.get("intake", "")
+                })
+        else:
+            gc_ref.delete()
+
+    flash("Teachers uploaded successfully from CSV!", "success")
     return redirect(url_for("admin_teacher_add"))
 
 
@@ -2721,6 +2756,7 @@ def assign_module():
     })
 
     return redirect(url_for("admin_modules"))
+
 # ------------------ Admin page ------------------
 @app.route("/admin/rooms")
 def admin_rooms():
