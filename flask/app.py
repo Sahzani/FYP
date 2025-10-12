@@ -956,6 +956,41 @@ def student_absentapp():
         group_code=group_code
     )
 
+# ------------------ Serve Uploaded Absence File ------------------
+@app.route("/student/absentapp/file/<record_id>")
+def serve_absence_file(record_id):
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
+
+    doc_ref = db.collection("absenceRecords").document(record_id)
+    doc = doc_ref.get()
+
+    if not doc.exists:
+        flash("File not found.", "danger")
+        return redirect(url_for("student_absentapp"))
+
+    data = doc.to_dict()
+    file_name = data.get("file_name", "document.pdf")
+    file_data = data.get("file_data")
+
+    if not file_data:
+        flash("File not found.", "danger")
+        return redirect(url_for("student_absentapp"))
+
+    import io, base64
+    # Remove the "data:...;base64," prefix if it exists
+    if file_data.startswith("data:"):
+        file_bytes = base64.b64decode(file_data.split(",")[1])
+    else:
+        file_bytes = base64.b64decode(file_data)
+
+    from flask import send_file
+    return send_file(
+        io.BytesIO(file_bytes),
+        mimetype=data.get("file_type", "application/pdf"),
+        download_name=file_name,  # <--- This controls the tab name
+        as_attachment=False       # Open in browser
+    )
 
 # ------------------ Delete Absence Record ------------------
 @app.route("/student/absentapp/delete/<record_id>", methods=["POST"])
