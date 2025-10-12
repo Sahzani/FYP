@@ -618,10 +618,33 @@ def teacher_individual_summary():
 #------------------ Admin Pages ------------------
 @app.route("/admin_dashboard")
 def admin_dashboard():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Homepage.html")
-    return redirect(url_for("home"))
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
 
+    admin_name = session.get("user_name", "Admin")
+    month = datetime.now().strftime("%Y-%m")
+    
+    doc = db.collection("stats").document("monthly").collection(month).document("totals").get()
+    
+    if doc.exists:
+        data = doc.to_dict()
+        present = data.get("present", 0)
+        absent = data.get("absent", 0)
+        late = data.get("late", 0)
+    else:
+        present = absent = late = 0
+
+    now = datetime.now()
+    return render_template(
+        "admin/A_Homepage.html",
+        admin_name=admin_name,
+        stats_present=present,
+        stats_absent=absent,
+        stats_late=late,
+        current_date=now.strftime("%A, %B %d"),
+        current_time=now.strftime("%I:%M %p")
+    )
+# ------------------ Admin Profile & Edit ------------------
 @app.route("/admin/profile")
 def admin_profile():
     if session.get("role") != "admin":
@@ -1425,6 +1448,7 @@ def update_attendance():
     return redirect(url_for("studattendance", module_id=module_id, group_id=group_id, schedule_id=schedule_id, date=date))
 
 # ------------------ Teacher Mark Present via API (for face detection) ------------------
+
 @app.route("/teacher/mark_present", methods=["POST"])
 def mark_present():
     if session.get("role") != "teacher":
@@ -1471,6 +1495,7 @@ def mark_present():
     student_name = f"{student_data.get('first_name', '')} {student_data.get('last_name', '')}".strip() or "Unknown Student"
 
     today_str = datetime.now().strftime("%Y-%m-%d")
+    month_str = datetime.now().strftime("%Y-%m")  # ← For monthly stats
 
     att_data = {
         "schedule_id": schedule_id,
@@ -1478,19 +1503,27 @@ def mark_present():
         "status": "Present",
         "timestamp": datetime.now(),
         "date": today_str,
-        "group": group_name,        # ✅ Human-readable
-        "program": program_name,    # ✅ Human-readable
-        "module": module_name,      # ✅ Human-readable (not ID!)
+        "group": group_name,
+        "program": program_name,
+        "module": module_name,
         "name": student_name,
         "day": day
     }
 
     try:
+        # 1. Save individual attendance record
         db.collection("attendance") \
           .document(schedule_id) \
           .collection(today_str) \
           .document(student_id) \
           .set(att_data)
+
+        # 2. ✅ UPDATE SUMMARY STATS (NEW CODE)
+        stats_ref = db.collection("stats").document("monthly").collection(month_str).document("totals")
+        stats_ref.set({
+            "present": firestore.Increment(1)
+        }, merge=True)
+
         return jsonify({"success": True})
     except Exception as e:
         print(f"[ERROR] Save attendance failed: {e}")
@@ -1740,6 +1773,8 @@ def api_attendance(schedule_id):
                 "day": day
             }
         }
+
+        
 
         return jsonify(response_data)
         
@@ -4267,16 +4302,48 @@ def api_schedule(student_id):
 # ------------------ API Endpoints for Schedules ------------------
 @app.route("/api/schedules")
 def api_schedules():
-    try:
-        schedules_ref = db.collection("schedules").stream()
-        schedules = []
-        for doc in schedules_ref:
-            sched = doc.to_dict()
-            sched["id"] = doc.id
-            schedules.append(sched)
-        return jsonify(schedules)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    if session.get("role") != "teacher":
+        return jsonify([])
+
+    teacher_id = str(session.get("user_id")).strip()
+
+    # Fetch supporting collections
+    groups = {g.id: g.to_dict() for g in db.collection("groups").stream()}
+    programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
+    mlmodules = {m.id: m.to_dict() for m in db.collection("mlmodule").stream()}
+
+    schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+    schedules = []
+    for doc in schedules_docs:
+        s = doc.to_dict()
+        s['docId'] = doc.id
+
+        # === Group ===
+        raw_group = s.get('fk_group', '').strip()
+        group_id = raw_group.split('/')[-1] if '/' in raw_group else raw_group
+        group = groups.get(group_id, {})
+        s['groupName'] = group.get('groupName') or group.get('groupCode', 'Unknown Group')
+
+        # === Program ===
+        raw_program = s.get('fk_program', '').strip()
+        program_id = raw_program.split('/')[-1] if '/' in raw_program else raw_program
+        program = programs.get(program_id, {})
+        
+        # 👇 Add this debug line
+        print(f"Schedule {doc.id}: fk_program={raw_program} → program_id={program_id} → program={program}")
+
+        s['programName'] = program.get('programName', 'Unknown Program')  # ✅ Correct field name
+
+        # === Module ===
+        raw_module = s.get('fk_module', '').strip()
+        module_id = raw_module.split('/')[-1] if '/' in raw_module else raw_module
+        module = mlmodules.get(module_id, {})
+        s['moduleName'] = module.get('moduleName', 'Unknown Module')
+
+        s['day'] = s.get('day', 'Unknown')
+        schedules.append(s)
+
+    return jsonify(schedules)
 # ------------------ Logout / Signup ------------------
 @app.route("/logout")
 def logout():

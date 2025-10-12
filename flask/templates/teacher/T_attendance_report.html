@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iAttend - Attendance Report</title>
+  <!-- Tailwind CSS CDN (replace with compiled CSS in production) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
@@ -189,7 +190,6 @@
 
     #attendance-table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
 
-    /* Status badge (READ-ONLY) */
     .status-badge {
       font-weight: 600;
       padding: 4px 10px;
@@ -207,6 +207,12 @@
       .sidebar.collapsed { left: 0; width: 250px; }
       .main-content { margin-left: 0; }
       .main-content.expanded { margin-left: 0; }
+    }
+
+    /* Prevent dropdown text cutoff */
+    select {
+      min-width: 140px;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -266,7 +272,6 @@
           <label class="block text-sm font-medium mb-1">Program</label>
           <select id="filter-program" class="w-full border rounded-md p-2">
             <option value="">All Programs</option>
-            {% for p in programs %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
           </select>
         </div>
         <div>
@@ -323,8 +328,6 @@
     </div>
   </div>
 
-  <script id="schedules-data" type="application/json">{{ schedules | tojson }}</script>
-
   <script>
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
@@ -336,17 +339,61 @@
     });
 
     const WEBCAM_URL = "{{ webcam_url }}";
-    const allSchedules = JSON.parse(document.getElementById('schedules-data').textContent);
+    let allSchedules = [];
     let scheduleId = "";
     const videoContainer = document.getElementById('video-container');
     const webcamFeed = document.getElementById('webcam-feed');
     const attendanceTable = document.querySelector('#attendance-table tbody');
 
+    // === FETCH SCHEDULES VIA AJAX ===
+     function loadSchedules() {
+    fetch('/api/schedules')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load schedules');
+        return res.json();
+      })
+      .then(data => {
+        // ✅ TRIM all fields to remove accidental spaces
+        allSchedules = data.map(s => ({
+          ...s,
+          programName: (s.programName || '').trim(),
+          groupName: (s.groupName || '').trim(),
+          moduleName: (s.moduleName || '').trim(),
+          day: (s.day || '').trim()
+        }));
+
+        // ✅ Manually populate the Program dropdown FIRST
+        const programSelect = document.getElementById('filter-program');
+        programSelect.innerHTML = '<option value="">All Programs</option>';
+        
+        const uniquePrograms = [...new Set(allSchedules.map(s => s.programName))]
+          .filter(name => name && name !== "-")
+          .sort();
+        
+        uniquePrograms.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          programSelect.appendChild(option);
+        });
+
+        // Now run normal filter logic
+        updateFilters();
+      })
+      .catch(err => {
+        console.error("Error loading schedules:", err);
+        alert("Failed to load class data. Please refresh the page.");
+      });
+  }
+
     function populateDropdown(id, values) {
       const select = document.getElementById(id);
       const current = select.value;
       select.innerHTML = '<option value="">All</option>';
-      const uniqueValues = [...new Set(values)].filter(v => v && v !== "-").sort();
+      // ✅ Allow any non-empty string (even "Unknown Program" for debugging)
+      const uniqueValues = [...new Set(values)]
+        .filter(v => v && v.trim() !== "")
+        .sort();
       uniqueValues.forEach(val => {
         const opt = document.createElement('option');
         opt.value = val;
@@ -403,8 +450,6 @@
       updateFilters();
     });
 
-    updateFilters();
-
     function startCameraWithSchedule(scheduleId) {
       fetch(`${WEBCAM_URL}/start_camera`, {
         method: "POST",
@@ -457,6 +502,9 @@
           attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
         });
     }
+
+    // Load schedules when page is ready
+    document.addEventListener('DOMContentLoaded', loadSchedules);
   </script>
 </body>
 </html>

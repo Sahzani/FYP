@@ -4,20 +4,54 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iAttend Admin Dashboard</title>
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+
   <style>
-    /* Reset & Body */
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(180deg,#f7ecd7 0%,#f8f1e5 35%,#fbfaf7 100%); overflow-x:hidden; }
+    /* Reset & Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(180deg, #f7ecd7 0%, #f8f1e5 35%, #fbfaf7 100%);
+      overflow-x: hidden;
+    }
 
     /* Header */
-    header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.08); display:flex; align-items:center; padding:0 20px; z-index:1000; }
-    #menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; transition: color 0.3s; }
-    #menu-toggle:hover { color:#4154F1; }
-    .header-content { display:flex; justify-content:space-between; align-items:center; width:100%; }
-    .header-content a.title { text-decoration:none; color:#444; font-weight:700; font-size:26px; transition: color 0.3s; }
-    .header-content a.title:hover { color:#4154F1; }
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 1000;
+    }
+    #menu-toggle {
+      font-size: 28px;
+      margin-right: 15px;
+      cursor: pointer;
+      color: #444;
+    }
+    #menu-toggle:hover { color: #4154F1; }
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .header-content a.title {
+      text-decoration: none;
+      color: #444;
+      font-weight: 700;
+      font-size: 26px;
+    }
+    .header-content a.title:hover { color: #4154F1; }
     header a.user-info {
       display: flex;
       align-items: center;
@@ -25,11 +59,6 @@
       text-decoration: none;
       color: #444;
       font-weight: 600;
-      transition: all 0.2s ease;
-      padding: 0;
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
     }
     header a.user-info:hover {
       padding: 4px 12px;
@@ -37,7 +66,12 @@
       background: #f8f1e5;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+    header a.user-info img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
 
     /* Sidebar */
     .sidebar {
@@ -78,7 +112,8 @@
       white-space: nowrap;
     }
     .sidebar-link i { width: 18px; text-align: center; }
-    .sidebar-link.active, .sidebar-link:hover {
+    .sidebar-link.active,
+    .sidebar-link:hover {
       background: #eadbbf;
       color: #1F2937;
       font-weight: 600;
@@ -94,47 +129,81 @@
     }
 
     /* Main Content */
-    .main-content { margin-left:260px; padding:100px 30px 30px; min-height:100vh; overflow-y:auto; transition:margin-left 0.3s ease; background:transparent; }
-    .main-content.expanded { margin-left:80px; }
-
-    /* Welcome Heading */
-    .main-content h2 {
-      font-family:'Poppins', sans-serif;
-      font-size:36px;
-      font-weight:700;
-      color:#444;
-      margin-bottom:30px;
+    .main-content {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      min-height: 100vh;
+      overflow-y: auto;
+      transition: margin-left 0.3s ease;
+      background: transparent;
     }
-    #admin-name { color:#4154F1; }
+    .main-content.expanded {
+      margin-left: 80px;
+    }
+
+    /* Typography */
+    h2 {
+      font-size: 36px;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 30px;
+    }
+    #admin-name { color: #4154F1; }
 
     /* Cards */
     .card {
-      background:#fff;
-      padding:22px;
-      border-radius:15px;
-      box-shadow:0 15px 30px rgba(0,0,0,0.05);
-      margin-bottom:25px;
+      background: #fff;
+      padding: 22px;
+      border-radius: 15px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+      margin-bottom: 25px;
       transition: transform 0.3s, box-shadow 0.3s;
     }
-    .card:hover { transform:translateY(-8px); box-shadow:0 20px 40px rgba(0,0,0,0.1); }
-    .card h2 { font-size:22px; font-weight:500; color:#444; margin-bottom:10px; }
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .card h2 {
+      font-size: 22px;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 10px;
+    }
 
     /* Grid */
-    .grid-container { display:grid; gap:1.5rem; }
-    .grid-container-lg { grid-template-columns:3fr 2fr; }
-    .grid-container-lg-2 { grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); }
-    .card-spacing { margin-bottom:1.5rem; }
+    .grid-container {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .grid-container-lg {
+      grid-template-columns: 3fr 2fr;
+    }
+    .card-spacing {
+      margin-bottom: 1.5rem;
+    }
 
     /* Stats */
-    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:1.5rem; }
-    .stats-card { display:flex; flex-direction:column; align-items:center; text-align:center; }
-    .icon-circle { 
-      width:3rem; height:3rem; 
-      display:flex; align-items:center; justify-content:center; 
-      background-color:#4154F1; 
-      color:white; 
-      border-radius:50%; 
-      margin-bottom:0.75rem; 
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1.5rem;
+    }
+    .stats-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .icon-circle {
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #4154F1;
+      color: white;
+      border-radius: 50%;
+      margin-bottom: 0.75rem;
     }
 
     /* Calendar */
@@ -148,29 +217,58 @@
       justify-content: space-between;
       transition: transform 0.3s, box-shadow 0.3s;
     }
-    .calendar-container:hover { 
-      transform:translateY(-5px); 
-      box-shadow:0 20px 40px rgba(0,0,0,0.1); 
+    .calendar-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     }
-    .calendar-info { display:flex; flex-direction:column; gap:8px; }
-    .calendar-date { font-size:1.5rem; font-weight:700; color:#4154F1; }
-    .calendar-time { font-size:1.1rem; color:#666; }
-    .calendar-icon { 
-      width:3.5rem; height:3.5rem; 
-      background: linear-gradient(135deg, #4154F1, #5D5FEF); 
-      border-radius:50%; 
-      display:flex; align-items:center; justify-content:center; 
-      color:white; 
-      font-size:1.5rem; 
+    .calendar-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .calendar-date {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #4154F1;
+    }
+    .calendar-time {
+      font-size: 1.1rem;
+      color: #666;
+    }
+    .calendar-icon {
+      width: 3.5rem;
+      height: 3.5rem;
+      background: linear-gradient(135deg, #4154F1, #5D5FEF);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
     }
 
-    /* Chart Card */
-    .chart-card { grid-column: 1 / -1; }
+    /* Chart */
+    .chart-card {
+      grid-column: 1 / -1;
+    }
 
-    @media(max-width:768px) {
-      .calendar-container { flex-direction:column; text-align:center; gap:1.5rem; }
-      .stats-grid { grid-template-columns:1fr; }
-      .main-content h2 { font-size:28px; }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { left: -260px; }
+      .sidebar.collapsed { left: 0; width: 250px; }
+      .main-content,
+      .main-content.expanded {
+        margin-left: 0;
+      }
+      .calendar-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      h2 { font-size: 28px; }
     }
   </style>
 </head>
@@ -182,19 +280,17 @@
     <a href="{{ url_for('admin_dashboard') }}" class="title">iAttend Admin</a>
     <a href="#" class="user-info">
       <span id="header-user-name">{{ admin_name }}</span>
-      <img src="https://placehold.co/36x36/899BBD/ffffff?text=A" alt="Admin Profile">
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23899BBD'/%3E%3Ctext x='12' y='16' text-anchor='middle' fill='white' font-size='12' font-family='Arial'>A%3C/text%3E%3C/svg%3E" alt="Admin Profile">
     </a>
   </div>
 </header>
 
-<!-- Sidebar (same as teacher) -->
 <div class="sidebar">
   <div class="sidebar-section">
     <a class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
     <a class="sidebar-link" href="{{ url_for('admin_student_add') }}"><i class="fas fa-user-graduate"></i><span>Students</span></a>
@@ -203,17 +299,14 @@
     <a class="sidebar-link" href="{{ url_for('admin_groups') }}"><i class="fas fa-users"></i><span>Groups</span></a>
     <a class="sidebar-link" href="{{ url_for('admin_modules') }}"><i class="fas fa-book"></i><span>Modules</span></a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">System</div>
     <a class="sidebar-link" href="{{ url_for('admin_schedules') }}"><i class="fas fa-file-upload"></i><span>Upload Schedules</span></a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">Logs</div>
     <a class="sidebar-link" href="{{ url_for('admin_attendance_log') }}"><i class="fas fa-history"></i><span>Attendance Logs</span></a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">Attendance</div>
     <a class="sidebar-link" href="{{ url_for('admin_summary') }}"><i class="fas fa-chart-line"></i><span>Summary</span></a>
@@ -224,9 +317,7 @@
 <div class="main-content">
   <h2>Welcome, <span id="admin-name">{{ admin_name }}</span>!</h2>
 
-  <!-- Stats & Calendar -->
   <div class="grid-container-lg grid-container card-spacing">
-    <!-- Stats -->
     <div class="stats-grid">
       <div class="card stats-card">
         <div class="icon-circle"><i class="fas fa-user-check"></i></div>
@@ -245,7 +336,6 @@
       </div>
     </div>
 
-    <!-- Calendar -->
     <div class="calendar-container">
       <div class="calendar-info">
         <div class="calendar-date" id="current-date">{{ current_date }}</div>
@@ -255,7 +345,6 @@
     </div>
   </div>
 
-  <!-- Monthly Attendance Chart -->
   <div class="card chart-card">
     <h2>Monthly Attendance Summary</h2>
     <canvas id="attendanceChart" height="150"></canvas>
@@ -263,15 +352,15 @@
 </div>
 
 <script>
-// Update time
+// Update time every 10 seconds
 function updateDateTime() {
   const now = new Date();
   const options = { weekday: 'long', month: 'long', day: 'numeric' };
   document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
-  document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 updateDateTime();
-setInterval(updateDateTime, 1000);
+setInterval(updateDateTime, 10000);
 
 // Sidebar toggle
 document.getElementById('menu-toggle').addEventListener('click', () => {
@@ -280,30 +369,31 @@ document.getElementById('menu-toggle').addEventListener('click', () => {
 });
 </script>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Load Chart.js only if needed -->
 <script>
-const ctx = document.getElementById('attendanceChart').getContext('2d');
-if (ctx) {
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Present', 'Absent', 'Late'],
-      datasets: [{
-        label: 'This Month',
-        data: [{{ stats_present }}, {{ stats_absent }}, {{ stats_late }}],
-        backgroundColor: ['#4CAF50', '#F44336', '#FFC107']
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'top' } },
-      scales: {
-        x: { stacked: false },
-        y: { beginAtZero: true }
+if (document.getElementById('attendanceChart')) {
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+  script.onload = () => {
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Present', 'Absent', 'Late'],
+        datasets: [{
+          label: 'This Month',
+          data: [{{ stats_present }}, {{ stats_absent }}, {{ stats_late }}],
+          backgroundColor: ['#4CAF50', '#F44336', '#FFC107']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true } }
       }
-    }
-  });
+    });
+  };
+  document.head.appendChild(script);
 }
 </script>
 
