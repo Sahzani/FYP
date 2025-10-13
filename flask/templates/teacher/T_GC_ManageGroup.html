@@ -36,10 +36,10 @@ td{padding: 12px 8px; border-top: 1px solid #e0e0e0; word-wrap: break-word; text
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content">
-    <a href="{{ url_for('gc_manage_group') }}" style="text-decoration:none;color:inherit;">iAttend</a>
+    <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
     <a href="{{ url_for('teacher_profile') }}" class="user-info">
       <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=GC" alt="Group Coordinator">
+      <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Group Coordinator">
     </a>
   </div>
 </header>
