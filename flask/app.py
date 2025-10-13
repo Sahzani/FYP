@@ -1744,33 +1744,33 @@ def api_attendance(schedule_id):
             status = "Absent"
 
             ts = att.get("timestamp")
-            if ts:
-                # Convert to timezone-aware Brunei time
-                if hasattr(ts, 'astimezone'):
-                    # Firestore Timestamp → it's UTC → convert to Brunei
-                    att_dt = ts.replace(tzinfo=pytz.UTC).astimezone(LOCAL_TZ)
+        if ts:
+            if hasattr(ts, 'astimezone'):
+                # ✅ Already Brunei local time — use as-is
+                att_dt = ts
+            else:
+                # Fallback for string (should not happen if stored correctly)
+                try:
+                    dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                    if dt.tzinfo is None:
+                        dt = LOCAL_TZ.localize(dt)
+                    att_dt = dt
+                except Exception:
+                    att_dt = None
+
+            if att_dt:
+                # Compare with scheduled_start (which is already Brunei local)
+                diff_seconds = (att_dt - scheduled_start).total_seconds()
+                minutes_late = diff_seconds / 60
+
+                if minutes_late <= 15:
+                    status = "Present"
+                elif minutes_late <= 30:
+                    status = "Late"
                 else:
-                    # Fallback for string/naive datetime
-                    try:
-                        dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
-                        if dt.tzinfo is None:
-                            dt = pytz.UTC.localize(dt)
-                        att_dt = dt.astimezone(LOCAL_TZ)
-                    except Exception:
-                        att_dt = None
+                    status = "Absent"
 
-                if att_dt:
-                    diff_seconds = (att_dt - scheduled_start).total_seconds()
-                    minutes_late = diff_seconds / 60
-
-                    if minutes_late <= 15:
-                        status = "Present"
-                    elif minutes_late <= 30:
-                        status = "Late"
-                    else:
-                        status = "Absent"
-
-                    att_time = att_dt.strftime("%H:%M")  # e.g., "13:43"
+                att_time = att_dt.strftime("%H:%M")  # e.g., "13:43"  # e.g., "13:43"
 
             attendance_records[student_id] = {
                 "status": status,
