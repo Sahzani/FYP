@@ -4,11 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iAttend - Attendance Report</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS CDN (replace with compiled CSS in production) -->
+  <script src="https://cdn.tailwindcss.com  "></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css  " rel="stylesheet" />
 
   <style>
     .main-content {
@@ -219,65 +218,53 @@
     const videoContainer = document.getElementById('video-container');
     const webcamFeed = document.getElementById('webcam-feed');
     const attendanceTable = document.querySelector('#attendance-table tbody');
-    let attendanceInterval = null;
-
-    // ✅ Format time in Brunei timezone
-    function formatBruneiTime(isoString) {
-      if (!isoString || isoString === "-") return "-";
-      try {
-        const dt = new Date(isoString);
-        return dt.toLocaleTimeString('en-GB', {
-          timeZone: 'Asia/Brunei',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-      } catch (e) {
-        console.warn("Failed to parse time:", isoString);
-        return "-";
-      }
-    }
 
     // === FETCH SCHEDULES VIA AJAX ===
-    function loadSchedules() {
-      fetch('/api/schedules')
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to load schedules');
-          return res.json();
-        })
-        .then(data => {
-          allSchedules = data.map(s => ({
-            ...s,
-            programName: (s.programName || '').trim(),
-            groupName: (s.groupName || '').trim(),
-            moduleName: (s.moduleName || '').trim(),
-            day: (s.day || '').trim()
-          }));
+     function loadSchedules() {
+    fetch('/api/schedules')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load schedules');
+        return res.json();
+      })
+      .then(data => {
+        // ✅ TRIM all fields to remove accidental spaces
+        allSchedules = data.map(s => ({
+          ...s,
+          programName: (s.programName || '').trim(),
+          groupName: (s.groupName || '').trim(),
+          moduleName: (s.moduleName || '').trim(),
+          day: (s.day || '').trim()
+        }));
 
-          const programSelect = document.getElementById('filter-program');
-          programSelect.innerHTML = '<option value="">All Programs</option>';
-          const uniquePrograms = [...new Set(allSchedules.map(s => s.programName))]
-            .filter(name => name && name !== "-")
-            .sort();
-          uniquePrograms.forEach(name => {
-            const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
-            programSelect.appendChild(option);
-          });
-
-          updateFilters();
-        })
-        .catch(err => {
-          console.error("Error loading schedules:", err);
-          alert("Failed to load class data. Please refresh the page.");
+        // ✅ Manually populate the Program dropdown FIRST
+        const programSelect = document.getElementById('filter-program');
+        programSelect.innerHTML = '<option value="">All Programs</option>';
+        
+        const uniquePrograms = [...new Set(allSchedules.map(s => s.programName))]
+          .filter(name => name && name !== "-")
+          .sort();
+        
+        uniquePrograms.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          programSelect.appendChild(option);
         });
-    }
+
+        // Now run normal filter logic
+        updateFilters();
+      })
+      .catch(err => {
+        console.error("Error loading schedules:", err);
+        alert("Failed to load class data. Please refresh the page.");
+      });
+  }
 
     function populateDropdown(id, values) {
       const select = document.getElementById(id);
       const current = select.value;
       select.innerHTML = '<option value="">All</option>';
+      // ✅ Allow any non-empty string (even "Unknown Program" for debugging)
       const uniqueValues = [...new Set(values)]
         .filter(v => v && v.trim() !== "")
         .sort();
@@ -346,14 +333,7 @@
       .then(() => {
         videoContainer.style.display = "block";
         webcamFeed.src = `${WEBCAM_URL}/video_feed`;
-        
-        // Start auto-refresh every 5 seconds
-        if (attendanceInterval) clearInterval(attendanceInterval);
-        attendanceInterval = setInterval(() => {
-          fetchAttendance(scheduleId);
-        }, 5000);
-        
-        fetchAttendance(scheduleId); // Initial load
+        fetchAttendance(scheduleId);
       })
       .catch(err => console.error("Failed to start camera:", err));
     }
@@ -363,10 +343,6 @@
         .then(() => {
           videoContainer.style.display = "none";
           webcamFeed.src = "";
-          if (attendanceInterval) {
-            clearInterval(attendanceInterval);
-            attendanceInterval = null;
-          }
         })
         .catch(err => console.error("Failed to stop camera:", err));
     });
@@ -382,13 +358,11 @@
           }
           data.students.forEach(student => {
             const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
-            const formattedTime = formatBruneiTime(student.time); // ✅ Brunei time
-
             const tr = document.createElement("tr");
             tr.innerHTML = `
               <td>${student.name || "Unknown Student"}</td>
               <td>${student.email || "-"}</td>
-              <td>${formattedTime}</td>
+              <td>${student.time || "-"}</td>
               <td><span class="status-badge status-${student.status}">${student.status}</span></td>
               <td>${student.group || "-"}</td>
               <td>${student.program || "-"}</td>
@@ -401,6 +375,37 @@
           console.error("Failed to fetch attendance:", err);
           attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
         });
+
+        let refreshInterval;
+
+function startCameraWithSchedule(scheduleId) {
+  fetch(`${WEBCAM_URL}/start_camera`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `schedule=${encodeURIComponent(scheduleId)}`
+  })
+  .then(() => {
+    videoContainer.style.display = "block";
+    webcamFeed.src = `${WEBCAM_URL}/video_feed`;
+    fetchAttendance(scheduleId);
+
+    // 🔁 Auto-refresh table every 5 seconds
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => fetchAttendance(scheduleId), 5000);
+  })
+  .catch(err => console.error("Failed to start camera:", err));
+}
+
+document.getElementById('stopCamera').addEventListener('click', () => {
+  fetch(`${WEBCAM_URL}/stop_camera`)
+    .then(() => {
+      videoContainer.style.display = "none";
+      webcamFeed.src = "";
+      if (refreshInterval) clearInterval(refreshInterval);
+    })
+    .catch(err => console.error("Failed to stop camera:", err));
+});
+
     }
 
     // Load schedules when page is ready
