@@ -3839,31 +3839,6 @@ def api_admin_attendance_filtered():
 
     return jsonify(results)
 
-# ------------------ Other Admin pages ------------------
-@app.route("/admin/change_logs")
-def admin_change_logs():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Change-Logs.html")
-    return redirect(url_for("home"))
-
-@app.route("/admin/roles")
-def admin_roles():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Roles.html")
-    return redirect(url_for("home"))
-
-@app.route("/admin/email_setup")
-def admin_email_setup():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Email-Setup.html")
-    return redirect(url_for("home"))
-
-@app.route("/admin/summary")
-def admin_summary():
-    if session.get("role") == "admin":
-        return render_template("admin/A_Summary.html")
-    return redirect(url_for("home"))
-
 # ------------------ Admin Modules page ------------------
 # Admin Modules Page
 @app.route("/admin/modules")
@@ -3935,24 +3910,27 @@ def admin_groups():
     if session.get("role") != "admin":
         return redirect(url_for("home"))
 
-    # Fetch all groups
+    # Fetch all programs and create a map: {docId: programName}
+    programs_docs = db.collection("programs").stream()
+    program_map = {}
+    for doc in programs_docs:
+        p = doc.to_dict()
+        program_map[doc.id] = p.get("programName", "—")
+
+    # Fetch all groups and attach resolved programName
     groups_docs = db.collection("groups").stream()
     groups = []
     for doc in groups_docs:
         g = doc.to_dict()
         g["docId"] = doc.id
+        fk_program = g.get("fk_program")
+        g["programName"] = program_map.get(fk_program, "—") if fk_program else "—"
         groups.append(g)
 
-    # Fetch all programs
-    programs_docs = db.collection("programs").stream()
-    programs = []
-    for doc in programs_docs:
-        p = doc.to_dict()
-        p["docId"] = doc.id
-        programs.append(p)
+    # Fetch programs list for the dropdown in the modal
+    programs = [{"docId": pid, "programName": pname} for pid, pname in program_map.items()]
 
     return render_template("admin/A_Group.html", groups=groups, programs=programs)
-
 
 # ------------------ Save (Add/Edit) Group ------------------
 @app.route("/admin/group/save", methods=["POST"])
@@ -3965,24 +3943,25 @@ def admin_group_save():
     program_id = request.form.get("fk_program")
     intake = request.form.get("intake")
 
+    if not group_code or not intake or not program_id:
+        flash("All fields are required!", "danger")
+        return redirect(url_for("admin_groups"))
+
     # Validate program exists
-    program_doc = db.collection("programs").document(program_id).get()
-    if not program_doc.exists:
+    if not db.collection("programs").document(program_id).get().exists:
         flash("Selected program does not exist!", "danger")
         return redirect(url_for("admin_groups"))
 
-    # Data to save
     group_data = {
         "groupCode": group_code,
-        "fk_program": program_id,  # store the program's Firestore ID
+        "fk_program": program_id,
         "intake": intake
     }
 
-    if group_id:  # Edit existing group
+    if group_id:
         db.collection("groups").document(group_id).set(group_data, merge=True)
-    else:  # Add new group
-        write_time, group_ref = db.collection("groups").add(group_data)  # correct unpacking
-        group_id = group_ref.id  # now safe to access
+    else:
+        db.collection("groups").add(group_data)
 
     flash("Group saved successfully!", "success")
     return redirect(url_for("admin_groups"))
@@ -4011,28 +3990,38 @@ def admin_group_upload_route():
         return redirect(url_for("admin_groups"))
 
     import csv, io
-    stream = io.StringIO(csv_file.stream.read().decode("UTF8"), newline=None)
+    stream = io.StringIO(csv_file.stream.read().decode("UTF-8"), newline=None)
     reader = csv.DictReader(stream)
 
+    # Expected columns: groupCode, intake, fk_program
+    required_cols = {"groupCode", "intake", "fk_program"}
+    if not required_cols.issubset(reader.fieldnames):
+        flash(f"CSV must contain columns: {', '.join(required_cols)}", "danger")
+        return redirect(url_for("admin_groups"))
+
+    added = 0
     for row in reader:
-        # Lookup program by name
-        program_name = row.get("program_name")
-        program_query = db.collection("programs").where("programName", "==", program_name).limit(1).get()
-        if not program_query:
-            flash(f"Program '{program_name}' not found. Skipping row.", "warning")
+        group_code = row.get("groupCode", "").strip()
+        intake = row.get("intake", "").strip()
+        program_id = row.get("fk_program", "").strip()
+
+        if not group_code or not intake or not program_id:
+            continue  # skip empty rows
+
+        # Optional: validate program exists
+        if not db.collection("programs").document(program_id).get().exists:
+            flash(f"Program ID '{program_id}' not found. Skipping group '{group_code}'.", "warning")
             continue
 
-        program_id = program_query[0].id
-
         group_data = {
-            "groupName": row.get("groupName"),
-            "groupCode": row.get("groupCode"),
-            "fk_program": program_id,
-            "intake": row.get("intake")
+            "groupCode": group_code,
+            "intake": intake,
+            "fk_program": program_id  # store as Firestore document ID
         }
         db.collection("groups").add(group_data)
+        added += 1
 
-    flash("CSV uploaded successfully!", "success")
+    flash(f"Successfully uploaded {added} group(s) from CSV!", "success")
     return redirect(url_for("admin_groups"))
 
 # ------------------ Admin Programs Page ------------------
@@ -4086,7 +4075,6 @@ def admin_program_delete(program_id):
     flash("Program deleted successfully!", "success")
     return redirect(url_for("admin_programs"))
 
-# ------------------ Upload Programs via CSV ------------------
 # ------------------ Upload Programs via CSV ------------------
 @app.route("/admin/program/upload", methods=["POST"])
 def admin_program_upload():

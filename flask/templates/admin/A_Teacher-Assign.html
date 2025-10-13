@@ -158,10 +158,6 @@
   </div>
 
   <div class="sidebar-section">
-    <div class="sidebar-section-title">Attendance</div>
-    <a class="sidebar-link {% if request.endpoint == 'admin_summary' %}active{% endif %}" href="{{ url_for('admin_summary') }}">
-      <i class="fas fa-chart-line"></i><span>Summary</span>
-    </a>
     <a class="sidebar-link" href="{{ url_for('logout') }}">
       <i class="fas fa-sign-out-alt"></i><span>Logout</span>
     </a>
