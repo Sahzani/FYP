@@ -1,104 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>iAttend - Assign Modules to Teachers</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-  html,body{height:100%;font-family:'Poppins',sans-serif;background:linear-gradient(75.18deg,#FFE5B4 36.63%,#F5EEDC 92.2%);}
-  header{position:fixed;top:0;left:0;right:0;height:60px;background:#fff;box-shadow:0 2px 20px rgba(1,41,112,0.1);display:flex;align-items:center;padding:0 20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:26px;color:#212529;z-index:1002;}
-  #menu-toggle{font-size:28px;margin-right:15px;cursor:pointer;}
-  .header-content{width:100%;display:flex;justify-content:space-between;align-items:center;}
-  .user-info{display:flex;align-items:center;gap:15px;padding:0 20px;border-radius:8px;cursor:pointer;transition:0.2s;}
-  .user-info:hover{background:#f0f0f0;}
-  .user-info img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
-  .user-info span{font-size:16px;font-weight:600;color:#444;}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iAttend - Assign Modules to Teachers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-  /* ==== Sidebar ==== */
-  .sidebar {
-    position: fixed; top:0; left:0; width:240px; height:100%; background: linear-gradient(180deg, #FFEED3 0%, #FFEED3 100%);
-    padding-top:60px; box-shadow:2px 0 15px rgba(1,41,112,0.08); font-family:'Poppins',sans-serif;
-    transition: width 0.3s, left 0.3s; z-index:1001; overflow-y:auto; border-top-right-radius:12px;
-  }
-  .sidebar.collapsed { width:70px; overflow:hidden; }
-  .sidebar-section { margin-bottom:25px; padding:0 15px; }
-  .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#5D5FEF; margin-bottom:10px; padding-left:10px; transition:opacity 0.3s; }
-  .sidebar.collapsed .sidebar-section-title { opacity:0; }
-  .sidebar-link { display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; font-size:15px; font-weight:500; color:#1A237E; text-decoration:none; transition:all 0.25s ease; white-space:nowrap; }
-  .sidebar-link i { width:18px; text-align:center; }
-  .sidebar-link:hover { background:rgba(255,255,255,0.5); transform:translateX(4px); }
-  .sidebar-link.active { background:rgba(255,255,255,0.7); color:#4154F1; font-weight:600; box-shadow:inset 0 0 0 1px rgba(181,116,28,0.2); }
+  <style>
+    /* Match background gradient from attendance log */
+    html, body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(180deg, #f7ecd7 0%, #f8f1e5 35%, #fbfaf7 100%);
+      overflow-x: hidden;
+    }
 
-  /* Dropdown */
-  .sidebar-dropdown { display:flex; flex-direction:column; }
-  .dropdown-menu { display:none; flex-direction:column; padding-left:20px; }
-  .sidebar-dropdown.active .dropdown-menu { display:flex; }
-  .sidebar-dropdown .dropdown-toggle i:last-child {
-    margin-left:auto;
-    transition: transform 0.3s;
-  }
-  .sidebar-dropdown.active .dropdown-toggle i:last-child {
-    transform: rotate(180deg);
-  }
-    /* ==== Breadcrumb ==== */
-.breadcrumb {
-    font-family:'Nunito',sans-serif;
-    font-size:14px;
-    font-weight:600;  /* change from 500 to 600 */
-    margin-bottom:20px; /* or 30px if you want same spacing */
-}
-.breadcrumb .section {
-    color:#989797;
-}
-.breadcrumb .current {
-    color:#444444;
-}
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 1000;
+    }
+    #menu-toggle {
+      font-size: 28px;
+      margin-right: 15px;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    #menu-toggle:hover { color: #4154F1; }
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .header-content a.title {
+      text-decoration: none;
+      color: #444;
+      font-weight: 700;
+      font-size: 26px;
+    }
+    .header-content a.title:hover { color: #4154F1; }
 
+    header a.user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #444;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    header a.user-info:hover {
+      background: #f8f1e5;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    header a.user-info img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
 
-  /* ==== Main Content ==== */
-  .main-content{margin-left:260px;padding:100px 30px 30px;height:100vh;overflow-y:auto;transition:margin-left 0.3s ease;}
-  .sidebar.collapsed ~ .main-content{margin-left:80px;}
-  .card{background:#fff;padding:1.5rem;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.08);margin-bottom:20px;}
-  table{width:100%;border-collapse:collapse;font-size:14px;}
-  th{background-color:#f8f7ff;text-align:left;padding:12px;font-weight:500;}
-  td{padding:12px;border-top:1px solid #ddd;}
-  button.action-btn{padding:5px 10px;border:none;border-radius:5px;cursor:pointer;margin-right:5px;color:white;}
-  .edit-btn{background:#1e90ff;}
-  .delete-btn{background:#ff4c4c;}
-  .upload-btn{background:#28a745;}
-  .modal{display:none;position:fixed;z-index:10000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,0.5);justify-content:center;align-items:center;}
-  .modal.show{display:flex;}
-  .modal-content{background:#fff;margin:auto;border-radius:12px;width:90%;max-width:500px;overflow:hidden;}
-  .modal-header{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);padding:15px;color:white;font-size:20px;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
-  .modal-body{padding:20px;}
-  .modal label{display:block;margin:10px 0 5px;color:#012970;font-weight:600;}
-  .modal input,.modal select{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px;margin-bottom:12px;}
-  .modal select[multiple]{height:120px;}
-  .modal-buttons{text-align:right;margin-top:10px;}
-  .modal button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:500;font-size:14px;margin-left:10px;}
-  .modal .save-btn{background:linear-gradient(90deg,#1e90ff 0%,#0066ff 100%);color:white;}
-  .modal .cancel-btn{background:#ccc;color:#000;}
-    .main-content h2 {
-    font-family: 'Poppins', sans-serif;
-    font-size: 28px;
-    font-weight: 500;
-    color: #444;
-    margin-bottom: 10px;
-  }
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 250px;
+      height: calc(100% - 60px);
+      background: #f8f1e5;
+      padding: 15px 0;
+      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.08);
+      border-top-right-radius: 12px;
+      transition: all 0.3s ease;
+      overflow-y: auto;
+      z-index: 999;
+    }
+    .sidebar.collapsed {
+      width: 70px;
+      overflow: hidden;
+    }
+    .sidebar.collapsed .sidebar-section-title,
+    .sidebar.collapsed .sidebar-link span {
+      display: none;
+    }
+    .sidebar-section { margin-bottom: 25px; padding: 0 15px; }
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6b7280;
+      margin-bottom: 10px;
+      padding-left: 10px;
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 15px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #2C2C2C;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .sidebar-link i { width: 18px; text-align: center; }
+    .sidebar-link.active,
+    .sidebar-link:hover {
+      background: #eadbbf;
+      color: #1F2937;
+      font-weight: 600;
+    }
+
+    /* Dropdown */
+    .sidebar-dropdown .dropdown-menu {
+      display: none;
+      margin-left: 20px;
+      margin-top: 4px;
+    }
+    .sidebar-dropdown.active .dropdown-menu {
+      display: block;
+    }
+    .sidebar-dropdown .dropdown-toggle::after {
+      content: "\f078";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      margin-left: auto;
+      font-size: 12px;
+    }
+    .sidebar-dropdown.active .dropdown-toggle::after {
+      content: "\f077";
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      min-height: 100vh;
+      transition: margin-left 0.3s ease;
+    }
+    .sidebar.collapsed ~ .main-content {
+      margin-left: 80px;
+    }
+
+    /* Card */
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { background-color: #f8f7ff; text-align: left; padding: 12px; font-weight: 500; }
+    td { padding: 12px; border-top: 1px solid #ddd; }
+
+    /* Buttons */
+    .action-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .save-btn { background: linear-gradient(90deg, #1e90ff 0%, #0066ff 100%); color: white; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { left: -260px; }
+      .sidebar.active { left: 0; }
+      .sidebar.collapsed { left: 0; width: 250px; }
+      .main-content { margin-left: 0; }
+      .sidebar.collapsed ~ .main-content { margin-left: 0; }
+    }
   </style>
 </head>
-
 <body>
 
-  <header>
-    <span id="menu-toggle">&#9776;</span>
-    <div class="header-content">
-      <span>iAttend Admin</span>
-      <div class="user-info"><span>Admin</span><img src="https://placehold.co/36x36/899BBD/ffffff?text=A"></div>
-    </div>
-  </header>
+<header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="{{ url_for('admin_dashboard') }}" class="title">iAttend</a>
+    <a href="#" class="user-info">
+      <span>Admin User</span>
+      <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=A" alt="Admin">
+    </a>
+  </div>
+</header>
 
 <!-- ========== SIDEBAR ========== -->
 <div class="sidebar">
@@ -110,16 +225,13 @@
 
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
-
-    <!-- Students -->
     <a class="sidebar-link {% if request.endpoint == 'admin_student_add' %}active{% endif %}" href="{{ url_for('admin_student_add') }}">
       <i class="fas fa-user-graduate"></i><span>Students</span>
     </a>
 
-    <!-- Teachers (Dropdown) -->
     <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_add','admin_teacher_assign'] %}active{% endif %}">
-      <a class="sidebar-link dropdown-toggle">
-        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
+      <a class="sidebar-link dropdown-toggle" href="#" onclick="event.preventDefault();">
+        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span>
       </a>
       <div class="dropdown-menu">
         <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
@@ -127,17 +239,14 @@
       </div>
     </div>
 
-    <!-- Programs -->
     <a class="sidebar-link {% if request.endpoint == 'admin_programs' %}active{% endif %}" href="{{ url_for('admin_programs') }}">
       <i class="fas fa-layer-group"></i><span>Programs</span>
     </a>
 
-    <!-- Groups -->
     <a class="sidebar-link {% if request.endpoint == 'admin_groups' %}active{% endif %}" href="{{ url_for('admin_groups') }}">
       <i class="fas fa-users"></i><span>Groups</span>
     </a>
 
-    <!-- Modules -->
     <a class="sidebar-link {% if request.endpoint == 'admin_modules' %}active{% endif %}" href="{{ url_for('admin_modules') }}">
       <i class="fas fa-book"></i><span>Modules</span>
     </a>
@@ -165,110 +274,96 @@
 </div>
 
 <div class="main-content">
-  <h2>Assign Modules</h2>
-    <div class="breadcrumb">
-  <span class="section">Management</span> / <span class="section">Teachers</span> / <span class="current">Assign Modules</span>
-</div>
+  <h2 class="text-2xl font-bold mb-4">Assign Modules to Teachers</h2>
+  <div class="text-sm font-medium text-gray-600 mb-6">
+    <span class="text-gray-500">Management</span> / 
+    <span class="text-gray-500">Teachers</span> / 
+    <span class="text-gray-800">Assign Modules</span>
+  </div>
 
   <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>Teacher Name</th>
-          <th>Email</th>
-          <th>Program</th>
-          <th>Group Code</th>
-          <th>Assign Module</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for teacher in teachers %}
-        <tr>
-<td>{{ teacher.firstName }} {{ teacher.lastName }}</td>
-<td>{{ teacher.email }}</td>
-<td>{% if teacher.program %}{{ programs_map.get(teacher.program, 'N/A') }}{% else %}N/A{% endif %}</td>
-<form method="POST" action="{{ url_for('admin_teacher_assign') }}">
-<td>
-<input type="hidden" name="teacher_id" value="{{ teacher.docId }}" id="fk_teacher_{{ teacher.docId }}">
-<input type="hidden" id="fk_program_{{ teacher.docId }}" name="fk_program">
-<input type="hidden" id="fk_group_{{ teacher.docId }}" name="fk_group">
-<input type="hidden" id="fk_module_{{ teacher.docId }}" name="fk_module">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="bg-gray-50 text-left">
+            <th class="p-3 font-medium">Teacher Name</th>
+            <th class="p-3 font-medium">Email</th>
+            <th class="p-3 font-medium">Program</th>
+            <th class="p-3 font-medium">Group</th>
+            <th class="p-3 font-medium">Module</th>
+            <th class="p-3 font-medium">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for teacher in teachers %}
+          <tr class="border-t hover:bg-gray-50">
+            <td class="p-3">{{ teacher.firstName }} {{ teacher.lastName }}</td>
+            <td class="p-3">{{ teacher.email }}</td>
+            <td class="p-3">
+              {% if teacher.program %}
+                {{ programs_map.get(teacher.program, '—') }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <form method="POST" action="{{ url_for('admin_teacher_assign') }}">
+              <input type="hidden" name="teacher_id" value="{{ teacher.docId }}">
 
-<select name="group_id" required>
-<option value="">Select Group</option>
-{% if teacher.program %}
-{% for group in groups %}
-{% if group.fk_program and group.fk_program.strip() == teacher.program.strip() %}
-<option value="{{ group.docId }}">{{ group.groupCode }}{% if group.intake %} - {{ group.intake }}{% endif %}</option>
-{% endif %}
-{% endfor %}
-{% endif %}
-</select>
+              <td class="p-3">
+                <select name="group_id" class="w-full p-2 border rounded text-sm" required>
+                  <option value="">Select Group</option>
+                  {% if teacher.program %}
+                    {% for group in groups %}
+                      {% if group.fk_program and group.fk_program.strip() == teacher.program.strip() %}
+                        <option value="{{ group.docId }}">{{ group.groupCode }}{% if group.intake %} - {{ group.intake }}{% endif %}</option>
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                </select>
+              </td>
 
-<select id="teacher_assignment_dropdown_{{ teacher.docId }}" style="display:none"></select>
-</td>
+              <td class="p-3">
+                <select name="module_id" class="w-full p-2 border rounded text-sm" required>
+                  <option value="">Select Module</option>
+                  {% for module in modules %}
+                    {% if module.status != 'assigned' %}
+                      <option value="{{ module.docId }}">{{ module.moduleName }} ({{ module.moduleCode }})</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </td>
 
-<td>
-<select name="module_id" required>
-<option value="">Select Module</option>
-{% for module in modules %}
-{% if module.status != 'assigned' %}
-<option value="{{ module.docId }}">{{ module.moduleName }} ({{ module.moduleCode }})</option>
-{% endif %}
-{% endfor %}
-</select>
-</td>
-
-<td>
-<button type="submit" class="action-btn save-btn">Save</button>
-</td>
-</form>
-</tr>
-{% endfor %}
-</tbody>
-</table>
+              <td class="p-3">
+                <button type="submit" class="action-btn save-btn text-xs px-3 py-1">Save</button>
+              </td>
+            </form>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
-</div>
+
 <script>
-// Dropdown toggle
-document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-toggle.addEventListener('click', e => { e.preventDefault(); toggle.parentElement.classList.toggle('active'); });
-});
+  // Sidebar toggle
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  menuToggle.addEventListener('click', () => {
+    if (window.innerWidth <= 768) {
+      sidebar.classList.toggle('active');
+    } else {
+      sidebar.classList.toggle('collapsed');
+    }
+  });
 
-// Sidebar collapse
-const menuToggle = document.getElementById('menu-toggle');
-const sidebar = document.querySelector('.sidebar');
-menuToggle.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
-
-// Teacher assignment dropdowns
-document.querySelectorAll('[id^="fk_teacher_"]').forEach(input => {
-    const teacherId = input.value;
-    const dropdown = document.getElementById(`teacher_assignment_dropdown_${teacherId}`);
-    fetch(`/api/teacher_assignment/${teacherId}`)
-        .then(res => res.json())
-        .then(data => {
-            if(data.error){ dropdown.style.display="none"; return; }
-            dropdown.innerHTML = "";
-            data.forEach((assignment,index)=>{
-                const option = document.createElement("option");
-                option.value=index;
-                option.text=`${assignment.moduleName} | ${assignment.groupCode} | ${assignment.programName}`;
-                dropdown.appendChild(option);
-            });
-            dropdown.style.display="block";
-            fillScheduleFields(teacherId, data[0]);
-            dropdown.onchange = ()=>fillScheduleFields(teacherId, data[dropdown.value]);
-        })
-        .catch(err=>console.error("Error fetching assignments:", err));
-});
-
-function fillScheduleFields(teacherId, assignment){
-    document.getElementById(`fk_program_${teacherId}`).value = assignment.programId;
-    document.getElementById(`fk_group_${teacherId}`).value = assignment.groupId;
-    document.getElementById(`fk_module_${teacherId}`).value = assignment.moduleName;
-}
-
+  // Dropdown toggle
+  document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+    toggle.addEventListener('click', e => {
+      e.preventDefault();
+      toggle.parentElement.classList.toggle('active');
+    });
+  });
 </script>
 
 </body>
