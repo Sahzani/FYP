@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iAttend - Attendance Report</title>
-  <!-- Tailwind CSS CDN (replace with compiled CSS in production) -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
@@ -328,189 +328,208 @@
     </div>
   </div>
 
-<script>
-  const menuToggle = document.getElementById('menu-toggle');
-  const sidebar = document.querySelector('.sidebar');
-  const mainContent = document.querySelector('.main-content');
+  <script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
 
-  menuToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-    mainContent.classList.toggle('expanded');
-  });
-
-  const WEBCAM_URL = "{{ webcam_url }}";
-  let allSchedules = [];
-  let scheduleId = "";
-  const videoContainer = document.getElementById('video-container');
-  const webcamFeed = document.getElementById('webcam-feed');
-  const attendanceTable = document.querySelector('#attendance-table tbody');
-  let attendanceInterval = null;
-
-  // === FETCH SCHEDULES VIA AJAX ===
-  function loadSchedules() {
-    fetch('/api/schedules')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load schedules');
-        return res.json();
-      })
-      .then(data => {
-        allSchedules = data.map(s => ({
-          ...s,
-          programName: (s.programName || '').trim(),
-          groupName: (s.groupName || '').trim(),
-          moduleName: (s.moduleName || '').trim(),
-          day: (s.day || '').trim()
-        }));
-
-        const programSelect = document.getElementById('filter-program');
-        programSelect.innerHTML = '<option value="">All Programs</option>';
-        const uniquePrograms = [...new Set(allSchedules.map(s => s.programName))]
-          .filter(name => name && name !== "-")
-          .sort();
-        uniquePrograms.forEach(name => {
-          const option = document.createElement('option');
-          option.value = name;
-          option.textContent = name;
-          programSelect.appendChild(option);
-        });
-
-        updateFilters();
-      })
-      .catch(err => {
-        console.error("Error loading schedules:", err);
-        alert("Failed to load class data. Please refresh the page.");
-      });
-  }
-
-  function populateDropdown(id, values) {
-    const select = document.getElementById(id);
-    const current = select.value;
-    select.innerHTML = '<option value="">All</option>';
-    const uniqueValues = [...new Set(values)]
-      .filter(v => v && v.trim() !== "")
-      .sort();
-    uniqueValues.forEach(val => {
-      const opt = document.createElement('option');
-      opt.value = val;
-      opt.textContent = val;
-      select.appendChild(opt);
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
     });
-    if (uniqueValues.includes(current)) select.value = current;
-    else select.value = "";
-  }
 
-  function updateFilters() {
-    const program = document.getElementById('filter-program').value;
-    const group = document.getElementById('filter-group').value;
-    const module = document.getElementById('filter-module').value;
-    const day = document.getElementById('filter-day').value;
-    let filtered = allSchedules;
-    if (program) filtered = filtered.filter(s => s.programName === program);
-    if (group) filtered = filtered.filter(s => s.groupName === group);
-    if (module) filtered = filtered.filter(s => s.moduleName === module);
-    if (day) filtered = filtered.filter(s => s.day === day);
-    populateDropdown('filter-group', filtered.map(s => s.groupName));
-    populateDropdown('filter-module', filtered.map(s => s.moduleName));
-    populateDropdown('filter-day', filtered.map(s => s.day));
-    document.getElementById('filter-group').disabled = !filtered.some(s => s.groupName);
-    document.getElementById('filter-module').disabled = !filtered.some(s => s.moduleName);
-    document.getElementById('filter-day').disabled = !filtered.some(s => s.day);
-    window.filteredSchedules = filtered;
-  }
+    const WEBCAM_URL = "{{ webcam_url }}";
+    let allSchedules = [];
+    let scheduleId = "";
+    const videoContainer = document.getElementById('video-container');
+    const webcamFeed = document.getElementById('webcam-feed');
+    const attendanceTable = document.querySelector('#attendance-table tbody');
+    let attendanceInterval = null;
 
-  document.getElementById('filter-program').addEventListener('change', updateFilters);
-  document.getElementById('filter-group').addEventListener('change', updateFilters);
-  document.getElementById('filter-module').addEventListener('change', updateFilters);
-  document.getElementById('filter-day').addEventListener('change', updateFilters);
-
-  document.getElementById('apply-filters').addEventListener('click', () => {
-    const filtered = window.filteredSchedules || allSchedules;
-    if (filtered.length === 0) {
-      alert("No classes match your filters.");
-      return;
-    }
-    if (filtered.length === 1) {
-      scheduleId = filtered[0].docId;
-      startCameraWithSchedule(scheduleId);
-    } else {
-      alert("Multiple classes match. Please refine filters.");
-    }
-  });
-
-  document.getElementById('reset-filters').addEventListener('click', () => {
-    document.getElementById('filter-program').value = '';
-    document.getElementById('filter-group').value = '';
-    document.getElementById('filter-module').value = '';
-    document.getElementById('filter-day').value = '';
-    updateFilters();
-  });
-
-  function startCameraWithSchedule(scheduleId) {
-    fetch(`${WEBCAM_URL}/start_camera`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `schedule=${encodeURIComponent(scheduleId)}`
-    })
-    .then(() => {
-      videoContainer.style.display = "block";
-      webcamFeed.src = `${WEBCAM_URL}/video_feed`;
-      
-      // ✅ Start auto-refresh every 5 seconds
-      if (attendanceInterval) clearInterval(attendanceInterval);
-      attendanceInterval = setInterval(() => {
-        fetchAttendance(scheduleId);
-      }, 5000);
-      
-      fetchAttendance(scheduleId); // Initial load
-    })
-    .catch(err => console.error("Failed to start camera:", err));
-  }
-
-  document.getElementById('stopCamera').addEventListener('click', () => {
-    fetch(`${WEBCAM_URL}/stop_camera`)
-      .then(() => {
-        videoContainer.style.display = "none";
-        webcamFeed.src = "";
-        if (attendanceInterval) {
-          clearInterval(attendanceInterval);
-          attendanceInterval = null;
-        }
-      })
-      .catch(err => console.error("Failed to stop camera:", err));
-  });
-
-  function fetchAttendance(scheduleId) {
-    fetch(`/api/attendance/${scheduleId}`)
-      .then(res => res.json())
-      .then(data => {
-        attendanceTable.innerHTML = "";
-        if (!data.students || data.students.length === 0) {
-          attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">No students found</td></tr>`;
-          return;
-        }
-        data.students.forEach(student => {
-          const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${student.name || "Unknown Student"}</td>
-            <td>${student.email || "-"}</td>
-            <td>${student.time || "-"}</td>
-            <td><span class="status-badge status-${student.status}">${student.status}</span></td>
-            <td>${student.group || "-"}</td>
-            <td>${student.program || "-"}</td>
-            <td>${moduleName}</td>
-          `;
-          attendanceTable.appendChild(tr);
+    // ✅ Format time in Brunei timezone
+    function formatBruneiTime(isoString) {
+      if (!isoString || isoString === "-") return "-";
+      try {
+        const dt = new Date(isoString);
+        return dt.toLocaleTimeString('en-GB', {
+          timeZone: 'Asia/Brunei',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
         });
-      })
-      .catch(err => {
-        console.error("Failed to fetch attendance:", err);
-        attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
-      });
-  }
+      } catch (e) {
+        console.warn("Failed to parse time:", isoString);
+        return "-";
+      }
+    }
 
-  // Load schedules when page is ready
-  document.addEventListener('DOMContentLoaded', loadSchedules);
-</script>
+    // === FETCH SCHEDULES VIA AJAX ===
+    function loadSchedules() {
+      fetch('/api/schedules')
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to load schedules');
+          return res.json();
+        })
+        .then(data => {
+          allSchedules = data.map(s => ({
+            ...s,
+            programName: (s.programName || '').trim(),
+            groupName: (s.groupName || '').trim(),
+            moduleName: (s.moduleName || '').trim(),
+            day: (s.day || '').trim()
+          }));
+
+          const programSelect = document.getElementById('filter-program');
+          programSelect.innerHTML = '<option value="">All Programs</option>';
+          const uniquePrograms = [...new Set(allSchedules.map(s => s.programName))]
+            .filter(name => name && name !== "-")
+            .sort();
+          uniquePrograms.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            programSelect.appendChild(option);
+          });
+
+          updateFilters();
+        })
+        .catch(err => {
+          console.error("Error loading schedules:", err);
+          alert("Failed to load class data. Please refresh the page.");
+        });
+    }
+
+    function populateDropdown(id, values) {
+      const select = document.getElementById(id);
+      const current = select.value;
+      select.innerHTML = '<option value="">All</option>';
+      const uniqueValues = [...new Set(values)]
+        .filter(v => v && v.trim() !== "")
+        .sort();
+      uniqueValues.forEach(val => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        select.appendChild(opt);
+      });
+      if (uniqueValues.includes(current)) select.value = current;
+      else select.value = "";
+    }
+
+    function updateFilters() {
+      const program = document.getElementById('filter-program').value;
+      const group = document.getElementById('filter-group').value;
+      const module = document.getElementById('filter-module').value;
+      const day = document.getElementById('filter-day').value;
+      let filtered = allSchedules;
+      if (program) filtered = filtered.filter(s => s.programName === program);
+      if (group) filtered = filtered.filter(s => s.groupName === group);
+      if (module) filtered = filtered.filter(s => s.moduleName === module);
+      if (day) filtered = filtered.filter(s => s.day === day);
+      populateDropdown('filter-group', filtered.map(s => s.groupName));
+      populateDropdown('filter-module', filtered.map(s => s.moduleName));
+      populateDropdown('filter-day', filtered.map(s => s.day));
+      document.getElementById('filter-group').disabled = !filtered.some(s => s.groupName);
+      document.getElementById('filter-module').disabled = !filtered.some(s => s.moduleName);
+      document.getElementById('filter-day').disabled = !filtered.some(s => s.day);
+      window.filteredSchedules = filtered;
+    }
+
+    document.getElementById('filter-program').addEventListener('change', updateFilters);
+    document.getElementById('filter-group').addEventListener('change', updateFilters);
+    document.getElementById('filter-module').addEventListener('change', updateFilters);
+    document.getElementById('filter-day').addEventListener('change', updateFilters);
+
+    document.getElementById('apply-filters').addEventListener('click', () => {
+      const filtered = window.filteredSchedules || allSchedules;
+      if (filtered.length === 0) {
+        alert("No classes match your filters.");
+        return;
+      }
+      if (filtered.length === 1) {
+        scheduleId = filtered[0].docId;
+        startCameraWithSchedule(scheduleId);
+      } else {
+        alert("Multiple classes match. Please refine filters.");
+      }
+    });
+
+    document.getElementById('reset-filters').addEventListener('click', () => {
+      document.getElementById('filter-program').value = '';
+      document.getElementById('filter-group').value = '';
+      document.getElementById('filter-module').value = '';
+      document.getElementById('filter-day').value = '';
+      updateFilters();
+    });
+
+    function startCameraWithSchedule(scheduleId) {
+      fetch(`${WEBCAM_URL}/start_camera`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `schedule=${encodeURIComponent(scheduleId)}`
+      })
+      .then(() => {
+        videoContainer.style.display = "block";
+        webcamFeed.src = `${WEBCAM_URL}/video_feed`;
+        
+        // Start auto-refresh every 5 seconds
+        if (attendanceInterval) clearInterval(attendanceInterval);
+        attendanceInterval = setInterval(() => {
+          fetchAttendance(scheduleId);
+        }, 5000);
+        
+        fetchAttendance(scheduleId); // Initial load
+      })
+      .catch(err => console.error("Failed to start camera:", err));
+    }
+
+    document.getElementById('stopCamera').addEventListener('click', () => {
+      fetch(`${WEBCAM_URL}/stop_camera`)
+        .then(() => {
+          videoContainer.style.display = "none";
+          webcamFeed.src = "";
+          if (attendanceInterval) {
+            clearInterval(attendanceInterval);
+            attendanceInterval = null;
+          }
+        })
+        .catch(err => console.error("Failed to stop camera:", err));
+    });
+
+    function fetchAttendance(scheduleId) {
+      fetch(`/api/attendance/${scheduleId}`)
+        .then(res => res.json())
+        .then(data => {
+          attendanceTable.innerHTML = "";
+          if (!data.students || data.students.length === 0) {
+            attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">No students found</td></tr>`;
+            return;
+          }
+          data.students.forEach(student => {
+            const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
+            const formattedTime = formatBruneiTime(student.time); // ✅ Brunei time
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${student.name || "Unknown Student"}</td>
+              <td>${student.email || "-"}</td>
+              <td>${formattedTime}</td>
+              <td><span class="status-badge status-${student.status}">${student.status}</span></td>
+              <td>${student.group || "-"}</td>
+              <td>${student.program || "-"}</td>
+              <td>${moduleName}</td>
+            `;
+            attendanceTable.appendChild(tr);
+          });
+        })
+        .catch(err => {
+          console.error("Failed to fetch attendance:", err);
+          attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
+        });
+    }
+
+    // Load schedules when page is ready
+    document.addEventListener('DOMContentLoaded', loadSchedules);
+  </script>
 </body>
 </html>
