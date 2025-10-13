@@ -980,42 +980,39 @@ def student_absentapp():
     )
 
 # ------------------ Serve Uploaded Absence File ------------------
-@app.route("/serve_absence_file/<record_id>")
+@app.route("/student/absentapp/file/<record_id>")
 def serve_absence_file(record_id):
-    role = session.get("role")
-    if role not in ["student", "teacher", "gc"]:
-        flash("You must be logged in to view this file.", "danger")
-        return redirect(url_for("login"))
+    if session.get("role") != "student":
+        return redirect(url_for("home"))
 
     doc_ref = db.collection("absenceRecords").document(record_id)
     doc = doc_ref.get()
 
     if not doc.exists:
         flash("File not found.", "danger")
-        return redirect(request.referrer or url_for("home"))
+        return redirect(url_for("student_absentapp"))
 
     data = doc.to_dict()
     file_name = data.get("file_name", "document.pdf")
     file_data = data.get("file_data")
 
     if not file_data:
-        flash("No file available.", "danger")
-        return redirect(request.referrer or url_for("home"))
+        flash("File not found.", "danger")
+        return redirect(url_for("student_absentapp"))
 
     import io, base64
-    from flask import send_file
-
+    # Remove the "data:...;base64," prefix if it exists
     if file_data.startswith("data:"):
         file_bytes = base64.b64decode(file_data.split(",")[1])
     else:
         file_bytes = base64.b64decode(file_data)
 
-
+    from flask import send_file
     return send_file(
         io.BytesIO(file_bytes),
         mimetype=data.get("file_type", "application/pdf"),
-        download_name=file_name,
-        as_attachment=False  # open in browser
+        download_name=file_name,  # <--- This controls the tab name
+        as_attachment=False       # Open in browser
     )
 
 # ------------------ Delete Absence Record ------------------
@@ -1637,6 +1634,7 @@ def teacher_attendance():
 #------------------ API to get attendance data ------------------
 from flask import jsonify
 from datetime import datetime
+
 @app.route("/api/attendance/<schedule_id>")
 def api_attendance(schedule_id):
     """Return live attendance for all students in a schedule with auto status (Present/Late/Absent)."""
@@ -1656,14 +1654,7 @@ def api_attendance(schedule_id):
         if not group_id:
             return jsonify({"error": "Invalid schedule group"}), 400
 
-        # 🔥 Resolve group name (FIX: was showing ID before)
-        group_name = "-"
-        if group_id:
-            group_doc = db.collection("groups").document(group_id).get()
-            if group_doc.exists:
-                group_name = group_doc.to_dict().get("groupName", "-")
-
-        # 🔥 Resolve module name
+        # 🔥 CORRECT: Use 'mlmodule' (as used in your other routes)
         module_name = "-"
         if module_id:
             module_doc = db.collection("mlmodule").document(module_id).get()
@@ -1712,7 +1703,7 @@ def api_attendance(schedule_id):
                 "name": student_name,
                 "email": student_email,
                 "studentID": studentID,
-                "group": group_name,          # ✅ NOW READABLE!
+                "group": group_id,
                 "program": program_name,
                 "module": module_name,
                 "photo_url": photo_url,
@@ -1726,7 +1717,7 @@ def api_attendance(schedule_id):
 
         try:
             class_start_time = datetime.strptime(start_time_str, "%H:%M").time()
-            scheduled_start = datetime.combine(today, class_start_time)
+            scheduled_start = datetime.combine(today, class_start_time)  # naive datetime
         except Exception:
             scheduled_start = datetime.combine(today, datetime.min.time())
 
@@ -1742,8 +1733,9 @@ def api_attendance(schedule_id):
 
             ts = att.get("timestamp")
             if ts:
+                # Handle Firestore Timestamp or ISO string
                 if hasattr(ts, "astimezone"):
-                    att_dt = ts.astimezone().replace(tzinfo=None)
+                    att_dt = ts.astimezone().replace(tzinfo=None)  # convert to naive local time
                 else:
                     try:
                         att_dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
@@ -1764,6 +1756,8 @@ def api_attendance(schedule_id):
                         status = "Absent"
 
                     att_time = att_dt.strftime("%H:%M")
+                # else: keep status = "Absent"
+            # else: no timestamp → status remains "Absent"
 
             attendance_records[student_id] = {
                 "status": status,
@@ -1780,7 +1774,7 @@ def api_attendance(schedule_id):
                 "email": s["email"],
                 "status": att["status"] if att else "Absent",
                 "time": att["time"] if att else "-",
-                "group": s["group"],          # ✅ Now shows "Group A", not "grp_123"
+                "group": s["group"],
                 "program": s["program"],
                 "module": s["module"],
                 "studentID": s["studentID"],
@@ -1789,18 +1783,22 @@ def api_attendance(schedule_id):
                 "last_name": s["last_name"]
             })
 
-        return jsonify({
+        response_data = {
             "students": result,
             "schedule_context": {
                 "schedule_id": schedule_id,
                 "group_id": group_id,
-                "group_name": group_name,     # Optional: for debugging
+                "module_id": module_id,
                 "module_name": module_name,
                 "teacher_id": teacher_id,
                 "total_students": len(result),
                 "day": day
             }
-        })
+        }
+
+        
+
+        return jsonify(response_data)
         
     except Exception as e:
         print(f"[ERROR] api_attendance error: {str(e)}")
