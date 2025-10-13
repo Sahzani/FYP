@@ -980,39 +980,42 @@ def student_absentapp():
     )
 
 # ------------------ Serve Uploaded Absence File ------------------
-@app.route("/student/absentapp/file/<record_id>")
+@app.route("/serve_absence_file/<record_id>")
 def serve_absence_file(record_id):
-    if session.get("role") != "student":
-        return redirect(url_for("home"))
+    role = session.get("role")
+    if role not in ["student", "teacher", "gc"]:
+        flash("You must be logged in to view this file.", "danger")
+        return redirect(url_for("login"))
 
     doc_ref = db.collection("absenceRecords").document(record_id)
     doc = doc_ref.get()
 
     if not doc.exists:
         flash("File not found.", "danger")
-        return redirect(url_for("student_absentapp"))
+        return redirect(request.referrer or url_for("home"))
 
     data = doc.to_dict()
     file_name = data.get("file_name", "document.pdf")
     file_data = data.get("file_data")
 
     if not file_data:
-        flash("File not found.", "danger")
-        return redirect(url_for("student_absentapp"))
+        flash("No file available.", "danger")
+        return redirect(request.referrer or url_for("home"))
 
     import io, base64
-    # Remove the "data:...;base64," prefix if it exists
+    from flask import send_file
+
     if file_data.startswith("data:"):
         file_bytes = base64.b64decode(file_data.split(",")[1])
     else:
         file_bytes = base64.b64decode(file_data)
 
-    from flask import send_file
+
     return send_file(
         io.BytesIO(file_bytes),
         mimetype=data.get("file_type", "application/pdf"),
-        download_name=file_name,  # <--- This controls the tab name
-        as_attachment=False       # Open in browser
+        download_name=file_name,
+        as_attachment=False  # open in browser
     )
 
 # ------------------ Delete Absence Record ------------------
@@ -1634,6 +1637,11 @@ def teacher_attendance():
 #------------------ API to get attendance data ------------------
 from flask import jsonify
 from datetime import datetime
+import pytz
+from datetime import datetime
+
+# Brunei timezone
+LOCAL_TZ = pytz.timezone("Asia/Brunei")
 
 @app.route("/api/attendance/<schedule_id>")
 def api_attendance(schedule_id):
@@ -1654,7 +1662,14 @@ def api_attendance(schedule_id):
         if not group_id:
             return jsonify({"error": "Invalid schedule group"}), 400
 
-        # 🔥 CORRECT: Use 'mlmodule' (as used in your other routes)
+        # 🔥 Resolve group name (FIX: was showing ID)
+        group_name = "-"
+        if group_id:
+            group_doc = db.collection("groups").document(group_id).get()
+            if group_doc.exists:
+                group_name = group_doc.to_dict().get("groupName", "-")
+
+        # 🔥 Resolve module name
         module_name = "-"
         if module_id:
             module_doc = db.collection("mlmodule").document(module_id).get()
@@ -1703,7 +1718,7 @@ def api_attendance(schedule_id):
                 "name": student_name,
                 "email": student_email,
                 "studentID": studentID,
-                "group": group_id,
+                "group": group_name,          # ✅ Readable name
                 "program": program_name,
                 "module": module_name,
                 "photo_url": photo_url,
@@ -1711,15 +1726,15 @@ def api_attendance(schedule_id):
                 "last_name": last_name
             })
 
-        # 3️⃣ Determine scheduled class start time (naive = local time)
-        today = datetime.now().date()
+        # 3️⃣ Build scheduled start time in Brunei local time (timezone-aware)
+        today = datetime.now(LOCAL_TZ).date()
         today_str = today.strftime("%Y-%m-%d")
 
         try:
             class_start_time = datetime.strptime(start_time_str, "%H:%M").time()
-            scheduled_start = datetime.combine(today, class_start_time)  # naive datetime
+            scheduled_start = LOCAL_TZ.localize(datetime.combine(today, class_start_time))
         except Exception:
-            scheduled_start = datetime.combine(today, datetime.min.time())
+            scheduled_start = LOCAL_TZ.localize(datetime.combine(today, datetime.min.time()))
 
         # 4️⃣ Fetch today's attendance records
         att_ref = db.collection("attendance").document(schedule_id).collection(today_str).stream()
@@ -1732,32 +1747,33 @@ def api_attendance(schedule_id):
             status = "Absent"
 
             ts = att.get("timestamp")
-            if ts:
-                # Handle Firestore Timestamp or ISO string
-                if hasattr(ts, "astimezone"):
-                    att_dt = ts.astimezone().replace(tzinfo=None)  # convert to naive local time
+        if ts:
+            if hasattr(ts, 'astimezone'):
+                # ✅ Already Brunei local time — use as-is
+                att_dt = ts
+            else:
+                # Fallback for string (should not happen if stored correctly)
+                try:
+                    dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                    if dt.tzinfo is None:
+                        dt = LOCAL_TZ.localize(dt)
+                    att_dt = dt
+                except Exception:
+                    att_dt = None
+
+            if att_dt:
+                # Compare with scheduled_start (which is already Brunei local)
+                diff_seconds = (att_dt - scheduled_start).total_seconds()
+                minutes_late = diff_seconds / 60
+
+                if minutes_late <= 15:
+                    status = "Present"
+                elif minutes_late <= 30:
+                    status = "Late"
                 else:
-                    try:
-                        att_dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
-                        if att_dt.tzinfo is not None:
-                            att_dt = att_dt.astimezone().replace(tzinfo=None)
-                    except Exception:
-                        att_dt = None
+                    status = "Absent"
 
-                if att_dt:
-                    diff_seconds = (att_dt - scheduled_start).total_seconds()
-                    minutes_late = diff_seconds / 60
-
-                    if minutes_late <= 15:
-                        status = "Present"
-                    elif minutes_late <= 30:
-                        status = "Late"
-                    else:
-                        status = "Absent"
-
-                    att_time = att_dt.strftime("%H:%M")
-                # else: keep status = "Absent"
-            # else: no timestamp → status remains "Absent"
+                att_time = att_dt.strftime("%H:%M")  # e.g., "13:43"  # e.g., "13:43"
 
             attendance_records[student_id] = {
                 "status": status,
@@ -1774,7 +1790,7 @@ def api_attendance(schedule_id):
                 "email": s["email"],
                 "status": att["status"] if att else "Absent",
                 "time": att["time"] if att else "-",
-                "group": s["group"],
+                "group": s["group"],      # ✅ Now shows "Group A", not ID
                 "program": s["program"],
                 "module": s["module"],
                 "studentID": s["studentID"],
@@ -1783,27 +1799,23 @@ def api_attendance(schedule_id):
                 "last_name": s["last_name"]
             })
 
-        response_data = {
+        return jsonify({
             "students": result,
             "schedule_context": {
                 "schedule_id": schedule_id,
                 "group_id": group_id,
+                "group_name": group_name,
                 "module_id": module_id,
                 "module_name": module_name,
                 "teacher_id": teacher_id,
                 "total_students": len(result),
                 "day": day
             }
-        }
-
-        
-
-        return jsonify(response_data)
+        })
         
     except Exception as e:
         print(f"[ERROR] api_attendance error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-
 # ------------------ Teacher manage Absence ------------------
 @app.route("/teacher/manage_absent", methods=["GET", "POST"])
 def teacher_manage_absent():

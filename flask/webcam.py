@@ -30,7 +30,7 @@ frame_lock = threading.Lock()
 camera_thread = None
 camera_running = False
 current_schedule = None
-API_URL = "http://127.0.0.1:8000"
+API_URL = "http://128.199.107.48"
 
 # Skip frames to reduce CPU usage (process 1 out of every 5 frames)
 FRAME_SKIP = 5
@@ -99,15 +99,22 @@ def load_students_for_schedule(schedule_id):
 
 # ===== Mark attendance (same as before) =====
 attended_today = {}
+import pytz
+# Add this near the top (after other imports)
+LOCAL_TZ = pytz.timezone("Asia/Brunei")
 
+# Replace your mark_attendance function:
 def mark_attendance(student_id):
     global current_schedule
-    today = datetime.now().strftime("%Y-%m-%d")
     if not current_schedule:
         return None
 
+    # Use Brunei local time (timezone-aware)
+    now_local = datetime.now(LOCAL_TZ)
+    today_str = now_local.strftime("%Y-%m-%d")
+
     schedule_id = current_schedule["schedule_id"]
-    key = (student_id, schedule_id, today)
+    key = (student_id, schedule_id, today_str)
     if attended_today.get(key):
         return None
 
@@ -116,14 +123,14 @@ def mark_attendance(student_id):
     group_code = s.get("group", "")
     program_id = s.get("program", "")
 
-    db.collection("attendance").document(schedule_id).collection(today).document(student_id).set({
+    db.collection("attendance").document(schedule_id).collection(today_str).document(student_id).set({
         "name": s.get("name", "Unknown"),
         "group": group_code,
         "program": program_id,
         "status": "Present",
-        "timestamp": firestore.SERVER_TIMESTAMP
+        "timestamp": now_local  # ✅ Store Brunei local time (NOT SERVER_TIMESTAMP)
     })
-    print(f"[INFO] Marked {s.get('name', 'Unknown')} as Present")
+    print(f"[INFO] Marked {s.get('name', 'Unknown')} as Present at {now_local.strftime('%H:%M')}")
     return s.get("name", "Unknown")
 
 # ===== Camera Loop (Optimized) =====
