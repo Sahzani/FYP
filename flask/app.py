@@ -980,39 +980,42 @@ def student_absentapp():
     )
 
 # ------------------ Serve Uploaded Absence File ------------------
-@app.route("/student/absentapp/file/<record_id>")
+@app.route("/serve_absence_file/<record_id>")
 def serve_absence_file(record_id):
-    if session.get("role") != "student":
-        return redirect(url_for("home"))
+    role = session.get("role")
+    if role not in ["student", "teacher", "gc"]:
+        flash("You must be logged in to view this file.", "danger")
+        return redirect(url_for("login"))
 
     doc_ref = db.collection("absenceRecords").document(record_id)
     doc = doc_ref.get()
 
     if not doc.exists:
         flash("File not found.", "danger")
-        return redirect(url_for("student_absentapp"))
+        return redirect(request.referrer or url_for("home"))
 
     data = doc.to_dict()
     file_name = data.get("file_name", "document.pdf")
     file_data = data.get("file_data")
 
     if not file_data:
-        flash("File not found.", "danger")
-        return redirect(url_for("student_absentapp"))
+        flash("No file available.", "danger")
+        return redirect(request.referrer or url_for("home"))
 
     import io, base64
-    # Remove the "data:...;base64," prefix if it exists
+    from flask import send_file
+
     if file_data.startswith("data:"):
         file_bytes = base64.b64decode(file_data.split(",")[1])
     else:
         file_bytes = base64.b64decode(file_data)
 
-    from flask import send_file
+
     return send_file(
         io.BytesIO(file_bytes),
         mimetype=data.get("file_type", "application/pdf"),
-        download_name=file_name,  # <--- This controls the tab name
-        as_attachment=False       # Open in browser
+        download_name=file_name,
+        as_attachment=False  # open in browser
     )
 
 # ------------------ Delete Absence Record ------------------

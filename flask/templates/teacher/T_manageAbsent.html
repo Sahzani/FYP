@@ -325,13 +325,18 @@ header a.user-info:hover {
               <td>{{ record.start_date.split('-')[2] }}/{{ record.start_date.split('-')[1] }}/{{ record.start_date.split('-')[0] }}</td>
               <td>{{ record.end_date.split('-')[2] }}/{{ record.end_date.split('-')[1] }}/{{ record.end_date.split('-')[0] }}</td>
               <td>{{ record.reason }}</td>
-              <td>
-                {% if record.file_data %}
-                  <a href="{{ record.file_data }}" target="_blank" class="text-blue-600 hover:underline">View File</a>
-                {% else %}
-                  No File
-                {% endif %}
-              </td>
+              <td class="text-center">
+  {% if record.file_name %}
+    <a href="{{ url_for('serve_absence_file', record_id=record.id) }}"
+       target="_blank"
+       title="{{ record.file_name }}"
+       class="inline-flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow transition duration-150 ease-in-out">
+       <i class="fas fa-eye mr-1"></i> View
+    </a>
+  {% else %}
+    <span class="text-gray-400 italic">No File</span>
+  {% endif %}
+</td>
               <td>{{ record.status }}</td>
               <td class="flex action-buttons">
                 <form method="POST">
