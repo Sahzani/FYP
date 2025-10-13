@@ -260,6 +260,37 @@
       color: #2C2C2C;
     }
 
+    /* Prominent action buttons */
+    .action-btn {
+     background: #4154F1;
+      color: white;
+     border: none;
+      border-radius: 8px;
+     font-weight: 600;
+     padding: 10px 20px;
+     font-size: 15px;
+     cursor: pointer;
+     transition: all 0.2s ease;
+     box-shadow: 0 4px 8px rgba(65, 84, 241, 0.3);
+     min-width: 140px;
+     display: inline-flex;
+     justify-content: center;
+     align-items: center;
+    }
+    .action-btn:hover {
+     background: #3344c0;
+     transform: translateY(-2px);
+     box-shadow: 0 6px 12px rgba(65, 84, 241, 0.4);
+    }
+    .action-btn.delete {
+      background: #ff4c4c;
+      box-shadow: 0 4px 8px rgba(255, 76, 76, 0.3);
+    }
+    .action-btn.delete:hover {
+      background: #e03a3a;
+      box-shadow: 0 6px 12px rgba(255, 76, 76, 0.4);
+    }
+
     @media (max-width: 768px) {
       .sidebar { left: -260px; }
       .sidebar.active { left: 0; }
@@ -386,7 +417,7 @@
       <input type="time" name="start_time" required style="flex:1; min-width:100px;">
       <input type="time" name="end_time" required style="flex:1; min-width:100px;">
       <input type="text" name="room" placeholder="Room" required style="flex:1; min-width:100px;">
-      <button type="submit" style="flex:none;">Add Schedule</button>
+      <button type="submit" class="action-btn">Add Schedule</button>
     </form>
   </div>
 
@@ -395,7 +426,7 @@
     <h3>Upload Schedules (CSV)</h3>
     <form method="POST" action="{{ url_for('admin_schedule_upload_csv') }}" enctype="multipart/form-data">
       <input type="file" name="file" accept=".csv" required>
-      <button type="submit">Upload CSV</button>
+      <button type="submit" class="action-btn">Upload CSV</button>
     </form>
     <p style="font-size:13px; color:#666; margin-top:8px;">
       CSV must have columns: <code>Teacher Name, Group, Module, Day, Start Time, End Time, Room</code>
