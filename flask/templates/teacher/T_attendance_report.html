@@ -328,32 +328,32 @@
     </div>
   </div>
 
-  <script>
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const mainContent = document.querySelector('.main-content');
+<script>
+  const menuToggle = document.getElementById('menu-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const mainContent = document.querySelector('.main-content');
 
-    menuToggle.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-      mainContent.classList.toggle('expanded');
-    });
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    mainContent.classList.toggle('expanded');
+  });
 
-    const WEBCAM_URL = "{{ webcam_url }}";
-    let allSchedules = [];
-    let scheduleId = "";
-    const videoContainer = document.getElementById('video-container');
-    const webcamFeed = document.getElementById('webcam-feed');
-    const attendanceTable = document.querySelector('#attendance-table tbody');
+  const WEBCAM_URL = "{{ webcam_url }}";
+  let allSchedules = [];
+  let scheduleId = "";
+  const videoContainer = document.getElementById('video-container');
+  const webcamFeed = document.getElementById('webcam-feed');
+  const attendanceTable = document.querySelector('#attendance-table tbody');
+  let attendanceInterval = null;
 
-    // === FETCH SCHEDULES VIA AJAX ===
-     function loadSchedules() {
+  // === FETCH SCHEDULES VIA AJAX ===
+  function loadSchedules() {
     fetch('/api/schedules')
       .then(res => {
         if (!res.ok) throw new Error('Failed to load schedules');
         return res.json();
       })
       .then(data => {
-        // ✅ TRIM all fields to remove accidental spaces
         allSchedules = data.map(s => ({
           ...s,
           programName: (s.programName || '').trim(),
@@ -362,14 +362,11 @@
           day: (s.day || '').trim()
         }));
 
-        // ✅ Manually populate the Program dropdown FIRST
         const programSelect = document.getElementById('filter-program');
         programSelect.innerHTML = '<option value="">All Programs</option>';
-        
         const uniquePrograms = [...new Set(allSchedules.map(s => s.programName))]
           .filter(name => name && name !== "-")
           .sort();
-        
         uniquePrograms.forEach(name => {
           const option = document.createElement('option');
           option.value = name;
@@ -377,7 +374,6 @@
           programSelect.appendChild(option);
         });
 
-        // Now run normal filter logic
         updateFilters();
       })
       .catch(err => {
@@ -386,125 +382,135 @@
       });
   }
 
-    function populateDropdown(id, values) {
-      const select = document.getElementById(id);
-      const current = select.value;
-      select.innerHTML = '<option value="">All</option>';
-      // ✅ Allow any non-empty string (even "Unknown Program" for debugging)
-      const uniqueValues = [...new Set(values)]
-        .filter(v => v && v.trim() !== "")
-        .sort();
-      uniqueValues.forEach(val => {
-        const opt = document.createElement('option');
-        opt.value = val;
-        opt.textContent = val;
-        select.appendChild(opt);
-      });
-      if (uniqueValues.includes(current)) select.value = current;
-      else select.value = "";
-    }
-
-    function updateFilters() {
-      const program = document.getElementById('filter-program').value;
-      const group = document.getElementById('filter-group').value;
-      const module = document.getElementById('filter-module').value;
-      const day = document.getElementById('filter-day').value;
-      let filtered = allSchedules;
-      if (program) filtered = filtered.filter(s => s.programName === program);
-      if (group) filtered = filtered.filter(s => s.groupName === group);
-      if (module) filtered = filtered.filter(s => s.moduleName === module);
-      if (day) filtered = filtered.filter(s => s.day === day);
-      populateDropdown('filter-group', filtered.map(s => s.groupName));
-      populateDropdown('filter-module', filtered.map(s => s.moduleName));
-      populateDropdown('filter-day', filtered.map(s => s.day));
-      document.getElementById('filter-group').disabled = !filtered.some(s => s.groupName);
-      document.getElementById('filter-module').disabled = !filtered.some(s => s.moduleName);
-      document.getElementById('filter-day').disabled = !filtered.some(s => s.day);
-      window.filteredSchedules = filtered;
-    }
-
-    document.getElementById('filter-program').addEventListener('change', updateFilters);
-    document.getElementById('filter-group').addEventListener('change', updateFilters);
-    document.getElementById('filter-module').addEventListener('change', updateFilters);
-    document.getElementById('filter-day').addEventListener('change', updateFilters);
-
-    document.getElementById('apply-filters').addEventListener('click', () => {
-      const filtered = window.filteredSchedules || allSchedules;
-      if (filtered.length === 0) {
-        alert("No classes match your filters.");
-        return;
-      }
-      if (filtered.length === 1) {
-        scheduleId = filtered[0].docId;
-        startCameraWithSchedule(scheduleId);
-      } else {
-        alert("Multiple classes match. Please refine filters.");
-      }
+  function populateDropdown(id, values) {
+    const select = document.getElementById(id);
+    const current = select.value;
+    select.innerHTML = '<option value="">All</option>';
+    const uniqueValues = [...new Set(values)]
+      .filter(v => v && v.trim() !== "")
+      .sort();
+    uniqueValues.forEach(val => {
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = val;
+      select.appendChild(opt);
     });
+    if (uniqueValues.includes(current)) select.value = current;
+    else select.value = "";
+  }
 
-    document.getElementById('reset-filters').addEventListener('click', () => {
-      document.getElementById('filter-program').value = '';
-      document.getElementById('filter-group').value = '';
-      document.getElementById('filter-module').value = '';
-      document.getElementById('filter-day').value = '';
-      updateFilters();
-    });
+  function updateFilters() {
+    const program = document.getElementById('filter-program').value;
+    const group = document.getElementById('filter-group').value;
+    const module = document.getElementById('filter-module').value;
+    const day = document.getElementById('filter-day').value;
+    let filtered = allSchedules;
+    if (program) filtered = filtered.filter(s => s.programName === program);
+    if (group) filtered = filtered.filter(s => s.groupName === group);
+    if (module) filtered = filtered.filter(s => s.moduleName === module);
+    if (day) filtered = filtered.filter(s => s.day === day);
+    populateDropdown('filter-group', filtered.map(s => s.groupName));
+    populateDropdown('filter-module', filtered.map(s => s.moduleName));
+    populateDropdown('filter-day', filtered.map(s => s.day));
+    document.getElementById('filter-group').disabled = !filtered.some(s => s.groupName);
+    document.getElementById('filter-module').disabled = !filtered.some(s => s.moduleName);
+    document.getElementById('filter-day').disabled = !filtered.some(s => s.day);
+    window.filteredSchedules = filtered;
+  }
 
-    function startCameraWithSchedule(scheduleId) {
-      fetch(`${WEBCAM_URL}/start_camera`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `schedule=${encodeURIComponent(scheduleId)}`
-      })
-      .then(() => {
-        videoContainer.style.display = "block";
-        webcamFeed.src = `${WEBCAM_URL}/video_feed`;
+  document.getElementById('filter-program').addEventListener('change', updateFilters);
+  document.getElementById('filter-group').addEventListener('change', updateFilters);
+  document.getElementById('filter-module').addEventListener('change', updateFilters);
+  document.getElementById('filter-day').addEventListener('change', updateFilters);
+
+  document.getElementById('apply-filters').addEventListener('click', () => {
+    const filtered = window.filteredSchedules || allSchedules;
+    if (filtered.length === 0) {
+      alert("No classes match your filters.");
+      return;
+    }
+    if (filtered.length === 1) {
+      scheduleId = filtered[0].docId;
+      startCameraWithSchedule(scheduleId);
+    } else {
+      alert("Multiple classes match. Please refine filters.");
+    }
+  });
+
+  document.getElementById('reset-filters').addEventListener('click', () => {
+    document.getElementById('filter-program').value = '';
+    document.getElementById('filter-group').value = '';
+    document.getElementById('filter-module').value = '';
+    document.getElementById('filter-day').value = '';
+    updateFilters();
+  });
+
+  function startCameraWithSchedule(scheduleId) {
+    fetch(`${WEBCAM_URL}/start_camera`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `schedule=${encodeURIComponent(scheduleId)}`
+    })
+    .then(() => {
+      videoContainer.style.display = "block";
+      webcamFeed.src = `${WEBCAM_URL}/video_feed`;
+      
+      // ✅ Start auto-refresh every 5 seconds
+      if (attendanceInterval) clearInterval(attendanceInterval);
+      attendanceInterval = setInterval(() => {
         fetchAttendance(scheduleId);
+      }, 5000);
+      
+      fetchAttendance(scheduleId); // Initial load
+    })
+    .catch(err => console.error("Failed to start camera:", err));
+  }
+
+  document.getElementById('stopCamera').addEventListener('click', () => {
+    fetch(`${WEBCAM_URL}/stop_camera`)
+      .then(() => {
+        videoContainer.style.display = "none";
+        webcamFeed.src = "";
+        if (attendanceInterval) {
+          clearInterval(attendanceInterval);
+          attendanceInterval = null;
+        }
       })
-      .catch(err => console.error("Failed to start camera:", err));
-    }
+      .catch(err => console.error("Failed to stop camera:", err));
+  });
 
-    document.getElementById('stopCamera').addEventListener('click', () => {
-      fetch(`${WEBCAM_URL}/stop_camera`)
-        .then(() => {
-          videoContainer.style.display = "none";
-          webcamFeed.src = "";
-        })
-        .catch(err => console.error("Failed to stop camera:", err));
-    });
-
-    function fetchAttendance(scheduleId) {
-      fetch(`/api/attendance/${scheduleId}`)
-        .then(res => res.json())
-        .then(data => {
-          attendanceTable.innerHTML = "";
-          if (!data.students || data.students.length === 0) {
-            attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">No students found</td></tr>`;
-            return;
-          }
-          data.students.forEach(student => {
-            const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${student.name || "Unknown Student"}</td>
-              <td>${student.email || "-"}</td>
-              <td>${student.time || "-"}</td>
-              <td><span class="status-badge status-${student.status}">${student.status}</span></td>
-              <td>${student.group || "-"}</td>
-              <td>${student.program || "-"}</td>
-              <td>${moduleName}</td>
-            `;
-            attendanceTable.appendChild(tr);
-          });
-        })
-        .catch(err => {
-          console.error("Failed to fetch attendance:", err);
-          attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
+  function fetchAttendance(scheduleId) {
+    fetch(`/api/attendance/${scheduleId}`)
+      .then(res => res.json())
+      .then(data => {
+        attendanceTable.innerHTML = "";
+        if (!data.students || data.students.length === 0) {
+          attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">No students found</td></tr>`;
+          return;
+        }
+        data.students.forEach(student => {
+          const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${student.name || "Unknown Student"}</td>
+            <td>${student.email || "-"}</td>
+            <td>${student.time || "-"}</td>
+            <td><span class="status-badge status-${student.status}">${student.status}</span></td>
+            <td>${student.group || "-"}</td>
+            <td>${student.program || "-"}</td>
+            <td>${moduleName}</td>
+          `;
+          attendanceTable.appendChild(tr);
         });
-    }
+      })
+      .catch(err => {
+        console.error("Failed to fetch attendance:", err);
+        attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
+      });
+  }
 
-    // Load schedules when page is ready
-    document.addEventListener('DOMContentLoaded', loadSchedules);
-  </script>
+  // Load schedules when page is ready
+  document.addEventListener('DOMContentLoaded', loadSchedules);
+</script>
 </body>
 </html>

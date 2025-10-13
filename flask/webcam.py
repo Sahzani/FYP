@@ -30,7 +30,7 @@ frame_lock = threading.Lock()
 camera_thread = None
 camera_running = False
 current_schedule = None
-API_URL = "http://127.0.0.1:8000"
+API_URL = "http://128.199.107.48"
 
 # Skip frames to reduce CPU usage (process 1 out of every 5 frames)
 FRAME_SKIP = 5

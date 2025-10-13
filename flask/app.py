@@ -1637,7 +1637,6 @@ def teacher_attendance():
 #------------------ API to get attendance data ------------------
 from flask import jsonify
 from datetime import datetime
-
 @app.route("/api/attendance/<schedule_id>")
 def api_attendance(schedule_id):
     """Return live attendance for all students in a schedule with auto status (Present/Late/Absent)."""
@@ -1657,7 +1656,14 @@ def api_attendance(schedule_id):
         if not group_id:
             return jsonify({"error": "Invalid schedule group"}), 400
 
-        # 🔥 CORRECT: Use 'mlmodule' (as used in your other routes)
+        # 🔥 Resolve group name (FIX: was showing ID before)
+        group_name = "-"
+        if group_id:
+            group_doc = db.collection("groups").document(group_id).get()
+            if group_doc.exists:
+                group_name = group_doc.to_dict().get("groupName", "-")
+
+        # 🔥 Resolve module name
         module_name = "-"
         if module_id:
             module_doc = db.collection("mlmodule").document(module_id).get()
@@ -1706,7 +1712,7 @@ def api_attendance(schedule_id):
                 "name": student_name,
                 "email": student_email,
                 "studentID": studentID,
-                "group": group_id,
+                "group": group_name,          # ✅ NOW READABLE!
                 "program": program_name,
                 "module": module_name,
                 "photo_url": photo_url,
@@ -1720,7 +1726,7 @@ def api_attendance(schedule_id):
 
         try:
             class_start_time = datetime.strptime(start_time_str, "%H:%M").time()
-            scheduled_start = datetime.combine(today, class_start_time)  # naive datetime
+            scheduled_start = datetime.combine(today, class_start_time)
         except Exception:
             scheduled_start = datetime.combine(today, datetime.min.time())
 
@@ -1736,9 +1742,8 @@ def api_attendance(schedule_id):
 
             ts = att.get("timestamp")
             if ts:
-                # Handle Firestore Timestamp or ISO string
                 if hasattr(ts, "astimezone"):
-                    att_dt = ts.astimezone().replace(tzinfo=None)  # convert to naive local time
+                    att_dt = ts.astimezone().replace(tzinfo=None)
                 else:
                     try:
                         att_dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
@@ -1759,8 +1764,6 @@ def api_attendance(schedule_id):
                         status = "Absent"
 
                     att_time = att_dt.strftime("%H:%M")
-                # else: keep status = "Absent"
-            # else: no timestamp → status remains "Absent"
 
             attendance_records[student_id] = {
                 "status": status,
@@ -1777,7 +1780,7 @@ def api_attendance(schedule_id):
                 "email": s["email"],
                 "status": att["status"] if att else "Absent",
                 "time": att["time"] if att else "-",
-                "group": s["group"],
+                "group": s["group"],          # ✅ Now shows "Group A", not "grp_123"
                 "program": s["program"],
                 "module": s["module"],
                 "studentID": s["studentID"],
@@ -1786,22 +1789,18 @@ def api_attendance(schedule_id):
                 "last_name": s["last_name"]
             })
 
-        response_data = {
+        return jsonify({
             "students": result,
             "schedule_context": {
                 "schedule_id": schedule_id,
                 "group_id": group_id,
-                "module_id": module_id,
+                "group_name": group_name,     # Optional: for debugging
                 "module_name": module_name,
                 "teacher_id": teacher_id,
                 "total_students": len(result),
                 "day": day
             }
-        }
-
-        
-
-        return jsonify(response_data)
+        })
         
     except Exception as e:
         print(f"[ERROR] api_attendance error: {str(e)}")
