@@ -1040,20 +1040,42 @@ def edit_absent_record(record_id):
     reason = request.form.get("reason")
     start_date = request.form.get("start_date")
     end_date = request.form.get("end_date")
+    file = request.files.get("file")
 
     if not reason or not start_date or not end_date:
         flash("Please fill in all fields.", "danger")
         return redirect(url_for("student_absentapp"))
 
+    update_data = {
+        "reason": reason,
+        "start_date": start_date,
+        "end_date": end_date
+    }
+
+    # ✅ If new file uploaded, encode and update
+    if file and file.filename != "":
+        try:
+            from werkzeug.utils import secure_filename
+            import base64
+
+            filename = secure_filename(file.filename)
+            file_bytes = file.read()
+            file_base64 = base64.b64encode(file_bytes).decode("utf-8")
+            mime_type = file.mimetype
+
+            update_data["file_name"] = filename
+            update_data["file_type"] = mime_type
+            update_data["file_data"] = f"data:{mime_type};base64,{file_base64}"
+        except Exception as e:
+            print("[ERROR] Failed to encode uploaded file:", e)
+            flash("Failed to update file.", "danger")
+
+    # ✅ Update Firestore document
     try:
-        db.collection("absenceRecords").document(record_id).update({
-            "reason": reason,
-            "start_date": start_date,
-            "end_date": end_date
-        })
+        db.collection("absenceRecords").document(record_id).update(update_data)
         flash("Absence record updated successfully!", "success")
     except Exception as e:
-        print("Error updating record:", e)
+        print("[ERROR] Failed to update absence record:", e)
         flash("Failed to update absence record.", "danger")
 
     return redirect(url_for("student_absentapp"))
