@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>iAttend - Admin Schedules</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -44,7 +45,6 @@
       color: #444;
       font-weight: 700;
       font-size: 26px;
-      transition: color 0.3s;
     }
     .header-content a.title:hover { color: #4154F1; }
 
@@ -55,15 +55,11 @@
       text-decoration: none;
       color: #444;
       font-weight: 600;
-      transition: all 0.2s ease;
-      padding: 0;
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
-    }
-    header a.user-info:hover {
       padding: 4px 12px;
       border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    header a.user-info:hover {
       background: #f8f1e5;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
@@ -89,6 +85,14 @@
       overflow-y: auto;
       z-index: 999;
     }
+    .sidebar.collapsed {
+      width: 70px;
+      overflow: hidden;
+    }
+    .sidebar.collapsed .sidebar-section-title,
+    .sidebar.collapsed .sidebar-link span {
+      display: none;
+    }
     .sidebar-section { margin-bottom: 25px; padding: 0 15px; }
     .sidebar-section-title {
       font-size: 11px;
@@ -113,22 +117,14 @@
       white-space: nowrap;
     }
     .sidebar-link i { width: 18px; text-align: center; }
-    .sidebar-link.active, .sidebar-link:hover {
+    .sidebar-link.active,
+    .sidebar-link:hover {
       background: #eadbbf;
       color: #1F2937;
       font-weight: 600;
     }
 
-    .sidebar.collapsed {
-      width: 70px;
-      padding: 15px 0;
-      overflow: hidden;
-    }
-    .sidebar.collapsed .sidebar-section-title,
-    .sidebar.collapsed .sidebar-link span {
-      display: none;
-    }
-
+    /* Dropdown */
     .sidebar-dropdown .dropdown-menu {
       display: none;
       margin-left: 20px;
@@ -153,11 +149,9 @@
       margin-left: 260px;
       padding: 100px 30px 30px;
       min-height: 100vh;
-      overflow-y: auto;
       transition: margin-left 0.3s ease;
-      background: transparent;
     }
-    .main-content.expanded {
+    .sidebar.collapsed ~ .main-content {
       margin-left: 80px;
     }
 
@@ -237,6 +231,14 @@
       font-size: 13px;
     }
 
+     /* Ensure all form controls have the same height */
+    select, input[type="time"], input[type="text"] {
+     height: 40px;
+     padding: 8px 12px;
+      font-size: 14px;
+     line-height: 1.2;
+    }
+
     .breadcrumb {
       font-size: 14px;
       font-weight: 600;
@@ -263,7 +265,7 @@
       .sidebar.active { left: 0; }
       .sidebar.collapsed { left: 0; width: 250px; }
       .main-content { margin-left: 0; }
-      .main-content.expanded { margin-left: 0; }
+      .sidebar.collapsed ~ .main-content { margin-left: 0; }
     }
   </style>
 </head>
@@ -297,7 +299,7 @@
 
     <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_add','admin_teacher_assign'] %}active{% endif %}">
       <a class="sidebar-link dropdown-toggle" href="#" onclick="event.preventDefault();">
-        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span><i class="fas fa-chevron-down"></i>
+        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span>
       </a>
       <div class="dropdown-menu">
         <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
@@ -522,7 +524,6 @@ menuToggle.addEventListener('click', () => {
   } else {
     sidebar.classList.toggle('collapsed');
   }
-  document.querySelector('.main-content').classList.toggle('expanded');
 });
 
 // Dropdown toggle
