@@ -623,9 +623,10 @@ def admin_dashboard():
         return redirect(url_for("home"))
 
     admin_name = session.get("user_name", "Admin")
-    month = datetime.now().strftime("%Y-%m")
+    month = datetime.now().strftime("%Y-%m")  # e.g., "2025-10"
     
-    doc = db.collection("stats").document("monthly").collection(month).document("totals").get()
+    # 🔥 NEW: Read from attendance_summary
+    doc = db.collection("attendance_summary").document(month).get()
     
     if doc.exists:
         data = doc.to_dict()
@@ -645,6 +646,7 @@ def admin_dashboard():
         current_date=now.strftime("%A, %B %d"),
         current_time=now.strftime("%I:%M %p")
     )
+
 # ------------------ Admin Profile & Edit ------------------
 @app.route("/admin/profile")
 def admin_profile():
@@ -1556,7 +1558,6 @@ def mark_present():
         return jsonify({"error": "Failed to save"}), 500
 
 #------------------- Teacher Attendance Report ------------------
-
 from flask import session, redirect, url_for, render_template, jsonify
 from datetime import datetime
 
@@ -1638,12 +1639,6 @@ def teacher_attendance():
 #------------------ API to get attendance data ------------------
 from flask import jsonify
 from datetime import datetime
-import pytz
-from datetime import datetime
-
-# Brunei timezone
-LOCAL_TZ = pytz.timezone("Asia/Brunei")
-
 @app.route("/api/attendance/<schedule_id>")
 def api_attendance(schedule_id):
     """Return live attendance for all students in a schedule with auto status (Present/Late/Absent)."""
@@ -1663,14 +1658,7 @@ def api_attendance(schedule_id):
         if not group_id:
             return jsonify({"error": "Invalid schedule group"}), 400
 
-        # 🔥 Resolve group name (FIX: was showing ID)
-        group_name = "-"
-        if group_id:
-            group_doc = db.collection("groups").document(group_id).get()
-            if group_doc.exists:
-                group_name = group_doc.to_dict().get("groupName", "-")
-
-        # 🔥 Resolve module name
+        # 🔥 Fetch module name
         module_name = "-"
         if module_id:
             module_doc = db.collection("mlmodule").document(module_id).get()
@@ -1696,7 +1684,6 @@ def api_attendance(schedule_id):
                 
             role_data = role_doc.to_dict()
             student_group = role_data.get("fk_groupcode", "").strip()
-            
             if student_group != group_id:
                 continue
 
@@ -1719,7 +1706,7 @@ def api_attendance(schedule_id):
                 "name": student_name,
                 "email": student_email,
                 "studentID": studentID,
-                "group": group_name,          # ✅ Readable name
+                "group": group_id,
                 "program": program_name,
                 "module": module_name,
                 "photo_url": photo_url,
@@ -1727,15 +1714,15 @@ def api_attendance(schedule_id):
                 "last_name": last_name
             })
 
-        # 3️⃣ Build scheduled start time in Brunei local time (timezone-aware)
-        today = datetime.now(LOCAL_TZ).date()
+        # 3️⃣ Compute today's date and class start
+        today = datetime.now().date()
         today_str = today.strftime("%Y-%m-%d")
 
         try:
             class_start_time = datetime.strptime(start_time_str, "%H:%M").time()
-            scheduled_start = LOCAL_TZ.localize(datetime.combine(today, class_start_time))
+            scheduled_start = datetime.combine(today, class_start_time)
         except Exception:
-            scheduled_start = LOCAL_TZ.localize(datetime.combine(today, datetime.min.time()))
+            scheduled_start = datetime.combine(today, datetime.min.time())
 
         # 4️⃣ Fetch today's attendance records
         att_ref = db.collection("attendance").document(schedule_id).collection(today_str).stream()
@@ -1744,37 +1731,36 @@ def api_attendance(schedule_id):
         for doc in att_ref:
             att = doc.to_dict()
             student_id = doc.id
+
+            # ✅ Start with whatever status was written by face recognition
+            status = att.get("status", "Absent")
             att_time = "-"
-            status = "Absent"
 
             ts = att.get("timestamp")
-        if ts:
-            if hasattr(ts, 'astimezone'):
-                # ✅ Already Brunei local time — use as-is
-                att_dt = ts
-            else:
-                # Fallback for string (should not happen if stored correctly)
+            if ts:
                 try:
-                    dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
-                    if dt.tzinfo is None:
-                        dt = LOCAL_TZ.localize(dt)
-                    att_dt = dt
+                    # Handle Firestore Timestamp or ISO
+                    if hasattr(ts, "astimezone"):
+                        att_dt = ts.astimezone().replace(tzinfo=None)
+                    else:
+                        att_dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                        if att_dt.tzinfo:
+                            att_dt = att_dt.astimezone().replace(tzinfo=None)
                 except Exception:
                     att_dt = None
 
-            if att_dt:
-                # Compare with scheduled_start (which is already Brunei local)
-                diff_seconds = (att_dt - scheduled_start).total_seconds()
-                minutes_late = diff_seconds / 60
+                if att_dt:
+                    diff_seconds = (att_dt - scheduled_start).total_seconds()
+                    minutes_late = diff_seconds / 60
 
-                if minutes_late <= 15:
-                    status = "Present"
-                elif minutes_late <= 30:
-                    status = "Late"
-                else:
-                    status = "Absent"
+                    if minutes_late <= 15:
+                        status = "Present"
+                    elif minutes_late <= 30:
+                        status = "Late"
+                    else:
+                        status = "Absent"
 
-                att_time = att_dt.strftime("%H:%M")  # e.g., "13:43"  # e.g., "13:43"
+                    att_time = att_dt.strftime("%H:%M")
 
             attendance_records[student_id] = {
                 "status": status,
@@ -1784,14 +1770,14 @@ def api_attendance(schedule_id):
         # 5️⃣ Build final response
         result = []
         for s in students:
-            att = attendance_records.get(s["id"])
+            att = attendance_records.get(s["id"], {"status": "Absent", "time": "-"})
             result.append({
                 "id": s["id"],
                 "name": s["name"],
                 "email": s["email"],
-                "status": att["status"] if att else "Absent",
-                "time": att["time"] if att else "-",
-                "group": s["group"],      # ✅ Now shows "Group A", not ID
+                "status": att["status"],
+                "time": att["time"],
+                "group": s["group"],
                 "program": s["program"],
                 "module": s["module"],
                 "studentID": s["studentID"],
@@ -1800,23 +1786,26 @@ def api_attendance(schedule_id):
                 "last_name": s["last_name"]
             })
 
-        return jsonify({
+        response_data = {
             "students": result,
             "schedule_context": {
                 "schedule_id": schedule_id,
                 "group_id": group_id,
-                "group_name": group_name,
                 "module_id": module_id,
                 "module_name": module_name,
                 "teacher_id": teacher_id,
                 "total_students": len(result),
                 "day": day
             }
-        })
-        
+        }
+
+        return jsonify(response_data)
+
     except Exception as e:
         print(f"[ERROR] api_attendance error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+
+
 # ------------------ Teacher manage Absence ------------------
 @app.route("/teacher/manage_absent", methods=["GET", "POST"])
 def teacher_manage_absent():
@@ -2247,8 +2236,6 @@ def teacher_change_password():
     return render_template("combinePage/Change password.html")
 
 
-
-
 # ------------------ Teacher Edit Profile ------------------
 # Allowed image MIME types
 ALLOWED_IMAGE_MIMES = ["image/png", "image/jpeg", "image/jpg", "image/gif"]
@@ -2328,6 +2315,7 @@ def teacher_edit_profile():
             return redirect(url_for("teacher_edit_profile"))
 
     return render_template("teacher/T_EditProfile.html", profile=profile, now=int(time.time()))
+
 
 
 # ------------------ Admin Student Add/Edit ------------------
@@ -3470,14 +3458,22 @@ def admin_schedule_upload_csv():
         flash("Invalid file type! Please upload a .csv file.", "error")
         return redirect(url_for("admin_schedules"))
 
-# ------------------ Admin Attendance Log Page ------------------
+# ---from collections import defaultdict
+from collections import defaultdict
 from datetime import datetime
-from flask import session, redirect, url_for, render_template, request
+from flask import render_template, redirect, url_for, request, session
 
 @app.route("/admin/attendance_log")
 def admin_attendance_log():
     if session.get("role") != "admin":
         return redirect(url_for("home"))
+
+    profile = {
+        "firstName": "Admin",
+        "lastName": "",
+        "photo_name": "uploads/default_admin.png",
+        "is_gc": False
+    }
 
     # --- Get filters ---
     selected_date = request.args.get("date", datetime.now().strftime("%Y-%m-%d"))
@@ -3488,7 +3484,7 @@ def admin_attendance_log():
     # --- Fetch collections ---
     groups_ref = db.collection("groups").stream()
     programs_ref = db.collection("programs").stream()
-    modules_ref = db.collection("mlmodule").stream()
+    modules_ref = db.collection("mlmodule").stream()  # ✅ mlmodule is correct
 
     groups = {g.id: g.to_dict().get("groupCode", g.id) for g in groups_ref}
     programs = {p.id: p.to_dict().get("programName", p.id) for p in programs_ref}
@@ -3505,8 +3501,8 @@ def admin_attendance_log():
     selected_module_id = module_lookup.get(selected_module, "")
 
     # --- Build relationships for dropdowns ---
-    program_to_groups = {}
-    group_to_modules = {}
+    program_to_groups = defaultdict(set)
+    group_to_modules = defaultdict(set)
 
     all_schedules = []
     schedules = db.collection("schedules").stream()
@@ -3523,85 +3519,93 @@ def admin_attendance_log():
         group_name = groups.get(group_id, "Unknown Group")
         mod_name = modules.get(mod_id, "Unknown Module")
 
-        program_to_groups.setdefault(prog_name, set()).add(group_name)
-        group_to_modules.setdefault(group_name, set()).add(mod_name)
+        program_to_groups[prog_name].add(group_name)
+        group_to_modules[group_name].add(mod_name)
 
     program_to_groups = {k: sorted(v) for k, v in program_to_groups.items()}
     group_to_modules = {k: sorted(v) for k, v in group_to_modules.items()}
 
-    filtered_schedules = []
-    attendance_records = []
-
     # --- Filter schedules by converted IDs ---
-    if selected_program or selected_group or selected_module:
-        for s in all_schedules:
-            if selected_program_id and s.get("fk_program") != selected_program_id:
+    filtered_schedules = []
+    for s in all_schedules:
+        if selected_program_id and s.get("fk_program") != selected_program_id:
+            continue
+        if selected_group_id and s.get("fk_group") != selected_group_id:
+            continue
+        if selected_module_id and s.get("fk_module") != selected_module_id:
+            continue
+        filtered_schedules.append(s)
+
+    attendance_records = []
+    valid_statuses = {"Present", "Late", "Absent"}
+
+    # --- Fetch students + attendance ---
+    for sched in filtered_schedules:
+        schedule_id = sched["id"]
+        group_id = sched.get("fk_group", "").strip()
+        if not group_id:
+            continue
+
+        students_ref = db.collection("users").where("role_type", "==", 1).stream()
+        for student_doc in students_ref:
+            s_data = student_doc.to_dict()
+            student_id = student_doc.id
+
+            first = s_data.get('first_name', '').strip()
+            last = s_data.get('last_name', '').strip()
+            if not first and not last:
                 continue
-            if selected_group_id and s.get("fk_group") != selected_group_id:
-                continue
-            if selected_module_id and s.get("fk_module") != selected_module_id:
-                continue
-            filtered_schedules.append(s)
 
-        # --- Fetch students + attendance ---
-        for sched in filtered_schedules:
-            schedule_id = sched["id"]
-            group_id = sched.get("fk_group", "").strip()
-            if not group_id:
+            role_doc = db.collection("users").document(student_id).collection("roles").document("student").get()
+            if not role_doc.exists:
+                continue
+            role_data = role_doc.to_dict()
+            student_group = role_data.get("fk_groupcode", "").strip()
+            if student_group != group_id:
                 continue
 
-            students_ref = db.collection("users").where("role_type", "==", 1).stream()
-            for student_doc in students_ref:
-                s_data = student_doc.to_dict()
-                student_id = student_doc.id
+            student_name = f"{first} {last}".strip() or "Unknown Student"
 
-                first = s_data.get('first_name', '').strip()
-                last = s_data.get('last_name', '').strip()
-                if not first and not last:
-                    continue
+            # Check attendance record
+            att_ref = db.collection("attendance").document(schedule_id).collection(selected_date).document(student_id).get()
+            if att_ref.exists:
+                att = att_ref.to_dict()
+                status = att.get("status", "Present")
+            else:
+                status = "Absent"
 
-                role_doc = db.collection("users").document(student_id).collection("roles").document("student").get()
-                if not role_doc.exists:
-                    continue
-                role_data = role_doc.to_dict()
-                student_group = role_data.get("fk_groupcode", "").strip()
-                if student_group != group_id:
-                    continue
+            # Only include valid statuses
+            if status not in valid_statuses:
+                continue
 
-                student_name = f"{first} {last}".strip() or "Unknown Student"
+            attendance_records.append({
+                "student_name": student_name,
+                "group": groups.get(group_id, "Unknown Group"),
+                "program": programs.get(sched.get("fk_program", ""), "Unknown Program"),
+                "module": modules.get(sched.get("fk_module", ""), "Unknown Module"),
+                "status": status,
+                "date": selected_date
+            })
 
-                att_ref = db.collection("attendance").document(schedule_id).collection(selected_date).document(student_id).get()
-                if att_ref.exists:
-                    att = att_ref.to_dict()
-                    status = att.get("status", "Present")
-                    time_str = att.get("time", "-")
-                else:
-                    status = "Absent"
-                    time_str = "-"
+    # --- Deduplicate with status priority: Present > Late > Absent ---
+    from collections import defaultdict as dd
+    student_groups = dd(list)
+    for rec in attendance_records:
+        key = (rec["student_name"], rec["group"], rec["program"], rec["module"])
+        student_groups[key].append(rec)
 
-                attendance_records.append({
-                    "student_name": student_name,
-                    "group": groups.get(group_id, "Unknown Group"),
-                    "program": programs.get(sched.get("fk_program", ""), "Unknown Program"),
-                    "module": modules.get(sched.get("fk_module", ""), "Unknown Module"),
-                    "status": status,
-                    "time": time_str,
-                    "date": selected_date
-                })
+    status_priority = {"Present": 0, "Late": 1, "Absent": 2}
+    unique_records = []
+    for key, records in student_groups.items():
+        best = min(records, key=lambda r: status_priority.get(r["status"], 999))
+        unique_records.append(best)
 
-        # --- Remove duplicates ---
-        seen = set()
-        unique_records = []
-        for rec in attendance_records:
-            key = (rec["student_name"], rec["group"], rec["program"], rec["module"])
-            if key not in seen:
-                seen.add(key)
-                unique_records.append(rec)
-        attendance_records = sorted(unique_records, key=lambda x: x["student_name"])
+    unique_records.sort(key=lambda x: x["student_name"])
 
     return render_template(
         "admin/A_Attendance_Log.html",
-        records=attendance_records,
+        profile=profile,
+        records=unique_records,
         all_programs=sorted(program_to_groups.keys()),
         program_to_groups=program_to_groups,
         group_to_modules=group_to_modules,
@@ -3610,8 +3614,6 @@ def admin_attendance_log():
         selected_group=selected_group,
         selected_module=selected_module
     )
-
-
 # ------------------ API: Admin Attendance Log ------------------
 @app.route("/api/admin/attendance_log/<schedule_id>")
 def api_admin_attendance_log(schedule_id):
@@ -3747,6 +3749,8 @@ def api_filters():
 def api_admin_attendance_filtered():
     """
     Return filtered attendance for admin view.
+    Only includes records with status: Absent, Late, Present.
+    Does NOT include 'time' field.
     Query params:
       - program_id (optional)
       - group_id (optional)
@@ -3788,7 +3792,7 @@ def api_admin_attendance_filtered():
         schedule_id = sched_doc.id
         schedule_ids.append(schedule_id)
 
-        # 🔥 FIX: Use 'mlmodule', not 'modules'
+        # 🔥 Use 'mlmodule', not 'modules'
         module_name = "-"
         module_id = sched.get("fk_module")
         if module_id:
@@ -3850,9 +3854,11 @@ def api_admin_attendance_filtered():
             "program": program_name
         }
 
-    # Build attendance records per day
+    # Build attendance records per day (only Absent/Late/Present, no time)
     results = []
     current = first_day
+    valid_statuses = {"Absent", "Late", "Present"}
+
     while current <= last_day:
         day_str = current.strftime("%Y-%m-%d")
         for schedule_id in schedule_ids:
@@ -3860,31 +3866,29 @@ def api_admin_attendance_filtered():
             attendance_records = {}
             for doc in att_ref:
                 att = doc.to_dict()
-                att_time = "-"
-                if att.get("timestamp") and hasattr(att["timestamp"], "astimezone"):
-                    att_time = att["timestamp"].astimezone().strftime("%H:%M")
-                attendance_records[doc.id] = {
-                    "status": att.get("status", "Present"),
-                    "time": att_time
-                }
+                status = att.get("status", "Present")  # default to Present if missing
+                if status in valid_statuses:
+                    attendance_records[doc.id] = {"status": status}
 
             module_name = schedule_module_map.get(schedule_id, "-")
             for student_id, s in students.items():
                 att = attendance_records.get(student_id)
+                # Always include student (mark as Absent if no record)
+                final_status = att["status"] if att else "Absent"
+                # Only include if status is in allowed set (it will be, due to logic)
                 results.append({
                     "date": day_str,
                     "name": s["name"],
                     "email": s["email"],
                     "group": s["group"],
                     "program": s["program"],
-                    "module": module_name,  # ✅ Include resolved module name
-                    "time": att["time"] if att else "-",
-                    "status": att["status"] if att else "Absent"
+                    "module": module_name,
+                    "status": final_status
+                    # ⚠️ NO 'time' field included
                 })
         current += timedelta(days=1)
 
     return jsonify(results)
-
 # ------------------ Admin Modules Page ------------------
 @app.route("/admin/modules")
 def admin_modules():
