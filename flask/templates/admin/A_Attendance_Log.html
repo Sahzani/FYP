@@ -330,48 +330,45 @@
     </form>
   </div>
 
-  <!-- Table -->
-  <div class="card">
-    <div class="table-container">
-      <table>
-        <thead>
+<!-- Table -->
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Group</th>
+          <th>Program</th>
+          <th>Module</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if records %}
+          {% for r in records %}
+            <tr>
+              <td>{{ r.student_name }}</td>
+              <td>{{ r.group }}</td>
+              <td>{{ r.program }}</td>
+              <td>{{ r.module }}</td>
+              <td><span class="status-badge status-{{ r.status }}">{{ r.status }}</span></td>
+            </tr>
+          {% endfor %}
+        {% elif selected_program or selected_group or selected_module %}
           <tr>
-            <th>Student</th>
-            <th>Group</th>
-            <th>Program</th>
-            <th>Module</th>
-            <th>Time</th>
-            <th>Status</th>
+            <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+              No attendance records found.
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {% if records %}
-            {% for r in records %}
-              <tr>
-                <td>{{ r.student_name }}</td>
-                <td>{{ r.group }}</td>
-                <td>{{ r.program }}</td>
-                <td>{{ r.module }}</td>
-                <td>{{ r.time }}</td>
-                <td><span class="status-badge status-{{ r.status }}">{{ r.status }}</span></td>
-              </tr>
-            {% endfor %}
-          {% elif selected_program or selected_group or selected_module %}
-            <tr>
-              <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                No attendance records found.
-              </td>
-            </tr>
-          {% else %}
-            <tr>
-              <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                Please select at least one filter to view attendance.
-              </td>
-            </tr>
-          {% endif %}
-        </tbody>
-      </table>
-    </div>
+        {% else %}
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+              Please select at least one filter to view attendance.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
   </div>
 </div>
 

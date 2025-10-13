@@ -99,39 +99,38 @@ def load_students_for_schedule(schedule_id):
 
 # ===== Mark attendance (same as before) =====
 attended_today = {}
-import pytz
-# Add this near the top (after other imports)
-LOCAL_TZ = pytz.timezone("Asia/Brunei")
 
-# Replace your mark_attendance function:
 def mark_attendance(student_id):
     global current_schedule
+    today = datetime.now().strftime("%Y-%m-%d")
     if not current_schedule:
         return None
 
-    # Use Brunei local time (timezone-aware)
-    now_local = datetime.now(LOCAL_TZ)
-    today_str = now_local.strftime("%Y-%m-%d")
-
     schedule_id = current_schedule["schedule_id"]
-    key = (student_id, schedule_id, today_str)
+    key = (student_id, schedule_id, today)
     if attended_today.get(key):
-        return None
+        return None  # already marked
 
     attended_today[key] = True
     s = STUDENTS.get(student_id, {})
     group_code = s.get("group", "")
     program_id = s.get("program", "")
 
-    db.collection("attendance").document(schedule_id).collection(today_str).document(student_id).set({
+    now = datetime.now()
+    class_start = datetime.strptime("08:00", "%H:%M")  # <-- replace with schedule start time
+    status = "Present" if now <= class_start else "Late"
+
+    db.collection("attendance").document(schedule_id).collection(today).document(student_id).set({
         "name": s.get("name", "Unknown"),
         "group": group_code,
         "program": program_id,
-        "status": "Present",
-        "timestamp": now_local  # ✅ Store Brunei local time (NOT SERVER_TIMESTAMP)
-    })
-    print(f"[INFO] Marked {s.get('name', 'Unknown')} as Present at {now_local.strftime('%H:%M')}")
+        "status": status,
+        "timestamp": firestore.SERVER_TIMESTAMP
+    }, merge=True)
+
+    print(f"[INFO] Marked {s.get('name', 'Unknown')} as {status}")
     return s.get("name", "Unknown")
+
 
 # ===== Camera Loop (Optimized) =====
 def camera_loop():
@@ -256,4 +255,4 @@ if __name__ == "__main__":
     if wait_for_api(API_URL):
         app.run(host="0.0.0.0", port=5001, debug=False, threaded=True)
     else:
-        print("Exiting: main app not available")
+        print("Exiting: main app not available") 
