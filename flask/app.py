@@ -3861,35 +3861,35 @@ def api_admin_attendance_filtered():
 
     return jsonify(results)
 
-# ------------------ Admin Modules page ------------------
-# Admin Modules Page
+# ------------------ Admin Modules Page ------------------
 @app.route("/admin/modules")
 def admin_modules():
     if session.get("role") != "admin":
         return redirect(url_for("home"))
 
-    # Fetch modules
-    modules_ref = db.collection("modules")
-    modules_docs = modules_ref.stream()
+    # Fetch all programs and create a lookup dict: {docId: programName}
+    programs_docs = db.collection("programs").stream()
+    program_map = {}
+    for doc in programs_docs:
+        p = doc.to_dict()
+        program_map[doc.id] = p.get("programName", "—")
+
+    # Fetch all modules and attach resolved programName
+    modules_docs = db.collection("modules").stream()
     modules = []
     for doc in modules_docs:
         m = doc.to_dict()
         m["docId"] = doc.id
+        fk_program = m.get("fk_program")
+        m["programName"] = program_map.get(fk_program, "—") if fk_program else "—"
         modules.append(m)
-    
-    # Fetch programs
-    programs_ref = db.collection("programs")  # adjust collection name if different
-    programs_docs = programs_ref.stream()
-    programs = []
-    for doc in programs_docs:
-        p = doc.to_dict()
-        p["docId"] = doc.id
-        programs.append(p)
-    
+
+    # Pass programs list for the modal dropdown
+    programs = [{"docId": pid, "programName": pname} for pid, pname in program_map.items()]
+
     return render_template("admin/modules.html", modules=modules, programs=programs)
 
-
-# Add / Edit Module
+# ------------------ Save Module ------------------
 @app.route("/admin/module/save", methods=["POST"])
 def admin_module_save():
     if session.get("role") != "admin":
@@ -3898,33 +3898,89 @@ def admin_module_save():
     module_id = request.form.get("moduleId")
     module_name = request.form.get("moduleName")
     module_code = request.form.get("moduleCode")
-    fk_program = request.form.get("fk_program")   # <-- ADD THIS
-    status = int(request.form.get("status"))
+    fk_program = request.form.get("fk_program")
+    status = int(request.form.get("status", 1))
+
+    if not module_name or not module_code or not fk_program:
+        flash("All fields are required!", "danger")
+        return redirect(url_for("admin_modules"))
+
+    # Optional: validate program exists
+    if not db.collection("programs").document(fk_program).get().exists:
+        flash("Selected program does not exist!", "danger")
+        return redirect(url_for("admin_modules"))
 
     module_data = {
         "moduleName": module_name,
         "moduleCode": module_code,
-        "fk_program": fk_program,   # <-- SAVE PROGRAM REFERENCE
+        "fk_program": fk_program,
         "status": status
     }
 
-    if module_id:  # Edit existing module
+    if module_id:
         db.collection("modules").document(module_id).set(module_data, merge=True)
-    else:  # Add new module
+    else:
         db.collection("modules").add(module_data)
 
+    flash("Module saved successfully!", "success")
     return redirect(url_for("admin_modules"))
 
-
-# Delete Module
-@app.route("/delete_module/<module_id>", methods=["POST"])
-def delete_module(module_id):
+# ------------------ Delete Module ------------------
+@app.route("/admin/module/delete/<module_id>", methods=["POST"])
+def admin_module_delete(module_id):
     if session.get("role") != "admin":
         return redirect(url_for("home"))
 
     db.collection("modules").document(module_id).delete()
+    flash("Module deleted successfully!", "success")
     return redirect(url_for("admin_modules"))
 
+# ------------------ Upload Modules via CSV ------------------
+@app.route("/admin/module/upload", methods=["POST"])
+def admin_module_upload():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+
+    csv_file = request.files.get("csv_file")
+    if not csv_file:
+        flash("No CSV file selected!", "danger")
+        return redirect(url_for("admin_modules"))
+
+    import csv, io
+    stream = io.StringIO(csv_file.stream.read().decode("UTF-8"), newline=None)
+    reader = csv.DictReader(stream)
+
+    required_cols = {"moduleName", "moduleCode", "fk_program", "status"}
+    if not required_cols.issubset(reader.fieldnames):
+        flash(f"CSV must contain columns: {', '.join(required_cols)}", "danger")
+        return redirect(url_for("admin_modules"))
+
+    added = 0
+    for row in reader:
+        module_name = row.get("moduleName", "").strip()
+        module_code = row.get("moduleCode", "").strip()
+        program_id = row.get("fk_program", "").strip()
+        status = row.get("status", "1").strip()
+
+        if not module_name or not module_code or not program_id:
+            continue
+
+        # Optional: validate program exists
+        if not db.collection("programs").document(program_id).get().exists:
+            flash(f"Program ID '{program_id}' not found. Skipping module '{module_name}'.", "warning")
+            continue
+
+        module_data = {
+            "moduleName": module_name,
+            "moduleCode": module_code,
+            "fk_program": program_id,
+            "status": int(status) if status in ("0", "1") else 1
+        }
+        db.collection("modules").add(module_data)
+        added += 1
+
+    flash(f"Successfully uploaded {added} module(s) from CSV!", "success")
+    return redirect(url_for("admin_modules"))
 
 # ------------------ Admin Groups Page ------------------
 @app.route("/admin/groups")
