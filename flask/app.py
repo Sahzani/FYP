@@ -622,9 +622,10 @@ def admin_dashboard():
         return redirect(url_for("home"))
 
     admin_name = session.get("user_name", "Admin")
-    month = datetime.now().strftime("%Y-%m")
+    month = datetime.now().strftime("%Y-%m")  # e.g., "2025-10"
     
-    doc = db.collection("stats").document("monthly").collection(month).document("totals").get()
+    # 🔥 NEW: Read from attendance_summary
+    doc = db.collection("attendance_summary").document(month).get()
     
     if doc.exists:
         data = doc.to_dict()
@@ -644,6 +645,7 @@ def admin_dashboard():
         current_date=now.strftime("%A, %B %d"),
         current_time=now.strftime("%I:%M %p")
     )
+
 # ------------------ Admin Profile & Edit ------------------
 @app.route("/admin/profile")
 def admin_profile():
