@@ -1842,6 +1842,15 @@ def teacher_manage_absent():
         return redirect(url_for("home"))
     profile = user_doc.to_dict()
 
+    # Check if teacher is also a Group Coordinator
+    profile["is_gc"] = False
+    roles_doc = db.collection("users").document(user_id).collection("roles").document("teacher").get()
+    if roles_doc.exists:
+        role_data = roles_doc.to_dict()
+        if role_data.get("isCoordinator"):
+            profile["is_gc"] = True
+
+
     # Handle approve/reject
     if request.method == "POST":
         record_id = request.form.get("record_id")
@@ -2130,8 +2139,8 @@ def teacher_delete_group(group_id):
     return redirect(url_for("teacher_manage_groups"))
 
 
-# ------------------ Group Coordinator Group Reports ------------------
-@app.route("/gc/group_reports")
+# ------------------ Group Coordinator Group Report ------------------
+@app.route("/gc/group_report")
 def gc_group_report():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
@@ -2141,9 +2150,26 @@ def gc_group_report():
     if not teacher_uid:
         return redirect(url_for("login"))
 
+    # Fetch teacher profile first ✅
+    profile_doc = db.collection("users").document(teacher_uid).get()
+    profile = profile_doc.to_dict() if profile_doc.exists else {}
+    profile["is_gc"] = False  # Initialize to False by default
+
     # Check GC flag
     roles_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
     if not roles_doc.exists or not roles_doc.to_dict().get("isCoordinator"):
+        return redirect(url_for("teacher_dashboard"))
+    
+    # Check all roles for GC status
+    roles_docs = db.collection("users").document(teacher_uid).collection("roles").stream()
+    for role_doc in roles_docs:
+        role_data = role_doc.to_dict()
+        if role_data.get("isCoordinator") is True:
+            profile["is_gc"] = True
+            break
+
+    # Only allow GC teachers to access
+    if not profile.get("is_gc"):
         return redirect(url_for("teacher_dashboard"))
 
     # Fetch the group the GC is responsible for
@@ -2171,11 +2197,10 @@ def gc_group_report():
             "members": members
         }
 
-    profile_doc = db.collection("users").document(teacher_uid).get()
-    profile = profile_doc.to_dict() if profile_doc.exists else {}
+
 
     return render_template(
-        "teacher/T_GC_GroupReports.html",
+        "teacher/T_GC_GroupReport.html",
         profile=profile,
         group=group
     )
