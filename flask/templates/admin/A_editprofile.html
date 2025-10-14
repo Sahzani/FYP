@@ -12,19 +12,19 @@
 <!-- Page Header -->
 <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow flex justify-between items-center px-4 z-40">
     <div class="text-2xl font-bold text-gray-800">Edit Profile</div>
-    <a href="{{ url_for('admin_profile') }}" class="text-blue-600 hover:underline">Back to Profile</a>
+    <a href="{{ url_for('admin_dashboard') }}" class="text-blue-600 hover:underline">Back to Dashboard</a>
 </header>
 
 <main class="pt-20 px-6 max-w-2xl mx-auto">
 
     <div class="bg-white p-8 rounded-2xl shadow">
         <!-- FORM START -->
-        <form method="POST" action="{{ url_for('a_editprofile') }}" enctype="multipart/form-data" class="space-y-6">
+        <form method="POST" action="{{ url_for('admin_edit_profile') }}" enctype="multipart/form-data" class="space-y-6">
             
             <!-- Profile Picture -->
             <div class="flex flex-col items-center">
                 <div class="h-32 w-32 rounded-full overflow-hidden mb-4">
-                    <img src="{{ user.get('photoURL', 'https://placehold.co/128x128/b8c6ff/ffffff?text=A') }}" 
+                    <img src="{{ profile.get('profile_pic', 'https://placehold.co/128x128/b8c6ff/ffffff?text=A') }}" 
                          alt="Profile Picture" class="w-full h-full object-cover">
                 </div>
                 <input type="file" name="photo" class="text-sm text-gray-600">
@@ -33,21 +33,21 @@
             <!-- Name -->
             <div>
                 <label class="block text-gray-700 mb-1">Name</label>
-                <input type="text" name="name" value="{{ user.get('name', '') }}" 
+                <input type="text" name="name" value="{{ profile.get('full_name', '') }}" 
                        placeholder="Admin Name" class="w-full p-3 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500">
             </div>
 
             <!-- Email (read-only) -->
             <div>
                 <label class="block text-gray-700 mb-1">Email</label>
-                <input type="email" name="email" value="{{ user.get('email', '') }}" readonly
+                <input type="email" name="email" value="{{ profile.get('email', '') }}" readonly
                        class="w-full p-3 rounded border border-gray-300 bg-gray-100 text-gray-500">
             </div>
 
             <!-- Phone -->
             <div>
                 <label class="block text-gray-700 mb-1">Phone</label>
-                <input type="tel" name="phone" value="{{ user.get('phone', '') }}" 
+                <input type="tel" name="phone" value="{{ profile.get('phone', '') }}" 
                        placeholder="+123456789" class="w-full p-3 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500">
             </div>
 
@@ -58,9 +58,9 @@
                        class="w-full p-3 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500">
             </div>
 
-            <!-- Save Button -->
+            <!-- Save and Cancel Buttons -->
             <div class="flex justify-end space-x-4">
-                <a href="{{ url_for('admin_profile') }}" 
+                <a href="{{ url_for('admin_dashboard') }}" 
                    class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 transition">Cancel</a>
                 <button type="submit" 
                         class="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition">

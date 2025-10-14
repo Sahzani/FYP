@@ -630,29 +630,30 @@ from datetime import datetime
 from firebase_admin import firestore
 
 # ------------------ Admin Pages ------------------
-@app.route("/admin_dashboard")
+from datetime import datetime
+
+# -------------------- Admin Dashboard --------------------
+@app.route("/admin/dashboard")
 def admin_dashboard():
     if session.get("role") != "admin":
-        return redirect(url_for("home"))
+        return redirect(url_for("admin_login"))
 
-    admin_name = session.get("user_name", "Admin")
-    month = datetime.now().strftime("%Y-%m")  # e.g., "2025-10"
-    
-    # 🔥 Read from attendance_summary
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("admin_login"))
+
+    month = datetime.now().strftime("%Y-%m")
     doc = db.collection("attendance_summary").document(month).get()
     
-    if doc.exists:
-        data = doc.to_dict()
-        present = data.get("present", 0)
-        absent = data.get("absent", 0)
-        late = data.get("late", 0)
-    else:
-        present = absent = late = 0
+    stats = doc.to_dict() if doc.exists else {}
+    present = stats.get("present", 0)
+    absent = stats.get("absent", 0)
+    late = stats.get("late", 0)
 
     now = datetime.now()
     return render_template(
         "admin/A_Homepage.html",
-        admin_name=admin_name,
+        user=user,
         stats_present=present,
         stats_absent=absent,
         stats_late=late,
@@ -697,69 +698,41 @@ def update_attendance_summary(month_str=None):
     })
     print(f"✅ Updated attendance_summary for {month_str}: P={present}, A={absent}, L={late}")
 
-# ------------------ Admin Profile & Edit ------------------
-@app.route("/admin/profile")
+# -------------------- Admin Profile --------------------
+@app.route("/admin/profile", methods=["GET"], strict_slashes=False)
 def admin_profile():
-    # Only admins can access
     if session.get("role") != "admin":
-        return redirect(url_for("home"))
+        return redirect(url_for("admin_login"))
 
-    # Get the admin user info from session
     user = session.get("user")
     if not user:
-        return redirect(url_for("home"))
+        return redirect(url_for("admin_login"))
 
-    uid = user.get("uid")  # Firestore document ID
-
-    # Fetch main user document
+    # Fetch latest data from Firestore
+    uid = user.get("uid")
     user_doc = db.collection("users").document(uid).get()
-    if not user_doc.exists:
-        flash("Admin data not found.")
-        return redirect(url_for("admin_dashboard"))
+    if user_doc.exists:
+        user_data = user_doc.to_dict()
+        profile_pic = user_data.get("photo_url") or user_data.get("photo_name") or "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
+        user_data["profile_pic"] = profile_pic
+    else:
+        user_data = user
 
-    user_data = user_doc.to_dict()
-    if user_data.get("role_type") != "admin":
-        flash("Unauthorized access.")
-        return redirect(url_for("home"))
-
-    # Determine profile picture (prefer photo_url over photo_name)
-    profile_pic_path = user_data.get("photo_url") or user_data.get("photo_name")
-    if profile_pic_path and not profile_pic_path.startswith("http"):
-        profile_pic_path = profile_pic_path.replace("\\", "/")
-    elif not profile_pic_path:
-        profile_pic_path = "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
-
-    # Build profile dictionary for template
-    profile = {
-        "full_name": user_data.get("name", "Admin User"),
-        "first_name": user_data.get("first_name", ""),
-        "last_name": user_data.get("last_name", ""),
-        "email": user_data.get("email", "-"),
-        "phone": user_data.get("phone", "-"),  # optional field
-        "profile_pic": profile_pic_path,
-        "role": "Admin"
-    }
-
-    return render_template("admin/A_Profile.html", profile=profile)
+    return render_template("admin/A_Profile.html", profile=user_data)
 
 @app.route("/admin/edit_profile", methods=["GET", "POST"])
-def a_editprofile():
-    # Only allow admin access
+def admin_edit_profile():
     if session.get("role") != "admin":
-        return redirect(url_for("home"))
+        return redirect(url_for("admin_login"))
 
     user_id = session.get("user_id")
-    if not user_id:
-        return redirect(url_for("login"))
-
     user_ref = db.collection("users").document(user_id)
     user_doc = user_ref.get()
     if not user_doc.exists:
         flash("Admin data not found.")
-        return redirect(url_for("login"))
+        return redirect(url_for("admin_dashboard"))
 
     if request.method == "POST":
-        # Get form data
         name = request.form.get("name")
         phone = request.form.get("phone")
         password = request.form.get("password")
@@ -770,38 +743,33 @@ def a_editprofile():
         if phone:
             update_data["phone"] = phone
         if password:
-            update_data["password"] = password  # ⚠️ Hash password in production
+            update_data["password"] = password  # ⚠️ Hash in production
 
-        # Update Firestore if any fields provided
         if update_data:
             user_ref.update(update_data)
             flash("Profile updated successfully!", "success")
         else:
             flash("No changes detected.", "info")
 
-        return redirect(url_for("admin_profile"))
+        # ✅ Redirect to admin dashboard after saving
+        return redirect(url_for("admin_dashboard"))
 
-    # GET request → show current profile data in form
     user_data = user_doc.to_dict()
-
-    # Determine profile picture
-    profile_pic_path = user_data.get("photo_url") or user_data.get("photo_name")
-    if profile_pic_path and not profile_pic_path.startswith("http"):
-        profile_pic_path = profile_pic_path.replace("\\", "/")
-    elif not profile_pic_path:
-        profile_pic_path = "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
-
-    # Prepare dictionary for template
+    profile_pic = user_data.get("photo_url") or user_data.get("photo_name") or "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
     profile = {
         "full_name": user_data.get("name", "Admin User"),
         "first_name": user_data.get("first_name", ""),
         "last_name": user_data.get("last_name", ""),
         "email": user_data.get("email", "-"),
         "phone": user_data.get("phone", "-"),
-        "profile_pic": profile_pic_path
+        "profile_pic": profile_pic
     }
 
     return render_template("admin/A_EditProfile.html", profile=profile)
+
+
+# ------------------ Admin Login ------------------
+
 
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")

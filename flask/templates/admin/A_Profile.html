@@ -3,43 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile - iAttend</title>
+<title>Admin Profile - iAttend</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="bg-gradient-to-br from-[#FFE5B4] to-[#F5EEDC]">
+<body class="bg-gradient-to-br from-[#FFE5B4] to-[#F5EEDC] font-poppins">
 
 <!-- Page Header -->
-<header class="fixed top-0 left-0 right-0 h-16 bg-white shadow flex justify-between items-center px-4 z-40">
-    <div class="text-2xl font-bold text-gray-800">iAttend Profile</div>
-    <div class="flex items-center space-x-4">
-        <a href="#" class="flex items-center space-x-2">
-            <span class="font-semibold text-gray-800">Admin</span>
-            <div class="h-10 w-10 rounded-full overflow-hidden">
-                <img src="https://placehold.co/40x40/b8c6ff/ffffff?text=A" alt="Admin" class="w-full h-full object-cover">
-            </div>
-        </a>
-    </div>
+<header class="fixed top-0 left-0 right-0 h-16 bg-white shadow flex justify-between items-center px-6 z-40">
+    <div class="text-2xl font-bold text-gray-800">Admin Profile</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="text-blue-600 hover:underline">Back to Dashboard</a>
 </header>
 
-<main class="pt-20 px-6 max-w-3xl mx-auto">
+<main class="pt-24 px-6 max-w-2xl mx-auto">
 
-    <!-- Profile Card -->
-    <div class="bg-white p-8 rounded-2xl shadow flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-        <div class="h-32 w-32 rounded-full overflow-hidden flex-shrink-0">
-            <img src="https://placehold.co/128x128/b8c6ff/ffffff?text=A" alt="Profile Picture" class="w-full h-full object-cover">
+    <div class="bg-white p-8 rounded-2xl shadow">
+
+        <!-- Profile Picture -->
+        <div class="flex flex-col items-center mb-6">
+            <div class="h-32 w-32 rounded-full overflow-hidden mb-4">
+                <img src="{{ profile.get('profile_pic', 'https://placehold.co/140x140/E9E9E9/333333?text=A') }}" 
+                     alt="Profile Picture" class="w-full h-full object-cover">
+            </div>
+            <h2 class="text-xl font-semibold">{{ profile.get('full_name', 'Admin User') }}</h2>
+            <p class="text-gray-500">{{ profile.get('role', 'Admin') }}</p>
         </div>
-        <div class="flex-1">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Admin Name</h2>
-            <p class="text-gray-500 mb-1"><i class="fas fa-id-badge mr-2"></i>ID: 0001</p>
-            <p class="text-gray-500 mb-1"><i class="fas fa-envelope mr-2"></i>Email: admin@example.com</p>
-            <p class="text-gray-500 mb-1"><i class="fas fa-user-shield mr-2"></i>Role: Administrator</p>
-            <p class="text-gray-500 mb-4"><i class="fas fa-phone mr-2"></i>Phone: +123456789</p>
-            <div class="flex space-x-4">
-                <a href="{{ url_for('a_editprofile') }}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Edit Profile</a>
-                <button class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">Logout</button>
+
+        <!-- Profile Info -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-gray-700 font-medium">Email</label>
+                <p class="text-gray-800">{{ profile.get('email', '-') }}</p>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-medium">Phone</label>
+                <p class="text-gray-800">{{ profile.get('phone', '-') }}</p>
             </div>
         </div>
+
+        <!-- Buttons -->
+        <div class="mt-8 flex justify-between">
+            <!-- Back to Dashboard -->
+            <a href="{{ url_for('admin_dashboard') }}" 
+               class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 transition">
+               Back to Dashboard
+            </a>
+
+            <!-- Edit Profile -->
+            <a href="{{ url_for('admin_edit_profile') }}" 
+               class="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition">
+               Edit Profile
+            </a>
+        </div>
+
     </div>
 
 </main>
