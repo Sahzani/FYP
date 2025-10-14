@@ -5,60 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Profile - iAttend</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="bg-gradient-to-br from-[#FFE5B4] to-[#F5EEDC] font-poppins">
+<body class="bg-gray-100 font-sans">
 
-<!-- Page Header -->
-<header class="fixed top-0 left-0 right-0 h-16 bg-white shadow flex justify-between items-center px-6 z-40">
-    <div class="text-2xl font-bold text-gray-800">Admin Profile</div>
-    <a href="{{ url_for('admin_dashboard') }}" class="text-blue-600 hover:underline">Back to Dashboard</a>
-</header>
+<div class="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-10">
+    <h2 class="text-2xl font-bold mb-6">Admin Profile</h2>
 
-<main class="pt-24 px-6 max-w-2xl mx-auto">
-
-    <div class="bg-white p-8 rounded-2xl shadow">
-
-        <!-- Profile Picture -->
-        <div class="flex flex-col items-center mb-6">
-            <div class="h-32 w-32 rounded-full overflow-hidden mb-4">
-                <img src="{{ profile.get('profile_pic', 'https://placehold.co/140x140/E9E9E9/333333?text=A') }}" 
-                     alt="Profile Picture" class="w-full h-full object-cover">
-            </div>
-            <h2 class="text-xl font-semibold">{{ profile.get('full_name', 'Admin User') }}</h2>
-            <p class="text-gray-500">{{ profile.get('role', 'Admin') }}</p>
+    <div class="flex items-center mb-6">
+        <img src="{{ profile.profile_pic }}" alt="Profile Picture" class="h-24 w-24 rounded-full mr-4">
+        <div>
+            <h3 class="text-xl font-semibold">{{ profile.full_name }}</h3>
+            <p class="text-gray-600">{{ profile.role }}</p>
         </div>
-
-        <!-- Profile Info -->
-        <div class="space-y-4">
-            <div>
-                <label class="block text-gray-700 font-medium">Email</label>
-                <p class="text-gray-800">{{ profile.get('email', '-') }}</p>
-            </div>
-            <div>
-                <label class="block text-gray-700 font-medium">Phone</label>
-                <p class="text-gray-800">{{ profile.get('phone', '-') }}</p>
-            </div>
-        </div>
-
-        <!-- Buttons -->
-        <div class="mt-8 flex justify-between">
-            <!-- Back to Dashboard -->
-            <a href="{{ url_for('admin_dashboard') }}" 
-               class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 transition">
-               Back to Dashboard
-            </a>
-
-            <!-- Edit Profile -->
-            <a href="{{ url_for('admin_edit_profile') }}" 
-               class="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition">
-               Edit Profile
-            </a>
-        </div>
-
     </div>
 
-</main>
+    <div class="space-y-2">
+        <p><strong>Email:</strong> {{ profile.email }}</p>
+        <p><strong>Phone:</strong> {{ profile.phone }}</p>
+        <p><strong>Role:</strong> {{ profile.role }}</p>
+        <p><strong>ID:</strong> {{ profile.uid }}</p>
+    </div>
+
+    <!-- Buttons: Dashboard & Edit Profile only -->
+    <div class="flex space-x-4 mt-6">
+        <a href="{{ url_for('admin_dashboard') }}"
+           class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Dashboard</a>
+        <a href="{{ url_for('admin_edit_profile') }}"
+           class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Edit Profile</a>
+    </div>
+</div>
 
 </body>
 </html>

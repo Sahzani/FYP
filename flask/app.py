@@ -107,86 +107,77 @@ def inject_student_name():
     return {"full_name": "Student", "student_class": "", "group_code": ""}
 
 # ------------------ Routes ------------------
-@app.route("/login", methods=["POST"])
+# ------------------ Login ------------------
+# ------------------ Login ------------------
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    email = request.form.get("email", "").strip()
-    password = request.form.get("password", "").strip()
-    remember = request.form.get("remember")
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "").strip()
+        remember = request.form.get("remember")
 
-    if not email or not password:
-        flash("Please enter both email and password.")
-        return redirect(url_for("home"))  # "/" route
+        if not email or not password:
+            flash("Please enter both email and password.")
+            return redirect(url_for("login"))
 
-    try:
-        # ---------- Admin Login ----------
-        if email == "admin@admin.edu":
-            doc = db.collection("admin").document("admin").get()
-            if doc.exists and doc.to_dict().get("password") == password:
-                session["user"] = {"uid": "admin", "email": email}
-                session["user_id"] = "admin"
-                session["user_email"] = email
-                session["role"] = "admin"
-                session.permanent = True if remember == "on" else False
-                return redirect(url_for("admin_dashboard"))
+        try:
+            # ---------- Admin Login ----------
+            if email == "admin@admin.edu":
+                doc = db.collection("admin").document("admin").get()
+                if doc.exists and doc.to_dict().get("password") == password:
+                    session["user"] = {
+                        "uid": "admin",
+                        "email": email,
+                        "role": "Admin",
+                        "phone": doc.to_dict().get("phone", "-")
+                    }
+                    session.permanent = True if remember == "on" else False
+                    return redirect(url_for("admin_dashboard"))
+                else:
+                    flash("Invalid admin credentials.")
+                    return redirect(url_for("login"))
+
+            # ---------- Student / Teacher Login ----------
+            user = auth.get_user_by_email(email)
+            uid = user.uid
+            user_doc = db.collection("users").document(uid).get()
+
+            if not user_doc.exists:
+                flash("User not found in Firestore.")
+                return redirect(url_for("login"))
+
+            user_data = user_doc.to_dict()
+            role_type = user_data.get("role_type")
+            if role_type == 1:
+                role = "Student"
+                redirect_url = "student_dashboard"
+            elif role_type == 2:
+                role = "Teacher"
+                redirect_url = "teacher_dashboard"
             else:
-                flash("Invalid admin credentials.")
-                return redirect(url_for("home"))
+                # Professional unauthorized role message
+                flash("Access restricted: your account role is not authorized. Please contact admin.")
+                return redirect(url_for("login"))
 
-        # ---------- Student / Teacher Login ----------
-        user = auth.get_user_by_email(email)  # Firebase Auth lookup
-        uid = user.uid
+            session["user"] = {
+                "uid": uid,
+                "email": email,
+                "role": role
+            }
+            session.permanent = True if remember == "on" else False
+            return redirect(url_for(redirect_url))
 
-        # Fetch user document from users collection
-        user_doc_ref = db.collection("users").document(uid)
-        user_doc = user_doc_ref.get()
+        except auth.UserNotFoundError:
+            flash("Invalid email or password.")
+            return redirect(url_for("login"))
+        except Exception as e:
+            flash(f"Login error: {str(e)}")
+            return redirect(url_for("login"))
 
-        if not user_doc.exists:
-            flash("User not found in Firestore.")
-            return redirect(url_for("home"))
+    # GET request → show login page
+    return render_template("login.html")
 
-        user_data = user_doc.to_dict()
-        role_type = user_data.get("role_type")
-
-        if role_type == 1:
-            role = "student"
-            redirect_url = "student_dashboard"
-
-        elif role_type == 2:
-            role = "teacher"
-            redirect_url = "teacher_dashboard"
-
-            # ---------- Check if GC (only for teacher) ----------
-            roles_subcol = db.collection("users").document(uid).collection("roles").stream()
-            is_gc = False
-            for r in roles_subcol:
-                r_data = r.to_dict()
-                if r_data.get("isCoordinator") == True:
-                    is_gc = True
-                    break
-            # You can store this info in session if needed
-            session["is_gc"] = is_gc
-
-        else:
-            flash("Role not assigned. Contact admin.")
-            return redirect(url_for("home"))
-
-        # ✅ Unified session
-        session["user"] = {"uid": uid, "email": email}
-        session["user_id"] = uid
-        session["user_email"] = email
-        session["role"] = role
-        session.permanent = True if remember == "on" else False
-
-        return redirect(url_for(redirect_url))
-
-    except auth.UserNotFoundError:
-        flash("Invalid email or password")
-        return redirect(url_for("home"))
-
-    except Exception as e:
-        flash(f"Login error: {str(e)}")
-        return redirect(url_for("home"))
-
+# ------------------ Home Page ------------------
 @app.route("/")
 def home():
     return render_template("combinePage/Login.html")  # login page
@@ -635,28 +626,14 @@ from datetime import datetime
 # -------------------- Admin Dashboard --------------------
 @app.route("/admin/dashboard")
 def admin_dashboard():
-    if session.get("role") != "admin":
-        return redirect(url_for("admin_login"))
+    if not session.get("user") or session.get("user").get("role") != "Admin":
+        return redirect(url_for("login"))
 
-    user = session.get("user")
-    if not user:
-        return redirect(url_for("admin_login"))
-
-    month = datetime.now().strftime("%Y-%m")
-    doc = db.collection("attendance_summary").document(month).get()
-    
-    stats = doc.to_dict() if doc.exists else {}
-    present = stats.get("present", 0)
-    absent = stats.get("absent", 0)
-    late = stats.get("late", 0)
-
+    admin_name = session["user"]["email"]
     now = datetime.now()
     return render_template(
         "admin/A_Homepage.html",
-        user=user,
-        stats_present=present,
-        stats_absent=absent,
-        stats_late=late,
+        admin_name=admin_name,
         current_date=now.strftime("%A, %B %d"),
         current_time=now.strftime("%I:%M %p")
     )
@@ -698,78 +675,84 @@ def update_attendance_summary(month_str=None):
     })
     print(f"✅ Updated attendance_summary for {month_str}: P={present}, A={absent}, L={late}")
 
-# -------------------- Admin Profile --------------------
+# ------------------ Admin Profile ------------------
 @app.route("/admin/profile", methods=["GET"], strict_slashes=False)
 def admin_profile():
-    if session.get("role") != "admin":
-        return redirect(url_for("admin_login"))
+    if not session.get("user") or session.get("user").get("role") != "Admin":
+        return redirect(url_for("login"))
 
-    user = session.get("user")
-    if not user:
-        return redirect(url_for("admin_login"))
-
-    # Fetch latest data from Firestore
+    user = session["user"]
     uid = user.get("uid")
-    user_doc = db.collection("users").document(uid).get()
-    if user_doc.exists:
-        user_data = user_doc.to_dict()
-        profile_pic = user_data.get("photo_url") or user_data.get("photo_name") or "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
-        user_data["profile_pic"] = profile_pic
-    else:
-        user_data = user
+    user_doc = db.collection("admin").document(uid).get()
 
-    return render_template("admin/A_Profile.html", profile=user_data)
-
-@app.route("/admin/edit_profile", methods=["GET", "POST"])
-def admin_edit_profile():
-    if session.get("role") != "admin":
-        return redirect(url_for("admin_login"))
-
-    user_id = session.get("user_id")
-    user_ref = db.collection("users").document(user_id)
-    user_doc = user_ref.get()
     if not user_doc.exists:
-        flash("Admin data not found.")
-        return redirect(url_for("admin_dashboard"))
+        session.clear()
+        flash("Admin data not found. Please login again.", "error")
+        return redirect(url_for("login"))
+
+    user_data = user_doc.to_dict()
+    profile_data = {
+        "id": uid,
+        "email": user_data.get("email", "-"),
+        "role": "Admin",
+        "phone": user_data.get("phone", "-"),
+        "profile_pic": user_data.get("photo_url") or user_data.get("photo_name") \
+                       or "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
+    }
+
+    return render_template("admin/A_Profile.html", profile=profile_data)
+
+# ------------------ Admin Edit Profile ------------------
+@app.route("/admin/edit_profile", methods=["GET", "POST"], strict_slashes=False)
+def admin_edit_profile():
+    if not session.get("user") or session.get("user").get("role") != "Admin":
+        return redirect(url_for("login"))
+
+    uid = session["user"]["uid"]
+    user_ref = db.collection("admin").document(uid)
+    user_doc = user_ref.get()
+
+    if not user_doc.exists:
+        session.clear()
+        flash("Admin data not found. Please login again.", "error")
+        return redirect(url_for("login"))
 
     if request.method == "POST":
         name = request.form.get("name")
         phone = request.form.get("phone")
-        password = request.form.get("password")
+        password = request.form.get("password")  # hash in production
+        photo = request.files.get("photo")
 
         update_data = {}
-        if name:
-            update_data["name"] = name
-        if phone:
-            update_data["phone"] = phone
-        if password:
-            update_data["password"] = password  # ⚠️ Hash in production
+        if name: update_data["name"] = name
+        if phone: update_data["phone"] = phone
+        if password: update_data["password"] = password
+        if photo and photo.filename != "": update_data["photo_name"] = photo.filename
 
         if update_data:
             user_ref.update(update_data)
-            flash("Profile updated successfully!", "success")
-        else:
-            flash("No changes detected.", "info")
+            session["user"].update(update_data)
 
-        # ✅ Redirect to admin dashboard after saving
-        return redirect(url_for("admin_dashboard"))
+        flash("Profile updated successfully!", "success")
+        return redirect(url_for("admin_profile"))
 
     user_data = user_doc.to_dict()
-    profile_pic = user_data.get("photo_url") or user_data.get("photo_name") or "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
-    profile = {
-        "full_name": user_data.get("name", "Admin User"),
-        "first_name": user_data.get("first_name", ""),
-        "last_name": user_data.get("last_name", ""),
+    profile_data = {
+        "id": uid,
         "email": user_data.get("email", "-"),
+        "role": "Admin",
         "phone": user_data.get("phone", "-"),
-        "profile_pic": profile_pic
+        "profile_pic": user_data.get("photo_url") or user_data.get("photo_name") \
+                       or "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
     }
 
-    return render_template("admin/A_EditProfile.html", profile=profile)
+    return render_template("admin/A_EditProfile.html", profile=profile_data)
 
-
-# ------------------ Admin Login ------------------
-
+# ------------------ Admin Logout ------------------
+@app.route("/admin/logout")
+def admin_logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")
