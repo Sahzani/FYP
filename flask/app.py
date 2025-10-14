@@ -108,7 +108,7 @@ def inject_student_name():
 
 # ------------------ Routes ------------------
 # ------------------ Login ------------------
-# ------------------ Login ------------------
+# ------------------ Login Route ------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -125,45 +125,51 @@ def login():
             if email == "admin@admin.edu":
                 doc = db.collection("admin").document("admin").get()
                 if doc.exists and doc.to_dict().get("password") == password:
+                    # Set session for admin
                     session["user"] = {
                         "uid": "admin",
                         "email": email,
                         "role": "Admin",
                         "phone": doc.to_dict().get("phone", "-")
                     }
+                    session["role"] = "admin"
                     session.permanent = True if remember == "on" else False
                     return redirect(url_for("admin_dashboard"))
                 else:
                     flash("Invalid admin credentials.")
                     return redirect(url_for("login"))
 
-            # ---------- Student / Teacher Login ----------
-            user = auth.get_user_by_email(email)
+            # ---------- Teacher / Student Login ----------
+            user = auth.get_user_by_email(email)  # Firebase Auth lookup
             uid = user.uid
-            user_doc = db.collection("users").document(uid).get()
 
+            # Fetch user document from Firestore
+            user_doc = db.collection("users").document(uid).get()
             if not user_doc.exists:
                 flash("User not found in Firestore.")
                 return redirect(url_for("login"))
 
             user_data = user_doc.to_dict()
             role_type = user_data.get("role_type")
+
+            # ---------- Determine Role ----------
             if role_type == 1:
-                role = "Student"
+                # Student
+                session["user"] = {"uid": uid, "email": email, "role": "Student"}
+                session["role"] = "student"
                 redirect_url = "student_dashboard"
+
             elif role_type == 2:
-                role = "Teacher"
+                # Teacher
+                session["user"] = {"uid": uid, "email": email, "role": "Teacher"}
+                session["role"] = "teacher"
                 redirect_url = "teacher_dashboard"
+
             else:
-                # Professional unauthorized role message
-                flash("Access restricted: your account role is not authorized. Please contact admin.")
+                flash("Role not assigned. Contact admin.")
                 return redirect(url_for("login"))
 
-            session["user"] = {
-                "uid": uid,
-                "email": email,
-                "role": role
-            }
+            # Set session permanence
             session.permanent = True if remember == "on" else False
             return redirect(url_for(redirect_url))
 
@@ -386,19 +392,22 @@ def student_dashboard():
 from datetime import datetime
 from flask import session, redirect, url_for, render_template
 
+from flask import render_template, session, redirect, url_for
+from datetime import datetime
+
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
-    # Ensure teacher is logged in
+    # ------------------ Session Validation ------------------
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
     user = session.get("user")
     if not user:
         return redirect(url_for("home"))
+
     teacher_uid = user.get("uid")
 
-    # ------------------ Fetch teacher profile ------------------
-    profile_doc = db.collection("users").document(teacher_uid).get()
+    # ------------------ Default Teacher Profile ------------------
     profile = {
         "role": "Teacher",
         "firstName": "Teacher",
@@ -407,45 +416,44 @@ def teacher_dashboard():
         "is_gc": False
     }
 
+    # ------------------ Fetch Teacher Profile ------------------
+    profile_doc = db.collection("users").document(teacher_uid).get()
     if profile_doc.exists:
         user_data = profile_doc.to_dict()
-
-        first_name = user_data.get("firstName", "Teacher")
-        last_name = user_data.get("lastName", "")
-        photo_name = user_data.get("photo_name", "uploads/default_teacher.png")
-
-        # Check if teacher is a group coordinator
-        role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
-        is_gc = role_doc.exists and role_doc.to_dict().get("isCoordinator", False)
-
         profile.update({
-            "firstName": first_name,
-            "lastName": last_name,
-            "photo_name": photo_name,
-            "is_gc": is_gc
+            "firstName": user_data.get("firstName", "Teacher"),
+            "lastName": user_data.get("lastName", ""),
+            "photo_name": user_data.get("photo_name", "uploads/default_teacher.png")
         })
 
-    # ------------------ Fetch schedules ------------------
+        # Check if teacher is a Group Coordinator
+        role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
+        if role_doc.exists:
+            role_data = role_doc.to_dict()
+            profile["is_gc"] = role_data.get("isCoordinator", False)
+
+    # ------------------ Fetch Class Schedules ------------------
     schedules = []
     schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_uid).stream()
+
     for doc in schedules_docs:
         s = doc.to_dict()
         s["docId"] = doc.id
 
         group_code = s.get("fk_groupcode")
         module_code = s.get("fk_module")
-
         if not group_code or not module_code:
             continue
 
         group_doc = db.collection("groups").document(group_code).get()
         module_doc = db.collection("modules").document(module_code).get()
+
         s["group_name"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
         s["module_name"] = module_doc.to_dict().get("moduleName") if module_doc.exists else ""
 
         schedules.append(s)
 
-    # ------------------ Stats calculation ------------------
+    # ------------------ Calculate Attendance Stats ------------------
     today_str = datetime.now().strftime("%Y-%m-%d")
     total_present, total_absent = 0, 0
 
@@ -455,8 +463,8 @@ def teacher_dashboard():
         if not group_code or not module_code:
             continue
 
-        attendance_docs = db.collection("attendance").document(today_str)\
-            .collection(group_code).document(module_code)\
+        attendance_docs = db.collection("attendance").document(today_str) \
+            .collection(group_code).document(module_code) \
             .collection("students").stream()
 
         for att in attendance_docs:
@@ -472,36 +480,28 @@ def teacher_dashboard():
         "absent": total_absent
     }
 
-    # ------------------ Pending Absence Requests ------------------
-    # Get all group codes managed by this teacher
-    group_codes = []
+    # ------------------ Count Pending Absence Requests ------------------
+    pending_count = 0
     role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
     if role_doc.exists:
         role_data = role_doc.to_dict()
-        group_code = role_data.get("groupCode")  # exact Firestore field name
+        group_code = role_data.get("groupCode")
         if group_code:
-            group_codes.append(group_code)
+            pending_query = db.collection("absenceRecords") \
+                .where("status", "==", "In Progress") \
+                .where("group_code", "==", group_code)
 
-    pending_count = 0
-    for group_code in group_codes:
-        pending_query = db.collection("absenceRecords") \
-            .where("status", "==", "In Progress") \
-            .where("group_code", "==", group_code)
-        
-        # Debug: print all matched records
-        for doc in pending_query.stream():
-            print("Pending Absence:", doc.id, doc.to_dict())
-            pending_count += 1
+            for doc in pending_query.stream():
+                pending_count += 1
 
-
-    # ------------------ Render template ------------------
+    # ------------------ Render Teacher Dashboard ------------------
     return render_template(
         "teacher/T_dashboard.html",
-        stats=stats,
-        schedules=schedules,
         profile=profile,
-        current_schedule=None,
-        pending_count=pending_count
+        schedules=schedules,
+        stats=stats,
+        pending_count=pending_count,
+        current_schedule=None
     )
 
 #------------------ Teacher - view students Individual attendance ------------------
@@ -1286,9 +1286,10 @@ def student_editprofile():
 
     return render_template("student/S_EditProfile.html", profile=profile, now=int(time.time()))
 
-
+# ------------------ Student Change Password ------------------
 @app.route("/student/change_password", methods=["GET", "POST"])
 def student_change_password():
+    # Ensure the student is logged in
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
@@ -1323,10 +1324,12 @@ def student_change_password():
             flash(f"Error changing password: {str(e)}", "error")
             return redirect(url_for("student_change_password"))
 
-        return redirect(url_for("student_dashboard"))
+        # Redirect back to student profile/dashboard
+        return redirect(url_for("student_profile"))  # or student_dashboard
 
     return render_template("combinePage/Change password.html")
 
+# ------------------ Student Contact Page ------------------
 @app.route("/student/contact")
 def student_contact():
     if session.get("role") == "student":
@@ -2353,6 +2356,7 @@ def teacher_profile():
 # ------------------ Teacher Change Password ------------------
 @app.route("/teacher/change_password", methods=["GET", "POST"])
 def teacher_change_password():
+    # Ensure the teacher is logged in
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
@@ -2387,7 +2391,8 @@ def teacher_change_password():
             flash(f"Error changing password: {str(e)}", "error")
             return redirect(url_for("teacher_change_password"))
 
-        return redirect(url_for("teacher_dashboard"))
+        # Redirect back to teacher profile/dashboard
+        return redirect(url_for("teacher_profile"))  # or teacher_dashboard
 
     return render_template("combinePage/Change password.html")
 
@@ -2470,8 +2475,6 @@ def teacher_edit_profile():
             return redirect(url_for("teacher_edit_profile"))
 
     return render_template("teacher/T_EditProfile.html", profile=profile, now=int(time.time()))
-
-
 
 # ------------------ Admin Student Add/Edit ------------------
 
