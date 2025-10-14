@@ -10,19 +10,6 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
 <style>
-/* Copy your theme CSS here (same as T_Modules) */
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(180deg,#f7ecd7 0%,#f8f1e5 35%,#fbfaf7 100%); overflow-x:hidden; }
-header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.08); display:flex; align-items:center; padding:0 20px; z-index:1000; }
-#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
-#menu-toggle:hover { color:#4154F1; }
-.header-content { display:flex; justify-content:space-between; align-items:center; width:100%; }
-.header-content a.title { text-decoration:none; color:#444; font-weight:700; font-size:26px; }
-header a.user-info { display:flex; align-items:center; gap:10px; text-decoration:none; color:#444; font-weight:600; transition: all 0.2s ease; padding:0; border-radius:0; background:transparent; box-shadow:none; }
-header a.user-info:hover { padding:4px 12px; border-radius:12px; background:#f8f1e5; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
-header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-.header-content a.title:hover { color:#4154F1; }
-
 .main-content { margin-left:260px; padding:100px 30px 30px; min-height:100vh; overflow-y:auto; transition:margin-left 0.3s ease; background:transparent; }
 .main-content.expanded { margin-left:80px; }
 
@@ -30,11 +17,13 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
 .card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
 .card h2 { font-size:24px; font-weight:500; color:#444; margin-bottom:10px; }
 
-.table-wrapper { overflow-x:auto; }
-table { width:100%; border-collapse: collapse; table-layout: fixed; text-align:center; }
-thead th { position:sticky; top:0; background:#f8f1e5; z-index:10; padding:12px 8px; font-weight:600; color:#2C2C2C; text-align:center; }
-tbody td { border-top:1px solid #ddd; padding:12px 8px; word-wrap:break-word; text-align:center; }
-tbody tr:hover { background:#fef9f0; transition:background 0.2s; }
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; text-align: center; }
+table thead th { font-weight: 600; font-size: 14px; color: #2C2C2C; background-color: #f8f1e5; padding: 12px 8px; text-align: center; position: sticky; top: 0; z-index: 10; }
+table thead th:first-child { border-top-left-radius: 12px; }
+table thead th:last-child { border-top-right-radius: 12px; }
+table tbody td { padding: 12px 8px; border-top: 1px solid #ddd; word-wrap: break-word; text-align: center; }
+table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
 
 .btn-back { display:inline-block; margin-bottom:15px; padding:6px 12px; background:#f3f4f6; border-radius:6px; color:#1f2937; text-decoration:none; font-weight:500; }
 .btn-back:hover { background:#e0d8c5; }
@@ -151,62 +140,65 @@ tbody tr:hover { background:#fef9f0; transition:background 0.2s; }
       </span>
     </div>
 
-    <!-- Attendance Table -->
-    <div class="table-wrapper mt-4 overflow-x-auto">
-      <table id="attendanceTable" class="min-w-full border border-gray-200">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="py-2 px-3 border-b">Student Name</th>
-            <th class="py-2 px-3 border-b">Status</th>
-            <th class="py-2 px-3 border-b">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for student in attendance_records %}
-          <tr class="hover:bg-gray-50">
-        <td data-label="Student Name" class="py-2 px-3 border-b">{{ student.student_name }}</td>
-        <td data-label="Status" class="py-2 px-3 border-b">
-              {% if student.status == 'Present' %}
-                <span class="px-2 py-1 bg-green-100 text-green-800 rounded">
-                  <i class="fas fa-check-circle mr-1"></i>{{ student.status }}
-                </span>
-              {% elif student.status == 'Absent' %}
-                <span class="px-2 py-1 bg-red-100 text-red-800 rounded">
-                  <i class="fas fa-times-circle mr-1"></i>{{ student.status }}
-                </span>
-              {% elif student.status == 'Late' %}
-                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">
-                  <i class="fas fa-clock mr-1"></i>{{ student.status }}
-                </span>
-              {% else %}
-                <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded">
-                  <i class="fas fa-question-circle mr-1"></i>{{ student.status }}
-                </span>
-              {% endif %}
-            </td>
-            <td class="py-2 px-3 border-b">
-              <form method="POST" action="{{ url_for('update_attendance') }}" class="flex gap-2 items-center">
-                <input type="hidden" name="schedule_id" value="{{ schedule_id }}">
-                <input type="hidden" name="module_id" value="{{ module_id }}">
-                <input type="hidden" name="group_id" value="{{ group_id }}">
-                <input type="hidden" name="student_id" value="{{ student.student_id }}">
-                <input type="hidden" name="date" value="{{ selected_date }}">
-                <select name="status" class="border rounded px-2 py-1">
-                  <option value="Present" {% if student.status == 'Present' %}selected{% endif %}>Present</option>
-                  <option value="Absent" {% if student.status == 'Absent' %}selected{% endif %}>Absent</option>
-                  <option value="Late" {% if student.status == 'Late' %}selected{% endif %}>Late</option>
-                  <option value="Not Marked" {% if student.status == 'Not Marked' %}selected{% endif %}>Not Marked</option>
-                </select>
-                <button type="submit" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition">
-                  <i class="fas fa-sync-alt mr-1"></i>Update
-                </button>
-              </form>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+ <!-- Attendance Table -->
+<div class="table-wrapper mt-4 overflow-x-auto">
+  <table id="attendanceTable" class="min-w-full border-collapse">
+    <thead>
+      <tr>
+        <th class="py-2 px-2 border-b border-gray-300 text-center">Student Name</th>
+        <th class="py-2 px-2 border-b border-gray-300 text-center">Status</th>
+        <th class="py-2 px-2 border-b border-gray-300 text-center">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in attendance_records %}
+      <tr class="hover-row">
+        <td data-label="Student Name" class="py-2 px-2 border-b border-gray-200 text-center">{{ student.student_name }}</td>
+        <td data-label="Status" class="py-2 px-2 border-b border-gray-200 text-center">
+          {% if student.status == 'Present' %}
+            <span class="px-1 py-0.5 bg-green-100 text-green-800 rounded text-sm">
+              <i class="fas fa-check-circle mr-1"></i>{{ student.status }}
+            </span>
+          {% elif student.status == 'Absent' %}
+            <span class="px-1 py-0.5 bg-red-100 text-red-800 rounded text-sm">
+              <i class="fas fa-times-circle mr-1"></i>{{ student.status }}
+            </span>
+          {% elif student.status == 'Late' %}
+            <span class="px-1 py-0.5 bg-yellow-100 text-yellow-800 rounded text-sm">
+              <i class="fas fa-clock mr-1"></i>{{ student.status }}
+            </span>
+          {% else %}
+            <span class="px-1 py-0.5 bg-gray-100 text-gray-800 rounded text-sm">
+              <i class="fas fa-question-circle mr-1"></i>{{ student.status }}
+            </span>
+          {% endif %}
+        </td>
+        <td data-label="Action" class="py-2 px-2 border-b border-gray-200 text-center">
+          <form method="POST" action="{{ url_for('update_attendance') }}" class="flex items-center justify-center gap-1">
+            <input type="hidden" name="schedule_id" value="{{ schedule_id }}">
+            <input type="hidden" name="module_id" value="{{ module_id }}">
+            <input type="hidden" name="group_id" value="{{ group_id }}">
+            <input type="hidden" name="student_id" value="{{ student.student_id }}">
+            <input type="hidden" name="date" value="{{ selected_date }}">
+
+            <select name="status" class="border rounded px-1 py-0.5 text-sm text-center">
+              <option value="Present" {% if student.status == 'Present' %}selected{% endif %}>Present</option>
+              <option value="Absent" {% if student.status == 'Absent' %}selected{% endif %}>Absent</option>
+              <option value="Late" {% if student.status == 'Late' %}selected{% endif %}>Late</option>
+              <option value="Not Marked" {% if student.status == 'Not Marked' %}selected{% endif %}>Not Marked</option>
+            </select>
+
+            <button type="submit" class="px-2 py-0.5 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition">
+              <i class="fas fa-sync-alt mr-1"></i>Update
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
 
     <div class="mt-4">
       <a href="{{ url_for('teacher_modules') }}" class="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition">

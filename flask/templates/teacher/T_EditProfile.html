@@ -6,57 +6,8 @@
 <title>iAttend Teacher Profile</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 <style>
-/* -------------------- Global -------------------- */
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body { 
-    height:100%; 
-    font-family:'Poppins',sans-serif; 
-    background: linear-gradient(180deg,#f7ecd7 0%,#f8f1e5 35%,#fbfaf7 100%); 
-    overflow-x:hidden; 
-}
-
-/* -------------------- Header -------------------- */
-header {
-    position:fixed; top:0; left:0; right:0; height:60px; background:#fff; 
-    box-shadow:0 6px 20px rgba(0,0,0,0.08); display:flex; align-items:center; padding:0 20px; z-index:1000;
-}
-#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; transition: color 0.3s; }
-#menu-toggle:hover { color:#4154F1; }
-
-.header-content { display:flex; justify-content:space-between; align-items:center; width:100%; }
-.header-content a.title { text-decoration:none; color:#444; font-weight:700; font-size:26px; transition:color 0.3s; }
-.header-content a.title:hover { color:#4154F1; }
-
-header a.user-info {
-    display:flex; align-items:center; gap:10px; text-decoration:none; color:#444; font-weight:600; 
-    transition: all 0.2s ease; padding:0; border-radius:0; background:transparent; box-shadow:none;
-}
-header a.user-info:hover {
-    padding:4px 12px; border-radius:12px; background:#f8f1e5; box-shadow:0 2px 8px rgba(0,0,0,0.08);
-}
-header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-
-/* -------------------- Sidebar -------------------- */
-.sidebar {
-    position:fixed; top:60px; left:0; width:250px; height:calc(100% - 60px); 
-    background:#f8f1e5; padding:15px 0; box-shadow:2px 0 15px rgba(0,0,0,0.08); border-top-right-radius:12px; 
-    transition: all 0.3s ease; overflow-y:auto; z-index:999;
-}
-.sidebar-section { margin-bottom:25px; padding:0 15px; }
-.sidebar-section-title {
-    font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#6b7280; margin-bottom:10px; padding-left:10px;
-}
-.sidebar-link {
-    display:flex; align-items:center; gap:10px; padding:12px 15px; margin-bottom:8px; border-radius:8px; 
-    font-size:15px; font-weight:500; color:#2C2C2C; text-decoration:none; transition: all 0.25s ease; white-space:nowrap;
-}
-.sidebar-link i { width:18px; text-align:center; }
-.sidebar-link.active, .sidebar-link:hover { background:#eadbbf; color:#1F2937; font-weight:600; }
-.sidebar.collapsed { width:70px; padding:15px 0; overflow:hidden; }
-.sidebar.collapsed .sidebar-section-title,
-.sidebar.collapsed .sidebar-link span { display:none; }
-
 /* -------------------- Main Content -------------------- */
 .main-content {
     margin-left:260px; padding:100px 30px 30px; font-family:'Nunito',sans-serif;
@@ -126,14 +77,14 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
 <body>
 <!-- Header -->
 <header>
-    <span id="menu-toggle">&#9776;</span>
-    <div class="header-content">
-        <a href="{{ url_for('teacher_dashboard') }}" style="text-decoration: none; color: inherit;">iAttend</a>
-        <a href="{{ url_for('teacher_profile') }}" class="user-info">
-            <span id="header-user-name">Loading...</span>
-            <img id="user-profile-pic-header" src="https://placehold.co/36x36/899BBD/ffffff?text=T" alt="User Profile Picture">
-        </a>
-    </div>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
+    <a href="{{ url_for('teacher_profile') }}" class="user-info">
+      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
+      <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
+    </a>
+  </div>
 </header>
 
 <!-- Sidebar -->
@@ -162,13 +113,17 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}">
       <i class="fas fa-calendar-alt"></i><span>Absences Application</span>
     </a>
-
   </div>
+
   {% if profile.is_gc %}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
-    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}"><i class="fas fa-users-cog"></i><span>Manage Group</span></a>
-    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}"><i class="fas fa-file-alt"></i><span>Group Report</span></a>
+    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
+      <i class="fas fa-users-cog"></i><span>Manage Group</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
+      <i class="fas fa-file-alt"></i><span>Group Report</span>
+    </a>
   </div>
   {% endif %}
 
@@ -179,18 +134,6 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
   </div>
 </div>
 
-<!-- Header -->
-<header>
-  <span id="menu-toggle">&#9776;</span>
-  <div class="header-content">
-    <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
-    <a href="{{ url_for('teacher_profile') }}" class="user-info">
-      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
-    </a>
-  </div>
-</header>
-
 <!-- Main content -->
 <div class="main-content" style="font-family:'Nunito',sans-serif;">
   <div class="profile-sections">
@@ -200,17 +143,31 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
       <h2 style="font-family:'Poppins',sans-serif; font-weight:600; color:#4154F1;">Edit Teacher Profile</h2>
       <div class="profile-content">
 
-        <!-- Profile Picture -->
-        <div class="profile-pic-container">
-          <img id="user-profile-pic" 
-               src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" 
-               alt="Profile Picture">
-          <input type="file" id="profile-pic-upload" name="profile_pic" style="display:none;">
-          <i class="fas fa-camera edit-icon" onclick="document.getElementById('profile-pic-upload').click();"></i>
-        </div>
-
         <!-- Profile Form -->
         <form id="profile-form" class="profile-details" method="POST" action="{{ url_for('teacher_edit_profile') }}" enctype="multipart/form-data">
+          
+          <!-- Profile Picture -->
+          <div style="position:relative; width:120px; height:120px;">
+            <div class="profile-pic-container" style="width:120px; height:120px; display:flex; align-items:center; justify-content:center; font-size:50px; font-weight:700; color:#fff; background:#4154F1; border-radius:50%; overflow:hidden;">
+              
+              {% if profile.photo_name %}
+                <img id="user-profile-pic" 
+                     src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}?v={{ now }}{% endif %}" 
+                     alt="Profile Picture" style="width:100%; height:100%; object-fit:cover;">
+              {% else %}
+                {{ profile.firstName[0] if profile.firstName else 'T' }}
+              {% endif %}
+              
+              <input type="file" id="profile-pic-upload" name="profile_pic" accept="image/*" style="display:none;">
+            </div>
+
+            <!-- Camera icon overlapping bottom-right -->
+            <i class="fas fa-camera edit-icon" 
+               onclick="document.getElementById('profile-pic-upload').click();" 
+               style="position:absolute; bottom:0; right:0; transform:translate(25%, 25%); font-size:16px; color:#fff; background:#4154F1; border-radius:50%; padding:6px; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.3);">
+            </i>
+          </div>
+
           <div class="form-group">
             <label for="first-name-input">First Name</label>
             <input type="text" id="first-name-input" value="{{ profile.firstName }}" disabled>
@@ -237,6 +194,7 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
             <button type="submit" name="action" value="cancel" class="btn btn-secondary">Cancel</button>
             <button type="submit" name="action" value="save" class="btn btn-primary">Save Changes</button>
           </div>
+
         </form>
       </div>
     </div>
@@ -253,6 +211,7 @@ header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:
   </div>
 </div>
 
+
 <script>
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
@@ -264,7 +223,7 @@ menuToggle.addEventListener('click', () => {
   mainContent.classList.toggle('expanded');
 });
 
-// Profile picture preview immediately when selected
+// Profile picture live preview before saving
 const profilePicInput = document.getElementById('profile-pic-upload');
 const profilePicImg = document.getElementById('user-profile-pic');
 
@@ -273,13 +232,15 @@ profilePicInput.addEventListener('change', (e) => {
   if(file && file.type.startsWith('image/')) {
     const reader = new FileReader();
     reader.onload = (event) => {
-      profilePicImg.src = event.target.result;
+      profilePicImg.src = event.target.result; // live preview
     };
     reader.readAsDataURL(file);
   } else {
     profilePicInput.value = ''; // Reset if not an image
+    alert("Please select a valid image file (png, jpg, jpeg, gif).");
   }
 });
 </script>
+
 </body>
 </html>

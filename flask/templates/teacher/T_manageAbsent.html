@@ -49,10 +49,10 @@
   <header>
     <span id="menu-toggle">&#9776;</span>
     <div class="header-content">
-      <a href="#" class="title">iAttend</a>
-      <a href="#" class="user-info">
+      <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
+      <a href="{{ url_for('teacher_profile') }}" class="user-info">
         <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-        <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Teacher">
+        <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
       </a>
     </div>
   </header>
@@ -87,16 +87,12 @@
     </div>
 
     {% if profile.is_gc %}
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Group Coordinator</div>
-      <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}">
-        <i class="fas fa-users-cog"></i><span>Manage Group</span>
-      </a>
-      <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
-        <i class="fas fa-file-alt"></i><span>Group Report</span>
-      </a>
-    </div>
-    {% endif %}
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Group Coordinator</div>
+    <a class="sidebar-link" href="{{ url_for('gc_manage_group') }}"><i class="fas fa-users-cog"></i><span>Manage Group</span></a>
+    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}"><i class="fas fa-file-alt"></i><span>Group Report</span></a>
+  </div>
+  {% endif %}
 
     <div class="sidebar-section">
       <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">

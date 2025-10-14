@@ -9,7 +9,7 @@ import firebase_admin, random
 from flask import send_from_directory
 from collections import Counter 
 import os
-
+import time
 
 # For webcam page
 camera_process = None
@@ -265,10 +265,15 @@ def reset_password(student_id):
         user_data = user_doc.to_dict()
         uid = user_doc.id
 
-        # Update the password in Firebase Auth
+        # Update password in Firebase Auth
         auth.update_user(uid, password=new_password)
+
+        # Also update password in Firestore if stored there
+        db.collection("users").document(uid).update({"password": new_password})
+
         flash("Password reset successfully!", "success")
         return redirect(url_for("home"))
+
     except Exception as e:
         flash(f"Failed to reset password: {str(e)}", "error")
         return redirect(url_for("reset_password", student_id=student_id))
@@ -286,17 +291,17 @@ def student_dashboard():
     if not uid:
         return redirect(url_for("home"))
 
-    # ✅ Query the 'users' collection (not 'students')
+    # Query the 'users' collection
     user_doc = db.collection("users").document(uid).get()
     full_name = "Student"
+    profile_pic_url = None  # default None
 
     if user_doc.exists:
         user_data = user_doc.to_dict()
-        # Prefer the pre-built 'name' field if available
+        # Get full name
         if "name" in user_data and user_data["name"].strip():
             full_name = user_data["name"].strip()
         else:
-            # Fallback to first_name + last_name
             first = user_data.get("first_name", "").strip()
             last = user_data.get("last_name", "").strip()
             if first and last:
@@ -305,29 +310,52 @@ def student_dashboard():
                 full_name = first
             elif last:
                 full_name = last
-            # else remains "Student"
 
-    # Attendance stats
-    attendance_docs = db.collection("attendance").where("student_id", "==", uid).stream()
+        # Get profile picture
+        if "photo_url" in user_data and user_data["photo_url"].strip():
+            profile_pic_url = user_data["photo_url"].strip()
+
+    # Attendance stats (hierarchical)
     present = absent = late = streak = 0
     unexcused_absences = 0
     temp_streak = 0
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_status = "Not Marked Yet"
+    today_note = ""
 
-    for doc in attendance_docs:
-        data = doc.to_dict()
-        status = data.get("status")
-        if status == "Present":
-            present += 1
-            temp_streak += 1
-        elif status == "Late":
-            late += 1
-            temp_streak = 0
-        elif status == "Absent":
-            absent += 1
-            if not data.get("letter"):
-                unexcused_absences += 1
-            temp_streak = 0
-        streak = max(streak, temp_streak)
+    # Iterate over all schedule documents
+    schedule_docs = db.collection("attendance").stream()
+    for schedule_doc in schedule_docs:
+        schedule_id = schedule_doc.id
+        dates_collection = db.collection("attendance").document(schedule_id).collection("dates")
+        
+        for date_doc in dates_collection.stream():
+            date_id = date_doc.id  # e.g., "2025-10-10"
+            students_collection = dates_collection.document(date_id).collection("students")
+            student_doc = students_collection.document(uid).get()
+            
+            if student_doc.exists:
+                data = student_doc.to_dict()
+                status = data.get("status")
+                
+                # Count stats
+                if status == "Present":
+                    present += 1
+                    temp_streak += 1
+                elif status == "Late":
+                    late += 1
+                    temp_streak = 0
+                elif status == "Absent":
+                    absent += 1
+                    if not data.get("letter"):
+                        unexcused_absences += 1
+                    temp_streak = 0
+                streak = max(streak, temp_streak)
+                
+                # Today's attendance
+                if date_id == today_str:
+                    today_status = data.get("status", "Not Marked Yet")
+                    today_note = data.get("note", "")
 
     # Notifications
     if late >= 3:
@@ -336,23 +364,6 @@ def student_dashboard():
         notification = "Your attendance rate is dropped due to 3 unexcused absences this month."
     else:
         notification = "No new notifications."
-
-    # Today's attendance
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    today_status = "Not Marked Yet"
-    today_note = ""
-
-    today_attendance_doc = db.collection("attendance") \
-                             .where("student_id", "==", uid) \
-                             .where("date", "==", today_str) \
-                             .limit(1) \
-                             .stream()
-
-    for doc in today_attendance_doc:
-        data = doc.to_dict()
-        today_status = data.get("status", "Not Marked Yet")
-        today_note = data.get("note", "")
-        break
 
     # Determine color and icon for today's attendance
     if today_status == "Present":
@@ -371,6 +382,7 @@ def student_dashboard():
     return render_template(
         "student/S_Dashboard.html",
         full_name=full_name,
+        profile_pic_url=profile_pic_url,  # added for header
         stats_present=present,
         stats_absent=absent,
         stats_late=late,
@@ -381,7 +393,7 @@ def student_dashboard():
         status_color=status_color,
         status_icon=status_icon
     )
-    
+
 # ------------------ Teacher Dashboard ------------------
 from datetime import datetime
 from flask import session, redirect, url_for, render_template
@@ -1127,7 +1139,7 @@ def edit_absent_record(record_id):
 
     return redirect(url_for("student_absentapp"))
 
-# ------------------ Student Profile ------------------
+# ------------------ Student Profile Page ------------------
 @app.route("/student/profile")
 def student_profile():
     if session.get("role") != "student":
@@ -1139,107 +1151,157 @@ def student_profile():
 
     uid = user.get("uid")
 
-    # Fetch student data from Firestore
-    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
-    student_data = None
-    for doc in student_doc:
-        student_data = doc.to_dict()
-        break
-
-    if not student_data:
+    # Fetch main user document
+    user_doc = db.collection("users").document(uid).get()
+    if not user_doc.exists:
         flash("Student data not found.")
         return redirect(url_for("student_dashboard"))
 
-    # Handle profile picture path
-    profile_pic_path = student_data.get("profilePic", None)
+    user_data = user_doc.to_dict()
+    if user_data.get("role_type") != 1:
+        flash("Unauthorized access.")
+        return redirect(url_for("home"))
+
+    # Determine profile picture (prefer photo_url over photo_name)
+    profile_pic_path = user_data.get("photo_url") or user_data.get("photo_name")
     if profile_pic_path and not profile_pic_path.startswith("http"):
-        # Convert backslashes to forward slashes
         profile_pic_path = profile_pic_path.replace("\\", "/")
-    else:
+    elif not profile_pic_path:
         profile_pic_path = "https://placehold.co/140x140/E9E9E9/333333?text=User"
 
-    # Build profile dictionary
+    # Fetch student-specific info
+    student_doc_ref = db.collection("users").document(uid).collection("roles").document("student")
+    student_doc = student_doc_ref.get()
+    student_info = student_doc.to_dict() if student_doc.exists else {}
+
+    # Fetch group info
+    group_code_display = "-"
+    intake = "-"
+    program_name = "-"
+    fk_groupcode = student_info.get("fk_groupcode")
+    if fk_groupcode:
+        group_doc = db.collection("groups").document(fk_groupcode).get()
+        if group_doc.exists:
+            group_data = group_doc.to_dict()
+            group_code_display = group_data.get("groupCode", "-")
+            intake = group_data.get("intake", "-")
+            fk_program = group_data.get("fk_program")
+            # Fetch program name from programs collection
+            if fk_program:
+                program_doc = db.collection("programs").document(fk_program).get()
+                if program_doc.exists:
+                    program_name = program_doc.to_dict().get("programName", "-")
+
     profile = {
-        "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
-        "student_id": student_data.get("studentID", "-"),
-        "nickname": student_data.get("nickname", "-"),
-        "studentClass": student_data.get("studentClass", "-"),  
-        "phone": student_data.get("phone", "-"),
-        "email": user.get("email", "-"),
+        "full_name": user_data.get("name", "Student"),
+        "first_name": user_data.get("first_name", ""),
+        "last_name": user_data.get("last_name", ""),
+        "student_id": student_info.get("studentID", "-"),
+        "nickname": student_info.get("nickname", "-"),
+        "studentClass": group_code_display,
+        "phone": student_info.get("phone", "-"),  # optional: can be in user doc
+        "email": user_data.get("email", "-"),
         "profile_pic": profile_pic_path,
-        "course": student_data.get("course", "-"),
-        "intake": student_data.get("intake", "-")
+        "course": program_name,
+        "intake": intake
     }
 
     return render_template("student/S_Profile.html", profile=profile)
 
+
+
 # ------------------ Student Edit Profile ------------------
+# Allowed image MIME types
+ALLOWED_IMAGE_MIMES = ["image/png", "image/jpeg", "image/jpg", "image/gif"]
+
 @app.route("/student/editprofile", methods=["GET", "POST"])
 def student_editprofile():
-    if session.get("role") != "student":
-        return redirect(url_for("home"))
-
+    # Ensure student is logged in
     user = session.get("user")
-    if not user:
+    role = session.get("role")
+    if not user or role != "student":
         return redirect(url_for("home"))
 
     uid = user.get("uid")
-    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
-    student_data = None
-    student_ref = None
-    for doc in student_doc:
-        student_data = doc.to_dict()
-        student_ref = doc.reference
-        break
+    if not uid:
+        return redirect(url_for("home"))
 
-    if not student_data:
-        flash("Student data not found.")
-        return redirect(url_for("student_dashboard"))
+    # Fetch main user document
+    user_ref = db.collection("users").document(uid)
+    user_doc = user_ref.get()
+    user_data = user_doc.to_dict() if user_doc.exists else {}
 
-    if request.method == "POST":
-        nickname = request.form.get("nickname")
-        phone = request.form.get("phone")
-        profile_pic_file = request.files.get("profilePic")
+    # Fetch student-specific info
+    student_doc_ref = user_ref.collection("roles").document("student")
+    student_doc = student_doc_ref.get()
+    student_info = student_doc.to_dict() if student_doc.exists else {}
 
-        update_data = {
-            "nickname": nickname,
-            "phone": phone
-        }
+    # Determine profile picture
+    profile_pic_path = user_data.get("photo_url") or "uploads/default/user.png"
 
-        if profile_pic_file and profile_pic_file.filename != "":
-            filename = secure_filename(profile_pic_file.filename)
-            # Automatically create folder
-            upload_dir = os.path.join(BASE_DIR, "static", "uploads", "student_profiles", uid)
-            os.makedirs(upload_dir, exist_ok=True)
-            file_path = os.path.join(upload_dir, filename)
-            profile_pic_file.save(file_path)
-            update_data["profilePic"] = f"uploads/student_profiles/{uid}/{filename}"
-
-        student_ref.update(update_data)
-        flash("Profile updated successfully!")
-        return redirect(url_for("student_editprofile"))
-
+    # Prepare profile for template
     profile = {
-        "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
-        "first_name": student_data.get("firstName", ""),
-        "last_name": student_data.get("lastName", ""),
-        "nickname": student_data.get("nickname", ""),
-        "student_id": student_data.get("studentID", "-"),
-        "studentClass": student_data.get("studentClass", "-"),
-        "phone": student_data.get("phone", "-"),
-        "email": user.get("email", "-"),
-        "profile_pic": student_data.get("profilePic", "uploads/default/user.png"),
-        "course": student_data.get("course", "-"),
-        "intake": student_data.get("intake", "-")
+        "full_name": f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}".strip() or "Student",
+        "first_name": user_data.get("first_name", ""),
+        "last_name": user_data.get("last_name", ""),
+        "nickname": student_info.get("nickname", ""),
+        "student_id": student_info.get("studentID", "-"),
+        "studentClass": student_info.get("studentClass", "-"),
+        "phone": student_info.get("phone", "-"),
+        "email": user_data.get("email", "-"),
+        "profile_pic": profile_pic_path
     }
 
-    return render_template("student/S_EditProfile.html", profile=profile)
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "cancel":
+            return redirect(url_for("student_profile"))
+
+        if action == "save":
+            # Update nickname & phone in roles/student
+            student_update_data = {}
+            nickname = request.form.get("nickname", "").strip()
+            phone = request.form.get("phone", "").strip()
+            if nickname != profile["nickname"]:
+                student_update_data["nickname"] = nickname
+            if phone != profile["phone"]:
+                student_update_data["phone"] = phone
+            if student_update_data:
+                student_doc_ref.update(student_update_data)
+
+            # Handle uploaded photo
+            photo_file = request.files.get("photo_url")
+            if photo_file and photo_file.filename != "" and photo_file.mimetype in ALLOWED_IMAGE_MIMES:
+                filename = secure_filename(photo_file.filename)
+                upload_folder = os.path.join(app.root_path, "static", "uploads", "student_profiles", uid)
+                os.makedirs(upload_folder, exist_ok=True)
+                file_path = os.path.join(upload_folder, filename)
+                photo_file.save(file_path)
+                relative_path = f"uploads/student_profiles/{uid}/{filename}"
+
+                # Save photo_url in main users document
+                user_ref.update({"photo_url": relative_path})
+                profile["profile_pic"] = relative_path  # immediate preview
+
+            flash("Profile updated successfully!")
+            return redirect(url_for("student_editprofile"))
+
+    return render_template("student/S_EditProfile.html", profile=profile, now=int(time.time()))
+
 
 # ------------------ Change Password for student ------------------
 @app.route("/student/change_password", methods=["GET", "POST"])
 def student_change_password():
     if session.get("role") != "student":
         return redirect(url_for("home"))
+    
+    old_password = user_doc.get("password") 
+    
+    if (user_doc := db.collection("users").document(session.get("user_id")).get()).exists:
+        pass
+    else:
+        None
+        user_ref = db.collection("users").document(session.get("user_id"))
 
     if request.method == "POST":
         new_password = request.form.get("newPassword")
@@ -1252,6 +1314,12 @@ def student_change_password():
         if new_password != confirm_password:
             flash("Passwords do not match.", "error")
             return redirect(url_for("student_change_password"))
+        
+        if new_password == old_password:
+            flash("New password cannot be the same as the old password.")
+            return render_template("A_ChangePassword.html")
+        
+        user_ref.update({"password": new_password})
 
         try:
             user = session.get("user")
@@ -1864,6 +1932,15 @@ def teacher_manage_absent():
         return redirect(url_for("home"))
     profile = user_doc.to_dict()
 
+    # Check if teacher is also a Group Coordinator
+    profile["is_gc"] = False
+    roles_doc = db.collection("users").document(user_id).collection("roles").document("teacher").get()
+    if roles_doc.exists:
+        role_data = roles_doc.to_dict()
+        if role_data.get("isCoordinator"):
+            profile["is_gc"] = True
+
+
     # Handle approve/reject
     if request.method == "POST":
         record_id = request.form.get("record_id")
@@ -1936,14 +2013,10 @@ def teacher_schedules():
 
     teacher_id = str(session.get("user_id")).strip()
 
-    # Fetch all schedules for this teacher
+    # ------------------ Fetch all schedules ------------------
     schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
-
-    # Fetch supporting collections
     programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
     groups = {g.id: g.to_dict() for g in db.collection("groups").stream()}
-    
-    # ⚠️ CRITICAL: Use mlmodule, not modules!
     mlmodules = {m.id: m.to_dict() for m in db.collection("mlmodule").stream()}
 
     schedules = []
@@ -1951,19 +2024,19 @@ def teacher_schedules():
         s = doc.to_dict()
         s['docId'] = doc.id
 
-        # Get module info from mlmodule (not modules!)
+        # Module info
         mlmodule = mlmodules.get(s.get('fk_module'), {})
         s['moduleName'] = mlmodule.get('moduleName', 'Unknown Module')
 
-        # Get group info
+        # Group info
         group = groups.get(s.get('fk_group'), {})
         s['groupName'] = group.get('groupCode', s.get('fk_group', 'Unknown Group'))
 
-        # Get program name via group
+        # Program info (via group)
         fk_program = group.get('fk_program')
         s['programName'] = programs.get(fk_program, {}).get('programName', 'Unknown Program')
 
-        # Time, day, room
+        # Timing & room
         s['startTime'] = s.get('start_time', '00:00')
         s['endTime'] = s.get('end_time', '00:00')
         s['day'] = s.get('day', 'Unknown')
@@ -1971,12 +2044,35 @@ def teacher_schedules():
 
         schedules.append(s)
 
-    # Fetch teacher profile
+    # ------------------ Fetch teacher profile ------------------
     profile_doc = db.collection("users").document(teacher_id).get()
-    profile = profile_doc.to_dict() if profile_doc.exists else {"firstName": "Teacher", "lastName": ""}
+    profile = {
+        "firstName": "Teacher",
+        "lastName": "",
+        "photo_name": "uploads/default_teacher.png",
+        "is_gc": False
+    }
 
+    if profile_doc.exists:
+        user_data = profile_doc.to_dict()
+        first_name = user_data.get("firstName", "Teacher")
+        last_name = user_data.get("lastName", "")
+        photo_name = user_data.get("photo_name", "uploads/default_teacher.png")
+
+        # ✅ Check GC flag from subcollection (same logic as other pages)
+        role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
+        is_gc = role_doc.exists and role_doc.to_dict().get("isCoordinator", False)
+
+        profile.update({
+            "firstName": first_name,
+            "lastName": last_name,
+            "photo_name": photo_name,
+            "is_gc": is_gc
+        })
+
+    # ------------------ Render the Schedule Page ------------------
     return render_template(
-        "teacher/T_Schedule.html",
+        "teacher/T_schedule.html",
         schedules=schedules,
         profile=profile
     )
@@ -2133,8 +2229,8 @@ def teacher_delete_group(group_id):
     return redirect(url_for("teacher_manage_groups"))
 
 
-# ------------------ Group Coordinator Group Reports ------------------
-@app.route("/gc/group_reports")
+# ------------------ Group Coordinator Group Report ------------------
+@app.route("/gc/group_report")
 def gc_group_report():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
@@ -2144,9 +2240,26 @@ def gc_group_report():
     if not teacher_uid:
         return redirect(url_for("login"))
 
+    # Fetch teacher profile first ✅
+    profile_doc = db.collection("users").document(teacher_uid).get()
+    profile = profile_doc.to_dict() if profile_doc.exists else {}
+    profile["is_gc"] = False  # Initialize to False by default
+
     # Check GC flag
     roles_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
     if not roles_doc.exists or not roles_doc.to_dict().get("isCoordinator"):
+        return redirect(url_for("teacher_dashboard"))
+    
+    # Check all roles for GC status
+    roles_docs = db.collection("users").document(teacher_uid).collection("roles").stream()
+    for role_doc in roles_docs:
+        role_data = role_doc.to_dict()
+        if role_data.get("isCoordinator") is True:
+            profile["is_gc"] = True
+            break
+
+    # Only allow GC teachers to access
+    if not profile.get("is_gc"):
         return redirect(url_for("teacher_dashboard"))
 
     # Fetch the group the GC is responsible for
@@ -2174,11 +2287,10 @@ def gc_group_report():
             "members": members
         }
 
-    profile_doc = db.collection("users").document(teacher_uid).get()
-    profile = profile_doc.to_dict() if profile_doc.exists else {}
+
 
     return render_template(
-        "teacher/T_GC_GroupReports.html",
+        "teacher/T_GC_GroupReport.html",
         profile=profile,
         group=group
     )
@@ -2244,13 +2356,21 @@ def teacher_profile():
             "intake": ""
         }
 
-    return render_template("teacher/T_Profile.html", profile=profile)
+    return render_template("teacher/T_profile.html", profile=profile)
 
 # ------------------ Teacher Change Password ------------------
 @app.route("/teacher/change_password", methods=["GET", "POST"])
 def teacher_change_password():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
+    
+    old_password = user_doc.get("password") 
+    
+    if (user_doc := db.collection("users").document(session.get("user_id")).get()).exists:
+        pass
+    else:
+        None
+        user_ref = db.collection("users").document(session.get("user_id"))
 
     if request.method == "POST":
         new_password = request.form.get("newPassword")
@@ -2263,6 +2383,12 @@ def teacher_change_password():
         if new_password != confirm_password:
             flash("Passwords do not match.", "error")
             return redirect(url_for("teacher_change_password"))
+        
+        if new_password == old_password:
+            flash("New password cannot be the same as the old password.")
+            return render_template("A_ChangePassword.html")
+        
+        user_ref.update({"password": new_password})
 
         try:
             user = session.get("user")
@@ -2276,11 +2402,9 @@ def teacher_change_password():
 
     return render_template("combinePage/Change password.html")
 
-
 # ------------------ Teacher Edit Profile ------------------
-from flask import request, redirect, url_for, session, flash, render_template
-from werkzeug.utils import secure_filename
-import os
+# Allowed image MIME types
+ALLOWED_IMAGE_MIMES = ["image/png", "image/jpeg", "image/jpg", "image/gif"]
 
 @app.route("/teacher/profile/edit", methods=["GET", "POST"])
 def teacher_edit_profile():
@@ -2294,17 +2418,23 @@ def teacher_edit_profile():
 
     uid = user.get("uid")
     teacher_doc = db.collection("users").document(uid).get()
-    profile = {}
 
-    # Fetch existing profile data
+    # Fetch existing profile data from Firestore
     if teacher_doc.exists:
         data = teacher_doc.to_dict()
-        profile["firstName"] = data.get("firstName", "Teacher")
-        profile["lastName"] = data.get("lastName", "")
-        profile["nickname"] = data.get("nickname", "")
-        profile["phone"] = data.get("phone", "")
-        profile["email"] = user.get("email", "-")
-        profile["photo_name"] = data.get("photo_name", "/static/uploads/default_teacher.png")
+        profile = {
+            "firstName": data.get("firstName", "Teacher"),
+            "lastName": data.get("lastName", ""),
+            "nickname": data.get("nickname", ""),
+            "phone": data.get("phone", ""),
+            "email": user.get("email", "-"),
+            "photo_name": data.get("photo_name", "uploads/default_teacher.png")
+        }
+
+        # Add GC status
+        role_doc = db.collection("users").document(uid).collection("roles").document("teacher").get()
+        profile["is_gc"] = role_doc.exists and role_doc.to_dict().get("isCoordinator", False)
+
     else:
         profile = {
             "firstName": "Teacher",
@@ -2312,7 +2442,8 @@ def teacher_edit_profile():
             "nickname": "",
             "phone": "",
             "email": user.get("email", "-"),
-            "photo_name": "/static/uploads/default_teacher.png"
+            "photo_name": "uploads/default_teacher.png",
+            "is_gc": False  # default value for non-existing doc
         }
 
     if request.method == "POST":
@@ -2320,32 +2451,36 @@ def teacher_edit_profile():
         if action == "cancel":
             return redirect(url_for("teacher_profile"))
 
-        nickname = request.form.get("nickname", "").strip()
-        phone = request.form.get("phone", "").strip()
+        if action == "save":
+            nickname = request.form.get("nickname", "").strip()
+            phone = request.form.get("phone", "").strip()
 
-        update_data = {"nickname": nickname, "phone": phone}
+            update_data = {"nickname": nickname, "phone": phone}
 
-        # Handle profile picture upload
-        profile_pic = request.files.get("profile_pic")
-        if profile_pic and profile_pic.filename != "":
-            if profile_pic.mimetype.startswith("image/"):  # ensure it's an image
-                filename = secure_filename(profile_pic.filename)
-                upload_folder = os.path.join(app.root_path, "static", "uploads", "teacher_profiles", uid)
-                os.makedirs(upload_folder, exist_ok=True)
-                file_path = os.path.join(upload_folder, filename)
-                profile_pic.save(file_path)
+            # Handle profile picture upload
+            profile_pic = request.files.get("profile_pic")
+            if profile_pic and profile_pic.filename != "":
+                if profile_pic.mimetype in ALLOWED_IMAGE_MIMES:
+                    filename = secure_filename(profile_pic.filename)
 
-                # Save relative path in Firestore
-                update_data["photo_name"] = f"uploads/teacher_profiles/{uid}/{filename}"
-            else:
-                flash("Please upload a valid image file.", "error")
+                    # Create folder if it doesn't exist
+                    upload_folder = os.path.join(app.root_path, "static", "uploads", "teacher_profiles", uid)
+                    os.makedirs(upload_folder, exist_ok=True)
 
-        # Update Firestore
-        db.collection("users").document(uid).update(update_data)
-        flash("Profile updated successfully!", "success")
-        return redirect(url_for("teacher_edit_profile"))
+                    # Save new picture locally
+                    file_path = os.path.join(upload_folder, filename)
+                    profile_pic.save(file_path)
 
-    return render_template("teacher/T_EditProfile.html", profile=profile)
+                    # Update Firestore with relative path
+                    relative_path = f"uploads/teacher_profiles/{uid}/{filename}"
+                    update_data["photo_name"] = relative_path
+                    profile["photo_name"] = relative_path  # immediate preview
+
+            # Update Firestore
+            db.collection("users").document(uid).update(update_data)
+            return redirect(url_for("teacher_edit_profile"))
+
+    return render_template("teacher/T_EditProfile.html", profile=profile, now=int(time.time()))
 
 
 
