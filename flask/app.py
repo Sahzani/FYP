@@ -234,6 +234,7 @@ def forgot_password():
 
     return render_template("combinePage/Forget Password.html")
 
+# ------------------ Reset Password ------------------
 @app.route("/reset_password/<student_id>", methods=["GET", "POST"])
 def reset_password(student_id):
     if request.method == "POST":
@@ -697,26 +698,53 @@ def update_attendance_summary(month_str=None):
     print(f"✅ Updated attendance_summary for {month_str}: P={present}, A={absent}, L={late}")
 
 # ------------------ Admin Profile & Edit ------------------
-@app.route("/admin/profile", methods=["GET"])
+@app.route("/admin/profile")
 def admin_profile():
+    # Only admins can access
     if session.get("role") != "admin":
-        return redirect(url_for("home"))  # non-admin redirected
-    
-    user_id = session.get("user_id")
-    if not user_id:
-        return redirect(url_for("login"))  # no session → login page
-    
-    user_doc = db.collection("users").document(user_id).get()
-    if not user_doc.exists:
-        return redirect(url_for("login"))
-    
-    user_data = user_doc.to_dict()
-    user_data["docId"] = user_doc.id
-    
-    return render_template("admin/A_Profile.html", user=user_data)
+        return redirect(url_for("home"))
 
-@app.route("/admin/editprofile", methods=["GET", "POST"])
+    # Get the admin user info from session
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("home"))
+
+    uid = user.get("uid")  # Firestore document ID
+
+    # Fetch main user document
+    user_doc = db.collection("users").document(uid).get()
+    if not user_doc.exists:
+        flash("Admin data not found.")
+        return redirect(url_for("admin_dashboard"))
+
+    user_data = user_doc.to_dict()
+    if user_data.get("role_type") != "admin":
+        flash("Unauthorized access.")
+        return redirect(url_for("home"))
+
+    # Determine profile picture (prefer photo_url over photo_name)
+    profile_pic_path = user_data.get("photo_url") or user_data.get("photo_name")
+    if profile_pic_path and not profile_pic_path.startswith("http"):
+        profile_pic_path = profile_pic_path.replace("\\", "/")
+    elif not profile_pic_path:
+        profile_pic_path = "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
+
+    # Build profile dictionary for template
+    profile = {
+        "full_name": user_data.get("name", "Admin User"),
+        "first_name": user_data.get("first_name", ""),
+        "last_name": user_data.get("last_name", ""),
+        "email": user_data.get("email", "-"),
+        "phone": user_data.get("phone", "-"),  # optional field
+        "profile_pic": profile_pic_path,
+        "role": "Admin"
+    }
+
+    return render_template("admin/A_Profile.html", profile=profile)
+
+@app.route("/admin/edit_profile", methods=["GET", "POST"])
 def a_editprofile():
+    # Only allow admin access
     if session.get("role") != "admin":
         return redirect(url_for("home"))
 
@@ -727,9 +755,11 @@ def a_editprofile():
     user_ref = db.collection("users").document(user_id)
     user_doc = user_ref.get()
     if not user_doc.exists:
+        flash("Admin data not found.")
         return redirect(url_for("login"))
 
     if request.method == "POST":
+        # Get form data
         name = request.form.get("name")
         phone = request.form.get("phone")
         password = request.form.get("password")
@@ -740,16 +770,38 @@ def a_editprofile():
         if phone:
             update_data["phone"] = phone
         if password:
-            update_data["password"] = password  # Hash this in real app
+            update_data["password"] = password  # ⚠️ Hash password in production
 
+        # Update Firestore if any fields provided
         if update_data:
             user_ref.update(update_data)
+            flash("Profile updated successfully!", "success")
+        else:
+            flash("No changes detected.", "info")
 
-        flash("Profile updated successfully!", "success")
         return redirect(url_for("admin_profile"))
 
+    # GET request → show current profile data in form
     user_data = user_doc.to_dict()
-    return render_template("admin/A_EditProfile.html", user=user_data)
+
+    # Determine profile picture
+    profile_pic_path = user_data.get("photo_url") or user_data.get("photo_name")
+    if profile_pic_path and not profile_pic_path.startswith("http"):
+        profile_pic_path = profile_pic_path.replace("\\", "/")
+    elif not profile_pic_path:
+        profile_pic_path = "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
+
+    # Prepare dictionary for template
+    profile = {
+        "full_name": user_data.get("name", "Admin User"),
+        "first_name": user_data.get("first_name", ""),
+        "last_name": user_data.get("last_name", ""),
+        "email": user_data.get("email", "-"),
+        "phone": user_data.get("phone", "-"),
+        "profile_pic": profile_pic_path
+    }
+
+    return render_template("admin/A_EditProfile.html", profile=profile)
 
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")
@@ -1419,8 +1471,6 @@ def teacher_modules():
         profile=profile
     )
 
-
-
 # ------------------ Teacher views attendance for a module/group ------------------
 @app.route("/studattendance")
 def studattendance():
@@ -1577,7 +1627,6 @@ def update_attendance():
     return redirect(url_for("studattendance", module_id=module_id, group_id=group_id, schedule_id=schedule_id, date=date))
 
 # ------------------ Teacher Mark Present via API (for face detection) ------------------
-
 @app.route("/teacher/mark_present", methods=["POST"])
 def mark_present():
     if session.get("role") != "teacher":
@@ -1737,6 +1786,7 @@ def teacher_attendance():
         days=days_list,
         webcam_url="http://127.0.0.1:5001"
     )
+
 #------------------ API to get attendance data ------------------
 from flask import jsonify
 from datetime import datetime
