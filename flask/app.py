@@ -1914,14 +1914,10 @@ def teacher_schedules():
 
     teacher_id = str(session.get("user_id")).strip()
 
-    # Fetch all schedules for this teacher
+    # ------------------ Fetch all schedules ------------------
     schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
-
-    # Fetch supporting collections
     programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
     groups = {g.id: g.to_dict() for g in db.collection("groups").stream()}
-    
-    # ⚠️ CRITICAL: Use mlmodule, not modules!
     mlmodules = {m.id: m.to_dict() for m in db.collection("mlmodule").stream()}
 
     schedules = []
@@ -1929,19 +1925,19 @@ def teacher_schedules():
         s = doc.to_dict()
         s['docId'] = doc.id
 
-        # Get module info from mlmodule (not modules!)
+        # Module info
         mlmodule = mlmodules.get(s.get('fk_module'), {})
         s['moduleName'] = mlmodule.get('moduleName', 'Unknown Module')
 
-        # Get group info
+        # Group info
         group = groups.get(s.get('fk_group'), {})
         s['groupName'] = group.get('groupCode', s.get('fk_group', 'Unknown Group'))
 
-        # Get program name via group
+        # Program info (via group)
         fk_program = group.get('fk_program')
         s['programName'] = programs.get(fk_program, {}).get('programName', 'Unknown Program')
 
-        # Time, day, room
+        # Timing & room
         s['startTime'] = s.get('start_time', '00:00')
         s['endTime'] = s.get('end_time', '00:00')
         s['day'] = s.get('day', 'Unknown')
@@ -1949,10 +1945,33 @@ def teacher_schedules():
 
         schedules.append(s)
 
-    # Fetch teacher profile
+    # ------------------ Fetch teacher profile ------------------
     profile_doc = db.collection("users").document(teacher_id).get()
-    profile = profile_doc.to_dict() if profile_doc.exists else {"firstName": "Teacher", "lastName": ""}
+    profile = {
+        "firstName": "Teacher",
+        "lastName": "",
+        "photo_name": "uploads/default_teacher.png",
+        "is_gc": False
+    }
 
+    if profile_doc.exists:
+        user_data = profile_doc.to_dict()
+        first_name = user_data.get("firstName", "Teacher")
+        last_name = user_data.get("lastName", "")
+        photo_name = user_data.get("photo_name", "uploads/default_teacher.png")
+
+        # ✅ Check GC flag from subcollection (same logic as other pages)
+        role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
+        is_gc = role_doc.exists and role_doc.to_dict().get("isCoordinator", False)
+
+        profile.update({
+            "firstName": first_name,
+            "lastName": last_name,
+            "photo_name": photo_name,
+            "is_gc": is_gc
+        })
+
+    # ------------------ Render the Schedule Page ------------------
     return render_template(
         "teacher/T_Schedule.html",
         schedules=schedules,
