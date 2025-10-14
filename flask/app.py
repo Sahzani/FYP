@@ -1973,7 +1973,7 @@ def teacher_schedules():
 
     # ------------------ Render the Schedule Page ------------------
     return render_template(
-        "teacher/T_Schedule.html",
+        "teacher/T_schedule.html",
         schedules=schedules,
         profile=profile
     )
