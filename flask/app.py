@@ -1202,7 +1202,6 @@ def student_profile():
     # Fetch main user document
     user_doc = db.collection("users").document(uid).get()
     if not user_doc.exists:
-        flash("Student data not found.")
         return redirect(url_for("student_dashboard"))
 
     user_data = user_doc.to_dict()
@@ -1331,7 +1330,7 @@ def student_editprofile():
                 user_ref.update({"photo_url": relative_path})
                 profile["profile_pic"] = relative_path  # immediate preview
 
-            flash("Profile updated successfully!")
+            
             return redirect(url_for("student_editprofile"))
 
     return render_template("student/S_EditProfile.html", profile=profile, now=int(time.time()))
