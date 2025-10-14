@@ -2266,7 +2266,7 @@ def teacher_profile():
             "intake": ""
         }
 
-    return render_template("teacher/T_Profile.html", profile=profile)
+    return render_template("teacher/T_profile.html", profile=profile)
 
 # ------------------ Teacher Change Password ------------------
 @app.route("/teacher/change_password", methods=["GET", "POST"])
