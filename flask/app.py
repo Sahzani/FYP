@@ -265,10 +265,15 @@ def reset_password(student_id):
         user_data = user_doc.to_dict()
         uid = user_doc.id
 
-        # Update the password in Firebase Auth
+        # Update password in Firebase Auth
         auth.update_user(uid, password=new_password)
+
+        # Also update password in Firestore if stored there
+        db.collection("users").document(uid).update({"password": new_password})
+
         flash("Password reset successfully!", "success")
         return redirect(url_for("home"))
+
     except Exception as e:
         flash(f"Failed to reset password: {str(e)}", "error")
         return redirect(url_for("reset_password", student_id=student_id))
