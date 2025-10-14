@@ -42,15 +42,15 @@
 <body>
 
 <header>
-  <span id="menu-toggle">&#9776;</span>
-  <div class="header-content">
-    <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
+    <span id="menu-toggle">&#9776;</span>
+    <div class="header-content">
+      <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
       <a href="{{ url_for('teacher_profile') }}" class="user-info">
         <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-        <img src="{{ profile.photo_url or 'https://placehold.co/40x40/b8c6ff/ffffff?text=T' }}" alt="Group Coordinator">
-    </a>
-  </div>
-</header>
+        <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
+      </a>
+    </div>
+  </header>
 
 <div class="sidebar">
   <div class="sidebar-section">
