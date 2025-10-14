@@ -291,17 +291,17 @@ def student_dashboard():
     if not uid:
         return redirect(url_for("home"))
 
-    # ✅ Query the 'users' collection (not 'students')
+    # Query the 'users' collection
     user_doc = db.collection("users").document(uid).get()
     full_name = "Student"
+    profile_pic_url = None  # default None
 
     if user_doc.exists:
         user_data = user_doc.to_dict()
-        # Prefer the pre-built 'name' field if available
+        # Get full name
         if "name" in user_data and user_data["name"].strip():
             full_name = user_data["name"].strip()
         else:
-            # Fallback to first_name + last_name
             first = user_data.get("first_name", "").strip()
             last = user_data.get("last_name", "").strip()
             if first and last:
@@ -310,29 +310,52 @@ def student_dashboard():
                 full_name = first
             elif last:
                 full_name = last
-            # else remains "Student"
 
-    # Attendance stats
-    attendance_docs = db.collection("attendance").where("student_id", "==", uid).stream()
+        # Get profile picture
+        if "photo_url" in user_data and user_data["photo_url"].strip():
+            profile_pic_url = user_data["photo_url"].strip()
+
+    # Attendance stats (hierarchical)
     present = absent = late = streak = 0
     unexcused_absences = 0
     temp_streak = 0
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_status = "Not Marked Yet"
+    today_note = ""
 
-    for doc in attendance_docs:
-        data = doc.to_dict()
-        status = data.get("status")
-        if status == "Present":
-            present += 1
-            temp_streak += 1
-        elif status == "Late":
-            late += 1
-            temp_streak = 0
-        elif status == "Absent":
-            absent += 1
-            if not data.get("letter"):
-                unexcused_absences += 1
-            temp_streak = 0
-        streak = max(streak, temp_streak)
+    # Iterate over all schedule documents
+    schedule_docs = db.collection("attendance").stream()
+    for schedule_doc in schedule_docs:
+        schedule_id = schedule_doc.id
+        dates_collection = db.collection("attendance").document(schedule_id).collection("dates")
+        
+        for date_doc in dates_collection.stream():
+            date_id = date_doc.id  # e.g., "2025-10-10"
+            students_collection = dates_collection.document(date_id).collection("students")
+            student_doc = students_collection.document(uid).get()
+            
+            if student_doc.exists:
+                data = student_doc.to_dict()
+                status = data.get("status")
+                
+                # Count stats
+                if status == "Present":
+                    present += 1
+                    temp_streak += 1
+                elif status == "Late":
+                    late += 1
+                    temp_streak = 0
+                elif status == "Absent":
+                    absent += 1
+                    if not data.get("letter"):
+                        unexcused_absences += 1
+                    temp_streak = 0
+                streak = max(streak, temp_streak)
+                
+                # Today's attendance
+                if date_id == today_str:
+                    today_status = data.get("status", "Not Marked Yet")
+                    today_note = data.get("note", "")
 
     # Notifications
     if late >= 3:
@@ -341,23 +364,6 @@ def student_dashboard():
         notification = "Your attendance rate is dropped due to 3 unexcused absences this month."
     else:
         notification = "No new notifications."
-
-    # Today's attendance
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    today_status = "Not Marked Yet"
-    today_note = ""
-
-    today_attendance_doc = db.collection("attendance") \
-                             .where("student_id", "==", uid) \
-                             .where("date", "==", today_str) \
-                             .limit(1) \
-                             .stream()
-
-    for doc in today_attendance_doc:
-        data = doc.to_dict()
-        today_status = data.get("status", "Not Marked Yet")
-        today_note = data.get("note", "")
-        break
 
     # Determine color and icon for today's attendance
     if today_status == "Present":
@@ -376,6 +382,7 @@ def student_dashboard():
     return render_template(
         "student/S_Dashboard.html",
         full_name=full_name,
+        profile_pic_url=profile_pic_url,  # added for header
         stats_present=present,
         stats_absent=absent,
         stats_late=late,
@@ -386,7 +393,7 @@ def student_dashboard():
         status_color=status_color,
         status_icon=status_icon
     )
-    
+
 # ------------------ Teacher Dashboard ------------------
 from datetime import datetime
 from flask import session, redirect, url_for, render_template
@@ -621,7 +628,11 @@ def teacher_individual_summary():
         chart_percents=chart_percents
     )
 
-#------------------ Admin Pages ------------------
+# Make sure these imports are at the top of your file (add if missing)
+from datetime import datetime
+from firebase_admin import firestore
+
+# ------------------ Admin Pages ------------------
 @app.route("/admin_dashboard")
 def admin_dashboard():
     if session.get("role") != "admin":
@@ -630,7 +641,7 @@ def admin_dashboard():
     admin_name = session.get("user_name", "Admin")
     month = datetime.now().strftime("%Y-%m")  # e.g., "2025-10"
     
-    # 🔥 NEW: Read from attendance_summary
+    # 🔥 Read from attendance_summary
     doc = db.collection("attendance_summary").document(month).get()
     
     if doc.exists:
@@ -651,6 +662,43 @@ def admin_dashboard():
         current_date=now.strftime("%A, %B %d"),
         current_time=now.strftime("%I:%M %p")
     )
+
+# 🔥 NEW: Auto-update attendance summary function
+def update_attendance_summary(month_str=None):
+    """
+    Recalculate and update monthly attendance totals.
+    Call this after any attendance record is saved.
+    """
+    if month_str is None:
+        month_str = datetime.now().strftime("%Y-%m")
+    
+    present = absent = late = 0
+
+    # Count all attendance records for this month
+    user_docs = db.collection("attendance").stream()
+    for user_doc in user_docs:
+        try:
+            day_docs = user_doc.reference.collection(month_str).stream()
+            for day_doc in day_docs:
+                day_data = day_doc.to_dict()
+                status = day_data.get("status", "").lower()
+                if status == "present":
+                    present += 1
+                elif status == "absent":
+                    absent += 1
+                elif status == "late":
+                    late += 1
+        except:
+            continue  # Skip users without attendance data
+
+    # Save to attendance_summary
+    db.collection("attendance_summary").document(month_str).set({
+        "present": present,
+        "absent": absent,
+        "late": late,
+        "updated_at": firestore.SERVER_TIMESTAMP
+    })
+    print(f"✅ Updated attendance_summary for {month_str}: P={present}, A={absent}, L={late}")
 
 # ------------------ Admin Profile & Edit ------------------
 @app.route("/admin/profile", methods=["GET"])
