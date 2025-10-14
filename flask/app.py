@@ -1199,6 +1199,14 @@ def student_editprofile():
 def student_change_password():
     if session.get("role") != "student":
         return redirect(url_for("home"))
+    
+    old_password = user_doc.get("password") 
+    
+    if (user_doc := db.collection("users").document(session.get("user_id")).get()).exists:
+        pass
+    else:
+        None
+        user_ref = db.collection("users").document(session.get("user_id"))
 
     if request.method == "POST":
         new_password = request.form.get("newPassword")
@@ -1211,6 +1219,12 @@ def student_change_password():
         if new_password != confirm_password:
             flash("Passwords do not match.", "error")
             return redirect(url_for("student_change_password"))
+        
+        if new_password == old_password:
+            flash("New password cannot be the same as the old password.")
+            return render_template("A_ChangePassword.html")
+        
+        user_ref.update({"password": new_password})
 
         try:
             user = session.get("user")
@@ -2210,6 +2224,14 @@ def teacher_profile():
 def teacher_change_password():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
+    
+    old_password = user_doc.get("password") 
+    
+    if (user_doc := db.collection("users").document(session.get("user_id")).get()).exists:
+        pass
+    else:
+        None
+        user_ref = db.collection("users").document(session.get("user_id"))
 
     if request.method == "POST":
         new_password = request.form.get("newPassword")
@@ -2222,6 +2244,12 @@ def teacher_change_password():
         if new_password != confirm_password:
             flash("Passwords do not match.", "error")
             return redirect(url_for("teacher_change_password"))
+        
+        if new_password == old_password:
+            flash("New password cannot be the same as the old password.")
+            return render_template("A_ChangePassword.html")
+        
+        user_ref.update({"password": new_password})
 
         try:
             user = session.get("user")
@@ -2234,7 +2262,6 @@ def teacher_change_password():
         return redirect(url_for("teacher_dashboard"))
 
     return render_template("combinePage/Change password.html")
-
 
 # ------------------ Teacher Edit Profile ------------------
 # Allowed image MIME types
