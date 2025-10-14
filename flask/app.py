@@ -653,14 +653,14 @@ def admin_dashboard():
     )
 
 # ------------------ Admin Profile & Edit ------------------
-@app.route("/admin/profile")
+@app.route("/admin/profile", methods=["GET"])
 def admin_profile():
     if session.get("role") != "admin":
-        return redirect(url_for("home"))
+        return redirect(url_for("home"))  # non-admin redirected
     
     user_id = session.get("user_id")
     if not user_id:
-        return redirect(url_for("login"))
+        return redirect(url_for("login"))  # no session → login page
     
     user_doc = db.collection("users").document(user_id).get()
     if not user_doc.exists:
@@ -668,7 +668,7 @@ def admin_profile():
     
     user_data = user_doc.to_dict()
     user_data["docId"] = user_doc.id
-
+    
     return render_template("admin/A_Profile.html", user=user_data)
 
 @app.route("/admin/editprofile", methods=["GET", "POST"])
