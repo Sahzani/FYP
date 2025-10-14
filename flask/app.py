@@ -1091,7 +1091,6 @@ def edit_absent_record(record_id):
 
     return redirect(url_for("student_absentapp"))
 
-# ------------------ Student Profile ------------------
 @app.route("/student/profile")
 def student_profile():
     if session.get("role") != "student":
@@ -1103,39 +1102,64 @@ def student_profile():
 
     uid = user.get("uid")
 
-    # Fetch student data from Firestore
-    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
-    student_data = None
-    for doc in student_doc:
-        student_data = doc.to_dict()
-        break
-
-    if not student_data:
+    # Fetch main user document
+    user_doc = db.collection("users").document(uid).get()
+    if not user_doc.exists:
         flash("Student data not found.")
         return redirect(url_for("student_dashboard"))
 
-    # Handle profile picture path
-    profile_pic_path = student_data.get("profilePic", None)
+    user_data = user_doc.to_dict()
+    if user_data.get("role_type") != 1:
+        flash("Unauthorized access.")
+        return redirect(url_for("home"))
+
+    # Determine profile picture (prefer photo_url over photo_name)
+    profile_pic_path = user_data.get("photo_url") or user_data.get("photo_name")
     if profile_pic_path and not profile_pic_path.startswith("http"):
-        # Convert backslashes to forward slashes
         profile_pic_path = profile_pic_path.replace("\\", "/")
-    else:
+    elif not profile_pic_path:
         profile_pic_path = "https://placehold.co/140x140/E9E9E9/333333?text=User"
 
-    # Build profile dictionary
+    # Fetch student-specific info
+    student_doc_ref = db.collection("users").document(uid).collection("roles").document("student")
+    student_doc = student_doc_ref.get()
+    student_info = student_doc.to_dict() if student_doc.exists else {}
+
+    # Fetch group info
+    group_code_display = "-"
+    intake = "-"
+    program_name = "-"
+    fk_groupcode = student_info.get("fk_groupcode")
+    if fk_groupcode:
+        group_doc = db.collection("groups").document(fk_groupcode).get()
+        if group_doc.exists:
+            group_data = group_doc.to_dict()
+            group_code_display = group_data.get("groupCode", "-")
+            intake = group_data.get("intake", "-")
+            fk_program = group_data.get("fk_program")
+            # Fetch program name from programs collection
+            if fk_program:
+                program_doc = db.collection("programs").document(fk_program).get()
+                if program_doc.exists:
+                    program_name = program_doc.to_dict().get("programName", "-")
+
     profile = {
-        "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
-        "student_id": student_data.get("studentID", "-"),
-        "nickname": student_data.get("nickname", "-"),
-        "studentClass": student_data.get("studentClass", "-"),  
-        "phone": student_data.get("phone", "-"),
-        "email": user.get("email", "-"),
+        "full_name": user_data.get("name", "Student"),
+        "first_name": user_data.get("first_name", ""),
+        "last_name": user_data.get("last_name", ""),
+        "student_id": student_info.get("studentID", "-"),
+        "nickname": student_info.get("nickname", "-"),
+        "studentClass": group_code_display,
+        "phone": student_info.get("phone", "-"),  # optional: can be in user doc
+        "email": user_data.get("email", "-"),
         "profile_pic": profile_pic_path,
-        "course": student_data.get("course", "-"),
-        "intake": student_data.get("intake", "-")
+        "course": program_name,
+        "intake": intake
     }
 
     return render_template("student/S_Profile.html", profile=profile)
+
+
 
 # ------------------ Student Edit Profile ------------------
 @app.route("/student/editprofile", methods=["GET", "POST"])
