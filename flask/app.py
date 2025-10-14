@@ -616,7 +616,11 @@ def teacher_individual_summary():
         chart_percents=chart_percents
     )
 
-#------------------ Admin Pages ------------------
+# Make sure these imports are at the top of your file (add if missing)
+from datetime import datetime
+from firebase_admin import firestore
+
+# ------------------ Admin Pages ------------------
 @app.route("/admin_dashboard")
 def admin_dashboard():
     if session.get("role") != "admin":
@@ -625,7 +629,7 @@ def admin_dashboard():
     admin_name = session.get("user_name", "Admin")
     month = datetime.now().strftime("%Y-%m")  # e.g., "2025-10"
     
-    # 🔥 NEW: Read from attendance_summary
+    # 🔥 Read from attendance_summary
     doc = db.collection("attendance_summary").document(month).get()
     
     if doc.exists:
@@ -646,6 +650,43 @@ def admin_dashboard():
         current_date=now.strftime("%A, %B %d"),
         current_time=now.strftime("%I:%M %p")
     )
+
+# 🔥 NEW: Auto-update attendance summary function
+def update_attendance_summary(month_str=None):
+    """
+    Recalculate and update monthly attendance totals.
+    Call this after any attendance record is saved.
+    """
+    if month_str is None:
+        month_str = datetime.now().strftime("%Y-%m")
+    
+    present = absent = late = 0
+
+    # Count all attendance records for this month
+    user_docs = db.collection("attendance").stream()
+    for user_doc in user_docs:
+        try:
+            day_docs = user_doc.reference.collection(month_str).stream()
+            for day_doc in day_docs:
+                day_data = day_doc.to_dict()
+                status = day_data.get("status", "").lower()
+                if status == "present":
+                    present += 1
+                elif status == "absent":
+                    absent += 1
+                elif status == "late":
+                    late += 1
+        except:
+            continue  # Skip users without attendance data
+
+    # Save to attendance_summary
+    db.collection("attendance_summary").document(month_str).set({
+        "present": present,
+        "absent": absent,
+        "late": late,
+        "updated_at": firestore.SERVER_TIMESTAMP
+    })
+    print(f"✅ Updated attendance_summary for {month_str}: P={present}, A={absent}, L={late}")
 
 # ------------------ Admin Profile & Edit ------------------
 @app.route("/admin/profile")
