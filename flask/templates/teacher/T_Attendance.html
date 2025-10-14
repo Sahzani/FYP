@@ -10,19 +10,6 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
 <style>
-/* Copy your theme CSS here (same as T_Modules) */
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body { height:100%; font-family:'Poppins',sans-serif; background: linear-gradient(180deg,#f7ecd7 0%,#f8f1e5 35%,#fbfaf7 100%); overflow-x:hidden; }
-header { position:fixed; top:0; left:0; right:0; height:60px; background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.08); display:flex; align-items:center; padding:0 20px; z-index:1000; }
-#menu-toggle { font-size:28px; margin-right:15px; cursor:pointer; }
-#menu-toggle:hover { color:#4154F1; }
-.header-content { display:flex; justify-content:space-between; align-items:center; width:100%; }
-.header-content a.title { text-decoration:none; color:#444; font-weight:700; font-size:26px; }
-header a.user-info { display:flex; align-items:center; gap:10px; text-decoration:none; color:#444; font-weight:600; transition: all 0.2s ease; padding:0; border-radius:0; background:transparent; box-shadow:none; }
-header a.user-info:hover { padding:4px 12px; border-radius:12px; background:#f8f1e5; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
-header a.user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-.header-content a.title:hover { color:#4154F1; }
-
 .main-content { margin-left:260px; padding:100px 30px 30px; min-height:100vh; overflow-y:auto; transition:margin-left 0.3s ease; background:transparent; }
 .main-content.expanded { margin-left:80px; }
 
