@@ -234,49 +234,45 @@ def forgot_password():
 
     return render_template("combinePage/Forget Password.html")
 
-# ------------------ Reset Password ------------------
 @app.route("/reset_password/<student_id>", methods=["GET", "POST"])
 def reset_password(student_id):
-    if request.method == "GET":
-        # Render the reset password form
-        return render_template("combinePage/ResetPassword.html", student_id=student_id)
+    if request.method == "POST":
+        new_password = request.form.get("newPassword")
+        confirm_password = request.form.get("confirmPassword")
 
-    # Handle the form submission
-    new_password = request.form.get("newPassword")
-    confirm_password = request.form.get("confirmPassword")
+        if not new_password or not confirm_password:
+            flash("Please fill in all fields.", "error")
+            return redirect(url_for("reset_password", student_id=student_id))
 
-    if not new_password or not confirm_password:
-        flash("Please fill all password fields.", "error")
-        return redirect(url_for("reset_password", student_id=student_id))
-
-    if new_password != confirm_password:
-        flash("Passwords do not match.", "error")
-        return redirect(url_for("reset_password", student_id=student_id))
-
-    try:
-        # Fetch the user by student ID
-        student_doc = db.collection("users").where("studentID", "==", student_id).limit(1).stream()
-        user_doc = next(student_doc, None)
-
-        if not user_doc:
-            flash("Invalid student ID.", "error")
-            return redirect(url_for("change_password_page"))
-
-        user_data = user_doc.to_dict()
-        uid = user_doc.id
+        if new_password != confirm_password:
+            flash("Passwords do not match.", "error")
+            return redirect(url_for("reset_password", student_id=student_id))
 
         # Update password in Firebase Auth
-        auth.update_user(uid, password=new_password)
+        try:
+            # Fetch the user by ID from Firestore
+            user_doc = db.collection("users").document(student_id).get()
+            if not user_doc.exists:
+                flash("User not found.", "error")
+                return redirect(url_for("reset_password", student_id=student_id))
 
-        # Also update password in Firestore if stored there
-        db.collection("users").document(uid).update({"password": new_password})
+            user_data = user_doc.to_dict()
+            auth.update_user(user_data["uid"], password=new_password)
 
-        flash("Password reset successfully!", "success")
-        return redirect(url_for("home"))
+            # Optional: remove old password from Firestore
+            db.collection("users").document(student_id).update({"password": firestore.DELETE_FIELD})
 
-    except Exception as e:
-        flash(f"Failed to reset password: {str(e)}", "error")
-        return redirect(url_for("reset_password", student_id=student_id))
+            flash("Password reset successfully! Please login with your new password.", "success")
+
+            # Redirect to login page
+            return redirect(url_for("login"))
+
+        except Exception as e:
+            flash(f"Error resetting password: {str(e)}", "error")
+            return redirect(url_for("reset_password", student_id=student_id))
+
+    # GET request
+    return render_template("combinePage/ResetPassword.html", student_id=student_id)
 
 # ------------------ Student Dashboard ------------------
 from datetime import datetime
@@ -1289,19 +1285,17 @@ def student_editprofile():
     return render_template("student/S_EditProfile.html", profile=profile, now=int(time.time()))
 
 
-# ------------------ Change Password for student ------------------
 @app.route("/student/change_password", methods=["GET", "POST"])
 def student_change_password():
     if session.get("role") != "student":
         return redirect(url_for("home"))
-    
-    old_password = user_doc.get("password") 
-    
-    if (user_doc := db.collection("users").document(session.get("user_id")).get()).exists:
-        pass
-    else:
-        None
-        user_ref = db.collection("users").document(session.get("user_id"))
+
+    user = session.get("user")
+    if not user:
+        flash("User not logged in.", "error")
+        return redirect(url_for("login"))
+
+    user_ref = db.collection("users").document(user["uid"])
 
     if request.method == "POST":
         new_password = request.form.get("newPassword")
@@ -1314,20 +1308,18 @@ def student_change_password():
         if new_password != confirm_password:
             flash("Passwords do not match.", "error")
             return redirect(url_for("student_change_password"))
-        
-        if new_password == old_password:
-            flash("New password cannot be the same as the old password.")
-            return render_template("A_ChangePassword.html")
-        
-        user_ref.update({"password": new_password})
 
         try:
-            user = session.get("user")
-            if user:
-                auth.update_user(user["uid"], password=new_password)
-                flash("Password changed successfully!", "success")
+            # Update Firebase Auth password
+            auth.update_user(user["uid"], password=new_password)
+
+            # Remove old password field from Firestore if exists
+            user_ref.update({"password": firestore.DELETE_FIELD})
+
+            flash("Password changed successfully!", "success")
         except Exception as e:
             flash(f"Error changing password: {str(e)}", "error")
+            return redirect(url_for("student_change_password"))
 
         return redirect(url_for("student_dashboard"))
 
@@ -2363,14 +2355,13 @@ def teacher_profile():
 def teacher_change_password():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
-    
-    old_password = user_doc.get("password") 
-    
-    if (user_doc := db.collection("users").document(session.get("user_id")).get()).exists:
-        pass
-    else:
-        None
-        user_ref = db.collection("users").document(session.get("user_id"))
+
+    user = session.get("user")
+    if not user:
+        flash("User not logged in.", "error")
+        return redirect(url_for("login"))
+
+    user_ref = db.collection("users").document(user["uid"])
 
     if request.method == "POST":
         new_password = request.form.get("newPassword")
@@ -2383,20 +2374,18 @@ def teacher_change_password():
         if new_password != confirm_password:
             flash("Passwords do not match.", "error")
             return redirect(url_for("teacher_change_password"))
-        
-        if new_password == old_password:
-            flash("New password cannot be the same as the old password.")
-            return render_template("A_ChangePassword.html")
-        
-        user_ref.update({"password": new_password})
 
         try:
-            user = session.get("user")
-            if user:
-                auth.update_user(user["uid"], password=new_password)
-                flash("Password changed successfully!", "success")
+            # Update Firebase Auth password
+            auth.update_user(user["uid"], password=new_password)
+
+            # Remove old password field from Firestore if exists
+            user_ref.update({"password": firestore.DELETE_FIELD})
+
+            flash("Password changed successfully!", "success")
         except Exception as e:
             flash(f"Error changing password: {str(e)}", "error")
+            return redirect(url_for("teacher_change_password"))
 
         return redirect(url_for("teacher_dashboard"))
 
