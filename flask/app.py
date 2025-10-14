@@ -1091,6 +1091,7 @@ def edit_absent_record(record_id):
 
     return redirect(url_for("student_absentapp"))
 
+# ------------------ Student Profile Page ------------------
 @app.route("/student/profile")
 def student_profile():
     if session.get("role") != "student":
@@ -1162,66 +1163,83 @@ def student_profile():
 
 
 # ------------------ Student Edit Profile ------------------
+# Allowed image MIME types
+ALLOWED_IMAGE_MIMES = ["image/png", "image/jpeg", "image/jpg", "image/gif"]
+
 @app.route("/student/editprofile", methods=["GET", "POST"])
 def student_editprofile():
-    if session.get("role") != "student":
-        return redirect(url_for("home"))
-
+    # Ensure student is logged in
     user = session.get("user")
-    if not user:
+    role = session.get("role")
+    if not user or role != "student":
         return redirect(url_for("home"))
 
     uid = user.get("uid")
-    student_doc = db.collection("students").where("uid", "==", uid).limit(1).stream()
-    student_data = None
-    student_ref = None
-    for doc in student_doc:
-        student_data = doc.to_dict()
-        student_ref = doc.reference
-        break
+    if not uid:
+        return redirect(url_for("home"))
 
-    if not student_data:
-        flash("Student data not found.")
-        return redirect(url_for("student_dashboard"))
+    # Fetch main user document
+    user_ref = db.collection("users").document(uid)
+    user_doc = user_ref.get()
+    user_data = user_doc.to_dict() if user_doc.exists else {}
 
-    if request.method == "POST":
-        nickname = request.form.get("nickname")
-        phone = request.form.get("phone")
-        profile_pic_file = request.files.get("profilePic")
+    # Fetch student-specific info
+    student_doc_ref = user_ref.collection("roles").document("student")
+    student_doc = student_doc_ref.get()
+    student_info = student_doc.to_dict() if student_doc.exists else {}
 
-        update_data = {
-            "nickname": nickname,
-            "phone": phone
-        }
+    # Determine profile picture
+    profile_pic_path = user_data.get("photo_url") or "uploads/default/user.png"
 
-        if profile_pic_file and profile_pic_file.filename != "":
-            filename = secure_filename(profile_pic_file.filename)
-            # Automatically create folder
-            upload_dir = os.path.join(BASE_DIR, "static", "uploads", "student_profiles", uid)
-            os.makedirs(upload_dir, exist_ok=True)
-            file_path = os.path.join(upload_dir, filename)
-            profile_pic_file.save(file_path)
-            update_data["profilePic"] = f"uploads/student_profiles/{uid}/{filename}"
-
-        student_ref.update(update_data)
-        flash("Profile updated successfully!")
-        return redirect(url_for("student_editprofile"))
-
+    # Prepare profile for template
     profile = {
-        "full_name": f"{student_data.get('firstName','')} {student_data.get('lastName','')}".strip() or "Student",
-        "first_name": student_data.get("firstName", ""),
-        "last_name": student_data.get("lastName", ""),
-        "nickname": student_data.get("nickname", ""),
-        "student_id": student_data.get("studentID", "-"),
-        "studentClass": student_data.get("studentClass", "-"),
-        "phone": student_data.get("phone", "-"),
-        "email": user.get("email", "-"),
-        "profile_pic": student_data.get("profilePic", "uploads/default/user.png"),
-        "course": student_data.get("course", "-"),
-        "intake": student_data.get("intake", "-")
+        "full_name": f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}".strip() or "Student",
+        "first_name": user_data.get("first_name", ""),
+        "last_name": user_data.get("last_name", ""),
+        "nickname": student_info.get("nickname", ""),
+        "student_id": student_info.get("studentID", "-"),
+        "studentClass": student_info.get("studentClass", "-"),
+        "phone": student_info.get("phone", "-"),
+        "email": user_data.get("email", "-"),
+        "profile_pic": profile_pic_path
     }
 
-    return render_template("student/S_EditProfile.html", profile=profile)
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "cancel":
+            return redirect(url_for("student_profile"))
+
+        if action == "save":
+            # Update nickname & phone in roles/student
+            student_update_data = {}
+            nickname = request.form.get("nickname", "").strip()
+            phone = request.form.get("phone", "").strip()
+            if nickname != profile["nickname"]:
+                student_update_data["nickname"] = nickname
+            if phone != profile["phone"]:
+                student_update_data["phone"] = phone
+            if student_update_data:
+                student_doc_ref.update(student_update_data)
+
+            # Handle uploaded photo
+            photo_file = request.files.get("photo_url")
+            if photo_file and photo_file.filename != "" and photo_file.mimetype in ALLOWED_IMAGE_MIMES:
+                filename = secure_filename(photo_file.filename)
+                upload_folder = os.path.join(app.root_path, "static", "uploads", "student_profiles", uid)
+                os.makedirs(upload_folder, exist_ok=True)
+                file_path = os.path.join(upload_folder, filename)
+                photo_file.save(file_path)
+                relative_path = f"uploads/student_profiles/{uid}/{filename}"
+
+                # Save photo_url in main users document
+                user_ref.update({"photo_url": relative_path})
+                profile["profile_pic"] = relative_path  # immediate preview
+
+            flash("Profile updated successfully!")
+            return redirect(url_for("student_editprofile"))
+
+    return render_template("student/S_EditProfile.html", profile=profile, now=int(time.time()))
+
 
 # ------------------ Change Password for student ------------------
 @app.route("/student/change_password", methods=["GET", "POST"])
