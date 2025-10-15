@@ -1,160 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Edit Admin Profile - iAttend</title>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  <style>
-    .main-content {
-      margin-left: 260px;
-      padding: 100px 30px 50px;
-      min-height: 100vh;
-      background: transparent;
-      display: flex;
-      justify-content: center;
-      transition: margin-left 0.3s ease;
-    }
-    .main-content.expanded {
-      margin-left: 80px;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Edit Admin Profile - iAttend</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<style>
+/* -------------------- Main Content -------------------- */
+.main-content { margin-left:260px; padding:100px 30px 50px; font-family:'Nunito',sans-serif; transition:margin-left 0.3s ease; min-height:100vh; max-width:100%; }
+.sidebar.collapsed ~ .main-content { margin-left:80px; }
 
-    /* === PROFILE CARD (same as profile page) === */
-    .profile-card {
-      max-width: 900px;
-      width: 100%;
-      margin: 30px auto;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 15px 30px rgba(0,0,0,0.05);
-      padding: 50px 40px 30px;
-      box-sizing: border-box;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .profile-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-    }
+/* -------------------- Profile Sections -------------------- */
+.profile-sections { display:flex; flex-direction:column; gap:30px; max-width:900px; margin:0 auto; }
 
-    .profile-name {
-      font-size: 28px;
-      font-weight: 600;
-      color: #4154F1;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-    .profile-sub {
-      font-size: 16px;
-      color: #555;
-      margin-bottom: 35px;
-      text-align: center;
-    }
+/* -------------------- Card -------------------- */
+.card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
+.card h2 { margin-top:0; margin-bottom:20px; font-family:'Nunito',sans-serif; font-weight:600; font-size:24px; color:#4154F1; border-bottom:1px solid #eee; padding-bottom:10px; }
 
-    /* === FORM STYLING === */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 25px;
-      justify-items: start;
-      width: 100%;
-    }
+/* -------------------- Profile Form -------------------- */
+.profile-details { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; max-width:900px; width:100%; margin:0 auto; }
+.form-group { display:flex; flex-direction:column; }
+.form-group label { font-size:14px; color:#555; margin-bottom:5px; font-weight:600; }
+.form-group input { padding:10px 12px; border:1px solid #ddd; border-radius:5px; background:#fcfcfc; font-size:15px; font-family:'Open Sans',sans-serif; transition:0.3s; width:100%; box-sizing:border-box; }
+.form-group input:focus { border-color:#4154F1; box-shadow:0 0 5px rgba(65,84,241,0.4); outline:none; }
+.form-group input:disabled { background:#f5f5f5; color:#777; cursor:not-allowed; }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      max-width: 350px;
-    }
-    .form-group label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #888;
-      margin-bottom: 6px;
-    }
-    .form-group input {
-      padding: 12px 16px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 500;
-      color: #333;
-      background: #fdfdfd;
-      transition: border-color 0.3s;
-    }
-    .form-group input:focus {
-      outline: none;
-      border-color: #4154F1;
-      box-shadow: 0 0 0 3px rgba(65, 84, 241, 0.1);
-    }
-    .form-group input:disabled {
-      background: #f9f9f9;
-      color: #777;
-      cursor: not-allowed;
-    }
+/* -------------------- Buttons & Actions -------------------- */
+.card-actions { display:flex; justify-content:flex-end; gap:15px; margin-top:20px; flex-wrap:wrap; }
+.btn { padding:12px 24px; border-radius:5px; cursor:pointer; border:none; font-weight:600; font-family:'Nunito',sans-serif; transition:all 0.3s ease; display:flex; align-items:center; justify-content:center; font-size:15px; min-width:140px; white-space:nowrap; }
+.btn-primary { background:#4154F1; color:white; }
+.btn-primary:hover { background:#0d29e9; transform: translateY(-2px); }
+.btn-secondary { background:#6c757d; color:white; }
+.btn-secondary:hover { background:#5a6268; transform: translateY(-2px); }
 
-    .btn-row {
-      grid-column: 1 / -1;
-      display: flex;
-      justify-content: center;
-      gap: 25px;
-      margin-top: 20px;
-    }
+/* -------------------- Password Card -------------------- */
+.password-change-card { display:flex; flex-direction:column; gap:15px; padding:20px 30px; }
+.password-change-card input { max-width:350px; width:100%; box-sizing:border-box; }
 
-    /* === REUSE .edit-btn FROM PROFILE === */
-    .edit-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      background-color: #4154F1;
-      color: #fff;
-      font-weight: 600;
-      border-radius: 8px;
-      text-decoration: none;
-      transition: all 0.3s ease;
-    }
-    .edit-btn i { transition: transform 0.3s ease; }
-    .edit-btn:hover {
-      background-color: #3a4cd0;
-      transform: translateY(-2px);
-    }
-    .edit-btn:hover i {
-      transform: rotate(20deg);
-    }
+/* -------------------- Responsive -------------------- */
+@media(max-width:768px) {
+    .main-content { margin-left:0; }
+    .main-content { padding:20px 15px; }
+    .profile-details { grid-template-columns:1fr; }
+    .profile-details { gap:15px; }
+    .card-actions { flex-direction:row; }
+    .card-actions { flex-wrap:wrap; }
+    .card-actions { justify-content:flex-start; }
+    .card-actions { gap:10px; }
+    .card-actions { margin-top:20px; }
+    .card-actions { padding-right:0; }
+    .btn { width:auto; }
+    .btn { flex:1; }
+    .btn { min-width:120px; }
+    .btn { justify-content:center; }
+}
 
-    .btn-secondary {
-      background-color: #ccc;
-      color: #333;
-    }
-    .btn-secondary:hover {
-      background-color: #bbb;
-    }
 
-    @media (max-width: 768px) {
-      .main-content {
-        margin-left: 0;
-        padding: 20px 15px;
-      }
-      .profile-card {
-        padding: 30px 20px;
-      }
-      .form-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-      }
-      .btn-row {
-        flex-direction: column;
-        align-items: center;
-      }
-      .edit-btn {
-        width: 100%;
-        justify-content: center;
-      }
-    }
-  </style>
+</style>
 </head>
 <body>
 
@@ -164,8 +69,8 @@
   <div class="header-content">
     <a href="{{ url_for('admin_dashboard') }}" class="title">iAttend</a>
     <a href="{{ url_for('admin_profile') }}" class="user-info">
-      <span>Admin User</span>
-      <img src="{{ profile.profile_pic }}" alt="Admin">
+      <span>{{ profile.full_name }}</span>
+      <img src="{{ profile.profile_pic }}" alt="Admin" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
     </a>
   </div>
 </header>
@@ -173,9 +78,7 @@
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}">
-      <i class="fas fa-home"></i><span>Dashboard</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-home"></i><span>Dashboard</span></a>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
@@ -194,61 +97,65 @@
     <a class="sidebar-link" href="{{ url_for('admin_attendance_log') }}"><i class="fas fa-history"></i><span>Attendance Logs</span></a>
   </div>
   <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('logout') }}">
-      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-    </a>
+    <a class="sidebar-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
 </div>
 
-<!-- Main Content -->
+<!-- Main content -->
 <div class="main-content">
-  <div class="profile-card">
-    <h2 class="profile-name">Edit Admin Profile</h2>
-    <p class="profile-sub">{{ profile.role }}</p>
+  <div class="profile-sections">
 
-    <form method="POST" enctype="multipart/form-data">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="name">Name</label>
-          <input type="text" id="name" name="name" value="{{ profile.full_name }}" required>
+    <!-- Admin Profile Edit Card -->
+    <div class="card">
+      <h2 style="font-family:'Poppins',sans-serif; font-weight:600; color:#4154F1;">Edit Admin Profile</h2>
+      <form method="POST" enctype="multipart/form-data">
+        <div class="profile-details">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" value="{{ profile.full_name }}" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="text" id="phone" name="phone" value="{{ profile.phone }}">
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" value="{{ profile.email }}" disabled>
+          </div>
+          <div class="form-group">
+            <label for="role">Role</label>
+            <input type="text" id="role" value="{{ profile.role }}" disabled>
+          </div>
+          <div class="form-group">
+            <label for="photo">Profile Picture</label>
+            <input type="file" id="photo" name="photo" accept="image/*">
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="phone">Phone</label>
-          <input type="text" id="phone" name="phone" value="{{ profile.phone }}">
-        </div>
-
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" value="{{ profile.email }}" disabled>
-        </div>
-
-        <div class="form-group">
-          <label for="role">Role</label>
-          <input type="text" id="role" value="{{ profile.role }}" disabled>
-        </div>
-
-        <div class="form-group">
-          <label for="password">New Password</label>
-          <input type="password" id="password" name="password" placeholder="••••••••">
-        </div>
-
-        <div class="form-group">
-          <label for="photo">Profile Picture</label>
-          <input type="file" id="photo" name="photo" accept="image/*">
-        </div>
-
-        <div class="btn-row">
-          <a href="{{ url_for('admin_profile') }}" class="edit-btn btn-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Back to Profile
-          </a>
-          <button type="submit" class="edit-btn">
-            <i class="fa-solid fa-floppy-disk"></i> Save Changes
+        <!-- Buttons outside the grid to fix overlap -->
+        <div class="card-actions">
+          <button type="submit" name="action" value="save" class="btn btn-primary">
+            Save Changes
           </button>
         </div>
-      </div>
-    </form>
-  </div>
+      </form>
+    </div>
+
+   <!-- Password Change Card -->
+<div class="card password-change-card">
+  <h2 style="font-family:'Poppins',sans-serif; font-weight:600; color:#4154F1;">Password Change</h2>
+  <p style="font-size:14px; color:#555; margin-bottom:15px;">
+    For security reasons, you can change your password here.
+  </p>
+  <form method="POST">
+    <div class="form-group">
+      <label for="password">New Password</label>
+      <input type="password" id="password" name="password" placeholder="••••••••" required>
+    </div>
+    <div class="card-actions">
+      <button type="submit" name="action" value="change_password" class="btn btn-primary">Save Password</button>
+    </div>
+  </form>
 </div>
 
 <script>
