@@ -153,11 +153,13 @@ def login():
                 # Student
                 session["user"] = {"uid": uid, "email": email, "role": "Student"}
                 session["role"] = "student"
+                session["user_id"] = uid
                 redirect_url = "student_dashboard"
             elif role_type == 2:
                 # Teacher
                 session["user"] = {"uid": uid, "email": email, "role": "Teacher"}
                 session["role"] = "teacher"
+                session["user_id"] = uid
                 redirect_url = "teacher_dashboard"
             else:
                 # If role_type is missing, fallback to Firestore 'role' field
