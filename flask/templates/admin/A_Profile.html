@@ -4,36 +4,120 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Profile - iAttend</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+.main-content { margin-left:260px; padding:100px 30px 50px; min-height:100vh; background:transparent; display:flex; justify-content:center; }
+.main-content.expanded { margin-left:80px; }
+
+.profile-card { 
+  max-width:900px; width:100%; margin:30px auto; 
+  background:#fff; border-radius:12px; 
+  box-shadow:0 15px 30px rgba(0,0,0,0.05); 
+  padding:50px 40px 30px 40px; text-align:center; 
+  box-sizing:border-box; 
+  transition:transform 0.3s ease, box-shadow 0.3s ease; 
+}
+.profile-card:hover { transform:translateY(-6px); box-shadow:0 20px 40px rgba(0,0,0,0.15); }
+
+.profile-card img { 
+  width:160px; height:160px; border-radius:50%; 
+  object-fit:cover; margin-bottom:20px; 
+  border:4px solid #4154F1; 
+}
+
+.profile-name { font-size:28px; font-weight:600; color:#4154F1; margin-bottom:10px; }
+.profile-sub { font-size:16px; color:#555; margin-bottom:35px; }
+
+.info-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:25px; justify-items:center; width:100%; }
+.info-item { 
+  background:#fdfdfd; border-radius:12px; 
+  padding:20px 25px; box-shadow:0 3px 12px rgba(0,0,0,0.05); 
+  display:flex; align-items:center; gap:15px; width:100%; max-width:250px; 
+  transition:transform 0.3s ease, box-shadow 0.3s ease; text-align:left; 
+}
+.info-item:hover { transform:translateY(-6px); box-shadow:0 8px 20px rgba(0,0,0,0.12); }
+
+.info-item i { color:#4154F1; font-size:22px; }
+.info-text { display:flex; flex-direction:column; }
+.info-label { font-size:13px; font-weight:600; color:#888; margin-bottom:4px; }
+.info-value { font-size:16px; font-weight:500; color:#333; }
+
+.edit-btn { 
+  display:inline-flex; align-items:center; gap:8px; 
+  padding:12px 24px; background-color:#4154F1; 
+  color:#fff; font-weight:600; border-radius:8px; 
+  text-decoration:none; margin-top:35px; 
+  transition:all 0.3s ease; 
+}
+.edit-btn i { transition:transform 0.3s ease; }
+.edit-btn:hover { background-color:#3a4cd0; transform:translateY(-2px); }
+.edit-btn:hover i { transform:rotate(20deg); }
+
+.second-row {
+  grid-column: 1 / -1; 
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: nowrap; 
+}
+
+@media(max-width:768px) {
+  .main-content { margin-left:0; padding:20px 15px; }
+  .profile-card { padding:30px 20px; }
+  .profile-card img { width:120px; height:120px; }
+  .profile-name { font-size:24px; margin-bottom:8px; }
+  .profile-sub { font-size:14px; margin-bottom:25px; }
+  .info-grid { grid-template-columns:1fr; gap:20px; justify-items:center; }
+  .info-item { flex-direction:column; align-items:center; gap:10px; text-align:center; max-width:100%; justify-self:center !important; }
+  .second-row { flex-direction:row; gap:15px; }
+}
+</style>
 </head>
-<body class="bg-gray-100 font-sans">
 
-<div class="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-10">
-    <h2 class="text-2xl font-bold mb-6">Admin Profile</h2>
+<body>
+<div class="main-content">
+  <div class="profile-card">
+      <img src="{{ profile.profile_pic }}" alt="Profile Picture">
 
-    <div class="flex items-center mb-6">
-        <img src="{{ profile.profile_pic }}" alt="Profile Picture" class="h-24 w-24 rounded-full mr-4">
-        <div>
-            <h3 class="text-xl font-semibold">{{ profile.full_name }}</h3>
-            <p class="text-gray-600">{{ profile.role }}</p>
-        </div>
-    </div>
+      <h2 class="profile-name">{{ profile.full_name }}</h2>
+      <p class="profile-sub">{{ profile.role }}</p>
 
-    <div class="space-y-2">
-        <p><strong>Email:</strong> {{ profile.email }}</p>
-        <p><strong>Phone:</strong> {{ profile.phone }}</p>
-        <p><strong>Role:</strong> {{ profile.role }}</p>
-        <p><strong>ID:</strong> {{ profile.uid }}</p>
-    </div>
+      <div class="info-grid">
+          <div class="info-item">
+              <i class="fa-solid fa-envelope"></i>
+              <div class="info-text">
+                  <span class="info-label">Email</span>
+                  <span class="info-value">{{ profile.email }}</span>
+              </div>
+          </div>
 
-    <!-- Buttons: Dashboard & Edit Profile only -->
-    <div class="flex space-x-4 mt-6">
-        <a href="{{ url_for('admin_dashboard') }}"
-           class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Dashboard</a>
-        <a href="{{ url_for('admin_edit_profile') }}"
-           class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Edit Profile</a>
-    </div>
+          <div class="info-item">
+              <i class="fa-solid fa-phone"></i>
+              <div class="info-text">
+                  <span class="info-label">Phone</span>
+                  <span class="info-value">{{ profile.phone }}</span>
+              </div>
+          </div>
+
+          <div class="info-item">
+              <i class="fa-solid fa-id-card"></i>
+              <div class="info-text">
+                  <span class="info-label">User ID</span>
+                  <span class="info-value">{{ profile.uid }}</span>
+              </div>
+          </div>
+
+          <div class="second-row">
+              <a href="{{ url_for('admin_dashboard') }}" class="edit-btn" style="background:#ccc; color:#333;">
+                  <i class="fa-solid fa-arrow-left"></i> Dashboard
+              </a>
+              <a href="{{ url_for('admin_edit_profile') }}" class="edit-btn">
+                  <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+              </a>
+          </div>
+      </div>
+  </div>
 </div>
-
 </body>
 </html>
