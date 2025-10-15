@@ -8,27 +8,54 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
 <style>
-
+/* General */
 .user-info span{font-size:16px;font-weight:600;color:#444;}
-
 .sidebar.collapsed .sidebar-section-title{opacity:0;}
-
-.main-content{margin-left:260px;padding:100px 30px 30px;height:100vh;overflow-y:auto;transition:margin-left 0.3s ease;}
+.main-content{margin-left:260px;padding:100px 30px 30px;min-height:100vh;transition:margin-left 0.3s ease;}
 .sidebar.collapsed ~ .main-content{margin-left:80px;}
-.card{background:#fff;padding:1.5rem;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.08);margin-bottom:20px;}
-.card { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); position: relative; margin-bottom: 25px; transition: transform 0.3s, box-shadow 0.3s; }
-.card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; text-align: center; }
-th{font-weight: 600; font-size: 14px; color: #2C2C2C; background-color: #f8f1e5; padding: 12px; text-align: center; position: sticky; top: 0; z-index: 10;}
-td{padding: 12px 8px; border-top: 1px solid #e0e0e0; word-wrap: break-word; text-align: center; }
-.main-content h2 {font-family:'Poppins',sans-serif;font-size:28px;font-weight:700;color:#444;margin-bottom:10px;}
-.breadcrumb {font-family:'Poppins',sans-serif;font-size:14px;font-weight:500;margin-bottom:20px;}
-.breadcrumb .section { color: #989797; }
-.breadcrumb .current { color: #4154F1; font-weight: 400; }
-.note-text {font-size:14px;color:#555;margin-top:0.5rem;font-style:italic;}
-.group-details-container {display:flex; gap:20px; flex-wrap:wrap;}
-.group-details-container .card {flex:1; min-width:150px;}
+.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.1);margin-bottom:20px;transition:transform 0.2s,box-shadow 0.2s;}
+.card:hover{transform:translateY(-5px);box-shadow:0 15px 30px rgba(0,0,0,0.15);}
+
+/* Table */
+table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;}
+table thead th{font-weight:600;font-size:14px;color:#2C2C2C;background-color:#f8f1e5;padding:12px;text-align:left;position:sticky;top:0;z-index:10;}
+table tbody td{padding:10px 12px;border-top:1px solid #e0e0e0;word-wrap:break-word;text-align:left;}
+table tbody tr:hover{background:#fef9f0;transition:background 0.2s;}
+
+/* Search bar */
+.search-container{position:relative;max-width:300px;margin-bottom:1rem;}
+.search-container i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;}
+.search-container input{width:100%;padding:8px 10px 8px 35px;border:1px solid #d1d5db;border-radius:0.5rem;font-size:0.875rem;outline:none;transition:box-shadow 0.2s;}
+.search-container input:focus{border-color:#6366f1;box-shadow:0 0 0 2px rgba(99,102,241,0.2);}
+
+/* Breadcrumb */
+.main-content h2{font-family:'Poppins',sans-serif;font-size:28px;font-weight:700;color:#444;margin-bottom:10px;}
+.breadcrumb{font-family:'Poppins',sans-serif;font-size:14px;font-weight:500;margin-bottom:20px;}
+.breadcrumb .section{color:#989797;}
+.breadcrumb .current{color:#4154F1;font-weight:400;}
+.note-text{font-size:14px;color:#555;margin-top:0.5rem;font-style:italic;}
+
+/* Group cards */
+.group-details-container{display:flex;gap:20px;flex-wrap:wrap;}
+.group-details-container .card{flex:1;min-width:150px;}
+
+/* Sticky search bar */
+.search-container.sticky {position: sticky;top: 0;background-color: #ffffff;z-index: 20;padding: 0.5rem 0;border-bottom: 1px solid #e0e0e0;}
+
+.btn-export {
+    background-color: #ef4444;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-decoration: none;
+    transition: 0.2s;
+}
+.btn-export:hover {
+    background-color: #dc2626;
+}
 </style>
 </head>
 
@@ -36,96 +63,145 @@ td{padding: 12px 8px; border-top: 1px solid #e0e0e0; word-wrap: break-word; text
 <header>
     <span id="menu-toggle">&#9776;</span>
     <div class="header-content">
-      <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
-      <a href="{{ url_for('teacher_profile') }}" class="user-info">
-        <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-        <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
-      </a>
+        <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
+        <a href="{{ url_for('teacher_profile') }}" class="user-info">
+            <span>{{ profile.firstName }} {{ profile.lastName }}</span>
+            <img src="{% if profile.photo_name and profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
+        </a>
     </div>
-  </header>
+</header>
+
 <div class="sidebar">
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
-      <i class="fas fa-home"></i><span>Dashboard</span>
-    </a>
-  </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Reports</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
-      <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
-    </a>
-  </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Manage</div>
-    <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}">
-      <i class="fas fa-calendar"></i><span>Class Schedule</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}"><i class="fas fa-book"></i><span>My Modules & Rooms</span></a>
-    
-       <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
-       <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}"><i class="fas fa-address-card"></i><span>Individual Attendance</span></a>
-  </div>
-
-  {% if profile.is_gc %}
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Group Coordinator</div>
-    <a class="sidebar-link active" href="{{ url_for('gc_manage_group') }}">
-      <i class="fas fa-users-cog"></i><span>Manage Group</span>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
-      <i class="fas fa-file-alt"></i><span>Group Report</span>
-    </a>
-  </div>
-  {% endif %}
-
-  <div class="sidebar-section">
-    <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
-      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-    </a>
-  </div>
+    <div class="sidebar-section">
+        <a class="sidebar-link" href="{{ url_for('teacher_dashboard') }}">
+            <i class="fas fa-home"></i><span>Dashboard</span>
+        </a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Reports</div>
+        <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
+            <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
+        </a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Manage</div>
+        <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}">
+            <i class="fas fa-calendar"></i><span>Class Schedule</span>
+        </a>
+        <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
+            <i class="fas fa-book"></i><span>My Modules & Groups</span>
+        </a>
+        <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}">
+            <i class="fas fa-calendar-alt"></i><span>Absences Application</span>
+        </a>
+        <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}">
+            <i class="fas fa-address-card"></i><span>Individual Attendance</span>
+        </a>
+    </div>
+    {% if profile.is_gc %}
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Group Coordinator</div>
+        <a class="sidebar-link active" href="{{ url_for('gc_manage_group') }}">
+            <i class="fas fa-users-cog"></i><span>Manage Group</span>
+        </a>
+        <a class="sidebar-link" href="{{ url_for('gc_group_report') }}">
+            <i class="fas fa-file-alt"></i><span>Group Report</span>
+        </a>
+    </div>
+    {% endif %}
+    <div class="sidebar-section">
+        <a class="sidebar-link" href="{{ url_for('teacher_logout') }}">
+            <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+        </a>
+    </div>
 </div>
+
 <div class="main-content">
-  <h2>Manage Group</h2>
-  <div class="breadcrumb"><span class="section">Group Coordinator</span> / <span class="current">Manage Group</span></div>
-  {% if selected_group %}
-  <div class="group-details-container">
-    <div class="card"><p><strong>Group Code:</strong> {{ selected_group.groupCode }}</p></div>
-    <div class="card"><p><strong>Intake:</strong> {{ selected_group.intake }}</p></div>
-    <div class="card"><p><strong>Program:</strong> {{ selected_group.programName }}</p></div>
-  </div>
-  <div class="card">
-    <table>
-      <thead>
-        <tr><th>#</th><th>Student ID</th><th>First Name</th><th>Last Name</th><th>Email</th></tr>
-      </thead>
-      <tbody>
+    <h2>Manage Group</h2>
+    <div class="breadcrumb"><span class="section">Group Coordinator</span> / <span class="current">Manage Group</span></div>
+
+    {% if selected_group %}
+    <div class="group-details-container">
+        <div class="card"><p><strong>Group Code:</strong> {{ selected_group.groupCode }}</p></div>
+        <div class="card"><p><strong>Intake:</strong> {{ selected_group.intake }}</p></div>
+        <div class="card"><p><strong>Program:</strong> {{ selected_group.programName }}</p></div>
+        <div class="card"><p><strong>Total Students:</strong> {{ selected_group.members|length }}</p></div>
+    </div>
+
+    <div class="card">
+    <div class="overflow-x-auto max-h-[400px] relative">
+        <div class="search-container sticky top-0 bg-white z-20 p-2">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search...">
+        </div>
+
+        <table class="min-w-full">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student ID</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody">
+    {% if selected_group.members %}
         {% for student in selected_group.members %}
         <tr>
-          <td>{{ loop.index }}</td>
-          <td>{{ student.studentID }}</td>
-          <td>{{ student.first_name }}</td>
-          <td>{{ student.last_name }}</td>
-          <td>{{ student.email }}</td>
+            <td>{{ loop.index }}</td>
+            <td>{{ student.studentID }}</td>
+            <td>{{ student.first_name }}</td>
+            <td>{{ student.last_name }}</td>
+            <td>
+  <a href="mailto:{{ student.email }}" class="text-blue-600 hover:underline">
+    {{ student.email }}
+  </a>
+</td>
         </tr>
-        {% else %}
-        <tr><td colspan="5">No students in this group.</td></tr>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  <p class="note-text"><em>Note: Assigning or removing students is managed by admin only.</em></p>
-  {% else %}
-  <p>You are not assigned to any group yet.</p>
-  {% endif %}
-
-
+    {% else %}
+        <tr><td colspan="5">No students in this group.</td></tr>
+    {% endif %}
+</tbody>
+<tr id="noResultsRow" style="display: none;">
+    <td colspan="5">No matching results found.</td>
+</tr>
+        </table>
+    </div>
 </div>
+
+    <p class="note-text"><em>Note: Assigning, editing or removing students is managed by admin only.</em></p>
+
+    {% else %}
+    <p>You are not assigned to any group yet.</p>
+    {% endif %}
+</div>
+
 <script>
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 menuToggle.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
+
+const searchInput = document.getElementById('searchInput');
+const tableBody = document.getElementById('studentTableBody');
+const noResultsRow = document.getElementById('noResultsRow');
+
+searchInput.addEventListener('input', () => {
+    const filter = searchInput.value.toLowerCase();
+    const rows = tableBody.querySelectorAll('tr');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const rowText = row.innerText.toLowerCase();
+        const match = rowText.includes(filter);
+        row.style.display = match ? '' : 'none';
+        if (match) visibleCount++;
+    });
+
+    noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+});
 </script>
 
 </body>
-
 </html>
