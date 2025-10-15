@@ -107,7 +107,6 @@ def inject_student_name():
     return {"full_name": "Student", "student_class": "", "group_code": ""}
 
 # ------------------ Routes ------------------
-# ------------------ Login ------------------
 # ------------------ Login Route ------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -125,7 +124,6 @@ def login():
             if email == "admin@admin.edu":
                 doc = db.collection("admin").document("admin").get()
                 if doc.exists and doc.to_dict().get("password") == password:
-                    # Set session for admin
                     session["user"] = {
                         "uid": "admin",
                         "email": email,
@@ -139,35 +137,42 @@ def login():
                     flash("Invalid admin credentials.")
                     return redirect(url_for("login"))
 
-            # ---------- Teacher / Student Login ----------
-            user = auth.get_user_by_email(email)  # Firebase Auth lookup
+            # ---------- Firebase Auth for Student / Teacher ----------
+            user = auth.get_user_by_email(email)
             uid = user.uid
 
-            # Fetch user document from Firestore
             user_doc = db.collection("users").document(uid).get()
             if not user_doc.exists:
                 flash("User not found in Firestore.")
                 return redirect(url_for("login"))
 
             user_data = user_doc.to_dict()
-            role_type = user_data.get("role_type")
+            role_type = user_data.get("role_type")  # 1=student, 2=teacher
 
-            # ---------- Determine Role ----------
             if role_type == 1:
                 # Student
                 session["user"] = {"uid": uid, "email": email, "role": "Student"}
                 session["role"] = "student"
                 redirect_url = "student_dashboard"
-
             elif role_type == 2:
                 # Teacher
                 session["user"] = {"uid": uid, "email": email, "role": "Teacher"}
                 session["role"] = "teacher"
                 redirect_url = "teacher_dashboard"
-
             else:
-                flash("Role not assigned. Contact admin.")
-                return redirect(url_for("login"))
+                # If role_type is missing, fallback to Firestore 'role' field
+                role_field = user_data.get("role", "").lower()
+                if role_field == "student":
+                    session["user"] = {"uid": uid, "email": email, "role": "Student"}
+                    session["role"] = "student"
+                    redirect_url = "student_dashboard"
+                elif role_field == "teacher":
+                    session["user"] = {"uid": uid, "email": email, "role": "Teacher"}
+                    session["role"] = "teacher"
+                    redirect_url = "teacher_dashboard"
+                else:
+                    flash("Role not assigned. Contact admin.")
+                    return redirect(url_for("login"))
 
             # Set session permanence
             session.permanent = True if remember == "on" else False
@@ -181,7 +186,8 @@ def login():
             return redirect(url_for("login"))
 
     # GET request → show login page
-    return render_template("login.html")
+    return render_template("combinePage/login.html")
+
 
 # ------------------ Home Page ------------------
 @app.route("/")
@@ -278,38 +284,38 @@ from flask import render_template, session, redirect, url_for
 
 @app.route("/student_dashboard")
 def student_dashboard():
+    # Ensure student is logged in
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
-    uid = session.get("user_id")
-    if not uid:
-        return redirect(url_for("home"))
+    user = session.get("user")
+    if not user:
+        flash("User not logged in.", "error")
+        return redirect(url_for("login"))
 
-    # Query the 'users' collection
+    uid = user.get("uid")
+
+    # ------------------ Fetch student profile ------------------
     user_doc = db.collection("users").document(uid).get()
     full_name = "Student"
-    profile_pic_url = None  # default None
+    profile_pic_url = "uploads/default_student.png"  # default picture
 
     if user_doc.exists:
         user_data = user_doc.to_dict()
-        # Get full name
+        # Full name
         if "name" in user_data and user_data["name"].strip():
             full_name = user_data["name"].strip()
         else:
             first = user_data.get("first_name", "").strip()
             last = user_data.get("last_name", "").strip()
-            if first and last:
-                full_name = f"{first} {last}"
-            elif first:
-                full_name = first
-            elif last:
-                full_name = last
+            full_name = " ".join(filter(None, [first, last])) or "Student"
 
-        # Get profile picture
-        if "photo_url" in user_data and user_data["photo_url"].strip():
-            profile_pic_url = user_data["photo_url"].strip()
+        # Profile picture
+        photo = user_data.get("photo_url", "").strip()
+        if photo:
+            profile_pic_url = photo
 
-    # Attendance stats (hierarchical)
+    # ------------------ Attendance stats ------------------
     present = absent = late = streak = 0
     unexcused_absences = 0
     temp_streak = 0
@@ -317,22 +323,17 @@ def student_dashboard():
     today_status = "Not Marked Yet"
     today_note = ""
 
-    # Iterate over all schedule documents
-    schedule_docs = db.collection("attendance").stream()
-    for schedule_doc in schedule_docs:
-        schedule_id = schedule_doc.id
-        dates_collection = db.collection("attendance").document(schedule_id).collection("dates")
-        
+    attendance_collections = db.collection("attendance").stream()
+    for schedule_doc in attendance_collections:
+        dates_collection = db.collection("attendance").document(schedule_doc.id).collection("dates")
         for date_doc in dates_collection.stream():
-            date_id = date_doc.id  # e.g., "2025-10-10"
-            students_collection = dates_collection.document(date_id).collection("students")
+            students_collection = dates_collection.document(date_doc.id).collection("students")
             student_doc = students_collection.document(uid).get()
-            
+
             if student_doc.exists:
                 data = student_doc.to_dict()
                 status = data.get("status")
-                
-                # Count stats
+
                 if status == "Present":
                     present += 1
                     temp_streak += 1
@@ -345,13 +346,12 @@ def student_dashboard():
                         unexcused_absences += 1
                     temp_streak = 0
                 streak = max(streak, temp_streak)
-                
-                # Today's attendance
-                if date_id == today_str:
+
+                if date_doc.id == today_str:
                     today_status = data.get("status", "Not Marked Yet")
                     today_note = data.get("note", "")
 
-    # Notifications
+    # ------------------ Notifications ------------------
     if late >= 3:
         notification = "You have been late more than 3 times!"
     elif unexcused_absences >= 3:
@@ -359,30 +359,30 @@ def student_dashboard():
     else:
         notification = "No new notifications."
 
-    # Determine color and icon for today's attendance
+    # ------------------ Status color & icon ------------------
+    status_color = "#6c757d"
+    status_icon = "fas fa-circle"
     if today_status == "Present":
-        status_color = "#28a745"       # green
+        status_color = "#28a745"
         status_icon = "fas fa-check-circle"
     elif today_status == "Late":
-        status_color = "#ffc107"       # yellow
+        status_color = "#ffc107"
         status_icon = "fas fa-exclamation-triangle"
     elif today_status == "Absent":
-        status_color = "#dc3545"       # red
+        status_color = "#dc3545"
         status_icon = "fas fa-times-circle"
-    else:
-        status_color = "#6c757d"       # grey
-        status_icon = "fas fa-circle"
 
+    # ------------------ Render template ------------------
     return render_template(
         "student/S_Dashboard.html",
         full_name=full_name,
-        profile_pic_url=profile_pic_url,  # added for header
+        profile_pic_url=profile_pic_url,
         stats_present=present,
         stats_absent=absent,
         stats_late=late,
         attendance_streak=streak,
         notification_message=notification,
-        today_status=today_status,  
+        today_status=today_status,
         today_note=today_note,
         status_color=status_color,
         status_icon=status_icon
