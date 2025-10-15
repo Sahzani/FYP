@@ -794,7 +794,7 @@ def admin_edit_profile():
                        or "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
     }
 
-    return render_template("admin/A_EditProfile.html", profile=profile_data)
+    return render_template("admin/A_editProfile.html", profile=profile_data)
 
 # ------------------ Admin Logout ------------------
 @app.route("/admin/logout")
