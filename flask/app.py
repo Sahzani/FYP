@@ -801,81 +801,177 @@ def admin_edit_profile():
 def admin_logout():
     session.clear()
     return redirect(url_for("login"))
+# ------------------ Student Attendance History Page ------------------
+from datetime import datetime, timedelta
+from flask import render_template, session, redirect, url_for, request
+from collections import defaultdict  # for monthly late counting
 
-# ------------------ Student Pages ------------------
-@app.route("/student_attendance")
+@app.route("/student/attendance")
 def student_attendance():
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
-    uid = session.get("user_id")
-    if not uid:
+    user = session.get("user")
+    if not user:
         return redirect(url_for("login"))
 
-    # ✅ Fetch user's full name from Firestore 'users' collection
+    uid = user.get("uid")
+
+    # -------- Fetch user's full name --------
     full_name = "Student"
     user_doc = db.collection("users").document(uid).get()
     if user_doc.exists:
         user_data = user_doc.to_dict()
-        full_name = user_data.get("name", "Student").strip() or "Student"
+        full_name = user_data.get("name") or " ".join(
+            filter(None, [user_data.get("first_name"), user_data.get("last_name")])
+        ) or "Student"
 
-    try:
-        attendance_ref = db.collection('attendance').where('student_id', '==', uid)
-        docs = attendance_ref.stream()
+    # -------- Get student's group --------
+    fk_group = None
+    role_doc = db.collection("users").document(uid).collection("roles").document("student").get()
+    if role_doc.exists:
+        fk_group = role_doc.to_dict().get("fk_groupcode")
 
-        records = []
-        total = 0
-        present = 0
-        absent = 0
+    # -------- Get filter inputs from query parameters --------
+    selected_module = request.args.get("moduleFilter", "All")
+    selected_status = request.args.get("statusFilter", "All")
+    selected_date = request.args.get("dateFilter", "")  # yyyy-mm-dd from calendar
 
-        for doc in docs:
-            data = doc.to_dict()
-            
-            # Normalize fields
-            raw_date = data.get('date', '')
-            try:
-                display_date = datetime.strptime(raw_date, '%Y-%m-%d').strftime('%b %d, %Y')
-            except:
-                display_date = raw_date or 'Invalid Date'
+    # Convert selected_date (yyyy-mm-dd) to datetime for filtering
+    filter_date_dt = None
+    if selected_date:
+        try:
+            filter_date_dt = datetime.strptime(selected_date, "%Y-%m-%d")
+        except:
+            filter_date_dt = None
 
-            status = data.get('status', 'Unknown')
-            if status == 'Present':
-                present += 1
-            elif status == 'Absent':
-                absent += 1
-            total += 1
+    # Initialize lists and counters
+    records = []
+    total = present = absent = late = 0
+    modules_set = set()
 
-            records.append({
-                'date': display_date,
-                'time': data.get('time', '-'),
-                'subject': data.get('subject', '-'),
-                'status': status,
-                'remarks': data.get('remarks', '-')
-            })
+    # -------- Overall Attendance (unfiltered) --------
+    overall_total = overall_present = overall_absent = overall_late = 0
+    monthly_stats_overall = defaultdict(lambda: {"total":0, "present":0, "absent":0, "late":0, "adjusted_present":0})
 
-        percentage = round((present / total * 100), 2) if total > 0 else 0
+    if fk_group:
+        schedules = db.collection("schedules").where("fk_group","==",fk_group).stream()
+        for sched_doc in schedules:
+            sched = sched_doc.to_dict()
+            schedule_id = sched_doc.id
+            module_id = sched.get("fk_module")
 
-        return render_template(
-            "student/S_History.html",
-            records=records,
-            present=present,
-            absent=absent,
-            total=total,
-            percentage=percentage,
-            full_name=full_name  # ✅ Now uses Firestore name
-        )
+            # Fetch module info
+            module_name = "Unknown Module"
+            module_doc = db.collection("mlmodule").document(module_id).get()
+            if module_doc.exists:
+                module_name = module_doc.to_dict().get("moduleName","Unknown Module")
+                modules_set.add(module_name)
 
-    except Exception as e:
-        print(f"Error fetching attendance: {e}")
-        return render_template(
-            "student/S_History.html",
-            records=[],
-            present=0,
-            absent=0,
-            total=0,
-            percentage=0,
-            full_name=full_name  # ✅ Consistent fallback
-        )
+            # Attendance subcollections by date
+            date_collections = db.collection("attendance").document(schedule_id).collections()
+            for date_col in date_collections:
+                date_str = date_col.id
+                student_doc = date_col.document(uid).get()
+                if not student_doc.exists:
+                    continue
+                data = student_doc.to_dict()
+                status = data.get("status","Not Marked Yet").capitalize()
+
+                # --- Update Overall Attendance (unfiltered) ---
+                overall_total += 1
+                if status=="Present":
+                    overall_present += 1
+                elif status=="Absent":
+                    overall_absent += 1
+                elif status=="Late":
+                    overall_late += 1
+
+                # --- Update Monthly Stats (unfiltered) ---
+                try:
+                    record_date_dt = datetime.strptime(date_str,"%Y-%m-%d")
+                except:
+                    record_date_dt = None
+
+                if record_date_dt:
+                    month_key = record_date_dt.strftime("%Y-%m")
+                    monthly_stats_overall[month_key]["total"] += 1
+                    if status=="Present":
+                        monthly_stats_overall[month_key]["present"] += 1
+                    elif status=="Absent":
+                        monthly_stats_overall[month_key]["absent"] += 1
+                    elif status=="Late":
+                        monthly_stats_overall[month_key]["late"] += 1
+
+                # --- Apply filters for table records only ---
+                if selected_module != "All" and module_name != selected_module:
+                    continue
+                if selected_status != "All" and status != selected_status:
+                    continue
+                if filter_date_dt and record_date_dt and record_date_dt.date() != filter_date_dt.date():
+                    continue
+
+                # Timestamp → Brunei time (UTC+8)
+                timestamp = data.get("timestamp")
+                time = timestamp + timedelta(hours=8) if timestamp else None
+                time = time.strftime("%I:%M %p") if time else "-"
+
+                # Count filtered stats
+                if status=="Present":
+                    present += 1
+                elif status=="Absent":
+                    absent += 1
+                elif status=="Late":
+                    late += 1
+                total += 1
+
+                # Format date for display
+                display_date = record_date_dt.strftime("%d/%m/%Y") if record_date_dt else date_str
+
+                # Append record
+                records.append({
+                    "date": display_date,
+                    "time": time,
+                    "module": module_name,
+                    "status": status
+                })
+
+    # --- Apply monthly late penalties (overall monthly stats) ---
+    for month, stats in monthly_stats_overall.items():
+        penalty = stats["late"] // 3
+        stats["adjusted_present"] = max(stats["present"] - penalty, 0)
+
+    # --- Apply late penalties to overall attendance ---
+    adjusted_overall_present = overall_present
+    for stats in monthly_stats_overall.values():
+        adjusted_overall_present -= stats["late"] // 3
+    if adjusted_overall_present < 0:
+        adjusted_overall_present = 0
+
+    overall_percentage = round((adjusted_overall_present / overall_total * 100), 2) if overall_total>0 else 0
+    filtered_percentage = round((present / total * 100), 2) if total>0 else 0
+
+    return render_template(
+        "student/S_History.html",
+        records=records,
+        total=total,
+        present=present,
+        absent=absent,
+        late=late,
+        percentage=filtered_percentage,
+        monthly_stats=monthly_stats_overall,  # monthly summary always unfiltered
+        full_name=full_name,
+        modules=sorted(list(modules_set)),
+        selected_module=selected_module,
+        selected_status=selected_status,
+        date_for_input=selected_date,
+        # Overall attendance summary
+        overall_total=overall_total,
+        overall_present=adjusted_overall_present,
+        overall_absent=overall_absent,
+        overall_late=overall_late,
+        overall_percentage=overall_percentage
+    )
 # ------------------ Student Schedule Page ------------------
 @app.route("/student/schedule")
 def student_schedule():
