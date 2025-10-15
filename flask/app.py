@@ -1813,7 +1813,7 @@ def mark_present():
         return jsonify({"error": "Failed to save"}), 500
 
 #------------------- Teacher Attendance Report ------------------
-from flask import session, redirect, url_for, render_template, jsonify
+from flask import session, redirect, url_for, render_template
 from datetime import datetime
 
 @app.route("/teacher/attendance")
@@ -1823,14 +1823,21 @@ def teacher_attendance():
 
     teacher_id = str(session.get("user_id")).strip()
 
-    # Fetch teacher profile
+    # ------------------ Fetch Teacher Profile ------------------
     teacher_doc = db.collection("users").document(teacher_id).get()
     if teacher_doc.exists:
         profile = teacher_doc.to_dict()
         profile.setdefault("firstName", "Teacher")
         profile.setdefault("lastName", "")
         profile.setdefault("photo_name", "uploads/default_teacher.png")
-        profile.setdefault("is_gc", False)
+        
+        # --- Fetch role subcollection ---
+        teacher_role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
+        if teacher_role_doc.exists:
+            role_data = teacher_role_doc.to_dict()
+            profile['is_gc'] = bool(role_data.get("isCoordinator", False))
+        else:
+            profile['is_gc'] = False
     else:
         profile = {
             "firstName": "Teacher",
@@ -1839,12 +1846,12 @@ def teacher_attendance():
             "is_gc": False
         }
 
-    # 🔥 Fetch all supporting collections FIRST
+    # 🔥 Fetch all supporting collections FIRST (always, outside the if/else)
     groups = {g.id: g.to_dict() for g in db.collection("groups").stream()}
     programs = {p.id: p.to_dict() for p in db.collection("programs").stream()}
     mlmodules = {m.id: m.to_dict() for m in db.collection("mlmodule").stream()}
 
-    # Fetch schedules
+    # ------------------ Fetch schedules ------------------
     schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
     schedules = []
     for doc in schedules_docs:
@@ -1871,11 +1878,8 @@ def teacher_attendance():
 
         s['day'] = s.get('day', 'Unknown')
         schedules.append(s)
-        print("=== SCHEDULES DEBUG ===")
-        for s in schedules:
-            print(f"Program: {s.get('programName')}, Group: {s.get('groupName')}, Module: {s.get('moduleName')}, Day: {s.get('day')}")
-            
-    # ✅ Now extract unique lists for filters
+
+    # ------------------ Extract unique lists for filters ------------------
     programs_list = sorted({s["programName"] for s in schedules if s["programName"] != "Unknown Program"})
     groups_list = sorted({s["groupName"] for s in schedules if s["groupName"] != "Unknown Group"})
     modules_list = sorted({s["moduleName"] for s in schedules if s["moduleName"] != "Unknown Module"})
