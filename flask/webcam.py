@@ -250,8 +250,10 @@ def student_view():
     </html>
     """
 
-CERT_PATH = "/etc/letsencrypt/live/iattend.duckdns.org/fullchain.pem"
-KEY_PATH = "/etc/letsencrypt/live/iattend.duckdns.org/privkey.pem"
+# --- CRUCIAL CHANGE: Using relative paths for local files ---
+CERT_PATH = "flask_cert.pem"
+KEY_PATH = "flask_key.pem"
+# -----------------------------------------------------------
 
 if __name__ == "__main__":
     if wait_for_api(API_URL):
