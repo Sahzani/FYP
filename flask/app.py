@@ -762,31 +762,38 @@ def admin_edit_profile():
 
     if not user_doc.exists:
         session.clear()
-        flash("Admin data not found. Please login again.", "error")
+        
         return redirect(url_for("login"))
 
     if request.method == "POST":
+        # Get form data
         name = request.form.get("name")
         phone = request.form.get("phone")
-        password = request.form.get("password")  # hash in production
+        password = request.form.get("password")  # In production, hash it
         photo = request.files.get("photo")
 
+        # Prepare data to update
         update_data = {}
         if name: update_data["name"] = name
         if phone: update_data["phone"] = phone
         if password: update_data["password"] = password
-        if photo and photo.filename != "": update_data["photo_name"] = photo.filename
+        if photo and photo.filename != "":
+            # Save the photo to storage here if needed, then update the filename/url
+            update_data["photo_name"] = photo.filename
 
+        # Update Firestore and session
         if update_data:
             user_ref.update(update_data)
             session["user"].update(update_data)
 
-        flash("Profile updated successfully!", "success")
-        return redirect(url_for("admin_profile"))
+       
+        return redirect(url_for("admin_edit_profile"))
 
+    # Get user data to pre-fill the form
     user_data = user_doc.to_dict()
     profile_data = {
         "id": uid,
+        "full_name": user_data.get("name", "-"),  # <-- added name for editable field
         "email": user_data.get("email", "-"),
         "role": "Admin",
         "phone": user_data.get("phone", "-"),
@@ -795,6 +802,7 @@ def admin_edit_profile():
     }
 
     return render_template("admin/A_editProfile.html", profile=profile_data)
+
 
 # ------------------ Admin Logout ------------------
 @app.route("/admin/logout")
