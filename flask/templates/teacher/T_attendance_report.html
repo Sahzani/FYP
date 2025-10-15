@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iAttend - Attendance Report</title>
-  <!-- Tailwind CSS CDN (replace with compiled CSS in production) -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
@@ -84,7 +84,6 @@
       .main-content.expanded { margin-left: 0; }
     }
 
-    /* Prevent dropdown text cutoff */
     select {
       min-width: 140px;
       white-space: nowrap;
@@ -192,7 +191,7 @@
               <th>Email</th>
               <th>Time</th>
               <th>Status</th>
-              <th>Group</th>
+              <!-- Group column HIDDEN -->
               <th>Program</th>
               <th>Module</th>
             </tr>
@@ -219,7 +218,7 @@
     const videoContainer = document.getElementById('video-container');
     const webcamFeed = document.getElementById('webcam-feed');
     const attendanceTable = document.querySelector('#attendance-table tbody');
-    let refreshInterval;
+    let refreshInterval = null;
 
     // === FETCH SCHEDULES VIA AJAX ===
     function loadSchedules() {
@@ -229,7 +228,6 @@
           return res.json();
         })
         .then(data => {
-          // ✅ TRIM all fields to remove accidental spaces
           allSchedules = data.map(s => ({
             ...s,
             programName: (s.programName || '').trim(),
@@ -238,22 +236,17 @@
             day: (s.day || '').trim()
           }));
 
-          // ✅ Manually populate the Program dropdown FIRST
           const programSelect = document.getElementById('filter-program');
           programSelect.innerHTML = '<option value="">All Programs</option>';
-          
           const uniquePrograms = [...new Set(allSchedules.map(s => s.programName))]
             .filter(name => name && name !== "-")
             .sort();
-          
           uniquePrograms.forEach(name => {
             const option = document.createElement('option');
             option.value = name;
             option.textContent = name;
             programSelect.appendChild(option);
           });
-
-          // Now run normal filter logic
           updateFilters();
         })
         .catch(err => {
@@ -266,7 +259,6 @@
       const select = document.getElementById(id);
       const current = select.value;
       select.innerHTML = '<option value="">All</option>';
-      // ✅ Allow any non-empty string (even "Unknown Program" for debugging)
       const uniqueValues = [...new Set(values)]
         .filter(v => v && v.trim() !== "")
         .sort();
@@ -337,9 +329,11 @@
         webcamFeed.src = `${WEBCAM_URL}/video_feed`;
         fetchAttendance(scheduleId);
 
-        // 🔁 Auto-refresh table every 5 seconds
+        // 🔁 Start auto-refresh every 3 seconds
         if (refreshInterval) clearInterval(refreshInterval);
-        refreshInterval = setInterval(() => fetchAttendance(scheduleId), 5000);
+        refreshInterval = setInterval(() => {
+          fetchAttendance(scheduleId);
+        }, 3000);
       })
       .catch(err => console.error("Failed to start camera:", err));
     }
@@ -349,7 +343,10 @@
         .then(() => {
           videoContainer.style.display = "none";
           webcamFeed.src = "";
-          if (refreshInterval) clearInterval(refreshInterval);
+          if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+          }
         })
         .catch(err => console.error("Failed to stop camera:", err));
     });
@@ -360,7 +357,7 @@
         .then(data => {
           attendanceTable.innerHTML = "";
           if (!data.students || data.students.length === 0) {
-            attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">No students found</td></tr>`;
+            attendanceTable.innerHTML = `<tr><td colspan="6" class="text-center py-4">No students found</td></tr>`;
             return;
           }
           data.students.forEach(student => {
@@ -371,7 +368,6 @@
               <td>${student.email || "-"}</td>
               <td>${student.time || "-"}</td>
               <td><span class="status-badge status-${student.status}">${student.status}</span></td>
-              <td>${student.group || "-"}</td>
               <td>${student.program || "-"}</td>
               <td>${moduleName}</td>
             `;
@@ -380,7 +376,7 @@
         })
         .catch(err => {
           console.error("Failed to fetch attendance:", err);
-          attendanceTable.innerHTML = `<tr><td colspan="7" class="text-center py-4">Error loading data</td></tr>`;
+          attendanceTable.innerHTML = `<tr><td colspan="6" class="text-center py-4">Error loading data</td></tr>`;
         });
     }
 
