@@ -633,11 +633,31 @@ def admin_dashboard():
 
     admin_name = session["user"]["email"]
     now = datetime.now()
+    
+    # Get current month string (e.g., "2025-10")
+    month_str = now.strftime("%Y-%m")
+    
+    # Fetch attendance summary from Firestore
+    summary_ref = db.collection("attendance_summary").document(month_str)
+    summary_doc = summary_ref.get()
+    
+    if summary_doc.exists:
+        summary_data = summary_doc.to_dict()
+        stats_present = summary_data.get("present", 0)
+        stats_absent = summary_data.get("absent", 0)
+        stats_late = summary_data.get("late", 0)
+    else:
+        # Fallback if no data exists yet
+        stats_present = stats_absent = stats_late = 0
+
     return render_template(
         "admin/A_Homepage.html",
         admin_name=admin_name,
         current_date=now.strftime("%A, %B %d"),
-        current_time=now.strftime("%I:%M %p")
+        current_time=now.strftime("%I:%M %p"),
+        stats_present=stats_present,
+        stats_absent=stats_absent,
+        stats_late=stats_late
     )
 
 # 🔥 NEW: Auto-update attendance summary function
