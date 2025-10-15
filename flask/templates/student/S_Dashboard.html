@@ -79,7 +79,7 @@
 <header>
   <span id="menu-toggle">&#9776;</span>
   <div class="header-content" style="display:flex; align-items:center; justify-content:space-between;">
-    <a href="{{ url_for('student_dashboard') }}" class="title" style="font-weight:600; font-size:20px;">iAttend</a>
+    <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
     <a href="{{ url_for('student_profile') }}" class="user-info" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:inherit;">
       <span>{{ full_name }}</span>
       <img 
@@ -161,8 +161,21 @@
       <div class="today-attendance-card">
         <div class="today-attendance-info">
           <div class="today-attendance-title">Today's Class</div>
-          <div class="today-attendance-module">{{ today_module or 'No Class Today' }}</div>
-          <div class="today-attendance-status">{{ today_status or '-' }}</div>
+          {% if today_classes %}
+            {% for cls in today_classes %}
+              <div class="today-attendance-module">{{ cls.module }}</div>
+              <div class="today-attendance-status" style="color: 
+                {% if cls.status == 'Present' %}#28a745
+                {% elif cls.status == 'Late' %}#ffc107
+                {% elif cls.status == 'Absent' %}#dc3545
+                {% else %}#6c757d{% endif %};">
+                {{ cls.status }}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="today-attendance-module">No Class Today</div>
+            <div class="today-attendance-status">-</div>
+          {% endif %}
         </div>
         <div class="icon-circle" style="background-color: {{ status_color or '#4154F1' }};">
           <i class="{{ status_icon or 'fas fa-info' }}"></i>
@@ -188,7 +201,6 @@
       <div class="overall-attendance-percent">{{ overall_attendance }}%</div>
     </div>
   </div>
-
 </div>
 
 <script>
@@ -207,6 +219,8 @@ document.getElementById('menu-toggle').addEventListener('click', () => {
   document.querySelector('.main-content').classList.toggle('expanded');
 });
 </script>
+
+
 
 </body>
 </html>
