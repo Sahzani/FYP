@@ -282,7 +282,7 @@ def reset_password(student_id):
 
 # ------------------ Student Dashboard ------------------
 from datetime import datetime
-from flask import render_template, session, redirect, url_for
+from flask import render_template, session, redirect, url_for, flash
 
 @app.route("/student_dashboard")
 def student_dashboard():
@@ -297,45 +297,52 @@ def student_dashboard():
 
     uid = user.get("uid")
 
-    # ------------------ Fetch student profile ------------------
+    # -------- Student profile --------
     user_doc = db.collection("users").document(uid).get()
     full_name = "Student"
-    profile_pic_url = "uploads/default_student.png"  # default picture
+    profile_pic_url = "uploads/default_student.png"
 
+    fk_group = None
     if user_doc.exists:
         user_data = user_doc.to_dict()
         # Full name
-        if "name" in user_data and user_data["name"].strip():
-            full_name = user_data["name"].strip()
-        else:
-            first = user_data.get("first_name", "").strip()
-            last = user_data.get("last_name", "").strip()
-            full_name = " ".join(filter(None, [first, last])) or "Student"
+        full_name = user_data.get("name") or " ".join(filter(None, [user_data.get("first_name"), user_data.get("last_name")])) or "Student"
+        # Profile pic
+        profile_pic_url = user_data.get("photo_url") or profile_pic_url
 
-        # Profile picture
-        photo = user_data.get("photo_url", "").strip()
-        if photo:
-            profile_pic_url = photo
+        # Get student group from roles
+        role_doc = db.collection("users").document(uid).collection("roles").document("student").get()
+        if role_doc.exists:
+            fk_group = role_doc.to_dict().get("fk_groupcode")
 
-    # ------------------ Attendance stats ------------------
-    present = absent = late = streak = 0
-    unexcused_absences = 0
-    temp_streak = 0
+    # -------- Initialize stats --------
+    present = absent = late = 0
+    monthly_total = monthly_present = 0
+    streak = temp_streak = 0
     today_str = datetime.now().strftime("%Y-%m-%d")
-    today_status = "Not Marked Yet"
-    today_note = ""
+    current_month = datetime.now().strftime("%Y-%m")
+    today_classes = []  # List of today's modules & statuses
 
-    attendance_collections = db.collection("attendance").stream()
-    for schedule_doc in attendance_collections:
-        dates_collection = db.collection("attendance").document(schedule_doc.id).collection("dates")
-        for date_doc in dates_collection.stream():
-            students_collection = dates_collection.document(date_doc.id).collection("students")
-            student_doc = students_collection.document(uid).get()
+    # -------- Fetch schedules for this student --------
+    if fk_group:
+        schedules = db.collection("schedules").where("fk_group", "==", fk_group).stream()
+        for sched_doc in schedules:
+            sched = sched_doc.to_dict()
+            schedule_id = sched_doc.id
+            module_id = sched.get("fk_module")
 
-            if student_doc.exists:
+            # Loop through all date subcollections
+            date_collections = db.collection("attendance").document(schedule_id).collections()
+            for date_col in date_collections:
+                date_str = date_col.id
+                student_doc = date_col.document(uid).get()
+                if not student_doc.exists:
+                    continue
+
                 data = student_doc.to_dict()
-                status = data.get("status")
+                status = data.get("status", "Not Marked Yet").capitalize()
 
+                # Count overall stats
                 if status == "Present":
                     present += 1
                     temp_streak += 1
@@ -344,24 +351,43 @@ def student_dashboard():
                     temp_streak = 0
                 elif status == "Absent":
                     absent += 1
-                    if not data.get("letter"):
-                        unexcused_absences += 1
                     temp_streak = 0
+
                 streak = max(streak, temp_streak)
 
-                if date_doc.id == today_str:
-                    today_status = data.get("status", "Not Marked Yet")
-                    today_note = data.get("note", "")
+                # Count monthly stats
+                if date_str.startswith(current_month):
+                    monthly_total += 1
+                    if status == "Present":
+                        monthly_present += 1
 
-    # ------------------ Notifications ------------------
+                # Today's classes
+                if date_str == today_str:
+                    # Fetch module name
+                    module_doc = db.collection("mlmodule").document(module_id).get()
+                    module_name = module_doc.to_dict().get("moduleName") if module_doc.exists else "Unknown Module"
+                    today_classes.append({"module": module_name, "status": status})
+
+    # Overall monthly attendance %
+    overall_attendance = round((monthly_present / monthly_total * 100) if monthly_total else 0, 1)
+
+    # Notifications
     if late >= 3:
         notification = "You have been late more than 3 times!"
-    elif unexcused_absences >= 3:
+    elif absent >= 3:
         notification = "Your attendance rate is dropped due to 3 unexcused absences this month."
     else:
         notification = "No new notifications."
 
-    # ------------------ Status color & icon ------------------
+    # Today’s class (show first class if multiple, else fallback)
+    if today_classes:
+        today_module = today_classes[0]["module"]
+        today_status = today_classes[0]["status"]
+    else:
+        today_module = "No Class Today"
+        today_status = "-"
+
+    # Status color & icon
     status_color = "#6c757d"
     status_icon = "fas fa-circle"
     if today_status == "Present":
@@ -374,7 +400,6 @@ def student_dashboard():
         status_color = "#dc3545"
         status_icon = "fas fa-times-circle"
 
-    # ------------------ Render template ------------------
     return render_template(
         "student/S_Dashboard.html",
         full_name=full_name,
@@ -383,9 +408,10 @@ def student_dashboard():
         stats_absent=absent,
         stats_late=late,
         attendance_streak=streak,
+        overall_attendance=overall_attendance,
         notification_message=notification,
         today_status=today_status,
-        today_note=today_note,
+        today_module=today_module,
         status_color=status_color,
         status_icon=status_icon
     )
