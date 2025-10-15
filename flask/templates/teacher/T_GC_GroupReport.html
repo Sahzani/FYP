@@ -1,56 +1,51 @@
-<!-- gc_generate_reports.html -->
+<!-- T_GC_GroupReport.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>iAttend | Group Report</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@600;700&display=swap" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iAttend | Group Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-  <style>
-    body { margin:0; font-family:'Poppins',sans-serif; background:linear-gradient(75.18deg, #FFE5B4 36.63%, #F5EEDC 92.2%); }
-
-    .user-info { display:flex; align-items:center; gap:15px; padding:0 20px; border-radius:8px; transition:0.2s; cursor:pointer; text-decoration:none; }
-    .user-info:hover { background:#f0f0f0; }
-    .user-info img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
-    .user-info span { font-size:16px; font-weight:600; color:#444; }
-    .breadcrumb { font-family:'Poppins',sans-serif; font-size:14px; font-weight:600; margin-bottom:30px; }
-    .breadcrumb .section { color:#989797; }
-    .breadcrumb .current { color:#444444; }
-
-
-    .main { margin-left:260px; padding:100px 30px 30px; min-height:100vh; transition:margin-left 0.3s ease; }
-    .sidebar.collapsed ~ .main { margin-left:80px; }
-
-    .card { background:#fff; padding:1.5rem; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.08); transition:transform 0.3s ease, box-shadow 0.3s ease; }
-    .card:hover { transform:translateY(-5px); box-shadow:0 15px 30px rgba(0,0,0,0.15); }
-
-    label { font-weight:500; display:block; margin:10px 0 5px; }
-    select { padding:8px 12px; border-radius:8px; border:1px solid #ccc; font-size:14px; margin-right:10px; }
-    button { padding:10px 20px; background:#4154F1; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:background 0.3s ease; }
-    button:hover { background:#2e3bbd; }
-
-    table.styled-table { width:100%; border-collapse:collapse; margin-top:1rem; }
-    .styled-table th, .styled-table td { border:1px solid #ddd; padding:12px 15px; text-align:center; }
-    .styled-table th { background-color:#f4f4f4; font-weight:600; color:#333; }
-    .styled-table tr:nth-child(even) { background-color:#fafafa; }
-    .styled-table tr:hover { background-color:#f1f1f1; }
-  </style>
+<style>
+body { margin: 0; font-family: 'Poppins', sans-serif; background-color: #fdfcfb; }
+.user-info span { font-size: 16px; font-weight: 600; color: #444; }
+.sidebar.collapsed .sidebar-section-title { opacity: 0; }
+.main-content { margin-left: 260px; padding: 100px 30px 30px; min-height: 100vh; transition: margin-left 0.3s ease; }
+.sidebar.collapsed ~ .main-content { margin-left: 80px; }
+.main-content h2 { font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 700; color: #444; margin-bottom: 10px; }
+.breadcrumb { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 500; margin-bottom: 20px; }
+.breadcrumb .section { color: #989797; }
+.breadcrumb .current { color: #4154F1; font-weight: 400; }
+.card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; transition: transform 0.2s, box-shadow 0.2s; }
+.card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+label { font-weight: 500; font-size: 14px; margin-right: 10px; }
+select { padding: 8px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; margin-right: 10px; outline: none; transition: border-color 0.2s; }
+select:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
+button { padding: 8px 18px; background: #4154F1; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+button:hover { background: #2e3bbd; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+table thead th { font-weight: 600; font-size: 14px; color: #2C2C2C; background-color: #f8f1e5; padding: 12px; text-align: center; position: sticky; top: 0; z-index: 10; }
+table tbody td { padding: 10px 12px; border-top: 1px solid #e0e0e0; word-wrap: break-word; text-align: center; }
+table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
+.btn-export { display: inline-block; background-color: #ef4444; color: white; padding: 6px 14px; border-radius: 8px; font-size: 14px; text-decoration: none; margin-top: 10px; transition: 0.2s; }
+.btn-export:hover { background-color: #dc2626; }
+</style>
 </head>
-<body>
 
+<body>
 <header>
-    <span id="menu-toggle">&#9776;</span>
-    <div class="header-content">
-      <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
-      <a href="{{ url_for('teacher_profile') }}" class="user-info">
-        <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-        <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
-      </a>
-    </div>
-  </header>
+  <span id="menu-toggle">&#9776;</span>
+  <div class="header-content">
+    <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
+    <a href="{{ url_for('teacher_profile') }}" class="user-info">
+      <span>{{ profile.firstName }} {{ profile.lastName }}</span>
+      <img src="{% if profile.photo_name and profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
+    </a>
+  </div>
+</header>
 
 <div class="sidebar">
   <div class="sidebar-section">
@@ -59,26 +54,26 @@
     </a>
   </div>
   <div class="sidebar-section">
-      <div class="sidebar-section-title">Reports</div>
-      <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
-        <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
-      </a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Manage</div>
-      <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}">
-        <i class="fas fa-calendar"></i><span>Class Schedule</span>
-      </a>
-      <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
-        <i class="fas fa-book"></i><span>My Modules & Rooms</span>
-      </a>
-      <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}">
-        <i class="fas fa-calendar-alt"></i><span>Absences Application</span>
-      </a>
-      <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}">
-        <i class="fas fa-address-card"></i><span>Individual Attendance</span>
-      </a>
-    </div>
+    <div class="sidebar-section-title">Reports</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_attendance') }}">
+      <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
+    </a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Manage</div>
+    <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}">
+      <i class="fas fa-calendar"></i><span>Class Schedule</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_modules') }}">
+      <i class="fas fa-book"></i><span>My Modules & Groups</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}">
+      <i class="fas fa-calendar-alt"></i><span>Absences Application</span>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}">
+      <i class="fas fa-address-card"></i><span>Individual Attendance</span>
+    </a>
+  </div>
 
   {% if profile.is_gc %}
   <div class="sidebar-section">
@@ -99,7 +94,7 @@
   </div>
 </div>
 
-<div class="main">
+<div class="main-content">
   <h2>Group Report</h2>
   <div class="breadcrumb"><span class="section">Group Coordinator</span> / <span class="current">Group Report</span></div>
 
@@ -107,35 +102,26 @@
     <form action="{{ url_for('gc_group_report') }}" method="POST">
       <label>Select Month:</label>
       <select name="report_month">
-        <option value="1">January</option>
-        <option value="2">February</option>
-        <option value="3">March</option>
-        <option value="4">April</option>
-        <option value="5">May</option>
-        <option value="6">June</option>
-        <option value="7">July</option>
-        <option value="8">August</option>
-        <option value="9">September</option>
-        <option value="10">October</option>
-        <option value="11">November</option>
-        <option value="12">December</option>
+        {% for num, name in [(1,'January'),(2,'February'),(3,'March'),(4,'April'),(5,'May'),(6,'June'),(7,'July'),(8,'August'),(9,'September'),(10,'October'),(11,'November'),(12,'December')] %}
+        <option value="{{ num }}" {% if num == current_month %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
       </select>
 
       <label>Select Year:</label>
       <select name="report_year">
         {% for year in range(2000, 2101) %}
-          <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+        <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
         {% endfor %}
       </select>
 
-      <button type="submit">Generate Report</button>
+      <button type="submit"><i class="fas fa-chart-line"></i> Generate Report</button>
     </form>
   </div>
 
   {% if report_data %}
-  <div class="card" style="margin-top:20px;">
-    <h3>Report Results</h3>
-    <table class="styled-table">
+  <div class="card">
+    <h3 style="font-weight:600;color:#444;margin-bottom:10px;">Report Results</h3>
+    <table>
       <thead>
         <tr>
           <th>Group</th>
@@ -159,14 +145,19 @@
         {% endfor %}
       </tbody>
     </table>
+
+    <!-- Optional export button outside table -->
+    <a href="{{ url_for('gc_export_pdf', month=selected_month, year=selected_year) }}" class="btn-export">
+      <i class="fas fa-file-pdf"></i> Export PDF
+    </a>
   </div>
   {% endif %}
 </div>
 
 <script>
-  const menuToggle = document.getElementById('menu-toggle');
-  const sidebar = document.querySelector('.sidebar');
-  menuToggle.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+menuToggle.addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
 </script>
 
 </body>
