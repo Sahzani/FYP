@@ -30,7 +30,10 @@ frame_lock = threading.Lock()
 camera_thread = None
 camera_running = False
 current_schedule = None
-API_URL = "http://128.199.107.48"
+API_URL = "http://127.0.0.1:8000"
+
+# ===== NEW: Add this missing dictionary =====
+attended_today = {}
 
 # Skip frames to reduce CPU usage (process 1 out of every 5 frames)
 FRAME_SKIP = 5
@@ -97,9 +100,7 @@ def load_students_for_schedule(schedule_id):
         print(f"[ERROR] Load failed: {e}")
         return False
 
-# ===== Mark attendance (same as before) =====
-attended_today = {}
-
+# ===== Mark attendance VIA FLASK API =====
 def mark_attendance(student_id):
     global current_schedule
     today = datetime.now().strftime("%Y-%m-%d")
@@ -113,23 +114,36 @@ def mark_attendance(student_id):
 
     attended_today[key] = True
     s = STUDENTS.get(student_id, {})
-    group_code = s.get("group", "")
-    program_id = s.get("program", "")
 
+    # Determine status based on time (you can improve this logic)
     now = datetime.now()
-    class_start = datetime.strptime("08:00", "%H:%M")  # <-- replace with schedule start time
-    status = "Present" if now <= class_start else "Late"
+    class_start_str = "08:00"  # TODO: Get real class start time from schedule
+    class_start = datetime.strptime(f"{today} {class_start_str}", "%Y-%m-%d %H:%M")
+    
+    if now <= class_start:
+        status = "Present"
+    elif (now - class_start).total_seconds() <= 15 * 60:  # 15 minutes late
+        status = "Late"
+    else:
+        status = "Absent"
 
-    db.collection("attendance").document(schedule_id).collection(today).document(student_id).set({
-        "name": s.get("name", "Unknown"),
-        "group": group_code,
-        "program": program_id,
-        "status": status,
-        "timestamp": firestore.SERVER_TIMESTAMP
-    }, merge=True)
-
-    print(f"[INFO] Marked {s.get('name', 'Unknown')} as {status}")
-    return s.get("name", "Unknown")
+    # ✅ SEND TO FLASK API INSTEAD OF SAVING DIRECTLY
+    try:
+        response = requests.post(f"{API_URL}/teacher/mark_attendance", json={
+            "student_id": student_id,
+            "schedule_id": schedule_id,
+            "status": status.lower()  # "present", "absent", or "late"
+        }, timeout=5)
+        
+        if response.status_code == 200:
+            print(f"[INFO] Marked {s.get('name', 'Unknown')} as {status} via API")
+            return s.get("name", "Unknown")
+        else:
+            print(f"[ERROR] API returned {response.status_code}: {response.text}")
+            return None
+    except Exception as e:
+        print(f"[ERROR] Failed to call API: {e}")
+        return None
 
 
 # ===== Camera Loop (Optimized) =====

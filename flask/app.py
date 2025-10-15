@@ -628,7 +628,6 @@ def teacher_individual_summary():
         chart_percents=chart_percents
     )
 
-# Make sure these imports are at the top of your file (add if missing)
 from datetime import datetime
 from firebase_admin import firestore
 
@@ -663,33 +662,42 @@ def admin_dashboard():
         current_time=now.strftime("%I:%M %p")
     )
 
-# 🔥 NEW: Auto-update attendance summary function
+# 🔥 NEW: Auto-update attendance summary function (CORRECTED FOR YOUR STRUCTURE)
 def update_attendance_summary(month_str=None):
     """
-    Recalculate and update monthly attendance totals.
-    Call this after any attendance record is saved.
+    Count attendance records by STATUS only (ignores timestamps).
+    Scans: attendance/{schedule_id}/{YYYY-MM-DD}/{student_id}
     """
     if month_str is None:
-        month_str = datetime.now().strftime("%Y-%m")
-    
+        month_str = datetime.now().strftime("%Y-%m")  # e.g., "2025-10"
+
     present = absent = late = 0
 
-    # Count all attendance records for this month
-    user_docs = db.collection("attendance").stream()
-    for user_doc in user_docs:
+    # Get all schedule documents in attendance collection
+    schedule_docs = db.collection("attendance").stream()
+    
+    for schedule_doc in schedule_docs:
         try:
-            day_docs = user_doc.reference.collection(month_str).stream()
-            for day_doc in day_docs:
-                day_data = day_doc.to_dict()
-                status = day_data.get("status", "").lower()
-                if status == "present":
-                    present += 1
-                elif status == "absent":
-                    absent += 1
-                elif status == "late":
-                    late += 1
-        except:
-            continue  # Skip users without attendance data
+            # Get all date subcollections for this schedule
+            date_collections = schedule_doc.reference.list_collections()
+            for date_collection in date_collections:
+                # Only process dates in the target month
+                if date_collection.id.startswith(month_str):
+                    # Count each student's status
+                    student_docs = date_collection.stream()
+                    for student_doc in student_docs:
+                        att_data = student_doc.to_dict()
+                        status = att_data.get("status", "").lower()
+                        
+                        if status == "present":
+                            present += 1
+                        elif status == "absent":
+                            absent += 1
+                        elif status == "late":
+                            late += 1
+        except Exception as e:
+            print(f"[WARNING] Error processing schedule {schedule_doc.id}: {e}")
+            continue
 
     # Save to attendance_summary
     db.collection("attendance_summary").document(month_str).set({
@@ -699,6 +707,13 @@ def update_attendance_summary(month_str=None):
         "updated_at": firestore.SERVER_TIMESTAMP
     })
     print(f"✅ Updated attendance_summary for {month_str}: P={present}, A={absent}, L={late}")
+
+@app.route('/admin_refresh_summary')
+def admin_refresh_summary():
+    if session.get("role") != "admin":
+        return redirect(url_for("home"))
+    update_attendance_summary()
+    return "✅ Summary updated! <a href='/admin_dashboard'>Go back</a>"
 
 # ------------------ Admin Profile & Edit ------------------
 @app.route("/admin/profile")
@@ -1584,16 +1599,17 @@ def update_attendance():
 
     return redirect(url_for("studattendance", module_id=module_id, group_id=group_id, schedule_id=schedule_id, date=date))
 
-# ------------------ Teacher Mark Present via API (for face detection) ------------------
+# ------------------ Teacher Mark Attendance via API (for face detection) ------------------
 
-@app.route("/teacher/mark_present", methods=["POST"])
-def mark_present():
+@app.route("/teacher/mark_attendance", methods=["POST"])
+def mark_attendance():
     if session.get("role") != "teacher":
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.json
     student_id = data.get("student_id")
     schedule_id = data.get("schedule_id")
+    status = data.get("status", "Present").capitalize()  # Accepts "present", "absent", "late"
 
     if not all([student_id, schedule_id]):
         return jsonify({"error": "Missing data"}), 400
@@ -1637,7 +1653,7 @@ def mark_present():
     att_data = {
         "schedule_id": schedule_id,
         "student_id": student_id,
-        "status": "Present",
+        "status": status,  # ← Now uses the provided status
         "timestamp": datetime.now(),
         "date": today_str,
         "group": group_name,
@@ -1655,11 +1671,18 @@ def mark_present():
           .document(student_id) \
           .set(att_data)
 
-        # 2. ✅ UPDATE SUMMARY STATS (NEW CODE)
+        # 2. ✅ UPDATE OLD STATS (keep for compatibility)
         stats_ref = db.collection("stats").document("monthly").collection(month_str).document("totals")
+        increment_field = "present" if status.lower() == "present" else "absent"
         stats_ref.set({
-            "present": firestore.Increment(1)
+            increment_field: firestore.Increment(1)
         }, merge=True)
+
+        # 3. ✅ UPDATE attendance_summary for dashboard
+        try:
+            update_attendance_summary(month_str)
+        except Exception as e:
+            print(f"[WARNING] Failed to update attendance_summary: {e}")
 
         return jsonify({"success": True})
     except Exception as e:
