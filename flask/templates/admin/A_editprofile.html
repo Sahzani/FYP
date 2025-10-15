@@ -3,75 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Edit Profile - iAttend</title>
+<title>Edit Admin Profile - iAttend</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="bg-gradient-to-br from-[#FFE5B4] to-[#F5EEDC] font-poppins">
+<body class="bg-gray-100 font-sans">
 
-<!-- Page Header -->
-<header class="fixed top-0 left-0 right-0 h-16 bg-white shadow flex justify-between items-center px-4 z-40">
-    <div class="text-2xl font-bold text-gray-800">Edit Profile</div>
-    <a href="{{ url_for('admin_profile') }}" class="text-blue-600 hover:underline">Back to Profile</a>
-</header>
+<div class="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-10">
+    <h2 class="text-2xl font-bold mb-6">Edit Profile</h2>
 
-<main class="pt-20 px-6 max-w-2xl mx-auto">
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+            <label class="block mb-1">Name</label>
+            <input type="text" name="name" value="{{ profile.get('name','') }}"
+                   class="w-full p-2 border rounded">
+        </div>
 
-    <div class="bg-white p-8 rounded-2xl shadow">
-        <!-- FORM START -->
-        <form method="POST" action="{{ url_for('a_editprofile') }}" enctype="multipart/form-data" class="space-y-6">
-            
-            <!-- Profile Picture -->
-            <div class="flex flex-col items-center">
-                <div class="h-32 w-32 rounded-full overflow-hidden mb-4">
-                    <img src="{{ user.get('photoURL', 'https://placehold.co/128x128/b8c6ff/ffffff?text=A') }}" 
-                         alt="Profile Picture" class="w-full h-full object-cover">
-                </div>
-                <input type="file" name="photo" class="text-sm text-gray-600">
-            </div>
+        <div>
+            <label class="block mb-1">Phone</label>
+            <input type="text" name="phone" value="{{ profile.phone }}"
+                   class="w-full p-2 border rounded">
+        </div>
 
-            <!-- Name -->
-            <div>
-                <label class="block text-gray-700 mb-1">Name</label>
-                <input type="text" name="name" value="{{ user.get('name', '') }}" 
-                       placeholder="Admin Name" class="w-full p-3 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500">
-            </div>
+        <div>
+            <label class="block mb-1">Email (read-only)</label>
+            <input type="email" value="{{ profile.email }}" readonly
+                   class="w-full p-2 border bg-gray-100 rounded">
+        </div>
 
-            <!-- Email (read-only) -->
-            <div>
-                <label class="block text-gray-700 mb-1">Email</label>
-                <input type="email" name="email" value="{{ user.get('email', '') }}" readonly
-                       class="w-full p-3 rounded border border-gray-300 bg-gray-100 text-gray-500">
-            </div>
+        <div>
+            <label class="block mb-1">Role (read-only)</label>
+            <input type="text" value="{{ profile.role }}" readonly
+                   class="w-full p-2 border bg-gray-100 rounded">
+        </div>
 
-            <!-- Phone -->
-            <div>
-                <label class="block text-gray-700 mb-1">Phone</label>
-                <input type="tel" name="phone" value="{{ user.get('phone', '') }}" 
-                       placeholder="+123456789" class="w-full p-3 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500">
-            </div>
+        <div>
+            <label class="block mb-1">New Password</label>
+            <input type="password" name="password" placeholder="••••••••"
+                   class="w-full p-2 border rounded">
+        </div>
 
-            <!-- Password -->
-            <div>
-                <label class="block text-gray-700 mb-1">New Password</label>
-                <input type="password" name="password" placeholder="••••••••" 
-                       class="w-full p-3 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500">
-            </div>
+        <div>
+            <label class="block mb-1">Profile Picture</label>
+            <input type="file" name="photo" class="w-full">
+        </div>
 
-            <!-- Save Button -->
-            <div class="flex justify-end space-x-4">
-                <a href="{{ url_for('admin_profile') }}" 
-                   class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 transition">Cancel</a>
-                <button type="submit" 
-                        class="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition">
-                    Save Changes
-                </button>
-            </div>
-        </form>
-        <!-- FORM END -->
-    </div>
-
-</main>
+        <div class="flex space-x-4 mt-4">
+            <button type="submit"
+                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Save Changes</button>
+            <a href="{{ url_for('admin_profile') }}"
+               class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Back to Profile</a>
+        </div>
+    </form>
+</div>
 
 </body>
 </html>

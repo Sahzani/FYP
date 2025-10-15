@@ -107,86 +107,91 @@ def inject_student_name():
     return {"full_name": "Student", "student_class": "", "group_code": ""}
 
 # ------------------ Routes ------------------
-@app.route("/login", methods=["POST"])
+# ------------------ Login Route ------------------
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    email = request.form.get("email", "").strip()
-    password = request.form.get("password", "").strip()
-    remember = request.form.get("remember")
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "").strip()
+        remember = request.form.get("remember")
 
-    if not email or not password:
-        flash("Please enter both email and password.")
-        return redirect(url_for("home"))  # "/" route
+        if not email or not password:
+            flash("Please enter both email and password.")
+            return redirect(url_for("login"))
 
-    try:
-        # ---------- Admin Login ----------
-        if email == "admin@admin.edu":
-            doc = db.collection("admin").document("admin").get()
-            if doc.exists and doc.to_dict().get("password") == password:
-                session["user"] = {"uid": "admin", "email": email}
-                session["user_id"] = "admin"
-                session["user_email"] = email
-                session["role"] = "admin"
-                session.permanent = True if remember == "on" else False
-                return redirect(url_for("admin_dashboard"))
+        try:
+            # ---------- Admin Login ----------
+            if email == "admin@admin.edu":
+                doc = db.collection("admin").document("admin").get()
+                if doc.exists and doc.to_dict().get("password") == password:
+                    session["user"] = {
+                        "uid": "admin",
+                        "email": email,
+                        "role": "Admin",
+                        "phone": doc.to_dict().get("phone", "-")
+                    }
+                    session["role"] = "admin"
+                    session.permanent = True if remember == "on" else False
+                    return redirect(url_for("admin_dashboard"))
+                else:
+                    flash("Invalid admin credentials.")
+                    return redirect(url_for("login"))
+
+            # ---------- Firebase Auth for Student / Teacher ----------
+            user = auth.get_user_by_email(email)
+            uid = user.uid
+
+            user_doc = db.collection("users").document(uid).get()
+            if not user_doc.exists:
+                flash("User not found in Firestore.")
+                return redirect(url_for("login"))
+
+            user_data = user_doc.to_dict()
+            role_type = user_data.get("role_type")  # 1=student, 2=teacher
+
+            if role_type == 1:
+                # Student
+                session["user"] = {"uid": uid, "email": email, "role": "Student"}
+                session["role"] = "student"
+                session["user_id"] = uid
+                redirect_url = "student_dashboard"
+            elif role_type == 2:
+                # Teacher
+                session["user"] = {"uid": uid, "email": email, "role": "Teacher"}
+                session["role"] = "teacher"
+                session["user_id"] = uid
+                redirect_url = "teacher_dashboard"
             else:
-                flash("Invalid admin credentials.")
-                return redirect(url_for("home"))
+                # If role_type is missing, fallback to Firestore 'role' field
+                role_field = user_data.get("role", "").lower()
+                if role_field == "student":
+                    session["user"] = {"uid": uid, "email": email, "role": "Student"}
+                    session["role"] = "student"
+                    redirect_url = "student_dashboard"
+                elif role_field == "teacher":
+                    session["user"] = {"uid": uid, "email": email, "role": "Teacher"}
+                    session["role"] = "teacher"
+                    redirect_url = "teacher_dashboard"
+                else:
+                    flash("Role not assigned. Contact admin.")
+                    return redirect(url_for("login"))
 
-        # ---------- Student / Teacher Login ----------
-        user = auth.get_user_by_email(email)  # Firebase Auth lookup
-        uid = user.uid
+            # Set session permanence
+            session.permanent = True if remember == "on" else False
+            return redirect(url_for(redirect_url))
 
-        # Fetch user document from users collection
-        user_doc_ref = db.collection("users").document(uid)
-        user_doc = user_doc_ref.get()
+        except auth.UserNotFoundError:
+            flash("Invalid email or password.")
+            return redirect(url_for("login"))
+        except Exception as e:
+            flash(f"Login error: {str(e)}")
+            return redirect(url_for("login"))
 
-        if not user_doc.exists:
-            flash("User not found in Firestore.")
-            return redirect(url_for("home"))
+    # GET request → show login page
+    return render_template("combinePage/login.html")
 
-        user_data = user_doc.to_dict()
-        role_type = user_data.get("role_type")
 
-        if role_type == 1:
-            role = "student"
-            redirect_url = "student_dashboard"
-
-        elif role_type == 2:
-            role = "teacher"
-            redirect_url = "teacher_dashboard"
-
-            # ---------- Check if GC (only for teacher) ----------
-            roles_subcol = db.collection("users").document(uid).collection("roles").stream()
-            is_gc = False
-            for r in roles_subcol:
-                r_data = r.to_dict()
-                if r_data.get("isCoordinator") == True:
-                    is_gc = True
-                    break
-            # You can store this info in session if needed
-            session["is_gc"] = is_gc
-
-        else:
-            flash("Role not assigned. Contact admin.")
-            return redirect(url_for("home"))
-
-        # ✅ Unified session
-        session["user"] = {"uid": uid, "email": email}
-        session["user_id"] = uid
-        session["user_email"] = email
-        session["role"] = role
-        session.permanent = True if remember == "on" else False
-
-        return redirect(url_for(redirect_url))
-
-    except auth.UserNotFoundError:
-        flash("Invalid email or password")
-        return redirect(url_for("home"))
-
-    except Exception as e:
-        flash(f"Login error: {str(e)}")
-        return redirect(url_for("home"))
-
+# ------------------ Home Page ------------------
 @app.route("/")
 def home():
     return render_template("combinePage/Login.html")  # login page
@@ -237,46 +242,43 @@ def forgot_password():
 # ------------------ Reset Password ------------------
 @app.route("/reset_password/<student_id>", methods=["GET", "POST"])
 def reset_password(student_id):
-    if request.method == "GET":
-        # Render the reset password form
-        return render_template("combinePage/ResetPassword.html", student_id=student_id)
+    if request.method == "POST":
+        new_password = request.form.get("newPassword")
+        confirm_password = request.form.get("confirmPassword")
 
-    # Handle the form submission
-    new_password = request.form.get("newPassword")
-    confirm_password = request.form.get("confirmPassword")
+        if not new_password or not confirm_password:
+            flash("Please fill in all fields.", "error")
+            return redirect(url_for("reset_password", student_id=student_id))
 
-    if not new_password or not confirm_password:
-        flash("Please fill all password fields.", "error")
-        return redirect(url_for("reset_password", student_id=student_id))
-
-    if new_password != confirm_password:
-        flash("Passwords do not match.", "error")
-        return redirect(url_for("reset_password", student_id=student_id))
-
-    try:
-        # Fetch the user by student ID
-        student_doc = db.collection("users").where("studentID", "==", student_id).limit(1).stream()
-        user_doc = next(student_doc, None)
-
-        if not user_doc:
-            flash("Invalid student ID.", "error")
-            return redirect(url_for("change_password_page"))
-
-        user_data = user_doc.to_dict()
-        uid = user_doc.id
+        if new_password != confirm_password:
+            flash("Passwords do not match.", "error")
+            return redirect(url_for("reset_password", student_id=student_id))
 
         # Update password in Firebase Auth
-        auth.update_user(uid, password=new_password)
+        try:
+            # Fetch the user by ID from Firestore
+            user_doc = db.collection("users").document(student_id).get()
+            if not user_doc.exists:
+                flash("User not found.", "error")
+                return redirect(url_for("reset_password", student_id=student_id))
 
-        # Also update password in Firestore if stored there
-        db.collection("users").document(uid).update({"password": new_password})
+            user_data = user_doc.to_dict()
+            auth.update_user(user_data["uid"], password=new_password)
 
-        flash("Password reset successfully!", "success")
-        return redirect(url_for("home"))
+            # Optional: remove old password from Firestore
+            db.collection("users").document(student_id).update({"password": firestore.DELETE_FIELD})
 
-    except Exception as e:
-        flash(f"Failed to reset password: {str(e)}", "error")
-        return redirect(url_for("reset_password", student_id=student_id))
+            flash("Password reset successfully! Please login with your new password.", "success")
+
+            # Redirect to login page
+            return redirect(url_for("login"))
+
+        except Exception as e:
+            flash(f"Error resetting password: {str(e)}", "error")
+            return redirect(url_for("reset_password", student_id=student_id))
+
+    # GET request
+    return render_template("combinePage/ResetPassword.html", student_id=student_id)
 
 # ------------------ Student Dashboard ------------------
 from datetime import datetime
@@ -284,38 +286,38 @@ from flask import render_template, session, redirect, url_for
 
 @app.route("/student_dashboard")
 def student_dashboard():
+    # Ensure student is logged in
     if session.get("role") != "student":
         return redirect(url_for("home"))
 
-    uid = session.get("user_id")
-    if not uid:
-        return redirect(url_for("home"))
+    user = session.get("user")
+    if not user:
+        flash("User not logged in.", "error")
+        return redirect(url_for("login"))
 
-    # Query the 'users' collection
+    uid = user.get("uid")
+
+    # ------------------ Fetch student profile ------------------
     user_doc = db.collection("users").document(uid).get()
     full_name = "Student"
-    profile_pic_url = None  # default None
+    profile_pic_url = "uploads/default_student.png"  # default picture
 
     if user_doc.exists:
         user_data = user_doc.to_dict()
-        # Get full name
+        # Full name
         if "name" in user_data and user_data["name"].strip():
             full_name = user_data["name"].strip()
         else:
             first = user_data.get("first_name", "").strip()
             last = user_data.get("last_name", "").strip()
-            if first and last:
-                full_name = f"{first} {last}"
-            elif first:
-                full_name = first
-            elif last:
-                full_name = last
+            full_name = " ".join(filter(None, [first, last])) or "Student"
 
-        # Get profile picture
-        if "photo_url" in user_data and user_data["photo_url"].strip():
-            profile_pic_url = user_data["photo_url"].strip()
+        # Profile picture
+        photo = user_data.get("photo_url", "").strip()
+        if photo:
+            profile_pic_url = photo
 
-    # Attendance stats (hierarchical)
+    # ------------------ Attendance stats ------------------
     present = absent = late = streak = 0
     unexcused_absences = 0
     temp_streak = 0
@@ -323,22 +325,17 @@ def student_dashboard():
     today_status = "Not Marked Yet"
     today_note = ""
 
-    # Iterate over all schedule documents
-    schedule_docs = db.collection("attendance").stream()
-    for schedule_doc in schedule_docs:
-        schedule_id = schedule_doc.id
-        dates_collection = db.collection("attendance").document(schedule_id).collection("dates")
-        
+    attendance_collections = db.collection("attendance").stream()
+    for schedule_doc in attendance_collections:
+        dates_collection = db.collection("attendance").document(schedule_doc.id).collection("dates")
         for date_doc in dates_collection.stream():
-            date_id = date_doc.id  # e.g., "2025-10-10"
-            students_collection = dates_collection.document(date_id).collection("students")
+            students_collection = dates_collection.document(date_doc.id).collection("students")
             student_doc = students_collection.document(uid).get()
-            
+
             if student_doc.exists:
                 data = student_doc.to_dict()
                 status = data.get("status")
-                
-                # Count stats
+
                 if status == "Present":
                     present += 1
                     temp_streak += 1
@@ -351,13 +348,12 @@ def student_dashboard():
                         unexcused_absences += 1
                     temp_streak = 0
                 streak = max(streak, temp_streak)
-                
-                # Today's attendance
-                if date_id == today_str:
+
+                if date_doc.id == today_str:
                     today_status = data.get("status", "Not Marked Yet")
                     today_note = data.get("note", "")
 
-    # Notifications
+    # ------------------ Notifications ------------------
     if late >= 3:
         notification = "You have been late more than 3 times!"
     elif unexcused_absences >= 3:
@@ -365,30 +361,30 @@ def student_dashboard():
     else:
         notification = "No new notifications."
 
-    # Determine color and icon for today's attendance
+    # ------------------ Status color & icon ------------------
+    status_color = "#6c757d"
+    status_icon = "fas fa-circle"
     if today_status == "Present":
-        status_color = "#28a745"       # green
+        status_color = "#28a745"
         status_icon = "fas fa-check-circle"
     elif today_status == "Late":
-        status_color = "#ffc107"       # yellow
+        status_color = "#ffc107"
         status_icon = "fas fa-exclamation-triangle"
     elif today_status == "Absent":
-        status_color = "#dc3545"       # red
+        status_color = "#dc3545"
         status_icon = "fas fa-times-circle"
-    else:
-        status_color = "#6c757d"       # grey
-        status_icon = "fas fa-circle"
 
+    # ------------------ Render template ------------------
     return render_template(
         "student/S_Dashboard.html",
         full_name=full_name,
-        profile_pic_url=profile_pic_url,  # added for header
+        profile_pic_url=profile_pic_url,
         stats_present=present,
         stats_absent=absent,
         stats_late=late,
         attendance_streak=streak,
         notification_message=notification,
-        today_status=today_status,  
+        today_status=today_status,
         today_note=today_note,
         status_color=status_color,
         status_icon=status_icon
@@ -398,19 +394,22 @@ def student_dashboard():
 from datetime import datetime
 from flask import session, redirect, url_for, render_template
 
+from flask import render_template, session, redirect, url_for
+from datetime import datetime
+
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
-    # Ensure teacher is logged in
+    # ------------------ Session Validation ------------------
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
     user = session.get("user")
     if not user:
         return redirect(url_for("home"))
+
     teacher_uid = user.get("uid")
 
-    # ------------------ Fetch teacher profile ------------------
-    profile_doc = db.collection("users").document(teacher_uid).get()
+    # ------------------ Default Teacher Profile ------------------
     profile = {
         "role": "Teacher",
         "firstName": "Teacher",
@@ -419,45 +418,44 @@ def teacher_dashboard():
         "is_gc": False
     }
 
+    # ------------------ Fetch Teacher Profile ------------------
+    profile_doc = db.collection("users").document(teacher_uid).get()
     if profile_doc.exists:
         user_data = profile_doc.to_dict()
-
-        first_name = user_data.get("firstName", "Teacher")
-        last_name = user_data.get("lastName", "")
-        photo_name = user_data.get("photo_name", "uploads/default_teacher.png")
-
-        # Check if teacher is a group coordinator
-        role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
-        is_gc = role_doc.exists and role_doc.to_dict().get("isCoordinator", False)
-
         profile.update({
-            "firstName": first_name,
-            "lastName": last_name,
-            "photo_name": photo_name,
-            "is_gc": is_gc
+            "firstName": user_data.get("firstName", "Teacher"),
+            "lastName": user_data.get("lastName", ""),
+            "photo_name": user_data.get("photo_name", "uploads/default_teacher.png")
         })
 
-    # ------------------ Fetch schedules ------------------
+        # Check if teacher is a Group Coordinator
+        role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
+        if role_doc.exists:
+            role_data = role_doc.to_dict()
+            profile["is_gc"] = role_data.get("isCoordinator", False)
+
+    # ------------------ Fetch Class Schedules ------------------
     schedules = []
     schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_uid).stream()
+
     for doc in schedules_docs:
         s = doc.to_dict()
         s["docId"] = doc.id
 
         group_code = s.get("fk_groupcode")
         module_code = s.get("fk_module")
-
         if not group_code or not module_code:
             continue
 
         group_doc = db.collection("groups").document(group_code).get()
         module_doc = db.collection("modules").document(module_code).get()
+
         s["group_name"] = group_doc.to_dict().get("groupName") if group_doc.exists else ""
         s["module_name"] = module_doc.to_dict().get("moduleName") if module_doc.exists else ""
 
         schedules.append(s)
 
-    # ------------------ Stats calculation ------------------
+    # ------------------ Calculate Attendance Stats ------------------
     today_str = datetime.now().strftime("%Y-%m-%d")
     total_present, total_absent = 0, 0
 
@@ -467,8 +465,8 @@ def teacher_dashboard():
         if not group_code or not module_code:
             continue
 
-        attendance_docs = db.collection("attendance").document(today_str)\
-            .collection(group_code).document(module_code)\
+        attendance_docs = db.collection("attendance").document(today_str) \
+            .collection(group_code).document(module_code) \
             .collection("students").stream()
 
         for att in attendance_docs:
@@ -484,36 +482,28 @@ def teacher_dashboard():
         "absent": total_absent
     }
 
-    # ------------------ Pending Absence Requests ------------------
-    # Get all group codes managed by this teacher
-    group_codes = []
+    # ------------------ Count Pending Absence Requests ------------------
+    pending_count = 0
     role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
     if role_doc.exists:
         role_data = role_doc.to_dict()
-        group_code = role_data.get("groupCode")  # exact Firestore field name
+        group_code = role_data.get("groupCode")
         if group_code:
-            group_codes.append(group_code)
+            pending_query = db.collection("absenceRecords") \
+                .where("status", "==", "In Progress") \
+                .where("group_code", "==", group_code)
 
-    pending_count = 0
-    for group_code in group_codes:
-        pending_query = db.collection("absenceRecords") \
-            .where("status", "==", "In Progress") \
-            .where("group_code", "==", group_code)
-        
-        # Debug: print all matched records
-        for doc in pending_query.stream():
-            print("Pending Absence:", doc.id, doc.to_dict())
-            pending_count += 1
+            for doc in pending_query.stream():
+                pending_count += 1
 
-
-    # ------------------ Render template ------------------
+    # ------------------ Render Teacher Dashboard ------------------
     return render_template(
         "teacher/T_dashboard.html",
-        stats=stats,
-        schedules=schedules,
         profile=profile,
-        current_schedule=None,
-        pending_count=pending_count
+        schedules=schedules,
+        stats=stats,
+        pending_count=pending_count,
+        current_schedule=None
     )
 
 #------------------ Teacher - view students Individual attendance ------------------
@@ -628,76 +618,55 @@ def teacher_individual_summary():
         chart_percents=chart_percents
     )
 
+# Make sure these imports are at the top of your file (add if missing)
 from datetime import datetime
 from firebase_admin import firestore
 
 # ------------------ Admin Pages ------------------
-@app.route("/admin_dashboard")
+from datetime import datetime
+
+# -------------------- Admin Dashboard --------------------
+@app.route("/admin/dashboard")
 def admin_dashboard():
-    if session.get("role") != "admin":
-        return redirect(url_for("home"))
+    if not session.get("user") or session.get("user").get("role") != "Admin":
+        return redirect(url_for("login"))
 
-    admin_name = session.get("user_name", "Admin")
-    month = datetime.now().strftime("%Y-%m")  # e.g., "2025-10"
-    
-    # 🔥 Read from attendance_summary
-    doc = db.collection("attendance_summary").document(month).get()
-    
-    if doc.exists:
-        data = doc.to_dict()
-        present = data.get("present", 0)
-        absent = data.get("absent", 0)
-        late = data.get("late", 0)
-    else:
-        present = absent = late = 0
-
+    admin_name = session["user"]["email"]
     now = datetime.now()
     return render_template(
         "admin/A_Homepage.html",
         admin_name=admin_name,
-        stats_present=present,
-        stats_absent=absent,
-        stats_late=late,
         current_date=now.strftime("%A, %B %d"),
         current_time=now.strftime("%I:%M %p")
     )
 
-# 🔥 NEW: Auto-update attendance summary function (CORRECTED FOR YOUR STRUCTURE)
+# 🔥 NEW: Auto-update attendance summary function
 def update_attendance_summary(month_str=None):
     """
-    Count attendance records by STATUS only (ignores timestamps).
-    Scans: attendance/{schedule_id}/{YYYY-MM-DD}/{student_id}
+    Recalculate and update monthly attendance totals.
+    Call this after any attendance record is saved.
     """
     if month_str is None:
-        month_str = datetime.now().strftime("%Y-%m")  # e.g., "2025-10"
-
+        month_str = datetime.now().strftime("%Y-%m")
+    
     present = absent = late = 0
 
-    # Get all schedule documents in attendance collection
-    schedule_docs = db.collection("attendance").stream()
-    
-    for schedule_doc in schedule_docs:
+    # Count all attendance records for this month
+    user_docs = db.collection("attendance").stream()
+    for user_doc in user_docs:
         try:
-            # Get all date subcollections for this schedule
-            date_collections = schedule_doc.reference.list_collections()
-            for date_collection in date_collections:
-                # Only process dates in the target month
-                if date_collection.id.startswith(month_str):
-                    # Count each student's status
-                    student_docs = date_collection.stream()
-                    for student_doc in student_docs:
-                        att_data = student_doc.to_dict()
-                        status = att_data.get("status", "").lower()
-                        
-                        if status == "present":
-                            present += 1
-                        elif status == "absent":
-                            absent += 1
-                        elif status == "late":
-                            late += 1
-        except Exception as e:
-            print(f"[WARNING] Error processing schedule {schedule_doc.id}: {e}")
-            continue
+            day_docs = user_doc.reference.collection(month_str).stream()
+            for day_doc in day_docs:
+                day_data = day_doc.to_dict()
+                status = day_data.get("status", "").lower()
+                if status == "present":
+                    present += 1
+                elif status == "absent":
+                    absent += 1
+                elif status == "late":
+                    late += 1
+        except:
+            continue  # Skip users without attendance data
 
     # Save to attendance_summary
     db.collection("attendance_summary").document(month_str).set({
@@ -708,67 +677,84 @@ def update_attendance_summary(month_str=None):
     })
     print(f"✅ Updated attendance_summary for {month_str}: P={present}, A={absent}, L={late}")
 
-@app.route('/admin_refresh_summary')
-def admin_refresh_summary():
-    if session.get("role") != "admin":
-        return redirect(url_for("home"))
-    update_attendance_summary()
-    return "✅ Summary updated! <a href='/admin_dashboard'>Go back</a>"
-
-# ------------------ Admin Profile & Edit ------------------
-@app.route("/admin/profile")
+# ------------------ Admin Profile ------------------
+@app.route("/admin/profile", methods=["GET"], strict_slashes=False)
 def admin_profile():
-    if session.get("role") != "admin":
-        return redirect(url_for("home"))
-    
-    user_id = session.get("user_id")
-    if not user_id:
+    if not session.get("user") or session.get("user").get("role") != "Admin":
         return redirect(url_for("login"))
-    
-    user_doc = db.collection("users").document(user_id).get()
+
+    user = session["user"]
+    uid = user.get("uid")
+    user_doc = db.collection("admin").document(uid).get()
+
     if not user_doc.exists:
+        session.clear()
+        flash("Admin data not found. Please login again.", "error")
         return redirect(url_for("login"))
-    
+
     user_data = user_doc.to_dict()
-    user_data["docId"] = user_doc.id
+    profile_data = {
+        "id": uid,
+        "email": user_data.get("email", "-"),
+        "role": "Admin",
+        "phone": user_data.get("phone", "-"),
+        "profile_pic": user_data.get("photo_url") or user_data.get("photo_name") \
+                       or "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
+    }
 
-    return render_template("admin/A_Profile.html", user=user_data)
+    return render_template("admin/A_Profile.html", profile=profile_data)
 
-@app.route("/admin/editprofile", methods=["GET", "POST"])
-def a_editprofile():
-    if session.get("role") != "admin":
-        return redirect(url_for("home"))
-
-    user_id = session.get("user_id")
-    if not user_id:
+# ------------------ Admin Edit Profile ------------------
+@app.route("/admin/edit_profile", methods=["GET", "POST"], strict_slashes=False)
+def admin_edit_profile():
+    if not session.get("user") or session.get("user").get("role") != "Admin":
         return redirect(url_for("login"))
 
-    user_ref = db.collection("users").document(user_id)
+    uid = session["user"]["uid"]
+    user_ref = db.collection("admin").document(uid)
     user_doc = user_ref.get()
+
     if not user_doc.exists:
+        session.clear()
+        flash("Admin data not found. Please login again.", "error")
         return redirect(url_for("login"))
 
     if request.method == "POST":
         name = request.form.get("name")
         phone = request.form.get("phone")
-        password = request.form.get("password")
+        password = request.form.get("password")  # hash in production
+        photo = request.files.get("photo")
 
         update_data = {}
-        if name:
-            update_data["name"] = name
-        if phone:
-            update_data["phone"] = phone
-        if password:
-            update_data["password"] = password  # Hash this in real app
+        if name: update_data["name"] = name
+        if phone: update_data["phone"] = phone
+        if password: update_data["password"] = password
+        if photo and photo.filename != "": update_data["photo_name"] = photo.filename
 
         if update_data:
             user_ref.update(update_data)
+            session["user"].update(update_data)
 
         flash("Profile updated successfully!", "success")
         return redirect(url_for("admin_profile"))
 
     user_data = user_doc.to_dict()
-    return render_template("admin/A_EditProfile.html", user=user_data)
+    profile_data = {
+        "id": uid,
+        "email": user_data.get("email", "-"),
+        "role": "Admin",
+        "phone": user_data.get("phone", "-"),
+        "profile_pic": user_data.get("photo_url") or user_data.get("photo_name") \
+                       or "https://placehold.co/140x140/E9E9E9/333333?text=Admin"
+    }
+
+    return render_template("admin/A_EditProfile.html", profile=profile_data)
+
+# ------------------ Admin Logout ------------------
+@app.route("/admin/logout")
+def admin_logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 # ------------------ Student Pages ------------------
 @app.route("/student_attendance")
@@ -1169,7 +1155,6 @@ def student_profile():
     # Fetch main user document
     user_doc = db.collection("users").document(uid).get()
     if not user_doc.exists:
-        flash("Student data not found.")
         return redirect(url_for("student_dashboard"))
 
     user_data = user_doc.to_dict()
@@ -1298,25 +1283,24 @@ def student_editprofile():
                 user_ref.update({"photo_url": relative_path})
                 profile["profile_pic"] = relative_path  # immediate preview
 
-            flash("Profile updated successfully!")
+            
             return redirect(url_for("student_editprofile"))
 
     return render_template("student/S_EditProfile.html", profile=profile, now=int(time.time()))
 
-
-# ------------------ Change Password for student ------------------
+# ------------------ Student Change Password ------------------
 @app.route("/student/change_password", methods=["GET", "POST"])
 def student_change_password():
+    # Ensure the student is logged in
     if session.get("role") != "student":
         return redirect(url_for("home"))
-    
-    old_password = user_doc.get("password") 
-    
-    if (user_doc := db.collection("users").document(session.get("user_id")).get()).exists:
-        pass
-    else:
-        None
-        user_ref = db.collection("users").document(session.get("user_id"))
+
+    user = session.get("user")
+    if not user:
+        flash("User not logged in.", "error")
+        return redirect(url_for("login"))
+
+    user_ref = db.collection("users").document(user["uid"])
 
     if request.method == "POST":
         new_password = request.form.get("newPassword")
@@ -1329,25 +1313,25 @@ def student_change_password():
         if new_password != confirm_password:
             flash("Passwords do not match.", "error")
             return redirect(url_for("student_change_password"))
-        
-        if new_password == old_password:
-            flash("New password cannot be the same as the old password.")
-            return render_template("A_ChangePassword.html")
-        
-        user_ref.update({"password": new_password})
 
         try:
-            user = session.get("user")
-            if user:
-                auth.update_user(user["uid"], password=new_password)
-                flash("Password changed successfully!", "success")
+            # Update Firebase Auth password
+            auth.update_user(user["uid"], password=new_password)
+
+            # Remove old password field from Firestore if exists
+            user_ref.update({"password": firestore.DELETE_FIELD})
+
+            flash("Password changed successfully!", "success")
         except Exception as e:
             flash(f"Error changing password: {str(e)}", "error")
+            return redirect(url_for("student_change_password"))
 
-        return redirect(url_for("student_dashboard"))
+        # Redirect back to student profile/dashboard
+        return redirect(url_for("student_profile"))  # or student_dashboard
 
     return render_template("combinePage/Change password.html")
 
+# ------------------ Student Contact Page ------------------
 @app.route("/student/contact")
 def student_contact():
     if session.get("role") == "student":
@@ -1441,8 +1425,6 @@ def teacher_modules():
         modules=modules,
         profile=profile
     )
-
-
 
 # ------------------ Teacher views attendance for a module/group ------------------
 @app.route("/studattendance")
@@ -1599,17 +1581,15 @@ def update_attendance():
 
     return redirect(url_for("studattendance", module_id=module_id, group_id=group_id, schedule_id=schedule_id, date=date))
 
-# ------------------ Teacher Mark Attendance via API (for face detection) ------------------
-
-@app.route("/teacher/mark_attendance", methods=["POST"])
-def mark_attendance():
+# ------------------ Teacher Mark Present via API (for face detection) ------------------
+@app.route("/teacher/mark_present", methods=["POST"])
+def mark_present():
     if session.get("role") != "teacher":
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.json
     student_id = data.get("student_id")
     schedule_id = data.get("schedule_id")
-    status = data.get("status", "Present").capitalize()  # Accepts "present", "absent", "late"
 
     if not all([student_id, schedule_id]):
         return jsonify({"error": "Missing data"}), 400
@@ -1653,7 +1633,7 @@ def mark_attendance():
     att_data = {
         "schedule_id": schedule_id,
         "student_id": student_id,
-        "status": status,  # ← Now uses the provided status
+        "status": "Present",
         "timestamp": datetime.now(),
         "date": today_str,
         "group": group_name,
@@ -1671,18 +1651,11 @@ def mark_attendance():
           .document(student_id) \
           .set(att_data)
 
-        # 2. ✅ UPDATE OLD STATS (keep for compatibility)
+        # 2. ✅ UPDATE SUMMARY STATS (NEW CODE)
         stats_ref = db.collection("stats").document("monthly").collection(month_str).document("totals")
-        increment_field = "present" if status.lower() == "present" else "absent"
         stats_ref.set({
-            increment_field: firestore.Increment(1)
+            "present": firestore.Increment(1)
         }, merge=True)
-
-        # 3. ✅ UPDATE attendance_summary for dashboard
-        try:
-            update_attendance_summary(month_str)
-        except Exception as e:
-            print(f"[WARNING] Failed to update attendance_summary: {e}")
 
         return jsonify({"success": True})
     except Exception as e:
@@ -1768,6 +1741,7 @@ def teacher_attendance():
         days=days_list,
         webcam_url="http://127.0.0.1:5001"
     )
+
 #------------------ API to get attendance data ------------------
 from flask import jsonify
 from datetime import datetime
@@ -2103,14 +2077,14 @@ def teacher_schedules():
 # ------------------ Group Coordinator Manage Group ------------------
 @app.route("/gc/manage_group", methods=["GET", "POST"])
 def gc_manage_group():
-    # 1. Ensure user is logged in as teacher
+    # 1. Ensure the user is logged in as a teacher
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
     user = session.get("user")
     if not user:
         return redirect(url_for("login"))
-    
+
     teacher_uid = user.get("uid")
     if not teacher_uid:
         return redirect(url_for("login"))
@@ -2121,91 +2095,81 @@ def gc_manage_group():
     if profile_doc.exists:
         profile.update(profile_doc.to_dict())
 
-    # 3. Check GC flag from roles subcollection
-    roles_docs = db.collection("users").document(teacher_uid).collection("roles").stream()
-    for role_doc in roles_docs:
-        role_data = role_doc.to_dict()
-        if role_data.get("isCoordinator") is True:
-            profile["is_gc"] = True
-            break
+    # 3. Check teacher's 'roles/teacher' subdocument for GC role
+    role_doc = (
+        db.collection("users")
+        .document(teacher_uid)
+        .collection("roles")
+        .document("teacher")
+        .get()
+    )
 
-    #  Only allow GC teachers to access
-    if not profile.get("is_gc"):
-        return redirect(url_for("teacher_dashboard"))
-
-     # 4. Fetch the single group assigned to this GC
-    gc_group_docs = (db.collection("gc_group").where("coordinatorId", "==", teacher_uid).limit(1).get())
-    if not gc_group_docs:
-        # No group assigned
+    if not role_doc.exists:
+        # No role info found
         return render_template(
             "teacher/T_GC_ManageGroup.html",
             profile=profile,
-            groups=[],
             selected_group=None,
         )
 
-    gc_group = gc_group_docs[0].to_dict()
-    group_id = gc_group.get("fk_groupId")
+    role_data = role_doc.to_dict()
+    is_gc = role_data.get("isCoordinator", False)
+    profile["is_gc"] = is_gc
 
-    # Fetch group details
-    group_doc = db.collection("groups").document(group_id).get()
-    selected_group = None
-    members = []
+    # Only allow GCs
+    if not is_gc:
+        return redirect(url_for("teacher_dashboard"))
 
-    if group_doc.exists:
-        gdata = group_doc.to_dict()
-        group_code = gdata.get("groupCode")
+    # 4. Fetch group details from teacher role info
+    group_code = role_data.get("groupCode")
+    group_id = role_data.get("groupId")
+    intake = role_data.get("intake")
+    fk_program = role_data.get("program")
 
-        # 🔑 Fetch program name using fk_program
+    # Get program name
     program_name = ""
-    fk_program = gdata.get("fk_program")
     if fk_program:
         program_doc = db.collection("programs").document(fk_program).get()
         if program_doc.exists:
             program_name = program_doc.to_dict().get("programName", "")
 
+    # 5. Fetch all students in the same group
+    members = []
+    student_docs = db.collection("users").where("role_type", "==", 1).stream()
 
-        # Fetch all student users
-        student_docs = db.collection("users").where("role_type", "==", 1).stream()
-        for sdoc in student_docs:
-            sdata = sdoc.to_dict()
+    for sdoc in student_docs:
+        sdata = sdoc.to_dict()
+        # Check each student's roles/student subdoc
+        student_role_doc = (
+            db.collection("users")
+            .document(sdoc.id)
+            .collection("roles")
+            .document("student")
+            .get()
+        )
+        if student_role_doc.exists:
+            role_info = student_role_doc.to_dict()
+            if role_info.get("fk_groupcode") == group_id:  # match by groupId
+                members.append({
+                    "id": sdoc.id,
+                    "studentID": role_info.get("studentID", ""),
+                    "first_name": sdata.get("first_name", ""),
+                    "last_name": sdata.get("last_name", ""),
+                    "email": sdata.get("email", ""),
+                })
 
-             # Look into roles/student subdoc
-            role_doc = (
-                db.collection("users")
-                .document(sdoc.id)
-                .collection("roles")
-                .document("student")
-                .get()
-            )
-            if role_doc.exists:
-                role_data = role_doc.to_dict()
-                # Compare against Firestore document ID, not groupCode
-                if role_data.get("fk_groupcode") == group_doc.id:
-                    members.append({
-                        "id": sdoc.id,
-                        "studentID": role_data.get("studentID", ""),
-                        "first_name": sdata.get("first_name", ""),
-                        "last_name": sdata.get("last_name", ""),
-                        "email": sdata.get("email", ""),
-                        "fk_groupcode": role_data.get("fk_groupcode", ""),
-                        "program": role_data.get("program", "")
-                    })
+    # 6. Prepare selected group data
+    selected_group = {
+        "groupCode": group_code,
+        "intake": intake,
+        "programName": program_name,
+        "members": members
+    }
 
-        selected_group = {
-            "id": group_doc.id,
-            "groupCode": gdata.get("groupCode"),
-            "intake": gdata.get("intake"),
-            "fk_program": gdata.get("fk_program"),
-            "programName": program_name,
-            "members": members
-        }
-
-    # 5. Render page
+    # 7. Render page
     return render_template(
         "teacher/T_GC_ManageGroup.html",
         profile=profile,
-        groups=[selected_group] if selected_group else [],
         selected_group=selected_group
     )
 
@@ -2384,16 +2348,16 @@ def teacher_profile():
 # ------------------ Teacher Change Password ------------------
 @app.route("/teacher/change_password", methods=["GET", "POST"])
 def teacher_change_password():
+    # Ensure the teacher is logged in
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
-    
-    old_password = user_doc.get("password") 
-    
-    if (user_doc := db.collection("users").document(session.get("user_id")).get()).exists:
-        pass
-    else:
-        None
-        user_ref = db.collection("users").document(session.get("user_id"))
+
+    user = session.get("user")
+    if not user:
+        flash("User not logged in.", "error")
+        return redirect(url_for("login"))
+
+    user_ref = db.collection("users").document(user["uid"])
 
     if request.method == "POST":
         new_password = request.form.get("newPassword")
@@ -2406,22 +2370,21 @@ def teacher_change_password():
         if new_password != confirm_password:
             flash("Passwords do not match.", "error")
             return redirect(url_for("teacher_change_password"))
-        
-        if new_password == old_password:
-            flash("New password cannot be the same as the old password.")
-            return render_template("A_ChangePassword.html")
-        
-        user_ref.update({"password": new_password})
 
         try:
-            user = session.get("user")
-            if user:
-                auth.update_user(user["uid"], password=new_password)
-                flash("Password changed successfully!", "success")
+            # Update Firebase Auth password
+            auth.update_user(user["uid"], password=new_password)
+
+            # Remove old password field from Firestore if exists
+            user_ref.update({"password": firestore.DELETE_FIELD})
+
+            flash("Password changed successfully!", "success")
         except Exception as e:
             flash(f"Error changing password: {str(e)}", "error")
+            return redirect(url_for("teacher_change_password"))
 
-        return redirect(url_for("teacher_dashboard"))
+        # Redirect back to teacher profile/dashboard
+        return redirect(url_for("teacher_profile"))  # or teacher_dashboard
 
     return render_template("combinePage/Change password.html")
 
@@ -2504,8 +2467,6 @@ def teacher_edit_profile():
             return redirect(url_for("teacher_edit_profile"))
 
     return render_template("teacher/T_EditProfile.html", profile=profile, now=int(time.time()))
-
-
 
 # ------------------ Admin Student Add/Edit ------------------
 

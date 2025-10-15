@@ -28,6 +28,11 @@
     table thead th:first-child { border-top-left-radius: 12px; }
     table thead th:last-child { border-top-right-radius: 12px; }
     table tbody td { padding: 10px 12px; border-top: 1px solid #e0e0e0; }
+    table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
+    .status-approved { color: #16a34a; font-weight: 600; }   
+    .status-rejected { color: #dc2626; font-weight: 600; }  
+    .status-pending { color: #4154F1; font-weight: 600; }    
+
 
     /* Row colors */
     .row-pending { background-color: #fff7ed; }
@@ -173,7 +178,13 @@
     <span class="text-gray-400 italic">No File</span>
   {% endif %}
 </td>
-              <td>{{ record.status }}</td>
+              <td class="
+    {% if record.status|lower == 'approved' %}status-approved{% endif %}
+    {% if record.status|lower == 'rejected' %}status-rejected{% endif %}
+    {% if record.status|lower == 'in progress' %}status-pending{% endif %}
+">
+    {{ record.status }}
+</td>
               <td class="flex action-buttons">
                 <form method="POST">
                   <input type="hidden" name="record_id" value="{{ record.id }}">
