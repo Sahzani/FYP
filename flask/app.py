@@ -2367,69 +2367,127 @@ def teacher_delete_group(group_id):
 
 
 # ------------------ Group Coordinator Group Report ------------------
-@app.route("/gc/group_report")
+@app.route("/gc/group_report", methods=["GET"])
 def gc_group_report():
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
-    user = session.get("user")
-    teacher_uid = user.get("uid") if user else None
-    if not teacher_uid:
-        return redirect(url_for("login"))
+    teacher_id = session.get("user_id")
+    if not teacher_id:
+        return redirect(url_for("home"))
 
-    # Fetch teacher profile first ✅
-    profile_doc = db.collection("users").document(teacher_uid).get()
-    profile = profile_doc.to_dict() if profile_doc.exists else {}
-    profile["is_gc"] = False  # Initialize to False by default
+    # -------- Teacher profile --------
+    teacher_doc = db.collection("users").document(teacher_id).get()
+    profile = teacher_doc.to_dict() if teacher_doc.exists else {}
+    profile.setdefault("firstName", "Teacher")
+    profile.setdefault("lastName", "")
+    profile.setdefault("photo_name", "uploads/default_teacher.png")
 
-    # Check GC flag
-    roles_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
-    if not roles_doc.exists or not roles_doc.to_dict().get("isCoordinator"):
-        return redirect(url_for("teacher_dashboard"))
-    
-    # Check all roles for GC status
-    roles_docs = db.collection("users").document(teacher_uid).collection("roles").stream()
-    for role_doc in roles_docs:
-        role_data = role_doc.to_dict()
-        if role_data.get("isCoordinator") is True:
-            profile["is_gc"] = True
-            break
-
-    # Only allow GC teachers to access
-    if not profile.get("is_gc"):
+    # -------- GC role info --------
+    roles_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
+    if not roles_doc.exists or not roles_doc.to_dict().get("isCoordinator", False):
         return redirect(url_for("teacher_dashboard"))
 
-    # Fetch the group the GC is responsible for
+    profile["is_gc"] = True
     role_data = roles_doc.to_dict()
-    group_id = role_data.get("groupId")
-    group_doc = db.collection("groups").document(group_id).get()
-    group = None
-    if group_doc.exists:
-        gdata = group_doc.to_dict()
-        members = []
-        student_query = db.collection("users").where("fk_groupcode", "==", group_id).stream()
-        for sdoc in student_query:
-            sdata = sdoc.to_dict()
-            members.append({
-                "id": sdoc.id,
-                "studentID": sdata.get("studentID"),
-                "first_name": sdata.get("first_name"),
-                "last_name": sdata.get("last_name"),
-                "email": sdata.get("email")
-            })
-        group = {
-            "id": group_doc.id,
-            "groupCode": gdata.get("groupCode"),
-            "intake": gdata.get("intake"),
-            "members": members
-        }
+    group_id = role_data.get("groupId")      # Firestore ID for group
+    group_code = role_data.get("groupCode")  # Optional
 
+    # -------- Filters --------
+    month = request.args.get("month", type=int)
+    year = request.args.get("year", type=int)
 
+    # -------- Fetch students in this group --------
+    students = []
+    users_ref = db.collection("users").where("role_type", "==", 1).stream()  # role_type 1 = student
+    for u in users_ref:
+        udata = u.to_dict()
+        role_doc = db.collection("users").document(u.id).collection("roles").document("student").get()
+        if role_doc.exists:
+            rdata = role_doc.to_dict()
+            if rdata.get("fk_groupcode") == group_id:
+                students.append({"id": u.id, "name": udata.get("name", "Student")})
 
+    # -------- Attendance summary --------
+    summary = {}
+    chart_labels = []
+    chart_present = []
+    chart_absent = []
+    chart_late = []
+
+    if month and year and students:
+        stats_by_module = {}
+
+        # Get schedules taught by this teacher for this group
+        schedules_ref = db.collection("schedules")\
+            .where("fk_teacher", "==", teacher_id)\
+            .where("fk_group", "==", group_id).stream()
+
+        schedule_ids = [s.id for s in schedules_ref]
+
+        for sched_id in schedule_ids:
+            date_collections = db.collection("attendance").document(sched_id).collections()
+            for date_col in date_collections:
+                try:
+                    att_date = datetime.strptime(date_col.id, "%Y-%m-%d")
+                except:
+                    continue
+
+                if att_date.month != month or att_date.year != year:
+                    continue
+
+                for student in students:
+                    stu_doc = date_col.document(student["id"]).get()
+                    if not stu_doc.exists:
+                        continue
+
+                    att = stu_doc.to_dict()
+                    status = att.get("status")
+                    if status not in ["Present", "Absent", "Late"]:
+                        continue
+
+                    # Get module ID from schedule
+                    sched_doc = db.collection("schedules").document(sched_id).get()
+                    module_id = sched_doc.to_dict().get("fk_module") if sched_doc.exists else None
+                    if not module_id:
+                        continue
+
+                    if module_id not in stats_by_module:
+                        stats_by_module[module_id] = {"Present": 0, "Absent": 0, "Late": 0}
+
+                    stats_by_module[module_id][status] += 1
+
+        # Convert module IDs → names and prepare chart data
+        for mid, stats in stats_by_module.items():
+            module_doc = db.collection("mlmodule").document(mid).get()
+            module_name = module_doc.to_dict().get("moduleName", "Unknown Module") if module_doc.exists else "Unknown Module"
+
+            total = stats["Present"] + stats["Absent"] + stats["Late"]
+            percent = (stats["Present"] / total * 100) if total > 0 else 0
+
+            summary[module_name] = {
+                "Present": stats["Present"],
+                "Absent": stats["Absent"],
+                "Late": stats["Late"],
+                "percent": percent
+            }
+
+            chart_labels.append(module_name)
+            chart_present.append(stats["Present"])
+            chart_absent.append(stats["Absent"])
+            chart_late.append(stats["Late"])
+
+    # -------- Render template --------
     return render_template(
         "teacher/T_GC_GroupReport.html",
         profile=profile,
-        group=group
+        month=month,
+        year=year,
+        summary=summary,
+        chart_labels=chart_labels,
+        chart_present=chart_present,
+        chart_absent=chart_absent,
+        chart_late=chart_late
     )
 
 # ------------------ Teacher Profile ------------------
