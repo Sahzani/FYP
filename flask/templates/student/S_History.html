@@ -138,7 +138,7 @@
     <div class="summary-box-container">
       <div class="summary-box total-box">
         <span class="value">{{ total }}</span>
-        <span class="label">Total Classes</span>
+        <span class="label">Total Modules</span>
       </div>
       <div class="summary-box present-box">
         <span class="value">{{ present }}</span>
@@ -163,9 +163,8 @@
           <tr>
             <th>Date</th>
             <th>Time</th>
-            <th>Subject</th>
+            <th>Module</th>
             <th>Status</th>
-            <th>Remarks</th>
           </tr>
         </thead>
         <tbody>
@@ -174,16 +173,15 @@
               <tr>
                 <td>{{ record.date }}</td>
                 <td>{{ record.time or '-' }}</td>
-                <td>{{ record.subject or '-' }}</td>
+                <td>{{ record.module or '-' }}</td>
                 <td class="{% if record.status == 'Present' %}status-present{% else %}status-absent{% endif %}">
                   {{ record.status }}
                 </td>
-                <td>{{ record.remarks or '-' }}</td>
               </tr>
             {% endfor %}
           {% else %}
             <tr>
-              <td colspan="5" style="text-align:center;">No attendance records found</td>
+              <td colspan="4" style="text-align:center;">No attendance records found</td>
             </tr>
           {% endif %}
         </tbody>
