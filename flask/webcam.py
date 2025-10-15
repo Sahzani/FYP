@@ -30,7 +30,7 @@ frame_lock = threading.Lock()
 camera_thread = None
 camera_running = False
 current_schedule = None
-API_URL = "https://iattend.duckdns.org"
+API_URL = "http://128.199.107.48"
 
 # Skip frames to reduce CPU usage (process 1 out of every 5 frames)
 FRAME_SKIP = 5
@@ -250,19 +250,9 @@ def student_view():
     </html>
     """
 
-# --- CRUCIAL CHANGE: Using relative paths for local files ---
-CERT_PATH = "flask_cert.pem"
-KEY_PATH = "flask_key.pem"
-# -----------------------------------------------------------
-
 if __name__ == "__main__":
+    # Only run if main API is ready
     if wait_for_api(API_URL):
-        app.run(
-            host="0.0.0.0", 
-            port=5001, 
-            debug=False, 
-            threaded=True,
-            ssl_context=(CERT_PATH, KEY_PATH)  # <-- The new SSL part
-        )
+        app.run(host="0.0.0.0", port=5001, debug=False, threaded=True)
     else:
-        print("Exiting: main app not available")
+        print("Exiting: main app not available") 

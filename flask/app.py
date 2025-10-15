@@ -1739,7 +1739,7 @@ def teacher_attendance():
         groups=groups_list,
         modules=modules_list,
         days=days_list,
-        webcam_url="https://iattend.duckdns.org:5001"
+        webcam_url="http://127.0.0.1:5001"
     )
 
 #------------------ API to get attendance data ------------------
