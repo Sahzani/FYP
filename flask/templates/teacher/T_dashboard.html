@@ -1,107 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>iAttend Teacher Dashboard</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iAttend Teacher Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-<style>
-/* Main Content */
-.main-content { margin-left:260px; padding:100px 30px 30px; min-height:100vh; overflow-y:auto; transition:margin-left 0.3s ease; background:transparent; }
-.main-content.expanded { margin-left:80px; }
+  <style>
+    /* Main Content */
+    .main-content {
+      margin-left: 260px;
+      padding: 100px 30px 30px;
+      min-height: 100vh;
+      overflow-y: auto;
+      transition: margin-left 0.3s ease;
+      background: transparent;
+    }
+    .main-content.expanded {
+      margin-left: 80px;
+    }
 
-/* Welcome Heading */
-.main-content h2 {
-  font-family:'Poppins', sans-serif; /* original font */
-  font-size:36px;
-  font-weight:700;
-  color:#444;
-  margin-bottom:30px;
-}
-#teacher-name { color:#4154F1; }
+    /* Welcome Heading */
+    .main-content h2 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 30px;
+    }
+    #teacher-name {
+      color: #4154F1;
+    }
 
-/* Cards (Floating) */
-.card {
-  background:#fff;
-  padding:22px;
-  border-radius:15px;
-  box-shadow:0 15px 30px rgba(0,0,0,0.05);
-  margin-bottom:25px;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-.card:hover { transform:translateY(-8px); box-shadow:0 20px 40px rgba(0,0,0,0.1); }
-.card h2 { font-size:22px; font-weight:500; color:#444; margin-bottom:10px; }
+    /* Cards */
+    .card {
+      background: #fff;
+      padding: 22px;
+      border-radius: 15px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+      margin-bottom: 25px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
 
-/* Grid Layout */
-.grid-container { display:grid; gap:1.5rem; }
-.grid-container-lg { grid-template-columns:3fr 2fr; }
-.grid-container-lg-2 { grid-template-columns:repeat(2,1fr); }
-.card-spacing { margin-bottom:1.5rem; }
+    /* Grid Layout */
+    .grid-container {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .grid-container-lg-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
 
-/* Stats */
-.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:1.5rem; }
-.stats-card { display:flex; flex-direction:column; align-items:center; text-align:center; }
+    /* Calendar — Now Full Width */
+    .calendar-container {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 15px 25px rgba(0,0,0,0.05);
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .calendar-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .calendar-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .calendar-date {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #4154F1;
+    }
+    .calendar-time {
+      font-size: 1.1rem;
+      color: #666;
+    }
+    .calendar-icon {
+      width: 3.5rem;
+      height: 3.5rem;
+      background: linear-gradient(135deg, #4154F1, #5D5FEF);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+    }
 
-/* Circles */
-.icon-circle { width:3rem; height:3rem; display:flex; align-items:center; justify-content:center; background-color:#4154F1; color:white; border-radius:50%; margin-bottom:0.75rem; }
+    /* Notifications */
+    .notification-card {
+      background: #fff;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.5rem;
+      border-radius: 15px;
+      box-shadow: 0 15px 25px rgba(0,0,0,0.05);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .notification-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .notification-icon {
+      width: 3rem;
+      height: 3rem;
+      background-color: #4154F1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+    }
+    .notification-content {
+      flex-grow: 1;
+    }
+    .notification-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    .notification-text {
+      color: #666;
+      margin-bottom: 1rem;
+      font-size: 14px;
+    }
+    .notification-btn {
+      background: #4154F1;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+      font-size: 14px;
+    }
+    .notification-btn:hover {
+      background: #3a4cd0;
+      transform: translateY(-2px);
+    }
 
-/* Calendar */
-.calendar-container {
-  background: #fff;
-  border-radius: 15px;
-  box-shadow: 0 15px 25px rgba(0,0,0,0.05);
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-.calendar-container:hover { transform:translateY(-5px); box-shadow:0 20px 40px rgba(0,0,0,0.1); }
-.calendar-info { display:flex; flex-direction:column; gap:8px; }
-.calendar-date { font-size:1.5rem; font-weight:700; color:#4154F1; }
-.calendar-time { font-size:1.1rem; color:#666; }
-.calendar-icon { width:3.5rem; height:3.5rem; background: linear-gradient(135deg, #4154F1, #5D5FEF); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:1.5rem; }
+    /* Low Attendance */
+    .low-attendance-card {
+      grid-column: 1 / -1;
+      border-top: 2px solid #4154F1;
+    }
+    .low-attendance-title {
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .low-attendance-list {
+      list-style: none;
+    }
+    .low-attendance-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .low-attendance-item:last-child {
+      border-bottom: none;
+    }
+    .student-name {
+      color: #4154F1;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.2s;
+      font-size: 14px;
+    }
+    .student-name:hover {
+      color: #3a4cd0;
+    }
+    .attendance-percentage {
+      background: #ffebee;
+      color: #c62828;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+    }
 
-/* Notifications */
-.notification-card {
-  background:#fff;
-  display:flex;
-  align-items:flex-start;
-  gap:1rem;
-  padding:1.5rem;
-  border-radius:15px;
-  box-shadow:0 15px 25px rgba(0,0,0,0.05);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-.notification-card:hover { transform:translateY(-5px); box-shadow:0 20px 40px rgba(0,0,0,0.1); }
-.notification-icon { width:3rem; height:3rem; background-color:#4154F1; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; flex-shrink:0; }
-.notification-content { flex-grow:1; }
-.notification-title { font-size:1.2rem; font-weight:600; margin-bottom:0.5rem; color:#333; }
-.notification-text { color:#666; margin-bottom:1rem; font-size:14px; }
-.notification-btn { background:#4154F1; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer; transition:background 0.3s, transform 0.3s; font-size:14px; }
-.notification-btn:hover { background:#3a4cd0; transform:translateY(-2px); }
-
-/* Low Attendance */
-.low-attendance-card { grid-column:1 / -1; border-top:2px solid #4154F1; }
-.low-attendance-title { margin-bottom:1rem; font-size:1.2rem; color:#333; display:flex; align-items:center; gap:8px; }
-.low-attendance-list { list-style:none; }
-.low-attendance-item { padding:12px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
-.low-attendance-item:last-child { border-bottom:none; }
-.student-name { color:#4154F1; font-weight:600; cursor:pointer; text-decoration:underline; transition:color 0.2s; font-size:14px; }
-.student-name:hover { color:#3a4cd0; }
-.attendance-percentage { background:#ffebee; color:#c62828; padding:4px 10px; border-radius:20px; font-weight:600; font-size:14px; }
-
-@media(max-width:768px) {
-  .calendar-container { flex-direction:column; text-align:center; gap:1.5rem; }
-  .stats-grid { grid-template-columns:1fr; }
-  .notification-card { flex-direction:column; }
-  .notification-btn { width:100%; margin-top:1rem; }
-}
-</style>
+    @media (max-width: 768px) {
+      .calendar-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+      }
+      .notification-card {
+        flex-direction: column;
+      }
+      .notification-btn {
+        width: 100%;
+        margin-top: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -154,9 +268,8 @@
 <div class="main-content">
   <h2>Welcome, <span id="teacher-name">{{ profile.firstName }} {{ profile.lastName }}</span>!</h2>
 
-  <!-- Grid -->
-  <div class="grid-container-lg grid-container card-spacing">
-    <!-- Calendar -->
+  <!-- Calendar — Full Width -->
+  <div class="card">
     <div class="calendar-container">
       <div class="calendar-info">
         <div class="calendar-date" id="current-date">Wednesday, June 12</div>
@@ -164,48 +277,35 @@
       </div>
       <div class="calendar-icon"><i class="fas fa-calendar-day"></i></div>
     </div>
-
-    <!-- Stats -->
-    <div class="stats-grid">
-      <div class="card stats-card">
-        <div class="icon-circle"><i class="fas fa-user-times"></i></div>
-        <p>Students Absent Today</p>
-        <span id="stats-absent">{{ stats.absent }}</span>
-      </div>
-    </div>
   </div>
 
   <!-- Notifications -->
-<div class="grid-container-lg-2 grid-container card-spacing">
-  <div class="notification-card">
-    <div class="notification-icon"><i class="fas fa-bell"></i></div>
-    <div class="notification-content">
-      <div class="notification-title">Pending Absence Requests</div>
-
-      {% if pending_count > 0 %}
-        <div class="notification-text">
-          You have <strong>{{ pending_count }} pending absence request{% if pending_count > 1 %}s{% endif %}</strong> that need your review.
-        </div>
-        <a href="{{ url_for('teacher_manage_absent') }}" class="notification-btn">Review Requests</a>
-        
-        </button>
-      {% else %}
-        <div class="notification-text">No pending absence requests at the moment.</div>
-      {% endif %}
-
+  <div class="grid-container-lg-2 grid-container card-spacing">
+    <div class="notification-card">
+      <div class="notification-icon"><i class="fas fa-bell"></i></div>
+      <div class="notification-content">
+        <div class="notification-title">Pending Absence Requests</div>
+        {% if pending_count > 0 %}
+          <div class="notification-text">
+            You have <strong>{{ pending_count }} pending absence request{% if pending_count > 1 %}s{% endif %}</strong> that need your review.
+          </div>
+          <a href="{{ url_for('teacher_manage_absent') }}" class="notification-btn">Review Requests</a>
+        {% else %}
+          <div class="notification-text">No pending absence requests at the moment.</div>
+        {% endif %}
+      </div>
     </div>
   </div>
-</div>
 
   <!-- Low Attendance Students -->
   <div class="card low-attendance-card">
     <div class="low-attendance-title"><i class="fas fa-exclamation-triangle"></i> Students with Attendance Below 75%</div>
     <ul class="low-attendance-list">
       {% for student in low_attendance_students %}
-      <li class="low-attendance-item">
-        <a href="{{ url_for('teacher_individual_summary', student_id=student.id) }}" class="student-name">{{ student.name }}</a>
-        <span class="attendance-percentage">{{ student.attendance }}%</span>
-      </li>
+        <li class="low-attendance-item">
+          <a href="{{ url_for('teacher_individual_summary', student_id=student.id) }}" class="student-name">{{ student.name }}</a>
+          <span class="attendance-percentage">{{ student.attendance }}%</span>
+        </li>
       {% endfor %}
     </ul>
   </div>
@@ -214,9 +314,9 @@
 <script>
 function updateDateTime() {
   const now = new Date();
-  const options = { weekday:'long', month:'long', day:'numeric' };
+  const options = { weekday: 'long', month: 'long', day: 'numeric' };
   document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
-  document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
+  document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 updateDateTime();
 setInterval(updateDateTime, 1000);

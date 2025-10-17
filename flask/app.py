@@ -363,35 +363,72 @@ def student_dashboard():
     overall_attendance = round((monthly_present / monthly_total * 100) if monthly_total else 0, 1)
 
     # -------- Fetch absence records (avoid Firestore index errors) --------
-    absence_docs = db.collection("absenceRecords").where("studentID", "==", uid).stream()
-    absence_list = [doc.to_dict() for doc in absence_docs]
-    absence_list.sort(key=lambda x: x.get("submitted_at", ""), reverse=True)  # Sort in Python
+    absence_docs = db.collection("absenceRecords").where("student_id", "==", uid).stream()
+
+    absence_list = []
+    for doc in absence_docs:
+        data = doc.to_dict()
+        data["id"] = doc.id  # keep the doc ID for mark as read
+        absence_list.append(data)
+
+    # Sort descending by submission date
+    absence_list.sort(key=lambda x: x.get("submitted_at", ""), reverse=True)
 
     # -------- Generate notifications (soft warnings) --------
-    notifications = []
+    notification_list = []
 
+    # Absence form status updates
     for absence in absence_list:
-        status = absence.get("status", "").capitalize()
+        status = absence.get("status", "").title()
+        read = absence.get("read", False)
         reason = absence.get("reason", "No reason provided")
         start_date = absence.get("start_date", "")
         end_date = absence.get("end_date", "")
 
-        if status == "Approved":
-            notifications.append(f"Your absence ({reason}) from {start_date} to {end_date} has been approved.")
-        elif status == "Rejected":
-            notifications.append(f"Your absence ({reason}) from {start_date} to {end_date} has been rejected.")
-        elif status == "Pending":
-            notifications.append(f"Your absence ({reason}) from {start_date} to {end_date} is still pending.")
+        # Only hide approved/rejected if already marked as read
+        if status in ["Approved", "Rejected"] and read:
+            continue
+
+        # Set notification color
+        color = "#ffc107"  # default yellow
+        if status == "Approved": color = "#28a745"
+        elif status == "Rejected": color = "#dc3545"
+        elif status == "In Progress": color = "#ffc107"
+
+        notification_list.append({
+            "message": f"Your absence ({reason}) from {start_date} to {end_date} is {status.lower()}.",
+            "color": color,
+            "status": status,
+            "id": absence.get("id")  # needed for mark as read
+        })
 
     # Attendance reminders (soft warnings)
     if absent >= 3:
-        notifications.append("Reminder: You may receive a warning if you have 3 unexcused absences.")
+        notification_list.append({
+            "message": "Reminder: You may receive a warning if you have 3 unexcused absences.",
+            "color": "#dc3545",
+            "status": "Warning"
+        })
     if late >= 3:
-        notifications.append("Reminder: 3 late attendances count as 1 absence. Keep track to avoid warnings.")
+        notification_list.append({
+            "message": "Reminder: 3 late attendances count as 1 absence. Keep track to avoid warnings.",
+            "color": "#ffc107",
+            "status": "Warning"
+        })
     if overall_attendance < 75:
-        notifications.append("Reminder: Your attendance is below 75%. You may receive a warning if it stays low.")
+        notification_list.append({
+            "message": "Reminder: Your attendance is below 75%. You may receive a warning if it stays low.",
+            "color": "#dc3545",
+            "status": "Warning"
+        })
 
-    notification_message = " | ".join(notifications) if notifications else "No new notifications."
+    # No notifications case
+    if not notification_list:
+        notification_list.append({
+            "message": "No new notifications.",
+            "color": "#6c757d",
+            "status": "None"
+        })
 
     # Today’s class
     if today_classes:
@@ -413,6 +450,7 @@ def student_dashboard():
         status_color = "#dc3545"
         status_icon = "fas fa-times-circle"
 
+    # -------- Render template --------
     return render_template(
         "student/S_Dashboard.html",
         full_name=full_name,
@@ -422,7 +460,7 @@ def student_dashboard():
         stats_late=late,
         attendance_streak=streak,
         overall_attendance=overall_attendance,
-        notification_message=notification_message,
+        notifications=notification_list,
         today_status=today_status,
         today_module=today_module,
         status_color=status_color,
@@ -1228,7 +1266,8 @@ def student_absentapp():
             "end_date": end_date,
             "status": "In Progress",
             "group_code": group_code,
-            "submitted_at": firestore.SERVER_TIMESTAMP
+            "submitted_at": firestore.SERVER_TIMESTAMP,
+            "read": False
         }
 
         # ---------- Handle File Upload ----------
@@ -1283,6 +1322,9 @@ def student_absentapp():
                 records.append(rec)
         except Exception as e:
             print("[ERROR] Failed to fetch records:", e)
+
+        records.sort(key=lambda x: datetime.strptime(x["start_date"], "%Y-%m-%d"))
+
         return jsonify({"records": records})
 
     # ---------- Normal GET: render template ----------
@@ -1304,6 +1346,8 @@ def student_absentapp():
     except Exception as e:
         print("[ERROR] Failed to fetch records for template:", e)
 
+    records.sort(key=lambda x: datetime.strptime(x["start_date"], "%d/%m/%Y"))
+
     return render_template(
         "student/S_AbsentApp.html",
         records=records,
@@ -1313,6 +1357,42 @@ def student_absentapp():
         student_ID=student_ID,
         group_code=group_code
     )
+
+# ------------------ Student Mark a Record as Read ------------------
+@app.route("/student/mark_absence_read", methods=["POST"])
+def mark_absence_read():
+    if session.get("role") != "student":
+        return jsonify({"success": False, "error": "Unauthorized"}), 403
+
+    uid = session.get("user_id")
+    if not uid:
+        return jsonify({"success": False, "error": "Not logged in"}), 401
+
+    data = request.get_json()
+    record_id = data.get("id")
+
+    if not record_id:
+        return jsonify({"success": False, "error": "Missing record ID"}), 400
+
+    try:
+        # Reference the document
+        doc_ref = db.collection("absenceRecords").document(record_id)
+        doc = doc_ref.get()
+
+        if not doc.exists:
+            return jsonify({"success": False, "error": "Record not found"}), 404
+
+        doc_data = doc.to_dict()
+        if doc_data.get("student_id") != uid:
+            return jsonify({"success": False, "error": "Not your record"}), 403
+
+        # Update read field
+        doc_ref.update({"read": True})
+
+        return jsonify({"success": True})
+    except Exception as e:
+        print("[ERROR] Failed to mark as read:", e)
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 # ------------------ Serve Uploaded Absence File ------------------
 @app.route("/serve_absence_file/<record_id>")
@@ -1939,6 +2019,85 @@ def mark_present():
     except Exception as e:
         print(f"[ERROR] Save attendance failed: {e}")
         return jsonify({"error": "Failed to save"}), 500
+    
+    
+# ------------------ Teacher Mark Absent on Class Stop ------------------
+
+@app.route("/api/mark_absent_on_stop", methods=["POST"])
+def mark_absent_on_stop():
+    if session.get("role") != "teacher":
+        return jsonify({"error": "Unauthorized"}), 401
+
+    schedule_id = request.json.get("schedule_id")
+    if not schedule_id:
+        return jsonify({"error": "Missing schedule_id"}), 400
+
+    # Get schedule
+    sched_doc = db.collection("schedules").document(schedule_id).get()
+    if not sched_doc.exists:
+        return jsonify({"error": "Schedule not found"}), 404
+    sched = sched_doc.to_dict()
+    group_id = sched.get("fk_group", "").strip()
+    if not group_id:
+        return jsonify({"error": "Invalid group"}), 400
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+
+    # Get all students in the group
+    all_student_ids = []
+    students_ref = db.collection("users").where("role_type", "==", 1).stream()
+    for stu in students_ref:
+        role_doc = db.collection("users").document(stu.id).collection("roles").document("student").get()
+        if role_doc.exists and role_doc.to_dict().get("fk_groupcode") == group_id:
+            all_student_ids.append(stu.id)
+
+    # Get already marked students
+    marked_docs = db.collection("attendance").document(schedule_id).collection(today_str).stream()
+    marked_ids = {doc.id for doc in marked_docs}
+
+    # Mark unmarked students as "Absent"
+    absent_count = 0
+    for sid in all_student_ids:
+        if sid not in marked_ids:
+            # Fetch student info
+            stu_doc = db.collection("users").document(sid).get()
+            stu_data = stu_doc.to_dict() or {}
+            name = f"{stu_data.get('first_name', '')} {stu_data.get('last_name', '')}".strip() or "Student"
+
+            role_doc = db.collection("users").document(sid).collection("roles").document("student").get()
+            program_id = role_doc.to_dict().get("program") if role_doc.exists else None
+            program_name = "Unknown Program"
+            if program_id:
+                prog_doc = db.collection("programs").document(program_id).get()
+                if prog_doc.exists:
+                    program_name = prog_doc.to_dict().get("programName", "Unknown Program")
+
+                # Get class end time from schedule
+            end_time_str = sched.get("end_time", "00:00").strip()
+            try:
+                class_end_time = datetime.strptime(end_time_str, "%H:%M").time()
+                absent_time = datetime.combine(datetime.now().date(), class_end_time)
+            except:
+                absent_time = datetime.now()
+
+            # Use absent_time instead of datetime.now()
+            db.collection("attendance").document(schedule_id).collection(today_str).document(sid).set({
+                "status": "Absent",
+                "timestamp": absent_time,  # ✅ Class end time, not current time
+                # ... other fields
+            })
+
+            # Write "Absent" record
+            db.collection("attendance").document(schedule_id).collection(today_str).document(sid).set({
+                "student_name": name,
+                "group": group_id,
+                "program": program_name,
+                "status": "Absent",
+                "timestamp": datetime.now()
+            })
+            absent_count += 1
+
+    return jsonify({"success": True, "absent_marked": absent_count})
 
 #------------------- Teacher Attendance Report ------------------
 from flask import session, redirect, url_for, render_template
@@ -2256,6 +2415,8 @@ def teacher_manage_absent():
             else:
                 data["full_name"] = "Unknown Student"
             absence_records.append(data)
+
+    absence_records.sort(key=lambda r: r.get("start_date", ""))        
 
     return render_template(
         "teacher/T_manageAbsent.html",

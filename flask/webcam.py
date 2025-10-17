@@ -117,7 +117,7 @@ def mark_attendance(student_id):
     program_id = s.get("program", "")
 
     now = datetime.now()
-    class_start = datetime.strptime("08:00", "%H:%M")  # <-- replace with schedule start time
+    class_start = datetime.strptime("00:00", "%H:%M")  # <-- replace with schedule start time
     status = "Present" if now <= class_start else "Late"
 
     db.collection("attendance").document(schedule_id).collection(today).document(student_id).set({
