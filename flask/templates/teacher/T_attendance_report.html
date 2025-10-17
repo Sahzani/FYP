@@ -318,67 +318,107 @@
       updateFilters();
     });
 
-    function startCameraWithSchedule(scheduleId) {
-      fetch(`${WEBCAM_URL}/start_camera`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `schedule=${encodeURIComponent(scheduleId)}`
-      })
-      .then(() => {
-        videoContainer.style.display = "block";
-        webcamFeed.src = `${WEBCAM_URL}/video_feed`;
-        fetchAttendance(scheduleId);
-
-        // 🔁 Start auto-refresh every 3 seconds
-        if (refreshInterval) clearInterval(refreshInterval);
-        refreshInterval = setInterval(() => {
-          fetchAttendance(scheduleId);
-        }, 3000);
-      })
-      .catch(err => console.error("Failed to start camera:", err));
-    }
-
     document.getElementById('stopCamera').addEventListener('click', () => {
-      fetch(`${WEBCAM_URL}/stop_camera`)
-        .then(() => {
-          videoContainer.style.display = "none";
-          webcamFeed.src = "";
-          if (refreshInterval) {
-            clearInterval(refreshInterval);
-            refreshInterval = null;
-          }
-        })
-        .catch(err => console.error("Failed to stop camera:", err));
-    });
+  // Stop auto-refresh
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
 
-    function fetchAttendance(scheduleId) {
-      fetch(`/api/attendance/${scheduleId}`)
-        .then(res => res.json())
-        .then(data => {
-          attendanceTable.innerHTML = "";
-          if (!data.students || data.students.length === 0) {
-            attendanceTable.innerHTML = `<tr><td colspan="6" class="text-center py-4">No students found</td></tr>`;
-            return;
-          }
-          data.students.forEach(student => {
-            const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${student.name || "Unknown Student"}</td>
-              <td>${student.email || "-"}</td>
-              <td>${student.time || "-"}</td>
-              <td><span class="status-badge status-${student.status}">${student.status}</span></td>
-              <td>${student.program || "-"}</td>
-              <td>${moduleName}</td>
-            `;
-            attendanceTable.appendChild(tr);
-          });
-        })
-        .catch(err => {
-          console.error("Failed to fetch attendance:", err);
-          attendanceTable.innerHTML = `<tr><td colspan="6" class="text-center py-4">Error loading data</td></tr>`;
-        });
-    }
+  // Hide video
+  videoContainer.style.display = "none";
+  webcamFeed.src = "";
+
+  // ✅ Mark undetected students as "Absent"
+  if (scheduleId) {
+    fetch("/api/mark_absent_on_stop", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ schedule_id: scheduleId })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert(`Camera stopped. ${data.absent_marked} students marked as Absent.`);
+        // Optional: refresh table one last time
+        fetchAttendance(scheduleId);
+      }
+    })
+    .catch(err => {
+      console.error("Failed to mark absent students:", err);
+      alert("Camera stopped, but failed to update attendance.");
+    });
+  }
+});
+function startCameraWithSchedule(scheduleId) {
+  fetch(`${WEBCAM_URL}/start_camera`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `schedule=${encodeURIComponent(scheduleId)}`
+  })
+  .then(() => {
+    videoContainer.style.display = "block";
+    webcamFeed.src = `${WEBCAM_URL}/video_feed`;
+
+    // Initial fetch immediately
+    fetchAttendance(scheduleId);
+
+    // 🔁 Start auto-refresh every 2 seconds for real-time updates
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => {
+      fetchAttendance(scheduleId);
+    }, 2000); // faster refresh
+  })
+  .catch(err => console.error("Failed to start camera:", err));
+}
+
+function fetchAttendance(scheduleId) {
+  fetch(`/api/attendance/${scheduleId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data.students || data.students.length === 0) {
+        attendanceTable.innerHTML = `<tr><td colspan="6" class="text-center py-4">No students found</td></tr>`;
+        return;
+      }
+
+      // Create a map of current table students for quick lookup
+      const currentStudents = {};
+      attendanceTable.querySelectorAll('tr').forEach(tr => {
+        const email = tr.querySelector('td:nth-child(2)').textContent;
+        currentStudents[email] = tr;
+      });
+
+      data.students.forEach(student => {
+        const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
+
+        if (currentStudents[student.email]) {
+          // Update existing row if status/time changed
+          const tr = currentStudents[student.email];
+          tr.querySelector('td:nth-child(3)').textContent = student.time || "-";
+          const statusSpan = tr.querySelector('td:nth-child(4) span');
+          statusSpan.textContent = student.status;
+          statusSpan.className = `status-badge status-${student.status}`;
+        } else {
+          // Add new student row
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${student.name || "Unknown Student"}</td>
+            <td>${student.email || "-"}</td>
+            <td>${student.time || "-"}</td>
+            <td><span class="status-badge status-${student.status}">${student.status}</span></td>
+            <td>${student.program || "-"}</td>
+            <td>${moduleName}</td>
+          `;
+          attendanceTable.appendChild(tr);
+        }
+      });
+    })
+    .catch(err => {
+      console.error("Failed to fetch attendance:", err);
+      attendanceTable.innerHTML = `<tr><td colspan="6" class="text-center py-4">Error loading data</td></tr>`;
+    });
+}
+
 
     // Load schedules when page is ready
     document.addEventListener('DOMContentLoaded', loadSchedules);
