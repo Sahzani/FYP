@@ -2704,9 +2704,7 @@ def gc_group_report():
     # -------- Attendance summary --------
     summary = {}
     chart_labels = []
-    chart_present = []
-    chart_absent = []
-    chart_late = []
+    chart_percent = []  # ✅ new list for overall % chart
 
     if month and year and students:
         stats_by_module = {}
@@ -2739,7 +2737,7 @@ def gc_group_report():
                     if status not in ["Present", "Absent", "Late"]:
                         continue
 
-                    # Get module ID from schedule
+
                     sched_doc = db.collection("schedules").document(sched_id).get()
                     module_id = sched_doc.to_dict().get("fk_module") if sched_doc.exists else None
                     if not module_id:
@@ -2766,9 +2764,7 @@ def gc_group_report():
             }
 
             chart_labels.append(module_name)
-            chart_present.append(stats["Present"])
-            chart_absent.append(stats["Absent"])
-            chart_late.append(stats["Late"])
+            chart_percent.append(percent)  # ✅ store percentage for chart
 
     # -------- Render template --------
     return render_template(
@@ -2778,9 +2774,7 @@ def gc_group_report():
         year=year,
         summary=summary,
         chart_labels=chart_labels,
-        chart_present=chart_present,
-        chart_absent=chart_absent,
-        chart_late=chart_late
+        chart_percent=chart_percent,  # ✅ send overall% data to HTML
     )
 
 # ------------------ Teacher Profile ------------------

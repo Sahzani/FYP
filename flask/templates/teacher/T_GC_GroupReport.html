@@ -207,25 +207,28 @@ menuToggle.addEventListener('click', () => {
 {% if summary %}
 <script>
 const ctx = document.getElementById("attendanceChart");
+
+// Get labels and data from Flask
+const labels = {{ chart_labels|tojson|safe }};
+const data = {{ chart_percent|tojson|safe }};
+
+// Dynamically assign colors based on performance
+const colors = data.map(value => {
+  if (value >= 80) return "rgba(34,197,94,0.85)";    // Green
+  else if (value >= 50) return "rgba(234,179,8,0.85)"; // Orange
+  else return "rgba(239,68,68,0.85)";                 // Red
+});
+
 new Chart(ctx, {
   type: "bar",
   data: {
-    labels: {{ chart_labels|tojson|safe }},
+    labels: labels,
     datasets: [
       {
-        label: "Present",
-        data: {{ chart_present|tojson|safe }},
-        backgroundColor: "rgba(34,197,94,0.8)"
-      },
-      {
-        label: "Absent",
-        data: {{ chart_absent|tojson|safe }},
-        backgroundColor: "rgba(239,68,68,0.8)"
-      },
-      {
-        label: "Late",
-        data: {{ chart_late|tojson|safe }},
-        backgroundColor: "rgba(234,88,12,0.8)"
+        label: "Overall Attendance (%)",
+        data: data,
+        backgroundColor: colors,
+        borderRadius: 8,
       }
     ]
   },
@@ -234,10 +237,32 @@ new Chart(ctx, {
     maintainAspectRatio: true,
     aspectRatio: 2,
     scales: {
-      y: { beginAtZero: true, title: { display: true, text: "Number of Attendances" } }
+      y: {
+        beginAtZero: true,
+        max: 100,
+        title: {
+          display: true,
+          text: "Attendance Percentage (%)"
+        },
+        ticks: {
+          callback: function(value) { return value + "%"; }
+        }
+      }
     },
     plugins: {
-      legend: { position: "top" }
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return context.parsed.y + "%";
+          }
+        }
+      },
+      title: { display: false } // ✅ title removed
+    },
+    animation: {
+      duration: 1200,
+      easing: "easeOutQuart"
     }
   }
 });
