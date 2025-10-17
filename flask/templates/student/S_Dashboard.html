@@ -168,58 +168,85 @@
     </div>
   </div>
 
-  <!-- Today's Attendance + Notifications + Overall Attendance (right) -->
-<div class="grid-container" style="grid-template-columns:3fr 2fr; gap:1.5rem; margin-bottom:25px;">
-  <div style="display:flex; flex-direction:column; gap:1.5rem;">
-    <!-- Today's Attendance -->
-    <div class="today-attendance-card">
-      <div class="today-attendance-info">
-        <div class="today-attendance-title">Today's Attendance</div>
-        {% if today_status and today_status != '-' %}
-          <div class="today-attendance-status" style="color:
-            {% if today_status == 'Present' %}#28a745
-            {% elif today_status == 'Late' %}#ffc107
-            {% elif today_status == 'Absent' %}#dc3545
-            {% else %}#6c757d{% endif %};">
-            {{ today_status }}
-          </div>
-        {% else %}
-          <div class="today-attendance-status" style="color:#6c757d;">Not Marked</div>
-        {% endif %}
-      </div>
+  <div class="grid-container" style="grid-template-columns:3fr 2fr; gap:1.5rem; margin-bottom:25px;">
+    
+    <div style="display:flex; flex-direction:column; gap:1.5rem;">
+        <div class="today-attendance-card">
+            <div class="today-attendance-info">
+                <div class="today-attendance-title">Today's Attendance</div>
+                {% if today_status and today_status != '-' %}
+                    <div class="today-attendance-status" style="color:
+                        {% if today_status == 'Present' %}#28a745
+                        {% elif today_status == 'Late' %}#ffc107
+                        {% elif today_status == 'Absent' %}#dc3545
+                        {% else %}#6c757d{% endif %};">
+                        {{ today_status }}
+                    </div>
+                {% else %}
+                    <div class="today-attendance-status" style="color:#6c757d;">Not Marked</div>
+                {% endif %}
+            </div>
 
-      <!-- Enhanced Icon -->
-      <div class="icon-circle-enhanced" style="background:
-        {% if today_status == 'Present' %}linear-gradient(135deg, #28a745, #00c853)
-        {% elif today_status == 'Late' %}linear-gradient(135deg, #ffc107, #ffeb3b)
-        {% elif today_status == 'Absent' %}linear-gradient(135deg, #dc3545, #ff5252)
-        {% else %}linear-gradient(135deg, #6c757d, #a0a0a0){% endif %};">
-        <i class="{% if today_status == 'Present' %}fas fa-smile
-                   {% elif today_status == 'Late' %}fas fa-clock
-                   {% elif today_status == 'Absent' %}fas fa-frown
-                   {% else %}fas fa-question{% endif %}"></i>
-      </div>
-    </div>
-
-      <!-- Notifications -->
-      <div class="notification-card">
-        <div class="notification-icon"><i class="fas fa-bell"></i></div>
-        <div class="notification-content">
-          <div class="notification-title">Notifications</div>
-          <div class="notification-text">{{ notification_message or 'No new notifications' }}</div>
-          {% if notification_link %}
-          <button class="notification-btn" onclick="window.location.href='{{ notification_link }}'">View</button>
-          {% endif %}
+            <div class="icon-circle-enhanced" style="background:
+                {% if today_status == 'Present' %}linear-gradient(135deg, #28a745, #00c853)
+                {% elif today_status == 'Late' %}linear-gradient(135deg, #ffc107, #ffeb3b)
+                {% elif today_status == 'Absent' %}linear-gradient(135deg, #dc3545, #ff5252)
+                {% else %}linear-gradient(135deg, #6c757d, #a0a0a0){% endif %};">
+                <i class="{% if today_status == 'Present' %}fas fa-smile
+                        {% elif today_status == 'Late' %}fas fa-clock
+                        {% elif today_status == 'Absent' %}fas fa-frown
+                        {% else %}fas fa-question{% endif %}"></i>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Monthly Overall Attendance Big Card on the right -->
-    <div class="overall-attendance-card">
-      <div class="overall-attendance-title">Monthly Overall Attendance</div>
-      <div class="overall-attendance-percent">{{ overall_attendance }}%</div>
+        <div class="card">
+            <h3 style="font-weight:600; color:#333; margin-bottom:1rem;">
+                <i class="fas fa-bell" style="color:#4154F1; margin-right:8px;"></i>Notifications
+            </h3>
+
+            {% if notifications %}
+                {% for note in notifications %}
+                    <div class="notification-card" id="note-{{ note.id }}" style="border-left:6px solid {{ note.color }}; margin-bottom: 15px;">
+                        <div class="notification-icon" style="background-color:{{ note.color }};">
+                            {% if note.status == 'Approved' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% elif note.status == 'Rejected' %}
+                                <i class="fas fa-times-circle"></i>
+                            {% elif note.status == 'In Progress' or note.status == 'Pending' %}
+                                <i class="fas fa-hourglass-half"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle"></i>
+                            {% endif %}
+                        </div>
+
+                        <div class="notification-content">
+                            <div class="notification-text">{{ note.message }}</div>
+
+                            {% if note.status in ['Approved', 'Rejected'] %}
+                                <button class="notification-btn" onclick="markAsRead('{{ note.id }}')">Mark as Read</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="notification-card" style="border-left:6px solid #6c757d;">
+                    <div class="notification-icon" style="background-color:#6c757d;">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-text">No new notifications.</div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
     </div>
-  </div>
+    
+    <div>
+        <div class="overall-attendance-card">
+            <div class="overall-attendance-title">Monthly Overall Attendance</div>
+            <div class="overall-attendance-percent">{{ overall_attendance }}%</div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -237,6 +264,26 @@ document.getElementById('menu-toggle').addEventListener('click', () => {
   document.querySelector('.sidebar').classList.toggle('collapsed');
   document.querySelector('.main-content').classList.toggle('expanded');
 });
+function markAsRead(noteId) {
+  fetch('/student/mark_absence_read', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: noteId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const card = document.getElementById('note-' + noteId);
+      if (card) card.remove();
+    } else {
+      alert('Failed to mark as read: ' + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Error occurred while marking as read.');
+  });
+}
 </script>
 
 </body>
