@@ -11,57 +11,73 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
     <style>
-.main-content { margin-left: 260px; padding: 100px 30px 30px; min-height: 100vh; overflow-y: auto; transition: margin-left 0.3s ease; }
-.main-content.expanded { margin-left: 80px; }
-.card { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); position: relative; margin-bottom: 25px; transition: transform 0.3s, box-shadow 0.3s; }
-.card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-.send-application-btn { position: absolute; top: -50px; right: 2px; background: #4154F1; color: #fff; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(65,84,241,0.3); text-decoration: none; transition: all 0.25s ease; }
-.send-application-btn:hover { background: #3a4cd0; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(65,84,241,0.4); }
-.table-scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; text-align: center; }
-thead th { font-weight: 600; font-size: 14px; color: #2C2C2C; background-color: #f8f1e5; padding: 12px; text-align: center; position: sticky; top: 0; z-index: 10; }
-thead th:first-child { border-top-left-radius: 12px; }
-thead th:last-child { border-top-right-radius: 12px; }
-tbody td { padding: 12px 8px; border-top: 1px solid #e0e0e0; word-wrap: break-word; text-align: center; }
-tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
-td.status-approved { color: #16a34a; font-weight: 600; }
-td.status-rejected { color: #dc2626; font-weight: 600; }
-td.status-in-progress { color: #4154F1; font-weight: 600; }
-.icon-btn { border: none; background: none; cursor: pointer; font-size: 18px; margin-right: 10px; transition: all 0.25s ease; vertical-align: middle; padding: 6px; }
-.icon-btn i { transition: transform 0.25s ease, color 0.25s ease, text-shadow 0.25s ease; }
-.icon-btn.edit { color: #4154F1; }
-.icon-btn.edit:hover { transform: scale(1.2); text-shadow: 0 0 8px rgba(65,84,241,0.5); }
-.icon-btn.delete { color: #dc3545; }
-.icon-btn.delete:hover { transform: scale(1.2); text-shadow: 0 0 8px rgba(220,53,69,0.5); }
-.modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: flex-start; padding-top: 100px; transition: opacity 0.3s; }
-.modal.show { display: flex; opacity: 1; }
-.modal-content { background: #fff; padding: 0; border-radius: 12px; width: 90%; max-width: 450px; overflow: hidden; transform: translateY(-50px); transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; }
-.modal.show .modal-content { transform: translateY(0); opacity: 1; }
-.modal-header { background: #4154F1; padding: 15px; color: #fff; font-size: 20px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
-.modal label { display: block; margin: 10px 0 5px; color: #444; font-weight: 600; }
-.modal input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; margin-bottom: 12px; transition: border-color 0.2s; }
-.modal input:focus { border-color: #4154F1; outline: none; }
-.modal-buttons { text-align: right; margin-top: 15px; }
-.modal button { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; margin-left: 10px; transition: opacity 0.2s, transform 0.2s; }
-.modal .save-btn { background: #4154F1; color: #fff; }
-.modal .save-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-.modal .cancel-btn { background: #eee; color: #444; }
-.modal .cancel-btn:hover { opacity: 0.8; transform: translateY(-1px); }
-.view-btn { display: inline-flex; align-items: center; gap: 6px; background-color: #4154F1; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 14px; transition: background 0.2s ease, transform 0.2s ease; }
-.view-btn:hover { background-color: #2f3ecf; transform: translateY(-1px); }
-.view-btn i { font-size: 15px; }
-@media(max-width:768px) { .sidebar { left: -250px; } .sidebar.show { left: 0; } .main-content { margin-left: 0 !important; padding: 80px 15px 15px; } header a.title { font-size: 20px; } .page-title { font-size: 28px; } .send-application-btn { top: 10px; right: 10px; font-size: 12px; padding: 6px 12px; } .modal { justify-content: center; align-items: flex-start; padding-top: 100px; } .modal-content { width: 95%; } }
-#confirmDeleteBtn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(220,53,69,0.4); }
-#cancelDeleteBtn:hover { opacity: 0.8; transform: translateY(-1px); }
-#successNotification { display: none; position: fixed; z-index: 10001; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: flex-start; padding-top: 100px; transition: opacity 0.3s; }
-#successNotification.show { display: flex; opacity: 1; }
-#successNotification .modal-content { background: #fff; max-width: 350px; width: 90%; text-align: center; margin-top: 0; padding: 0; }
-#successNotification .success-icon { color: #4154F1; font-size: 48px; margin-bottom: 15px; display: inline-block; margin-top: 20px; }
-#successNotification .success-message { font-size: 16px; font-weight: 600; color: #444; margin-bottom: 20px; padding: 0 15px; }
-#successNotification .modal-header { padding: 10px 15px; border-radius: 12px 12px 0 0; background: #4154F1; color: #fff; font-weight: 600; }
-#successNotification .ok-btn { background: #4154F1; color: #fff; padding: 8px 20px; margin-bottom: 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: opacity 0.2s, transform 0.2s; }
-#successNotification .ok-btn:hover { background: #3a4cd0; opacity: 0.9; }
-#deleteConfirmModal { align-items: center !important; padding-top: 0 !important; }
+.main-content { margin-left:260px; padding:100px 30px 30px; min-height:100vh; overflow-y:auto; transition:margin-left 0.3s ease; }
+.main-content.expanded { margin-left:80px; }
+.card { background:#fff; padding:30px; border-radius:15px; box-shadow:0 15px 30px rgba(0,0,0,0.05); position:relative; margin-bottom:25px; transition:transform 0.3s, box-shadow 0.3s; }
+.card:hover { transform:translateY(-8px); box-shadow:0 20px 40px rgba(0,0,0,0.1); }
+.send-application-btn { position:absolute; top:-50px; right:2px; background:#4154F1; color:#fff; font-size:14px; font-weight:600; padding:10px 18px; border-radius:8px; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(65,84,241,0.3); text-decoration:none; transition:all 0.25s ease; }
+.send-application-btn:hover { background:#3a4cd0; transform:translateY(-2px); box-shadow:0 6px 16px rgba(65,84,241,0.4); }
+.table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table { width:100%; border-collapse:separate; border-spacing:0; table-layout:auto; text-align:center; min-width:600px; }
+thead th { font-weight:600; font-size:14px; color:#2C2C2C; background-color:#f8f1e5; padding:12px; text-align:center; position:sticky; top:0; z-index:20; }
+thead th:first-child { border-top-left-radius:12px; }
+thead th:last-child { border-top-right-radius:12px; }
+tbody td { padding:12px 8px; border-top:1px solid #e0e0e0; word-wrap:break-word; text-align:center; }
+tbody tr:hover { background:#fef9f0; transition:background 0.2s; }
+td.status-approved { color:#16a34a; font-weight:600; }
+td.status-rejected { color:#dc2626; font-weight:600; }
+td.status-in-progress { color:#4154F1; font-weight:600; }
+.icon-btn { border:none; background:none; cursor:pointer; font-size:18px; margin-right:10px; transition:all 0.25s ease; vertical-align:middle; padding:6px; }
+.icon-btn i { transition:transform 0.25s ease, color 0.25s ease, text-shadow 0.25s ease; }
+.icon-btn.edit { color:#4154F1; }
+.icon-btn.edit:hover { transform:scale(1.2); text-shadow:0 0 8px rgba(65,84,241,0.5); }
+.icon-btn.delete { color:#dc3545; }
+.icon-btn.delete:hover { transform:scale(1.2); text-shadow:0 0 8px rgba(220,53,69,0.5); }
+.modal { display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:flex-start; padding-top:100px; transition:opacity 0.3s; }
+.modal.show { display:flex; opacity:1; }
+.modal-content { background:#fff; padding:0; border-radius:12px; width:90%; max-width:450px; overflow:hidden; transform:translateY(-50px); transition:transform 0.3s ease, opacity 0.3s ease; opacity:0; }
+.modal.show .modal-content { transform:translateY(0); opacity:1; }
+.modal-header { background:#4154F1; padding:15px; color:#fff; font-size:20px; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
+.modal label { display:block; margin:10px 0 5px; color:#444; font-weight:600; }
+.modal input { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; margin-bottom:12px; transition:border-color 0.2s; }
+.modal input:focus { border-color:#4154F1; outline:none; }
+.modal-buttons { text-align:right; margin-top:15px; }
+.modal button { padding:10px 16px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; margin-left:10px; transition:opacity 0.2s, transform 0.2s; }
+.modal .save-btn { background:#4154F1; color:#fff; }
+.modal .save-btn:hover { opacity:0.9; transform:translateY(-1px); }
+.modal .cancel-btn { background:#eee; color:#444; }
+.modal .cancel-btn:hover { opacity:0.8; transform:translateY(-1px); }
+.view-btn { display:inline-flex; align-items:center; gap:6px; background-color:#4154F1; color:white; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:14px; transition:background 0.2s ease, transform 0.2s ease; }
+.view-btn:hover { background-color:#2f3ecf; transform:translateY(-1px); }
+.view-btn i { font-size:15px; }
+#confirmDeleteBtn:hover { opacity:0.9; transform:translateY(-1px); box-shadow:0 4px 10px rgba(220,53,69,0.4); }
+#cancelDeleteBtn:hover { opacity:0.8; transform:translateY(-1px); }
+#successNotification { display:none; position:fixed; z-index:10001; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:flex-start; padding-top:100px; transition:opacity 0.3s; }
+#successNotification.show { display:flex; opacity:1; }
+#successNotification .modal-content { background:#fff; max-width:350px; width:90%; text-align:center; margin-top:0; padding:0; }
+#successNotification .success-icon { color:#4154F1; font-size:48px; margin-bottom:15px; display:inline-block; margin-top:20px; }
+#successNotification .success-message { font-size:16px; font-weight:600; color:#444; margin-bottom:20px; padding:0 15px; }
+#successNotification .modal-header { padding:10px 15px; border-radius:12px 12px 0 0; background:#4154F1; color:#fff; font-weight:600; }
+#successNotification .ok-btn { background:#4154F1; color:#fff; padding:8px 20px; margin-bottom:20px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; transition:opacity 0.2s, transform 0.2s; }
+#successNotification .ok-btn:hover { background:#3a4cd0; opacity:0.9; }
+#deleteConfirmModal { align-items:center !important; padding-top:0 !important; }
+
+/* MOBILE RESPONSIVE */
+@media(max-width:768px) {
+.sidebar { left:-250px; transition:left 0.3s ease; }
+.sidebar.show { left:0; }
+.main-content { margin-left:0 !important; padding:80px 15px 15px; }
+header a.title { font-size:20px; }
+.page-title { font-size:24px; }
+.send-application-btn { position:relative; top:0; right:0; margin-bottom:10px; font-size:12px; padding:6px 12px; display:inline-block; }
+.modal { justify-content:center; align-items:flex-start; padding-top:50px; }
+.modal-content { width:95%; max-width:400px; }
+.table-scroll { overflow-x:auto; }
+table { font-size:12px; min-width:500px; }
+thead th { font-size:12px; padding:8px; }
+tbody td { padding:8px 6px; font-size:12px; }
+.card { padding:20px; }
+}
     </style>
 </head>
 
@@ -239,147 +255,139 @@ td.status-in-progress { color: #4154F1; font-weight: 600; }
         </div>
     </div>
     <script>
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.querySelector('.sidebar');
-        const mainContent = document.querySelector('.main-content');
-        const modal = document.getElementById('editModal');
-        const closeBtn = modal.querySelector('.close');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const openApplicationModal = document.getElementById('openApplicationModal');
-        const absenceForm = document.getElementById('absenceForm');
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+    const modal = document.getElementById('editModal');
+    const closeBtn = modal.querySelector('.close');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const openApplicationModal = document.getElementById('openApplicationModal');
+    const absenceForm = document.getElementById('absenceForm');
 
-        // Notification Modal Elements
-        const successNotification = document.getElementById('successNotification');
-        const notificationText = document.getElementById('notification-text');
-        const closeNotificationBtn = document.getElementById('closeNotificationBtn');
+    // Notification Modal Elements
+    const successNotification = document.getElementById('successNotification');
+    const notificationText = document.getElementById('notification-text');
+    const closeNotificationBtn = document.getElementById('closeNotificationBtn');
 
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('expanded');
+    // ---------------- Sidebar toggle (teacher-dashboard simple) ----------------
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    });
+
+    if (window.innerWidth > 768 && sidebar.classList.contains('collapsed')) {
+        mainContent.classList.add('expanded');
+    }
+
+    // ---------------- Modals ----------------
+    function openModal() {
+        modal.classList.add('show');
+        absenceForm.reset();
+        absenceForm.action = "{{ url_for('student_absentapp') }}";
+        absenceForm.querySelector(".save-btn").textContent = "Send";
+    }
+    openApplicationModal.onclick = openModal;
+
+    function showSuccessNotification(message) {
+        notificationText.textContent = message;
+        successNotification.classList.add('show');
+    }
+
+    closeNotificationBtn.onclick = () => successNotification.classList.remove('show');
+    successNotification.style.pointerEvents = 'auto';
+
+    // ---------------- Edit/Delete Buttons ----------------
+    function attachEditButtons() {
+        document.querySelectorAll('.icon-btn.edit').forEach(btn => {
+            btn.onclick = () => {
+                modal.classList.add('show');
+                absenceForm.action = `/student/absentapp/edit/${btn.dataset.id}`;
+                absenceForm.querySelector("input[name='reason']").value = btn.dataset.reason;
+                absenceForm.querySelector("input[name='start_date']").value = btn.dataset.start;
+                absenceForm.querySelector("input[name='end_date']").value = btn.dataset.end;
+                absenceForm.querySelector(".save-btn").textContent = "Save Changes";
+            };
         });
 
-        if (window.innerWidth > 768 && sidebar.classList.contains('collapsed')) {
-            mainContent.classList.add('expanded');
-        }
+        const deleteModal = document.getElementById("deleteConfirmModal");
+        const closeDeleteModal = document.getElementById("closeDeleteModal");
+        const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+        const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+        let deleteForm = null;
 
-        function openModal() {
-            modal.classList.add('show');
-            absenceForm.reset();
-            absenceForm.action = "{{ url_for('student_absentapp') }}";
-            absenceForm.querySelector(".save-btn").textContent = "Send";
-        }
-        openApplicationModal.onclick = openModal;
-
-        // Function to show custom success notification
-        function showSuccessNotification(message) {
-            notificationText.textContent = message;
-            successNotification.classList.add('show');
-        }
-
-        // Close notification handler
-        closeNotificationBtn.onclick = () => successNotification.classList.remove('show');
-        successNotification.style.pointerEvents = 'auto'; 
-
-        function attachEditButtons() {
-            // Handle edit buttons
-            document.querySelectorAll('.icon-btn.edit').forEach(btn => {
-                btn.onclick = () => {
-                    modal.classList.add('show');
-                    absenceForm.action = `/student/absentapp/edit/${btn.dataset.id}`;
-                    absenceForm.querySelector("input[name='reason']").value = btn.dataset.reason;
-                    absenceForm.querySelector("input[name='start_date']").value = btn.dataset.start;
-                    absenceForm.querySelector("input[name='end_date']").value = btn.dataset.end;
-                    absenceForm.querySelector(".save-btn").textContent = "Save Changes";
-                };
-            });
-
-            // Custom Delete Confirmation Modal
-            const deleteModal = document.getElementById("deleteConfirmModal");
-            const closeDeleteModal = document.getElementById("closeDeleteModal");
-            const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
-            const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
-            let deleteForm = null;
-
-            // Handle delete buttons
-            document.querySelectorAll('.icon-btn.delete').forEach(btn => {
-                btn.onclick = (e) => {
-                    e.preventDefault();
-                    deleteForm = btn.closest('form');
-                    deleteModal.classList.add("show");
-                };
-            });
-
-            // Modal buttons behavior
-            closeDeleteModal.onclick = cancelDeleteBtn.onclick = () => {
-                deleteModal.classList.remove("show");
-                deleteForm = null;
+        document.querySelectorAll('.icon-btn.delete').forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                deleteForm = btn.closest('form');
+                deleteModal.classList.add("show");
             };
+        });
 
-            confirmDeleteBtn.onclick = () => {
-                if (deleteForm) {
-                    // Temporarily replace alert with custom notification for a successful delete (optional)
-                    const deleteActionURL = deleteForm.action;
-                    fetch(deleteActionURL, { method: 'POST' })
-                        .then(response => {
-                            if (response.ok) {
-                                deleteModal.classList.remove("show");
-                                fetchRecordsAndRender(true, "Absence record deleted successfully!");
-                            } else {
-                                alert("Failed to delete application.");
-                            }
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            alert("Error deleting the form.");
-                        });
-                }
-            };
-        }
-        attachEditButtons();
+        closeDeleteModal.onclick = cancelDeleteBtn.onclick = () => {
+            deleteModal.classList.remove("show");
+            deleteForm = null;
+        };
 
-        closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
-
-        function formatDate(d) {
-            const dt = new Date(d);
-            const day = String(dt.getDate()).padStart(2, '0');
-            const month = String(dt.getMonth() + 1).padStart(2, '0');
-            const year = dt.getFullYear();
-            return `${day}/${month}/${year}`;
-        }
-
-        function renderFileCell(rec) {
-            if (!rec.file_data)
-                return '<span class="text-gray-400 italic">No file</span>';
-
-            return `<a href='/student/absentapp/file/${rec.id}' target='_blank' class='view-btn' title='${rec.file_name || ''}'>
-    <i class='fas fa-eye'></i> View</a>`;
-        }
-
-        // Fetch records and render, with an optional success notification
-        async function fetchRecordsAndRender(showSuccess, successMessage = "") {
-            try {
-                const response = await fetch("{{ url_for('student_absentapp') }}?fetch=1");
-                const data = await response.json();
-                renderTableRows(data.records);
-
-                if (showSuccess) {
-                    showSuccessNotification(successMessage); // Use custom notification
-                }
-            } catch (err) {
-                console.error("Error fetching records:", err);
+        confirmDeleteBtn.onclick = () => {
+            if (deleteForm) {
+                fetch(deleteForm.action, { method: 'POST' })
+                    .then(response => {
+                        if (response.ok) {
+                            deleteModal.classList.remove("show");
+                            fetchRecordsAndRender(true, "Absence record deleted successfully!");
+                        } else {
+                            alert("Failed to delete application.");
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert("Error deleting the form.");
+                    });
             }
-        }
+        };
+    }
+    attachEditButtons();
 
-        // UPDATED: JavaScript row generation to match new table format
-        function renderTableRows(records) {
-            const tbody = document.getElementById('recordsBody');
-            tbody.innerHTML = '';
-            records.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
-            if (records.length > 0) {
-                records.forEach((rec, index) => {
-                    const tr = document.createElement('tr');
-                    const statusClass = (rec.status || '').toLowerCase().replace(' ', '-');
-                    tr.innerHTML = `
+    closeBtn.onclick = cancelBtn.onclick = () => modal.classList.remove('show');
+
+    // ---------------- Table/Records ----------------
+    function formatDate(d) {
+        const dt = new Date(d);
+        const day = String(dt.getDate()).padStart(2, '0');
+        const month = String(dt.getMonth() + 1).padStart(2, '0');
+        const year = dt.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
+    function renderFileCell(rec) {
+        if (!rec.file_data)
+            return '<span class="text-gray-400 italic">No file</span>';
+
+        return `<a href='/student/absentapp/file/${rec.id}' target='_blank' class='view-btn' title='${rec.file_name || ''}'>
+    <i class='fas fa-eye'></i> View</a>`;
+    }
+
+    async function fetchRecordsAndRender(showSuccess, successMessage = "") {
+        try {
+            const response = await fetch("{{ url_for('student_absentapp') }}?fetch=1");
+            const data = await response.json();
+            renderTableRows(data.records);
+
+            if (showSuccess) showSuccessNotification(successMessage);
+        } catch (err) {
+            console.error("Error fetching records:", err);
+        }
+    }
+
+    function renderTableRows(records) {
+        const tbody = document.getElementById('recordsBody');
+        tbody.innerHTML = '';
+        records.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+        if (records.length > 0) {
+            records.forEach((rec, index) => {
+                const tr = document.createElement('tr');
+                const statusClass = (rec.status || '').toLowerCase().replace(' ', '-');
+                tr.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${rec.reason}</td>
                     <td>${formatDate(rec.start_date)}</td>
@@ -392,61 +400,53 @@ td.status-in-progress { color: #4154F1; font-weight: 600; }
                         <form method='POST' action='/student/absentapp/delete/${rec.id}' style='display:inline;'><button type='submit' class='icon-btn delete'><i class='fas fa-trash'></i></button></form>
                     </td>
                 `;
-                    tbody.appendChild(tr);
-                });
-                attachEditButtons();
-            } else {
-                tbody.innerHTML = `<tr><td colspan='8'>No absence records found.</td></tr>`;
-            }
+                tbody.appendChild(tr);
+            });
+            attachEditButtons();
+        } else {
+            tbody.innerHTML = `<tr><td colspan='8'>No absence records found.</td></tr>`;
         }
+    }
 
-        absenceForm.onsubmit = async function (e) {
-            e.preventDefault();
-            const formData = new FormData(absenceForm);
-            const actionURL = absenceForm.action;
-            const saveBtn = absenceForm.querySelector(".save-btn");
+    // ---------------- Absence Form ----------------
+    absenceForm.onsubmit = async function (e) {
+        e.preventDefault();
+        const formData = new FormData(absenceForm);
+        const actionURL = absenceForm.action;
+        const saveBtn = absenceForm.querySelector(".save-btn");
+        saveBtn.disabled = true;
 
-
-            saveBtn.disabled = true;
-
-
-            try {
-                const response = await fetch(actionURL, { method: "POST", body: formData });
-                if (response.ok) {
-                    modal.classList.remove("show");
-                    absenceForm.reset();
-
-
-
-                    const successMessage = actionURL.includes('/edit/') ? "Absence record updated successfully!" : "Absence application sent successfully!";
-
-                    // REPLACED: alert(successMessage);
-                    await fetchRecordsAndRender(true, successMessage); // Fetch records and show custom notification
-
-                } else {
-                    alert("Failed to submit application.");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Error submitting the form.");
-            } finally {
-                saveBtn.disabled = false;
-
+        try {
+            const response = await fetch(actionURL, { method: "POST", body: formData });
+            if (response.ok) {
+                modal.classList.remove("show");
+                absenceForm.reset();
+                const successMessage = actionURL.includes('/edit/') ? "Absence record updated successfully!" : "Absence application sent successfully!";
+                await fetchRecordsAndRender(true, successMessage);
+            } else {
+                alert("Failed to submit application.");
             }
-        };
+        } catch (err) {
+            console.error(err);
+            alert("Error submitting the form.");
+        } finally {
+            saveBtn.disabled = false;
+        }
+    };
 
-        setInterval(async () => {
-            const data = await fetch("{{ url_for('student_absentapp') }}?fetch=1").then(res => res.json());
-            renderTableRows(data.records);
-        }, 10000);
+    // ---------------- Auto-refresh ----------------
+    setInterval(async () => {
+        const data = await fetch("{{ url_for('student_absentapp') }}?fetch=1").then(res => res.json());
+        renderTableRows(data.records);
+    }, 10000);
 
-        // Close modals when clicking outside
-        window.onclick = (event) => {
-            if (event.target === modal) modal.classList.remove("show");
-            if (event.target === document.getElementById("deleteConfirmModal")) document.getElementById("deleteConfirmModal").classList.remove("show");
-            if (event.target === successNotification) successNotification.classList.remove("show"); // New handler
-        };
-    </script>
+    // ---------------- Close modals on outside click ----------------
+    window.onclick = (event) => {
+        if (event.target === modal) modal.classList.remove("show");
+        if (event.target === document.getElementById("deleteConfirmModal")) document.getElementById("deleteConfirmModal").classList.remove("show");
+        if (event.target === successNotification) successNotification.classList.remove("show");
+    };
+</script>
 </body>
 
 </html>
