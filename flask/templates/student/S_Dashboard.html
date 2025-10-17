@@ -9,7 +9,6 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-
 <style>
 /* Main Content */
 .main-content { margin-left:260px; padding:100px 30px 30px; min-height:100vh; overflow-y:auto; transition:margin-left 0.3s ease; }
@@ -58,8 +57,24 @@
 .today-attendance-card:hover { transform:translateY(-5px); box-shadow:0 20px 40px rgba(0,0,0,0.1); }
 .today-attendance-info { display:flex; flex-direction:column; gap:8px; }
 .today-attendance-title { font-size:1.2rem; font-weight:600; color:#333; margin-bottom:5px; }
-.today-attendance-module { font-size:14px; color:#666; }
-.today-attendance-status { font-weight:600; color:#4154F1; }
+.today-attendance-status { font-weight:600; font-size:1.2rem; }
+
+.icon-circle-enhanced { 
+  width:60px; 
+  height:60px; 
+  border-radius:50%; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+  font-size:28px; 
+  color:white; 
+  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+}
+.icon-circle-enhanced:hover {
+  transform: scale(1.1);
+  box-shadow:0 6px 20px rgba(0,0,0,0.25);
+}
 
 /* Overall Attendance Big Card */
 .overall-attendance-card { display:flex; flex-direction:column; justify-content:center; align-items:center; height:200px; padding:20px; border-radius:15px; background:#fff; box-shadow:0 15px 25px rgba(0,0,0,0.05); transition: transform 0.3s, box-shadow 0.3s; }
@@ -90,7 +105,6 @@
     </a>
   </div>
 </header>
-
 
 <div class="sidebar">
   <div class="sidebar-section">
@@ -155,32 +169,37 @@
   </div>
 
   <!-- Today's Attendance + Notifications + Overall Attendance (right) -->
-  <div class="grid-container" style="grid-template-columns:3fr 2fr; gap:1.5rem; margin-bottom:25px;">
-    <div style="display:flex; flex-direction:column; gap:1.5rem;">
-      <!-- Today's Attendance -->
-      <div class="today-attendance-card">
-        <div class="today-attendance-info">
-          <div class="today-attendance-title">Today's Class</div>
-          {% if today_classes %}
-            {% for cls in today_classes %}
-              <div class="today-attendance-module">{{ cls.module }}</div>
-              <div class="today-attendance-status" style="color: 
-                {% if cls.status == 'Present' %}#28a745
-                {% elif cls.status == 'Late' %}#ffc107
-                {% elif cls.status == 'Absent' %}#dc3545
-                {% else %}#6c757d{% endif %};">
-                {{ cls.status }}
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="today-attendance-module">No Class Today</div>
-            <div class="today-attendance-status">-</div>
-          {% endif %}
-        </div>
-        <div class="icon-circle" style="background-color: {{ status_color or '#4154F1' }};">
-          <i class="{{ status_icon or 'fas fa-info' }}"></i>
-        </div>
+<div class="grid-container" style="grid-template-columns:3fr 2fr; gap:1.5rem; margin-bottom:25px;">
+  <div style="display:flex; flex-direction:column; gap:1.5rem;">
+    <!-- Today's Attendance -->
+    <div class="today-attendance-card">
+      <div class="today-attendance-info">
+        <div class="today-attendance-title">Today's Attendance</div>
+        {% if today_status and today_status != '-' %}
+          <div class="today-attendance-status" style="color:
+            {% if today_status == 'Present' %}#28a745
+            {% elif today_status == 'Late' %}#ffc107
+            {% elif today_status == 'Absent' %}#dc3545
+            {% else %}#6c757d{% endif %};">
+            {{ today_status }}
+          </div>
+        {% else %}
+          <div class="today-attendance-status" style="color:#6c757d;">Not Marked</div>
+        {% endif %}
       </div>
+
+      <!-- Enhanced Icon -->
+      <div class="icon-circle-enhanced" style="background:
+        {% if today_status == 'Present' %}linear-gradient(135deg, #28a745, #00c853)
+        {% elif today_status == 'Late' %}linear-gradient(135deg, #ffc107, #ffeb3b)
+        {% elif today_status == 'Absent' %}linear-gradient(135deg, #dc3545, #ff5252)
+        {% else %}linear-gradient(135deg, #6c757d, #a0a0a0){% endif %};">
+        <i class="{% if today_status == 'Present' %}fas fa-smile
+                   {% elif today_status == 'Late' %}fas fa-clock
+                   {% elif today_status == 'Absent' %}fas fa-frown
+                   {% else %}fas fa-question{% endif %}"></i>
+      </div>
+    </div>
 
       <!-- Notifications -->
       <div class="notification-card">
@@ -219,8 +238,6 @@ document.getElementById('menu-toggle').addEventListener('click', () => {
   document.querySelector('.main-content').classList.toggle('expanded');
 });
 </script>
-
-
 
 </body>
 </html>

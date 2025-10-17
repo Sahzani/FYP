@@ -301,16 +301,13 @@ def student_dashboard():
     user_doc = db.collection("users").document(uid).get()
     full_name = "Student"
     profile_pic_url = "uploads/default_student.png"
-
     fk_group = None
+
     if user_doc.exists:
         user_data = user_doc.to_dict()
-        # Full name
         full_name = user_data.get("name") or " ".join(filter(None, [user_data.get("first_name"), user_data.get("last_name")])) or "Student"
-        # Profile pic
         profile_pic_url = user_data.get("photo_url") or profile_pic_url
 
-        # Get student group from roles
         role_doc = db.collection("users").document(uid).collection("roles").document("student").get()
         if role_doc.exists:
             fk_group = role_doc.to_dict().get("fk_groupcode")
@@ -321,7 +318,7 @@ def student_dashboard():
     streak = temp_streak = 0
     today_str = datetime.now().strftime("%Y-%m-%d")
     current_month = datetime.now().strftime("%Y-%m")
-    today_classes = []  # List of today's modules & statuses
+    today_classes = []
 
     # -------- Fetch schedules for this student --------
     if fk_group:
@@ -331,7 +328,6 @@ def student_dashboard():
             schedule_id = sched_doc.id
             module_id = sched.get("fk_module")
 
-            # Loop through all date subcollections
             date_collections = db.collection("attendance").document(schedule_id).collections()
             for date_col in date_collections:
                 date_str = date_col.id
@@ -342,7 +338,6 @@ def student_dashboard():
                 data = student_doc.to_dict()
                 status = data.get("status", "Not Marked Yet").capitalize()
 
-                # Count overall stats
                 if status == "Present":
                     present += 1
                     temp_streak += 1
@@ -355,31 +350,50 @@ def student_dashboard():
 
                 streak = max(streak, temp_streak)
 
-                # Count monthly stats
                 if date_str.startswith(current_month):
                     monthly_total += 1
                     if status == "Present":
                         monthly_present += 1
 
-                # Today's classes
                 if date_str == today_str:
-                    # Fetch module name
                     module_doc = db.collection("mlmodule").document(module_id).get()
                     module_name = module_doc.to_dict().get("moduleName") if module_doc.exists else "Unknown Module"
                     today_classes.append({"module": module_name, "status": status})
 
-    # Overall monthly attendance %
     overall_attendance = round((monthly_present / monthly_total * 100) if monthly_total else 0, 1)
 
-    # Notifications
-    if late >= 3:
-        notification = "You have been late more than 3 times!"
-    elif absent >= 3:
-        notification = "Your attendance rate is dropped due to 3 unexcused absences this month."
-    else:
-        notification = "No new notifications."
+    # -------- Fetch absence records (avoid Firestore index errors) --------
+    absence_docs = db.collection("absenceRecords").where("studentID", "==", uid).stream()
+    absence_list = [doc.to_dict() for doc in absence_docs]
+    absence_list.sort(key=lambda x: x.get("submitted_at", ""), reverse=True)  # Sort in Python
 
-    # Today’s class (show first class if multiple, else fallback)
+    # -------- Generate notifications (soft warnings) --------
+    notifications = []
+
+    for absence in absence_list:
+        status = absence.get("status", "").capitalize()
+        reason = absence.get("reason", "No reason provided")
+        start_date = absence.get("start_date", "")
+        end_date = absence.get("end_date", "")
+
+        if status == "Approved":
+            notifications.append(f"Your absence ({reason}) from {start_date} to {end_date} has been approved.")
+        elif status == "Rejected":
+            notifications.append(f"Your absence ({reason}) from {start_date} to {end_date} has been rejected.")
+        elif status == "Pending":
+            notifications.append(f"Your absence ({reason}) from {start_date} to {end_date} is still pending.")
+
+    # Attendance reminders (soft warnings)
+    if absent >= 3:
+        notifications.append("Reminder: You may receive a warning if you have 3 unexcused absences.")
+    if late >= 3:
+        notifications.append("Reminder: 3 late attendances count as 1 absence. Keep track to avoid warnings.")
+    if overall_attendance < 75:
+        notifications.append("Reminder: Your attendance is below 75%. You may receive a warning if it stays low.")
+
+    notification_message = " | ".join(notifications) if notifications else "No new notifications."
+
+    # Today’s class
     if today_classes:
         today_module = today_classes[0]["module"]
         today_status = today_classes[0]["status"]
@@ -387,7 +401,6 @@ def student_dashboard():
         today_module = "No Class Today"
         today_status = "-"
 
-    # Status color & icon
     status_color = "#6c757d"
     status_icon = "fas fa-circle"
     if today_status == "Present":
@@ -409,7 +422,7 @@ def student_dashboard():
         stats_late=late,
         attendance_streak=streak,
         overall_attendance=overall_attendance,
-        notification_message=notification,
+        notification_message=notification_message,
         today_status=today_status,
         today_module=today_module,
         status_color=status_color,
