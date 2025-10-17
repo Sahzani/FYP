@@ -3545,7 +3545,7 @@ def admin_schedules():
     if session.get("role") != "admin":
         return redirect(url_for("home"))
 
-    # Get current admin from session (assuming you store user data there)
+    # Get current admin from session
     current_admin = {
         "firstName": session.get("firstName", ""),
         "lastName": session.get("lastName", "")
@@ -3555,7 +3555,7 @@ def admin_schedules():
     programs = {p.id: {**p.to_dict(), "docId": p.id} for p in db.collection("programs").stream()}
     groups = {g.id: {**g.to_dict(), "docId": g.id} for g in db.collection("groups").stream()}
     
-    # Fetch teachers (users with role_type == 2)
+    # Fetch teachers
     teachers_docs = db.collection("users").where("role_type", "==", 2).stream()
     teachers = []
     for doc in teachers_docs:
@@ -3565,17 +3565,17 @@ def admin_schedules():
         teachers.append(t)
     teachers.sort(key=lambda t: t.get("fullName", "").lower())
 
-    # Fetch mlmodule records (teacher-module-group assignments)
+    # Fetch mlmodule records
     mlmodules = []
     for doc in db.collection("mlmodule").stream():
         ml = doc.to_dict()
         ml["docId"] = doc.id
         mlmodules.append(ml)
 
-    # Build teacher assignments mapping
+    # Build teacher assignments mapping (same as before)
     teacher_assignments = {}
     for ml in mlmodules:
-        fk_teacher = ml.get("fk_teacher") or ml.get("teacherID")  # Handle both field names
+        fk_teacher = ml.get("fk_teacher") or ml.get("teacherID")
         if not fk_teacher:
             continue
 
@@ -3587,10 +3587,8 @@ def admin_schedules():
                 "modules": []
             }
 
-        # Get group info to find program
         group_code = ml.get("group_code")
         if group_code:
-            # Find group by groupCode (not by ID, since mlmodule stores group_code as string)
             group = None
             for g_id, g_data in groups.items():
                 if g_data.get("groupCode") == group_code:
@@ -3603,14 +3601,12 @@ def admin_schedules():
                     teacher_assignments[fk_teacher]["program_id"] = fk_program
                     teacher_assignments[fk_teacher]["program_name"] = programs[fk_program].get("programName", "")
                 
-                # Add group to assignments
                 if not any(g["id"] == group["docId"] for g in teacher_assignments[fk_teacher]["groups"]):
                     teacher_assignments[fk_teacher]["groups"].append({
                         "id": group["docId"], 
                         "name": group["groupCode"]
                     })
 
-        # Add module to assignments
         module_name = ml.get("moduleName")
         if module_name and not any(m["id"] == ml["docId"] for m in teacher_assignments[fk_teacher]["modules"]):
             teacher_assignments[fk_teacher]["modules"].append({
@@ -3618,17 +3614,21 @@ def admin_schedules():
                 "name": module_name
             })
 
-    # Fetch schedules
+    # Fetch schedules — PRESERVE RAW FOREIGN KEYS
     schedules = []
     for doc in db.collection("schedules").stream():
         s = doc.to_dict()
         s["docId"] = doc.id
 
-        # Get teacher name
+        # Preserve raw foreign keys (CRITICAL FOR TIMETABLE)
+        s["fk_teacher"] = s.get("fk_teacher")  # Keep as-is
+        s["fk_module"] = s.get("fk_module")    # Keep as-is
+        s["fk_group"] = s.get("fk_group")      # Keep as-is
+
+        # Add display names (for List View)
         teacher = next((t for t in teachers if t["docId"] == s.get("fk_teacher")), None)
         s["teacher_name"] = teacher.get("fullName", "") if teacher else ""
 
-        # Get module and group info from mlmodule
         mlmodule = next((ml for ml in mlmodules if ml["docId"] == s.get("fk_module")), None)
         if mlmodule:
             s["module_name"] = mlmodule.get("moduleName", "")
@@ -3637,10 +3637,8 @@ def admin_schedules():
             s["module_name"] = ""
             s["group_name"] = ""
 
-        # Get program name
         s["program_name"] = ""
         if s.get("group_name"):
-            # Find group by groupCode
             group = None
             for g_data in groups.values():
                 if g_data.get("groupCode") == s["group_name"]:
@@ -3653,7 +3651,12 @@ def admin_schedules():
 
         schedules.append(s)
 
-    # Prepare groups list for dropdown (all groups)
+    # Handle teacher selection for timetable
+    teacher_id = request.args.get('teacher_id')
+    selected_teacher = None
+    if teacher_id:
+        selected_teacher = next((t for t in teachers if t["docId"] == teacher_id), None)
+
     groups_list = list(groups.values())
     
     return render_template(
@@ -3664,7 +3667,8 @@ def admin_schedules():
         schedules=schedules,
         teacher_assignments=teacher_assignments,
         mlmodules=mlmodules,
-        current_admin=current_admin 
+        current_admin=current_admin,
+        selected_teacher=selected_teacher  # Pass selected teacher
     )
 
 # ------------------ Save/Add/Edit Schedule ------------------

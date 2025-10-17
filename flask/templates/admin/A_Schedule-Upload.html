@@ -484,22 +484,36 @@
     </div>
   </div>
 
-  <!-- Timetable View -->
-  <div id="timetable" class="tab-content" style="display:none;">
-    <div class="card">
-      <h3>Select Teacher</h3>
-      <form method="GET" action="{{ url_for('admin_schedules') }}">
-        <select name="teacher_id" onchange="this.form.submit()">
-          <option value="">-- Choose Teacher --</option>
-          {% for t in teachers %}
-            <option value="{{ t.docId }}" {% if selected_teacher and selected_teacher.docId == t.docId %}selected{% endif %}>
-              {{ t.firstName }} {{ t.lastName }}
-            </option>
-          {% endfor %}
-        </select>
-      </form>
+ <!-- Timetable View -->
+<div id="timetable" class="tab-content" style="display:none;">
+  <div class="card">
+    <h3>Select Teacher</h3>
+    <form method="GET" action="{{ url_for('admin_schedules') }}">
+      <!-- Preserve the 'view=timetable' in the form -->
+      <input type="hidden" name="view" value="timetable">
+      <select name="teacher_id" onchange="this.form.submit()">
+        <option value="">-- Choose Teacher --</option>
+        {% for t in teachers %}
+          <option value="{{ t.docId }}" {% if selected_teacher and selected_teacher.docId == t.docId %}selected{% endif %}>
+            {{ t.firstName }} {{ t.lastName }}
+          </option>
+        {% endfor %}
+      </select>
+    </form>
 
-      {% if selected_teacher %}
+    {% if selected_teacher %}
+      {% set teacher_schedules = schedules | selectattr("fk_teacher", "equalto", selected_teacher.docId) | list %}
+      
+      {% if teacher_schedules %}
+        <!-- Dynamically generate time slots -->
+        {% set time_slots = [] %}
+        {% for s in teacher_schedules %}
+          {% if s.start_time not in time_slots %}
+            {% set _ = time_slots.append(s.start_time) %}
+          {% endif %}
+        {% endfor %}
+        {% set time_slots = time_slots | sort %}
+
         <table class="timetable">
           <thead>
             <tr>
@@ -512,23 +526,21 @@
             </tr>
           </thead>
           <tbody>
-            {% set timeslots = ["08:00","10:00","12:00","14:00","16:00"] %}
-            {% for t in timeslots %}
+            {% for time in time_slots %}
             <tr>
-              <td>{{ t }}</td>
-              {% for day in ["Monday","Tuesday","Wednesday","Thursday","Friday"] %}
-                {% set slot = schedules 
-                               | selectattr("fk_teacher","equalto",selected_teacher.docId)
-                               | selectattr("day","equalto",day)
-                               | selectattr("start_time","equalto",t)
-                               | list %}
+              <td>{{ time }}</td>
+              {% for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] %}
                 <td>
-                  {% for s in slot %}
-                    {% set m = mlmodules | selectattr("docId","equalto",s.fk_module) | list %}
-                    {% set g = groups  | selectattr("docId","equalto",s.fk_group)  | list %}
+                  {% set day_schedules = teacher_schedules 
+                                         | selectattr("day", "equalto", day)
+                                         | selectattr("start_time", "equalto", time)
+                                         | list %}
+                  {% for s in day_schedules %}
+                    {% set m = mlmodules | selectattr("docId", "equalto", s.fk_module) | list %}
+                    {% set g = groups | selectattr("docId", "equalto", s.fk_group) | list %}
                     <div class="class-box">
-                      <strong>{{ m[0].moduleName if m else '' }}</strong><br>
-                      {{ g[0].groupCode if g else '' }}<br>
+                      <strong>{{ m[0].moduleName if m else 'N/A' }}</strong><br>
+                      {{ g[0].groupCode if g else 'N/A' }}<br>
                       Room {{ s.room }}
                     </div>
                   {% endfor %}
@@ -539,9 +551,11 @@
           </tbody>
         </table>
       {% else %}
-        <p>Please select a teacher to view the timetable.</p>
+        <p class="text-gray-500 text-center py-4">No schedules found for this teacher.</p>
       {% endif %}
-    </div>
+    {% else %}
+      <p class="text-gray-500 text-center py-4">Please select a teacher to view the timetable.</p>
+    {% endif %}
   </div>
 </div>
 
@@ -567,13 +581,34 @@ document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
 
 // Tab switching
 function switchTab(tabName) {
+  const url = new URL(window.location);
+  url.searchParams.set('view', tabName);
+  window.history.replaceState({}, '', url);
+
   document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
   event.target.classList.add('active');
   document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
   document.getElementById(tabName).style.display = 'block';
 }
 
-// Teacher assignment logic (keep as-is)
+// Restore tab on page load
+document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const view = urlParams.get('view') || 'list';
+
+  // Activate correct tab UI
+  document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+  const tabElements = Array.from(document.querySelectorAll('.tab'));
+  const targetTab = tabElements.find(tab => tab.textContent.trim().toLowerCase().includes(view));
+  if (targetTab) targetTab.classList.add('active');
+
+  // Show correct content
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  const content = document.getElementById(view);
+  if (content) content.style.display = 'block';
+});
+
+// Teacher assignment logic
 const teacherSelect = document.getElementById('fk_teacher');
 const programNameInput = document.getElementById('fk_program_name');
 const programHiddenInput = document.getElementById('fk_program');
