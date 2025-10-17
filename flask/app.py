@@ -1787,7 +1787,6 @@ def teacher_modules():
 # ------------------ Teacher views attendance for a module/group ------------------
 @app.route("/studattendance")
 def studattendance():
-    # ------------------ Access control ------------------
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
@@ -1808,12 +1807,7 @@ def studattendance():
         last_name = data.get("lastName", "")
         role_doc = db.collection("users").document(teacher_id).collection("roles").document("teacher").get()
         is_gc = role_doc.to_dict().get("isCoordinator", False) if role_doc.exists else False
-
-        # Ensure photo_name always has a valid value
-        photo_name = data.get("photo_name")
-        if not photo_name or photo_name in ["None", None, ""]:
-            photo_name = "uploads/default_teacher.png"
-
+        photo_name = data.get("photo_name") or "uploads/default_teacher.png"
         profile = {
             "firstName": first_name,
             "lastName": last_name,
@@ -1834,6 +1828,7 @@ def studattendance():
     group_id = request.args.get("group_id")
     schedule_id = request.args.get("schedule_id")
     selected_date = request.args.get("date") or datetime.today().strftime("%Y-%m-%d")
+    selected_dt = datetime.strptime(selected_date, "%Y-%m-%d").date()
 
     if not (module_id and group_id and schedule_id):
         return redirect(url_for("teacher_modules"))
@@ -1842,10 +1837,25 @@ def studattendance():
     schedule_doc = db.collection("schedules").document(schedule_id).get()
     schedule = schedule_doc.to_dict() if schedule_doc.exists else {}
 
+    # ------------------ Get group code string ------------------
+    group_doc = db.collection("groups").document(group_id).get()
+    group_code_name = group_doc.to_dict().get("groupCode") if group_doc.exists else ""
+
     # ------------------ Fetch students in the group ------------------
     students_ref = db.collection("users").where("role_type", "==", 1).stream()
     attendance_records = []
-    status_counter = Counter()
+
+    # Initialize all status counts
+    status_counter = {
+        "Present": 0,
+        "Absent": 0,
+        "Late": 0,
+        "Not Marked": 0,
+        "Pending": 0,
+        "Approved Absence": 0,
+        "Rejected Absence": 0
+    }
+
     notifications = []
 
     # Fetch all dates for this schedule to count absences
@@ -1859,19 +1869,76 @@ def studattendance():
         if fk_groupcode != group_id:
             continue
 
-        # Fetch attendance for selected date
-        att_doc = db.collection("attendance").document(schedule_id).collection(selected_date).document(stu_id).get()
-        status = att_doc.to_dict().get("status") if att_doc.exists else "Not Marked"
+        # Default values
+        status = "Not Marked"
+        remarks = "-"
+
+        # Attendance for selected date
+        att_ref = db.collection("attendance").document(schedule_id).collection(selected_date).document(stu_id)
+        att_doc = att_ref.get()
+        if att_doc.exists:
+            att_data = att_doc.to_dict()
+            status = att_data.get("status", "Not Marked")
+            remarks = att_data.get("remarks", "-")
+
+        # ------------------ Pull absence status if student has absence for this date ------------------
+        abs_query = db.collection("absenceRecords")\
+            .where("student_id", "==", stu_id)\
+            .where("group_code", "==", group_code_name).stream()
+
+        for doc in abs_query:
+            abs_data = doc.to_dict()
+            start_date_str = abs_data.get("start_date")
+            end_date_str = abs_data.get("end_date") or start_date_str
+
+            if start_date_str and end_date_str:
+                start_date_obj = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+                end_date_obj = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+
+                # Check if selected date falls within absence period
+                if start_date_obj <= selected_dt <= end_date_obj:
+                    abs_status = abs_data.get("status", "")
+                    reason_text = abs_data.get("reason", "-")
+
+                    if abs_status == "In Progress":
+                        remarks = f"Permission Pending: {reason_text}"
+                        status_counter["Pending"] += 1
+                        # Status stays as is
+                    elif abs_status == "Approved":
+                        remarks = f"Approved Absence: {reason_text}"
+                        status = "Present"
+                        status_counter["Approved Absence"] += 1
+                        att_ref.set({
+                            "status": "Present",
+                            "remarks": remarks
+                        }, merge=True)
+                    elif abs_status == "Rejected":
+                        remarks = f"Rejected Absence: {reason_text}"
+                        status = "Absent"
+                        status_counter["Rejected Absence"] += 1
+                        att_ref.set({
+                            "status": "Absent",
+                            "remarks": remarks
+                        }, merge=True)
+                    else:
+                        remarks = reason_text or "-"
+                    break  # Only first matching absence
+
+        display_status = status
         attendance_records.append({
             "student_id": stu_id,
             "student_name": stu.get("name", "Student"),
-            "status": status
+            "status": display_status,
+            "remarks": remarks
         })
-        status_counter[status] += 1
 
-        # Count total absences across all dates
+        # Count status only if not permission-related
+        if display_status in ["Present", "Absent", "Late", "Not Marked"]:
+            status_counter[display_status] += 1
+
+        # Count total absences for notifications
         absent_count = sum(
-            1 for d in all_att_docs 
+            1 for d in all_att_docs
             if (doc := d.document(stu_id).get()).exists and doc.to_dict().get("status") == "Absent"
         )
         if absent_count >= 3:
@@ -1886,9 +1953,10 @@ def studattendance():
         module_id=module_id,
         group_id=group_id,
         schedule_id=schedule_id,
-        status_counts=status_counter, 
+        status_counts=status_counter,
         notifications=notifications
     )
+
 
 # ------------------ Teacher updates attendance for a student ------------------
 @app.route("/update_attendance", methods=["POST"])
@@ -1902,42 +1970,41 @@ def update_attendance():
     group_id = request.form.get("group_id")
     date = request.form.get("date")
     status = request.form.get("status")
+    remarks = request.form.get("remarks", "")
 
     if not all([student_id, schedule_id, module_id, group_id, date, status]):
-
         return redirect(url_for("studattendance", module_id=module_id, group_id=group_id, schedule_id=schedule_id, date=date))
 
     # ------------------ Fetch student info ------------------
     stu_doc = db.collection("users").document(student_id).get()
     stu_data = stu_doc.to_dict() if stu_doc.exists else {}
-
     student_name = stu_data.get("name", "Student")
 
-    # ------------------ Fetch program from roles/student subcollection ------------------
+    # ------------------ Fetch program ------------------
     role_doc = db.collection("users").document(student_id).collection("roles").document("student").get()
     program_id = role_doc.to_dict().get("program") if role_doc.exists else None
-
-    # ------------------ Fetch program name from programs collection ------------------
     program_name = "Unknown Program"
     if program_id:
         prog_doc = db.collection("programs").document(program_id).get()
         if prog_doc.exists:
             program_name = prog_doc.to_dict().get("programName", "Unknown Program")
 
-    # ------------------ Prepare attendance data ------------------
+    # ------------------ Attendance data ------------------
     attendance_data = {
         "student_name": student_name,
         "group": group_id,
         "program": program_name,
         "status": status,
+        "remarks": remarks,  # now saves remarks
         "timestamp": datetime.now()
     }
 
-    # ------------------ Update attendance in Firestore ------------------
+    # ------------------ Update attendance ------------------
     att_ref = db.collection("attendance").document(schedule_id).collection(date).document(student_id)
     att_ref.set(attendance_data, merge=True)
 
     return redirect(url_for("studattendance", module_id=module_id, group_id=group_id, schedule_id=schedule_id, date=date))
+
 
 # ------------------ Teacher Mark Present via API (for face detection) ------------------
 @app.route("/teacher/mark_present", methods=["POST"])
