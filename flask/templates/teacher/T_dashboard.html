@@ -10,108 +10,6 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
   <style>
-    /* Reset & Body */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(180deg, #f7ecd7 0%, #f8f1e5 35%, #fbfaf7 100%);
-      overflow-x: hidden;
-    }
-
-    /* Header */
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: #fff;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      z-index: 1000;
-    }
-    #menu-toggle {
-      font-size: 28px;
-      margin-right: 15px;
-      cursor: pointer;
-      transition: color 0.3s;
-    }
-    #menu-toggle:hover { color: #4154F1; }
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-    }
-    .header-content a.title {
-      text-decoration: none;
-      color: #444;
-      font-weight: 700;
-      font-size: 26px;
-    }
-    header a.user-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: #444;
-      font-weight: 600;
-    }
-    header a.user-info img {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      position: fixed;
-      top: 60px;
-      left: 0;
-      width: 250px;
-      height: calc(100% - 60px);
-      background: #f8f1e5;
-      padding: 15px 0;
-      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.08);
-      border-top-right-radius: 12px;
-      transition: all 0.3s ease;
-      overflow-y: auto;
-      z-index: 999;
-    }
-    .sidebar-section { margin-bottom: 25px; padding: 0 15px; }
-    .sidebar-section-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #6b7280;
-      margin-bottom: 10px;
-      padding-left: 10px;
-    }
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 15px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 500;
-      color: #2C2C2C;
-      text-decoration: none;
-      transition: all 0.25s ease;
-      white-space: nowrap;
-    }
-    .sidebar-link i { width: 18px; text-align: center; }
-    .sidebar-link.active, .sidebar-link:hover {
-      background: #eadbbf;
-      color: #1F2937;
-      font-weight: 600;
-    }
-
     /* Main Content */
     .main-content {
       margin-left: 260px;
@@ -133,27 +31,47 @@
       color: #444;
       margin-bottom: 30px;
     }
-    #teacher-name { color: #4154F1; }
+    #teacher-name {
+      color: #4154F1;
+    }
 
-    /* Unified Card Style */
+    /* Cards */
     .card {
       background: #fff;
       padding: 22px;
       border-radius: 15px;
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.05);
       margin-bottom: 25px;
       transition: transform 0.3s, box-shadow 0.3s;
     }
     .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     }
 
-    /* Calendar */
+    /* Grid Layout */
+    .grid-container {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .grid-container-lg-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Calendar — Now Full Width */
     .calendar-container {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 15px 25px rgba(0,0,0,0.05);
+      padding: 1.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .calendar-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     }
     .calendar-info {
       display: flex;
@@ -183,9 +101,18 @@
 
     /* Notifications */
     .notification-card {
+      background: #fff;
       display: flex;
       align-items: flex-start;
       gap: 1rem;
+      padding: 1.5rem;
+      border-radius: 15px;
+      box-shadow: 0 15px 25px rgba(0,0,0,0.05);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .notification-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     }
     .notification-icon {
       width: 3rem;
@@ -198,6 +125,20 @@
       color: white;
       flex-shrink: 0;
     }
+    .notification-content {
+      flex-grow: 1;
+    }
+    .notification-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    .notification-text {
+      color: #666;
+      margin-bottom: 1rem;
+      font-size: 14px;
+    }
     .notification-btn {
       background: #4154F1;
       color: white;
@@ -206,19 +147,17 @@
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.3s;
-      text-decoration: none;
-      display: inline-block;
-      text-align: center;
-      min-width: 120px;
+      transition: background 0.3s, transform 0.3s;
       font-size: 14px;
     }
     .notification-btn:hover {
       background: #3a4cd0;
+      transform: translateY(-2px);
     }
 
     /* Low Attendance */
     .low-attendance-card {
+      grid-column: 1 / -1;
       border-top: 2px solid #4154F1;
     }
     .low-attendance-title {
@@ -245,8 +184,13 @@
     .student-name {
       color: #4154F1;
       font-weight: 600;
-      text-decoration: underline;
       cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.2s;
+      font-size: 14px;
+    }
+    .student-name:hover {
+      color: #3a4cd0;
     }
     .attendance-percentage {
       background: #ffebee;
@@ -258,9 +202,6 @@
     }
 
     @media (max-width: 768px) {
-      .sidebar { left: -260px; }
-      .sidebar.active { left: 0; }
-      .main-content { margin-left: 0; padding-top: 90px; }
       .calendar-container {
         flex-direction: column;
         text-align: center;
@@ -295,12 +236,14 @@
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
+
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
     <a class="sidebar-link {% if request.endpoint == 'teacher_attendance' %}active{% endif %}" href="{{ url_for('teacher_attendance') }}">
       <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
     </a>
   </div>
+
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
     <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}"><i class="fas fa-calendar"></i><span>Class Schedule</span></a>
@@ -308,6 +251,7 @@
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
     <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}"><i class="fas fa-address-card"></i><span>Individual Attendance</span></a>
   </div>
+
   {% if profile.is_gc %}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
@@ -315,6 +259,7 @@
     <a class="sidebar-link" href="{{ url_for('gc_group_report') }}"><i class="fas fa-file-alt"></i><span>Group Report</span></a>
   </div>
   {% endif %}
+
   <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
@@ -323,7 +268,7 @@
 <div class="main-content">
   <h2>Welcome, <span id="teacher-name">{{ profile.firstName }} {{ profile.lastName }}</span>!</h2>
 
-  <!-- Calendar Card (Full Width) -->
+  <!-- Calendar — Full Width -->
   <div class="card">
     <div class="calendar-container">
       <div class="calendar-info">
@@ -334,27 +279,25 @@
     </div>
   </div>
 
-  <!-- Notifications Card -->
-  <div class="card">
+  <!-- Notifications -->
+  <div class="grid-container-lg-2 grid-container card-spacing">
     <div class="notification-card">
       <div class="notification-icon"><i class="fas fa-bell"></i></div>
-      <div class="notification-content" style="flex: 1;">
+      <div class="notification-content">
         <div class="notification-title">Pending Absence Requests</div>
         {% if pending_count > 0 %}
-          <div class="notification-text mt-1">
-            You have <strong>{{ pending_count }} pending absence request{% if pending_count > 1 %}s{% endif %}</strong>.
+          <div class="notification-text">
+            You have <strong>{{ pending_count }} pending absence request{% if pending_count > 1 %}s{% endif %}</strong> that need your review.
           </div>
-          <div class="mt-3">
-            <a href="{{ url_for('teacher_manage_absent') }}" class="notification-btn">Review Requests</a>
-          </div>
+          <a href="{{ url_for('teacher_manage_absent') }}" class="notification-btn">Review Requests</a>
         {% else %}
-          <div class="notification-text mt-1">No pending absence requests.</div>
+          <div class="notification-text">No pending absence requests at the moment.</div>
         {% endif %}
       </div>
     </div>
   </div>
 
-  <!-- Low Attendance Card -->
+  <!-- Low Attendance Students -->
   <div class="card low-attendance-card">
     <div class="low-attendance-title"><i class="fas fa-exclamation-triangle"></i> Students with Attendance Below 75%</div>
     <ul class="low-attendance-list">
@@ -378,6 +321,7 @@ function updateDateTime() {
 updateDateTime();
 setInterval(updateDateTime, 1000);
 
+// Toggle sidebar
 document.getElementById('menu-toggle').addEventListener('click', () => {
   document.querySelector('.sidebar').classList.toggle('collapsed');
   document.querySelector('.main-content').classList.toggle('expanded');
