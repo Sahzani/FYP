@@ -2340,6 +2340,8 @@ def teacher_manage_absent():
                 data["full_name"] = "Unknown Student"
             absence_records.append(data)
 
+    absence_records.sort(key=lambda r: r.get("start_date", ""))        
+
     return render_template(
         "teacher/T_manageAbsent.html",
         profile=profile,
