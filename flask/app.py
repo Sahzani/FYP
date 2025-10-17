@@ -427,17 +427,12 @@ def student_dashboard():
         today_module=today_module,
         status_color=status_color,
         status_icon=status_icon
-    )
-
-# ------------------ Teacher Dashboard ------------------
-from datetime import datetime
-from flask import session, redirect, url_for, render_template
-
-from flask import render_template, session, redirect, url_for
-from datetime import datetime
+    )       
 
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
+    from datetime import datetime, timedelta
+
     # ------------------ Session Validation ------------------
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
@@ -499,18 +494,11 @@ def teacher_dashboard():
     total_present, total_absent = 0, 0
 
     for schedule in schedules:
-        group_code = schedule.get("fk_groupcode")
-        module_code = schedule.get("fk_module")
-        if not group_code or not module_code:
-            continue
-
-        attendance_docs = db.collection("attendance").document(today_str) \
-            .collection(group_code).document(module_code) \
-            .collection("students").stream()
-
-        for att in attendance_docs:
-            att_data = att.to_dict()
-            if att_data.get("status") == "Present":
+        schedule_id = schedule["docId"]
+        date_ref = db.collection("attendance").document(schedule_id).collection(today_str)
+        for att_doc in date_ref.stream():
+            att_data = att_doc.to_dict()
+            if att_data.get("status", "").strip().lower() == "present":
                 total_present += 1
             else:
                 total_absent += 1
@@ -531,9 +519,94 @@ def teacher_dashboard():
             pending_query = db.collection("absenceRecords") \
                 .where("status", "==", "In Progress") \
                 .where("group_code", "==", group_code)
-
             for doc in pending_query.stream():
                 pending_count += 1
+
+
+    # ------------------ Find Students with Attendance Below 75% ------------------
+    low_attendance_students = []
+    seen_students = set()
+    today = datetime.now()
+
+    # ---- Step 1: Preload all students (for name → ID lookup) ----
+    all_students = {}
+    # Use 'filter=' for Firestore v3+
+    students_ref = db.collection("users").where("role_type", "==", 1).stream()
+    for s in students_ref:
+        sdata = s.to_dict()
+        full_name = f"{sdata.get('firstName', '').strip()} {sdata.get('lastName', '').strip()}".strip()
+        if full_name:
+            all_students[full_name] = s.id
+
+    print("All students loaded:", all_students)  # Debug
+
+    # ---- Step 2: Calculate attendance ----
+    for schedule in schedules:
+        group_code = schedule.get("fk_groupcode")
+        module_code = schedule.get("fk_module")
+        if not group_code or not module_code:
+            print(f"Skipping schedule due to missing group/module: {schedule}")
+            continue
+
+        student_stats = {}
+
+        # Loop through last 60 days
+        for i in range(60):
+            date_str = (today - timedelta(days=i)).strftime("%Y-%m-%d")
+            try:
+                students_collection = (
+                    db.collection("attendance")
+                    .document(date_str)
+                    .collection(group_code)
+                    .document(module_code)
+                    .collection("students")
+                )
+
+                docs = list(students_collection.stream())
+                if docs:
+                    print(f"{date_str} - {group_code}/{module_code} - Found {len(docs)} attendance records")
+
+                for student_doc in docs:
+                    data = student_doc.to_dict()
+                    if not data:
+                        continue
+
+                    student_name = data.get("student_name", "").strip()
+                    if not student_name:
+                        continue
+
+                    if student_name not in student_stats:
+                        student_stats[student_name] = {"present": 0, "total": 0}
+
+                    student_stats[student_name]["total"] += 1
+                    if data.get("status", "").strip().lower() == "present":
+                        student_stats[student_name]["present"] += 1
+
+            except Exception as e:
+                print(f"Error reading attendance for {group_code}-{module_code} on {date_str}: {e}")
+                continue
+
+        print(f"Attendance stats for {group_code}-{module_code}: {student_stats}")  # Debug
+
+        # ---- Step 3: Calculate attendance percentage ----
+        for student_name, stats_data in student_stats.items():
+            if stats_data["total"] == 0:
+                continue
+
+            percentage = (stats_data["present"] / stats_data["total"]) * 100
+            print(f"{student_name}: {stats_data['present']}/{stats_data['total']} = {percentage:.2f}%")  # Debug
+
+            if percentage < 75 and student_name not in seen_students:
+                student_id = all_students.get(student_name)
+                low_attendance_students.append({
+                    "id": student_id,
+                    "name": student_name,
+                    "attendance": round(percentage, 2)
+                })
+                seen_students.add(student_name)
+                print(f"Added low attendance: {student_name} ({percentage:.2f}%)")  # Debug
+
+    print("Final low attendance students list:", low_attendance_students)
 
     # ------------------ Render Teacher Dashboard ------------------
     return render_template(
@@ -542,8 +615,11 @@ def teacher_dashboard():
         schedules=schedules,
         stats=stats,
         pending_count=pending_count,
+        low_attendance_students=low_attendance_students,
         current_schedule=None
     )
+
+
 
 #------------------ Teacher - view students Individual attendance ------------------
 @app.route("/teacher/individual_summary", methods=["GET"])
