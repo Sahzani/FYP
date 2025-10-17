@@ -26,8 +26,8 @@ table tbody td { padding: 12px 8px; border-top: 1px solid #ddd; word-wrap: break
 table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
 
 
-.btn-attendance { display:inline-block; padding:6px 12px; background:#4f46e5; color:#fff; border-radius:6px; font-weight:500; text-decoration:none; transition:all 0.2s ease; }
-.btn-attendance:hover { background:#3730a3; }
+.btn-attendance { display:inline-block; padding:6px 12px; background:#4154F1; color:#fff; border-radius:6px; font-weight:500; text-decoration:none; transition:all 0.2s ease; }
+.btn-attendance:hover { background:#4154F1; }
 
 @media (max-width:768px) { .sidebar { left:-260px; } .sidebar.collapsed { left:0; width:250px; } .main-content { margin-left:0; padding:100px 15px 30px; } .main-content.expanded { margin-left:0; } table, thead, tbody, th, td, tr { display:block; } thead tr { display:none; } td { padding-left:50%; position:relative; text-align:left; } td::before { content:attr(data-label); position:absolute; left:12px; top:12px; font-weight:600; font-size:12px; color:#555; } }
 </style>
@@ -110,7 +110,7 @@ table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
             <td data-label="Action">
               <a
                 href="{{ url_for('studattendance', module_id=module.id, group_id=group.id, schedule_id=group.scheduleID) }}"
-                class="inline-block px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition"
+                class="btn-attendance"
               >
                 View Attendance
               </a>
