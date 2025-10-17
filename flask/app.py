@@ -1246,6 +1246,9 @@ def student_absentapp():
                 records.append(rec)
         except Exception as e:
             print("[ERROR] Failed to fetch records:", e)
+
+        records.sort(key=lambda x: datetime.strptime(x["start_date"], "%Y-%m-%d"))
+
         return jsonify({"records": records})
 
     # ---------- Normal GET: render template ----------
@@ -1266,6 +1269,8 @@ def student_absentapp():
             records.append(rec)
     except Exception as e:
         print("[ERROR] Failed to fetch records for template:", e)
+
+    records.sort(key=lambda x: datetime.strptime(x["start_date"], "%d/%m/%Y"))
 
     return render_template(
         "student/S_AbsentApp.html",

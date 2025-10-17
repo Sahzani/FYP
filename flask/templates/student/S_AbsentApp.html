@@ -45,7 +45,7 @@ td.status-in-progress { color: #4154F1; font-weight: 600; }
 .modal label { display: block; margin: 10px 0 5px; color: #444; font-weight: 600; }
 .modal input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; margin-bottom: 12px; transition: border-color 0.2s; }
 .modal input:focus { border-color: #4154F1; outline: none; }
-.modal-buttons { text-align: right; margin-top: 10px; }
+.modal-buttons { text-align: right; margin-top: 15px; }
 .modal button { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; margin-left: 10px; transition: opacity 0.2s, transform 0.2s; }
 .modal .save-btn { background: #4154F1; color: #fff; }
 .modal .save-btn:hover { opacity: 0.9; transform: translateY(-1px); }
@@ -183,30 +183,30 @@ td.status-in-progress { color: #4154F1; font-weight: 600; }
     </div>
 
     <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span>Send Absence Application</span>
-                <span class="close" style="cursor:pointer;">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="absenceForm" method="POST" action="{{ url_for('student_absentapp') }}"
-                    enctype="multipart/form-data">
-                    <label>Reason</label>
-                    <input type="text" name="reason" placeholder="Enter reason" required>
-                    <label>Start Date</label>
-                    <input type="date" name="start_date" required>
-                    <label>End Date</label>
-                    <input type="date" name="end_date" required>
-                    <label>Upload File (PDF/Image)</label>
-                    <input type="file" name="file" accept=".pdf,.jpg,.png" required>
-                    <div class="modal-buttons">
-                        <button type="submit" class="save-btn">Send</button>
-                        <button type="button" class="cancel-btn" id="cancelBtn">Cancel</button>
-                    </div>
-                </form>
-            </div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <span>Send Absence Application</span>
+            <span class="close" style="cursor:pointer;">&times;</span>
+        </div>
+        <div class="modal-body" style="padding: 20px 30px;">
+            <form id="absenceForm" method="POST" action="{{ url_for('student_absentapp') }}"
+                enctype="multipart/form-data">
+                <label>Reason</label>
+                <input type="text" name="reason" placeholder="Enter reason" required>
+                <label>Start Date</label>
+                <input type="date" name="start_date" required>
+                <label>End Date</label>
+                <input type="date" name="end_date" required>
+                <label>Upload File (PDF/Image)</label>
+                <input type="file" name="file" accept=".pdf,.jpg,.png" required>
+                <div class="modal-buttons">
+                    <button type="submit" class="save-btn">Send</button>
+                    <button type="button" class="cancel-btn" id="cancelBtn">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
     <!-- Delete Confirmation Modal -->
     <div id="deleteConfirmModal" class="modal">
@@ -377,6 +377,7 @@ td.status-in-progress { color: #4154F1; font-weight: 600; }
         function renderTableRows(records) {
             const tbody = document.getElementById('recordsBody');
             tbody.innerHTML = '';
+            records.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
             if (records.length > 0) {
                 records.forEach((rec, index) => {
                     const tr = document.createElement('tr');
