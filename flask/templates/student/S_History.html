@@ -81,6 +81,23 @@
     .filter-input { padding: 6px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; }
     .filter-btn { padding: 7px 12px; background:#4154F1; color:white; border-radius:8px; border:none; cursor:pointer; }
     .filter-btn:hover { background:#2f43d0; }
+
+    /* Remarks colors */
+.remarks-approved {
+  color: green;
+  font-weight: bold;
+}
+
+.remarks-rejected {
+  color: red;
+  font-weight: bold;
+}
+
+.remarks-pending {
+  color: blue; /* or yellow if you prefer */
+  font-weight: bold;
+}
+
   </style>
 </head>
 <body>
@@ -144,7 +161,7 @@
     <div class="summary-box-container">
       <div class="summary-box total-box">
         <span class="value">{{ overall_total }}</span>
-        <span class="label">Total Modules</span>
+        <span class="label">Total Attendance</span>
       </div>
       <div class="summary-box present-box">
         <span class="value">{{ overall_present }}</span>
@@ -178,7 +195,6 @@
             <th>Present</th>
             <th>Absent</th>
             <th>Late</th>
-            <th>Adjusted Present</th>
             <th>Attendance %</th>
             <th>Chart</th>
           </tr>
@@ -192,10 +208,9 @@
             <td>{{ stats.present }}</td>
             <td>{{ stats.absent }}</td>
             <td>{{ stats.late }}</td>
-            <td>{{ stats.adjusted_present }}</td>
             <td>
               {% if stats.total > 0 %}
-                {{ ((stats.adjusted_present / stats.total) * 100)|round(2) }}%
+                {{ ((stats.present / stats.total) * 100)|round(2) }}%
               {% else %}
                 0%
               {% endif %}
@@ -228,20 +243,16 @@
           const month = btn.dataset.month;
           const stats = monthlyStats[month];
 
-          // Show chart container
           chartContainer.style.display = "block";
-
-          // Destroy previous chart
           if(currentChart) currentChart.destroy();
 
-          // Create new chart
           currentChart = new Chart(ctx, {
             type: 'bar',
             data: {
-              labels: ['Adjusted Present', 'Absent', 'Late'],
+              labels: ['Present', 'Absent', 'Late'],
               datasets: [{
                 label: `Attendance for ${month}`,
-                data: [stats.adjusted_present, stats.absent, stats.late],
+                data: [stats.present, stats.absent, stats.late],
                 backgroundColor: ['#4CAF50','#F44336','#FFC107']
               }]
             },
@@ -261,12 +272,49 @@
   </div>
   {% endif %}
 
+  <!-- Overall Attendance by Module -->
+  {% if module_stats %}
+  <div class="card mt-4">
+    <h2>Overall Attendance by Module</h2>
+    <div class="table-wrapper">
+      <table class="w-full text-sm text-left">
+        <thead>
+          <tr>
+            <th>Module</th>
+            <th>Present</th>
+            <th>Absent</th>
+            <th>Late</th>
+            <th>Attendance %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for module, stats in module_stats.items() %}
+          <tr>
+            <td>{{ module }}</td>
+            <td>{{ stats.present }}</td>
+            <td>{{ stats.absent }}</td>
+            <td>{{ stats.late }}</td>
+            <td>
+              {% set total = stats.present + stats.absent + stats.late %}
+              {% if total > 0 %}
+                {{ ((stats.present / total) * 100)|round(2) }}%
+              {% else %}
+                0%
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Filters & Records Table -->
   <div class="card mt-4">
     <form method="get" class="flex justify-between items-center mb-4 filters-row" style="gap:12px;">
       <h2 class="text-lg font-semibold text-gray-700 m-0">Attendance Records</h2>
       <div class="flex items-center space-x-2">
-        <!-- Module Filter -->
         <label for="moduleFilter" class="text-sm text-gray-700 font-medium">Module:</label>
         <select name="moduleFilter" id="moduleFilter" class="filter-input">
           <option value="All" {% if selected_module == "All" %}selected{% endif %}>All</option>
@@ -275,7 +323,6 @@
           {% endfor %}
         </select>
 
-        <!-- Status Filter -->
         <label for="statusFilter" class="text-sm text-gray-700 font-medium">Status:</label>
         <select name="statusFilter" id="statusFilter" class="filter-input">
           <option value="All" {% if selected_status == "All" %}selected{% endif %}>All</option>
@@ -284,11 +331,9 @@
           <option value="Late" {% if selected_status == "Late" %}selected{% endif %}>Late</option>
         </select>
 
-        <!-- Date Filter -->
         <label for="dateFilter" class="text-sm text-gray-700 font-medium">Date:</label>
-        <input type="date" name="dateFilter" id="dateFilter" value="{{ date_for_input }}">  
+        <input type="date" name="dateFilter" id="dateFilter" value="{{ date_for_input }}">
 
-        <!-- View Button -->
         <button type="submit" class="filter-btn flex items-center justify-center gap-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -302,37 +347,58 @@
     </form>
 
     <div class="table-wrapper">
-      <table id="attendanceTable">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Module</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% if records %}
-            {% for record in records %}
-              <tr>
-                <td>{{ record.date }}</td>
-                <td>{{ record.time or '-' }}</td>
-                <td>{{ record.module or '-' }}</td>
-                <td class="{% if record.status == 'Present' %}status-present{% elif record.status == 'Late' %}status-late{% else %}status-absent{% endif %}">
-                  {{ record.status }}
-                </td>
-              </tr>
-            {% endfor %}
-          {% else %}
-            <tr>
-              <td colspan="4" style="text-align:center;">No attendance records found</td>
-            </tr>
+  <table id="attendanceTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Module</th>
+        <th>Status</th>
+        <th>Remarks</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if records %}
+        {% for record in records|sort(attribute='_datetime', reverse=True) %}
+          {% set remarks = record.remarks if record.remarks else '-' %}
+          {% set display_status = record.status %}
+          {% if 'Approved' in remarks %}
+            {% set display_status = 'Present' %}
+          {% elif 'Rejected' in remarks %}
+            {% set display_status = 'Absent' %}
+          {% elif 'In Progress' in remarks %}
+            {% set display_status = 'Pending' %}
           {% endif %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+          <tr>
+            <td>{{ record.date }}</td>
+            <td>{{ record.time or '-' }}</td>
+            <td>{{ record.module or '-' }}</td>
+            <td class="{% if display_status == 'Present' %}status-present{% elif display_status == 'Late' %}status-late{% elif display_status == 'Pending' %}status-pending{% else %}status-absent{% endif %}">
+              {{ display_status }}
+            </td>
+            <!-- Colored Remarks using keyword matching -->
+            <td class="
+              {% if 'Approved' in remarks %}remarks-approved
+              {% elif 'Rejected' in remarks %}remarks-rejected
+              {% elif 'In Progress' in remarks %}remarks-pending
+              {% endif %}
+            ">
+              {{ remarks }}
+            </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="5" style="text-align:center;">No attendance records found</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
 </div>
+
+
+
+
 
 <!-- Sidebar toggle -->
 <script>

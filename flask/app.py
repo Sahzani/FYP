@@ -809,10 +809,11 @@ def admin_edit_profile():
 def admin_logout():
     session.clear()
     return redirect(url_for("login"))
+
 # ------------------ Student Attendance History Page ------------------
 from datetime import datetime, timedelta
 from flask import render_template, session, redirect, url_for, request
-from collections import defaultdict  # for monthly late counting
+from collections import defaultdict
 
 @app.route("/student/attendance")
 def student_attendance():
@@ -843,9 +844,8 @@ def student_attendance():
     # -------- Get filter inputs from query parameters --------
     selected_module = request.args.get("moduleFilter", "All")
     selected_status = request.args.get("statusFilter", "All")
-    selected_date = request.args.get("dateFilter", "")  # yyyy-mm-dd from calendar
+    selected_date = request.args.get("dateFilter", "")
 
-    # Convert selected_date (yyyy-mm-dd) to datetime for filtering
     filter_date_dt = None
     if selected_date:
         try:
@@ -853,14 +853,24 @@ def student_attendance():
         except:
             filter_date_dt = None
 
-    # Initialize lists and counters
     records = []
     total = present = absent = late = 0
     modules_set = set()
 
-    # -------- Overall Attendance (unfiltered) --------
     overall_total = overall_present = overall_absent = overall_late = 0
-    monthly_stats_overall = defaultdict(lambda: {"total":0, "present":0, "absent":0, "late":0, "adjusted_present":0})
+    monthly_stats_overall = defaultdict(lambda: {"total":0, "present":0, "absent":0, "late":0})
+    module_stats = defaultdict(lambda: {"present":0, "absent":0, "late":0})
+
+    # -------- Fetch all absence applications once --------
+    student_absences = []
+    absences_docs = db.collection("absenceRecords").where("student_id","==",uid).stream()
+    for abs_doc in absences_docs:
+        abs_data = abs_doc.to_dict()
+        student_absences.append({
+            "start_date": abs_data.get("start_date"),  # string "YYYY-MM-DD"
+            "end_date": abs_data.get("end_date") or abs_data.get("start_date"),
+            "status": abs_data.get("status")  # Approved / Rejected / In Progress
+        })
 
     if fk_group:
         schedules = db.collection("schedules").where("fk_group","==",fk_group).stream()
@@ -869,7 +879,6 @@ def student_attendance():
             schedule_id = sched_doc.id
             module_id = sched.get("fk_module")
 
-            # Fetch module info
             module_name = "Unknown Module"
             module_doc = db.collection("mlmodule").document(module_id).get()
             if module_doc.exists:
@@ -879,84 +888,112 @@ def student_attendance():
             # Attendance subcollections by date
             date_collections = db.collection("attendance").document(schedule_id).collections()
             for date_col in date_collections:
-                date_str = date_col.id
+                date_str = date_col.id  # e.g., "2025-10-14"
                 student_doc = date_col.document(uid).get()
                 if not student_doc.exists:
                     continue
                 data = student_doc.to_dict()
                 status = data.get("status","Not Marked Yet").capitalize()
 
-                # --- Update Overall Attendance (unfiltered) ---
-                overall_total += 1
-                if status=="Present":
-                    overall_present += 1
-                elif status=="Absent":
-                    overall_absent += 1
-                elif status=="Late":
-                    overall_late += 1
+                # -------- Handle Absence Applications --------
+                remarks = ""
+                display_status = status
+                highlight_pending = False
 
-                # --- Update Monthly Stats (unfiltered) ---
                 try:
                     record_date_dt = datetime.strptime(date_str,"%Y-%m-%d")
                 except:
                     record_date_dt = None
 
                 if record_date_dt:
-                    month_key = record_date_dt.strftime("%Y-%m")
-                    monthly_stats_overall[month_key]["total"] += 1
-                    if status=="Present":
-                        monthly_stats_overall[month_key]["present"] += 1
-                    elif status=="Absent":
-                        monthly_stats_overall[month_key]["absent"] += 1
-                    elif status=="Late":
-                        monthly_stats_overall[month_key]["late"] += 1
+                    for absence in student_absences:
+                        try:
+                            start_dt = datetime.strptime(absence["start_date"], "%Y-%m-%d")
+                            end_dt = datetime.strptime(absence["end_date"], "%Y-%m-%d")
+                        except:
+                            continue
+                        # ✅ Only mark if attendance date is within absence application range
+                        if start_dt.date() <= record_date_dt.date() <= end_dt.date():
+                            abs_status = absence["status"].lower()
+                            if abs_status == "approved":
+                                display_status = "Present"
+                                remarks = "Your Absence Application has been Approved"
+                            elif abs_status == "rejected":
+                                display_status = "Absent"
+                                remarks = "Your Absence Application has been Rejected"
+                            elif abs_status == "in progress":
+                                display_status = "In Progress"
+                                remarks = "In Progress"
+                                highlight_pending = True
+                            else:
+                                remarks = absence["status"].capitalize() or ""
+                            break  # stop at first matching absence
 
-                # --- Apply filters for table records only ---
+                # --- Update Overall Attendance ---
+                overall_total += 1
+                if display_status=="Present":
+                    overall_present += 1
+                elif display_status=="Absent":
+                    overall_absent += 1
+                elif display_status=="Late":
+                    overall_late += 1
+
+                # --- Module Stats ---
+                if display_status=="Present":
+                    module_stats[module_name]["present"] += 1
+                elif display_status=="Absent":
+                    module_stats[module_name]["absent"] += 1
+                elif display_status=="Late":
+                    module_stats[module_name]["late"] += 1
+
+                # --- Monthly Stats ---
+                month_key = record_date_dt.strftime("%Y-%m")
+                monthly_stats_overall[month_key]["total"] += 1
+                if display_status=="Present":
+                    monthly_stats_overall[month_key]["present"] += 1
+                elif display_status=="Absent":
+                    monthly_stats_overall[month_key]["absent"] += 1
+                elif display_status=="Late":
+                    monthly_stats_overall[month_key]["late"] += 1
+
+                # --- Apply filters ---
                 if selected_module != "All" and module_name != selected_module:
                     continue
-                if selected_status != "All" and status != selected_status:
+                if selected_status != "All" and display_status != selected_status:
                     continue
-                if filter_date_dt and record_date_dt and record_date_dt.date() != filter_date_dt.date():
+                if filter_date_dt and record_date_dt.date() != filter_date_dt.date():
                     continue
 
-                # Timestamp → Brunei time (UTC+8)
                 timestamp = data.get("timestamp")
                 time = timestamp + timedelta(hours=8) if timestamp else None
                 time = time.strftime("%I:%M %p") if time else "-"
 
-                # Count filtered stats
-                if status=="Present":
+                if display_status=="Present":
                     present += 1
-                elif status=="Absent":
+                elif display_status=="Absent":
                     absent += 1
-                elif status=="Late":
+                elif display_status=="Late":
                     late += 1
                 total += 1
 
-                # Format date for display
                 display_date = record_date_dt.strftime("%d/%m/%Y") if record_date_dt else date_str
 
-                # Append record
                 records.append({
                     "date": display_date,
                     "time": time,
                     "module": module_name,
-                    "status": status
+                    "status": display_status,
+                    "remarks": remarks,
+                    "highlight_pending": highlight_pending,
+                    "_datetime": record_date_dt
                 })
 
-    # --- Apply monthly late penalties (overall monthly stats) ---
-    for month, stats in monthly_stats_overall.items():
-        penalty = stats["late"] // 3
-        stats["adjusted_present"] = max(stats["present"] - penalty, 0)
+    # --- Sort records ---
+    records.sort(key=lambda x: x["_datetime"] or datetime.min, reverse=True)
+    for r in records:
+        r.pop("_datetime", None)
 
-    # --- Apply late penalties to overall attendance ---
-    adjusted_overall_present = overall_present
-    for stats in monthly_stats_overall.values():
-        adjusted_overall_present -= stats["late"] // 3
-    if adjusted_overall_present < 0:
-        adjusted_overall_present = 0
-
-    overall_percentage = round((adjusted_overall_present / overall_total * 100), 2) if overall_total>0 else 0
+    overall_percentage = round((overall_present / overall_total * 100), 2) if overall_total>0 else 0
     filtered_percentage = round((present / total * 100), 2) if total>0 else 0
 
     return render_template(
@@ -967,19 +1004,21 @@ def student_attendance():
         absent=absent,
         late=late,
         percentage=filtered_percentage,
-        monthly_stats=monthly_stats_overall,  # monthly summary always unfiltered
+        monthly_stats=monthly_stats_overall,
+        module_stats=module_stats,
         full_name=full_name,
         modules=sorted(list(modules_set)),
         selected_module=selected_module,
         selected_status=selected_status,
         date_for_input=selected_date,
-        # Overall attendance summary
         overall_total=overall_total,
-        overall_present=adjusted_overall_present,
+        overall_present=overall_present,
         overall_absent=overall_absent,
         overall_late=overall_late,
         overall_percentage=overall_percentage
     )
+
+
 # ------------------ Student Schedule Page ------------------
 @app.route("/student/schedule")
 def student_schedule():
