@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -84,7 +84,6 @@ table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
       Attendance - {{ schedule.get('day', '') }} | {{ schedule.get('room', '') }}
     </h2>
 
-    <!-- Notifications -->
     {% if notifications %}
     <div class="mb-4 p-4 bg-red-100 text-red-800 rounded shadow">
       <strong>Notifications:</strong>
@@ -96,7 +95,6 @@ table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
     </div>
     {% endif %}
 
-    <!-- Date Filter + Status Filter + Search -->
     <form method="GET" action="{{ url_for('studattendance') }}" class="mb-4 flex flex-wrap gap-2 items-center">
       <input type="hidden" name="module_id" value="{{ module_id }}">
       <input type="hidden" name="group_id" value="{{ group_id }}">
@@ -112,10 +110,13 @@ table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
       <label for="statusFilter" class="font-medium ml-4">Status:</label>
       <select id="statusFilter" class="border rounded px-2 py-1">
         <option value="">All</option>
-        <option value="Present"><i class="fas fa-check-circle"></i> Present</option>
-        <option value="Absent"><i class="fas fa-times-circle"></i> Absent</option>
-        <option value="Late"><i class="fas fa-clock"></i> Late</option>
-        <option value="Not Marked"><i class="fas fa-question-circle"></i> Not Marked</option>
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+        <option value="Late">Late</option>
+        <option value="Not Marked">Not Marked</option>
+        <option value="Pending">Permission Pending</option>
+        <option value="Approved Absence">Approved Absence</option>
+        <option value="Rejected Absence">Rejected Absence</option>
       </select>
 
       <div class="relative ml-auto">
@@ -124,7 +125,7 @@ table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
       </div>
     </form>
 
-    <!-- Status Counters -->
+    <!-- Status Counts -->
     <div class="mb-4 flex flex-wrap gap-2">
       <span class="px-2 py-1 bg-green-100 text-green-800 rounded font-medium">
         <i class="fas fa-check-circle mr-1"></i>Present: {{ status_counts['Present'] }}
@@ -138,76 +139,104 @@ table tbody tr:hover { background: #fef9f0; transition: background 0.2s; }
       <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded font-medium">
         <i class="fas fa-question-circle mr-1"></i>Not Marked: {{ status_counts['Not Marked'] }}
       </span>
+      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded font-medium">
+        <i class="fas fa-clock mr-1"></i>Permission Pending: {{ status_counts['Pending'] }}
+      </span>
+      <span class="px-2 py-1 bg-green-200 text-green-900 rounded font-medium">
+        Approved Absence: {{ status_counts['Approved Absence'] }}
+      </span>
+      <span class="px-2 py-1 bg-red-200 text-red-900 rounded font-medium">
+        Rejected Absence: {{ status_counts['Rejected Absence'] }}
+      </span>
     </div>
 
- <!-- Attendance Table -->
-<div class="table-wrapper mt-4 overflow-x-auto">
-  <table id="attendanceTable" class="min-w-full border-collapse">
-    <thead>
-      <tr>
-        <th class="py-2 px-2 border-b border-gray-300 text-center">Student Name</th>
-        <th class="py-2 px-2 border-b border-gray-300 text-center">Status</th>
-        <th class="py-2 px-2 border-b border-gray-300 text-center">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for student in attendance_records %}
-      <tr class="hover-row">
-        <td data-label="Student Name" class="py-2 px-2 border-b border-gray-200 text-center">{{ student.student_name }}</td>
-        <td data-label="Status" class="py-2 px-2 border-b border-gray-200 text-center">
-          {% if student.status == 'Present' %}
-            <span class="px-1 py-0.5 bg-green-100 text-green-800 rounded text-sm">
-              <i class="fas fa-check-circle mr-1"></i>{{ student.status }}
-            </span>
-          {% elif student.status == 'Absent' %}
-            <span class="px-1 py-0.5 bg-red-100 text-red-800 rounded text-sm">
-              <i class="fas fa-times-circle mr-1"></i>{{ student.status }}
-            </span>
-          {% elif student.status == 'Late' %}
-            <span class="px-1 py-0.5 bg-yellow-100 text-yellow-800 rounded text-sm">
-              <i class="fas fa-clock mr-1"></i>{{ student.status }}
-            </span>
-          {% else %}
-            <span class="px-1 py-0.5 bg-gray-100 text-gray-800 rounded text-sm">
-              <i class="fas fa-question-circle mr-1"></i>{{ student.status }}
-            </span>
-          {% endif %}
-        </td>
-        <td data-label="Action" class="py-2 px-2 border-b border-gray-200 text-center">
-          <form method="POST" action="{{ url_for('update_attendance') }}" class="flex items-center justify-center gap-1">
-            <input type="hidden" name="schedule_id" value="{{ schedule_id }}">
-            <input type="hidden" name="module_id" value="{{ module_id }}">
-            <input type="hidden" name="group_id" value="{{ group_id }}">
-            <input type="hidden" name="student_id" value="{{ student.student_id }}">
-            <input type="hidden" name="date" value="{{ selected_date }}">
+    <!-- Attendance Table with Remarks -->
+    <div class="table-wrapper mt-4 overflow-x-auto">
+      <table id="attendanceTable" class="min-w-full border-collapse">
+        <thead>
+          <tr>
+            <th class="py-2 px-2 border-b border-gray-300 text-center">Student Name</th>
+            <th class="py-2 px-2 border-b border-gray-300 text-center">Status</th>
+            <th class="py-2 px-2 border-b border-gray-300 text-center">Remarks</th>
+            <th class="py-2 px-2 border-b border-gray-300 text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in attendance_records %}
+          <tr class="hover-row">
+            <td data-label="Student Name" class="py-2 px-2 border-b border-gray-200 text-center">
+              {{ student.student_name }}
+            </td>
 
-            <select name="status" class="border rounded px-1 py-0.5 text-sm text-center">
-              <option value="Present" {% if student.status == 'Present' %}selected{% endif %}>Present</option>
-              <option value="Absent" {% if student.status == 'Absent' %}selected{% endif %}>Absent</option>
-              <option value="Late" {% if student.status == 'Late' %}selected{% endif %}>Late</option>
-              <option value="Not Marked" {% if student.status == 'Not Marked' %}selected{% endif %}>Not Marked</option>
-            </select>
+            <!-- Status Column (actual attendance only) -->
+            <td data-label="Status" class="py-2 px-2 border-b border-gray-200 text-center">
+              {% set status = student.status %}
+              {% if status == 'Present' %}
+                <span class="px-1 py-0.5 bg-green-100 text-green-800 rounded text-sm">
+                  <i class="fas fa-check-circle mr-1"></i>{{ status }}
+                </span>
+              {% elif status == 'Absent' %}
+                <span class="px-1 py-0.5 bg-red-100 text-red-800 rounded text-sm">
+                  <i class="fas fa-times-circle mr-1"></i>{{ status }}
+                </span>
+              {% elif status == 'Late' %}
+                <span class="px-1 py-0.5 bg-yellow-100 text-yellow-800 rounded text-sm">
+                  <i class="fas fa-clock mr-1"></i>{{ status }}
+                </span>
+              {% elif status == 'Not Marked' %}
+                <span class="px-1 py-0.5 bg-gray-100 text-gray-800 rounded text-sm">
+                  <i class="fas fa-question-circle mr-1"></i>{{ status }}
+                </span>
+              {% endif %}
+            </td>
 
-            <button type="submit" class="px-2 py-0.5 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition">
-              <i class="fas fa-sync-alt mr-1"></i>Update
-            </button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+            <!-- Remarks Column -->
+            <td data-label="Remarks" class="py-2 px-2 border-b border-gray-200 text-center">
+              {% set remark = student.remarks or '-' %}
+              <span class="
+                {% if 'Approved' in remark %}text-green-700
+                {% elif 'Rejected' in remark %}text-red-700
+                {% elif 'Pending' in remark or 'In Progress' in remark %}text-blue-700
+                {% else %}text-gray-700
+                {% endif %} text-sm">
+                {{ remark }}
+              </span>
+            </td>
 
+            <!-- Action Column -->
+            <td data-label="Action" class="py-2 px-2 border-b border-gray-200 text-center">
+              <form method="POST" action="{{ url_for('update_attendance') }}" class="flex items-center justify-center gap-1">
+                <input type="hidden" name="schedule_id" value="{{ schedule_id }}">
+                <input type="hidden" name="module_id" value="{{ module_id }}">
+                <input type="hidden" name="group_id" value="{{ group_id }}">
+                <input type="hidden" name="student_id" value="{{ student.student_id }}">
+                <input type="hidden" name="date" value="{{ selected_date }}">
 
-    <div class="mt-4">
-      <a href="{{ url_for('teacher_modules') }}" class="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-        <i class="fas fa-arrow-left mr-1"></i>Back to Modules
-      </a>
+                <select name="status" class="border rounded px-1 py-0.5 text-sm text-center">
+                  <option value="Present" {% if student.status == 'Present' %}selected{% endif %}>Present</option>
+                  <option value="Absent" {% if student.status == 'Absent' %}selected{% endif %}>Absent</option>
+                  <option value="Late" {% if student.status == 'Late' %}selected{% endif %}>Late</option>
+                  <option value="Not Marked" {% if student.status == 'Not Marked' %}selected{% endif %}>Not Marked</option>
+                </select>
+
+                <button type="submit" class="px-2 py-0.5 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition">
+                  <i class="fas fa-sync-alt mr-1"></i>Update
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
 
+<div class="mt-4">
+  <a href="{{ url_for('teacher_modules') }}" class="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
+    <i class="fas fa-arrow-left mr-1"></i>Back to Modules
+  </a>
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -221,14 +250,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const rows = table.querySelectorAll('tbody tr');
     rows.forEach(row => {
-      // Get name text
       const nameCell = row.querySelector('td[data-label="Student Name"]')?.textContent.toLowerCase() || "";
-
-      // Get status text only (remove icon)
       const statusCell = row.querySelector('td[data-label="Status"]')?.textContent.replace(/\s+/g, ' ').trim() || "";
+      const remarkCell = row.querySelector('td[data-label="Remarks"]')?.textContent.replace(/\s+/g, ' ').trim() || "";
+
+      let matchesStatus = true;
+      if (statusValue) {
+        if(statusValue === 'Pending') {
+          matchesStatus = remarkCell.includes('Pending') || remarkCell.includes('In Progress');
+        } else if(statusValue === 'Approved Absence') {
+          matchesStatus = remarkCell.includes('Approved');
+        } else if(statusValue === 'Rejected Absence') {
+          matchesStatus = remarkCell.includes('Rejected');
+        } else {
+          matchesStatus = statusCell.includes(statusValue);
+        }
+      }
 
       const matchesSearch = nameCell.includes(searchValue);
-      const matchesStatus = !statusValue || statusCell.includes(statusValue);
 
       row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
     });
@@ -237,7 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
   searchInput.addEventListener('input', filterTable);
   statusFilter.addEventListener('change', filterTable);
 
-  // Sidebar toggle
+  // Menu toggle (unchanged)
   const menuToggle = document.getElementById('menu-toggle');
   const sidebar = document.querySelector('.sidebar');
   const mainContent = document.querySelector('.main-content');
@@ -250,8 +289,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 </script>
-
-
 
 
 </body>
