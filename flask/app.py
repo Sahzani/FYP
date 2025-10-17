@@ -1938,6 +1938,85 @@ def mark_present():
     except Exception as e:
         print(f"[ERROR] Save attendance failed: {e}")
         return jsonify({"error": "Failed to save"}), 500
+    
+    
+# ------------------ Teacher Mark Absent on Class Stop ------------------
+
+@app.route("/api/mark_absent_on_stop", methods=["POST"])
+def mark_absent_on_stop():
+    if session.get("role") != "teacher":
+        return jsonify({"error": "Unauthorized"}), 401
+
+    schedule_id = request.json.get("schedule_id")
+    if not schedule_id:
+        return jsonify({"error": "Missing schedule_id"}), 400
+
+    # Get schedule
+    sched_doc = db.collection("schedules").document(schedule_id).get()
+    if not sched_doc.exists:
+        return jsonify({"error": "Schedule not found"}), 404
+    sched = sched_doc.to_dict()
+    group_id = sched.get("fk_group", "").strip()
+    if not group_id:
+        return jsonify({"error": "Invalid group"}), 400
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+
+    # Get all students in the group
+    all_student_ids = []
+    students_ref = db.collection("users").where("role_type", "==", 1).stream()
+    for stu in students_ref:
+        role_doc = db.collection("users").document(stu.id).collection("roles").document("student").get()
+        if role_doc.exists and role_doc.to_dict().get("fk_groupcode") == group_id:
+            all_student_ids.append(stu.id)
+
+    # Get already marked students
+    marked_docs = db.collection("attendance").document(schedule_id).collection(today_str).stream()
+    marked_ids = {doc.id for doc in marked_docs}
+
+    # Mark unmarked students as "Absent"
+    absent_count = 0
+    for sid in all_student_ids:
+        if sid not in marked_ids:
+            # Fetch student info
+            stu_doc = db.collection("users").document(sid).get()
+            stu_data = stu_doc.to_dict() or {}
+            name = f"{stu_data.get('first_name', '')} {stu_data.get('last_name', '')}".strip() or "Student"
+
+            role_doc = db.collection("users").document(sid).collection("roles").document("student").get()
+            program_id = role_doc.to_dict().get("program") if role_doc.exists else None
+            program_name = "Unknown Program"
+            if program_id:
+                prog_doc = db.collection("programs").document(program_id).get()
+                if prog_doc.exists:
+                    program_name = prog_doc.to_dict().get("programName", "Unknown Program")
+
+                # Get class end time from schedule
+            end_time_str = sched.get("end_time", "00:00").strip()
+            try:
+                class_end_time = datetime.strptime(end_time_str, "%H:%M").time()
+                absent_time = datetime.combine(datetime.now().date(), class_end_time)
+            except:
+                absent_time = datetime.now()
+
+            # Use absent_time instead of datetime.now()
+            db.collection("attendance").document(schedule_id).collection(today_str).document(sid).set({
+                "status": "Absent",
+                "timestamp": absent_time,  # ✅ Class end time, not current time
+                # ... other fields
+            })
+
+            # Write "Absent" record
+            db.collection("attendance").document(schedule_id).collection(today_str).document(sid).set({
+                "student_name": name,
+                "group": group_id,
+                "program": program_name,
+                "status": "Absent",
+                "timestamp": datetime.now()
+            })
+            absent_count += 1
+
+    return jsonify({"success": True, "absent_marked": absent_count})
 
 #------------------- Teacher Attendance Report ------------------
 from flask import session, redirect, url_for, render_template
