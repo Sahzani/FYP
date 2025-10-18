@@ -467,11 +467,11 @@ def student_dashboard():
         status_icon=status_icon
     )       
 
+#------------------ Teacher Dashboard ------------------
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
-    from datetime import datetime, timedelta
+    from datetime import datetime
 
-    # ------------------ Session Validation ------------------
     if session.get("role") != "teacher":
         return redirect(url_for("home"))
 
@@ -481,7 +481,6 @@ def teacher_dashboard():
 
     teacher_uid = user.get("uid")
 
-    # ------------------ Default Teacher Profile ------------------
     profile = {
         "role": "Teacher",
         "firstName": "Teacher",
@@ -490,7 +489,6 @@ def teacher_dashboard():
         "is_gc": False
     }
 
-    # ------------------ Fetch Teacher Profile ------------------
     profile_doc = db.collection("users").document(teacher_uid).get()
     if profile_doc.exists:
         user_data = profile_doc.to_dict()
@@ -500,7 +498,6 @@ def teacher_dashboard():
             "photo_name": user_data.get("photo_name", "uploads/default_teacher.png")
         })
 
-        # Check if teacher is a Group Coordinator
         role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
         if role_doc.exists:
             role_data = role_doc.to_dict()
@@ -508,16 +505,20 @@ def teacher_dashboard():
 
     # ------------------ Fetch Class Schedules ------------------
     schedules = []
+    group_ids = set()  # ← ADDED: to collect all groups taught by this teacher
     schedules_docs = db.collection("schedules").where("fk_teacher", "==", teacher_uid).stream()
 
     for doc in schedules_docs:
         s = doc.to_dict()
         s["docId"] = doc.id
 
-        group_code = s.get("fk_groupcode")
+        # FIX: schedules use 'fk_group', NOT 'fk_groupcode'
+        group_code = s.get("fk_group")        # ← CORRECT FIELD
         module_code = s.get("fk_module")
         if not group_code or not module_code:
             continue
+
+        group_ids.add(group_code)  # ← ADD to set
 
         group_doc = db.collection("groups").document(group_code).get()
         module_doc = db.collection("modules").document(module_code).get()
@@ -547,12 +548,12 @@ def teacher_dashboard():
         "absent": total_absent
     }
 
-    # ------------------ Count Pending Absence Requests ------------------
+    # ------------------ Count Pending Absence Requests (UNCHANGED) ------------------
     pending_count = 0
     role_doc = db.collection("users").document(teacher_uid).collection("roles").document("teacher").get()
     if role_doc.exists:
         role_data = role_doc.to_dict()
-        group_code = role_data.get("groupCode")
+        group_code = role_data.get("groupCode")  # ← This is from teacher's role (for GC)
         if group_code:
             pending_query = db.collection("absenceRecords") \
                 .where("status", "==", "In Progress") \
@@ -560,93 +561,59 @@ def teacher_dashboard():
             for doc in pending_query.stream():
                 pending_count += 1
 
+    # ------------------ Helper Function ------------------
+    def calculate_student_attendance_percentage(teacher_id, student_id, start_date=None, end_date=None):
+        total_sessions = 0
+        present_count = 0
 
-    # ------------------ Find Students with Attendance Below 75% ------------------
+        schedules_ref = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
+        for sched_doc in schedules_ref:
+            schedule_id = sched_doc.id
+            date_collections = db.collection("attendance").document(schedule_id).collections()
+            for date_col in date_collections:
+                date_str = date_col.id
+                try:
+                    att_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                except ValueError:
+                    continue
+
+                if start_date and att_date < start_date:
+                    continue
+                if end_date and att_date > end_date:
+                    continue
+
+                stu_doc = date_col.document(student_id).get()
+                if not stu_doc.exists:
+                    continue
+
+                total_sessions += 1
+                if stu_doc.to_dict().get("status") == "Present":
+                    present_count += 1
+
+        if total_sessions == 0:
+            return 0
+        return (present_count / total_sessions) * 100
+
+    # ------------------ Find Students with <75% Attendance ------------------
     low_attendance_students = []
-    seen_students = set()
-    today = datetime.now()
+    users_ref = db.collection("users").where("role_type", "==", 1).stream()
+    for u in users_ref:
+        udata = u.to_dict()
+        role_doc = db.collection("users").document(u.id).collection("roles").document("student").get()
+        if role_doc.exists:
+            rdata = role_doc.to_dict()
+            # Student's group is in 'fk_groupcode'; teacher's groups are in 'group_ids' (from schedule.fk_group)
+            if rdata.get("fk_groupcode") in group_ids:
+                pct = calculate_student_attendance_percentage(teacher_uid, u.id)
+                if pct < 75:
+                    low_attendance_students.append({
+                        "id": u.id,
+                        "name": udata.get("name", "Student"),
+                        "attendance_pct": round(pct, 1)
+                    })
 
-    # ---- Step 1: Preload all students (for name → ID lookup) ----
-    all_students = {}
-    # Use 'filter=' for Firestore v3+
-    students_ref = db.collection("users").where("role_type", "==", 1).stream()
-    for s in students_ref:
-        sdata = s.to_dict()
-        full_name = f"{sdata.get('firstName', '').strip()} {sdata.get('lastName', '').strip()}".strip()
-        if full_name:
-            all_students[full_name] = s.id
-
-    print("All students loaded:", all_students)  # Debug
-
-    # ---- Step 2: Calculate attendance ----
-    for schedule in schedules:
-        group_code = schedule.get("fk_groupcode")
-        module_code = schedule.get("fk_module")
-        if not group_code or not module_code:
-            print(f"Skipping schedule due to missing group/module: {schedule}")
-            continue
-
-        student_stats = {}
-
-        # Loop through last 60 days
-        for i in range(60):
-            date_str = (today - timedelta(days=i)).strftime("%Y-%m-%d")
-            try:
-                students_collection = (
-                    db.collection("attendance")
-                    .document(date_str)
-                    .collection(group_code)
-                    .document(module_code)
-                    .collection("students")
-                )
-
-                docs = list(students_collection.stream())
-                if docs:
-                    print(f"{date_str} - {group_code}/{module_code} - Found {len(docs)} attendance records")
-
-                for student_doc in docs:
-                    data = student_doc.to_dict()
-                    if not data:
-                        continue
-
-                    student_name = data.get("student_name", "").strip()
-                    if not student_name:
-                        continue
-
-                    if student_name not in student_stats:
-                        student_stats[student_name] = {"present": 0, "total": 0}
-
-                    student_stats[student_name]["total"] += 1
-                    if data.get("status", "").strip().lower() == "present":
-                        student_stats[student_name]["present"] += 1
-
-            except Exception as e:
-                print(f"Error reading attendance for {group_code}-{module_code} on {date_str}: {e}")
-                continue
-
-        print(f"Attendance stats for {group_code}-{module_code}: {student_stats}")  # Debug
-
-        # ---- Step 3: Calculate attendance percentage ----
-        for student_name, stats_data in student_stats.items():
-            if stats_data["total"] == 0:
-                continue
-
-            percentage = (stats_data["present"] / stats_data["total"]) * 100
-            print(f"{student_name}: {stats_data['present']}/{stats_data['total']} = {percentage:.2f}%")  # Debug
-
-            if percentage < 75 and student_name not in seen_students:
-                student_id = all_students.get(student_name)
-                low_attendance_students.append({
-                    "id": student_id,
-                    "name": student_name,
-                    "attendance": round(percentage, 2)
-                })
-                seen_students.add(student_name)
-                print(f"Added low attendance: {student_name} ({percentage:.2f}%)")  # Debug
-
-    print("Final low attendance students list:", low_attendance_students)
-
-    # ------------------ Render Teacher Dashboard ------------------
+    # ------------------ Render Template ------------------
+    now = datetime.now()
     return render_template(
         "teacher/T_dashboard.html",
         profile=profile,
@@ -654,6 +621,8 @@ def teacher_dashboard():
         stats=stats,
         pending_count=pending_count,
         low_attendance_students=low_attendance_students,
+        month=now.month,
+        year=now.year,
         current_schedule=None
     )
 
