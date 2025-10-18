@@ -2129,11 +2129,12 @@ def mark_absent_on_stop():
                 "group": group_id,
                 "program": program_name,
                 "status": "Absent",
-                "timestamp": datetime.now()
+                "timestamp": None,  # No timestamp for absent
             })
             absent_count += 1
 
     return jsonify({"success": True, "absent_marked": absent_count})
+
 
 #------------------- Teacher Attendance Report ------------------
 from flask import session, redirect, url_for, render_template
