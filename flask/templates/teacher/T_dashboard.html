@@ -296,19 +296,29 @@
       </div>
     </div>
   </div>
-
-  <!-- Low Attendance Students -->
-  <div class="card low-attendance-card">
-    <div class="low-attendance-title"><i class="fas fa-exclamation-triangle"></i> Students with Attendance Below 75%</div>
+<!-- Low Attendance Students -->
+<div class="card low-attendance-card">
+  <div class="low-attendance-title"><i class="fas fa-exclamation-triangle"></i> Students with Attendance Below 75%</div>
+  {% if low_attendance_students %}
     <ul class="low-attendance-list">
       {% for student in low_attendance_students %}
         <li class="low-attendance-item">
-          <a href="{{ url_for('teacher_individual_summary', student_id=student.id) }}" class="student-name">{{ student.name }}</a>
-          <span class="attendance-percentage">{{ student.attendance }}%</span>
+          <a href="{{ url_for('teacher_individual_summary', 
+                              student_id=student.id, 
+                              month=month, 
+                              year=year) }}" 
+             class="student-name">
+            {{ student.name }}
+          </a>
+          <span class="attendance-percentage">{{ student.attendance_pct }}%</span>
         </li>
       {% endfor %}
     </ul>
-  </div>
+  {% else %}
+    <div class="low-attendance-list">
+      <p class="text-muted">All students have 75% or higher attendance.</p>
+    </div>
+  {% endif %}
 </div>
 
 <script>
