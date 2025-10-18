@@ -174,7 +174,7 @@ def camera_loop():
                 best_match_index = np.argmin(face_distances)
                 best_distance = face_distances[best_match_index]
 
-                if best_distance < 0.45:
+                if best_distance < 0.50:
                     student_id = classNames[best_match_index]
                     name = mark_attendance(student_id)
                 else:
