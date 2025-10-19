@@ -1202,6 +1202,9 @@ def student_absentapp():
         last_name = user_data.get("last_name", "").strip()
         full_name = f"{first_name} {last_name}".strip() or "Student"
 
+    # ✅ Profile picture (fallback if not set)
+    profile_pic_url = user_data.get("photo_url") or "uploads/default_student.png"
+
     # Student subcollection (roles → student)
     student_doc = db.collection("users").document(uid).collection("roles").document("student").get()
     student_data = student_doc.to_dict() if student_doc.exists else {}
@@ -1229,7 +1232,7 @@ def student_absentapp():
         data = {
             "student_id": uid,
             "studentID": student_ID,
-            "full_name": full_name,  # ✅ Now uses correct name
+            "full_name": full_name,
             "reason": reason,
             "start_date": start_date,
             "end_date": end_date,
@@ -1317,6 +1320,7 @@ def student_absentapp():
 
     records.sort(key=lambda x: datetime.strptime(x["start_date"], "%d/%m/%Y"))
 
+    # ---------- Render template ----------
     return render_template(
         "student/S_AbsentApp.html",
         records=records,
@@ -1324,8 +1328,10 @@ def student_absentapp():
         full_name=full_name,      # ✅ Correct full name
         uid=uid,
         student_ID=student_ID,
-        group_code=group_code
+        group_code=group_code,
+        profile_pic_url=profile_pic_url   # ✅ Added profile picture
     )
+
 
 # ------------------ Student Mark a Record as Read ------------------
 @app.route("/student/mark_absence_read", methods=["POST"])
