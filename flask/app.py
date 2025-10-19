@@ -922,14 +922,16 @@ def student_attendance():
 
     uid = user.get("uid")
 
-    # -------- Fetch user's full name --------
+    # -------- Fetch user's full name and photo URL --------
     full_name = "Student"
+    profile_pic_url = url_for('static', filename='default_profile.png')  # fallback
     user_doc = db.collection("users").document(uid).get()
     if user_doc.exists:
         user_data = user_doc.to_dict()
         full_name = user_data.get("name") or " ".join(
             filter(None, [user_data.get("first_name"), user_data.get("last_name")])
         ) or "Student"
+        profile_pic_url = user_data.get("photo_url") or profile_pic_url  # add photo URL
 
     # -------- Get student's group --------
     fk_group = None
@@ -963,9 +965,9 @@ def student_attendance():
     for abs_doc in absences_docs:
         abs_data = abs_doc.to_dict()
         student_absences.append({
-            "start_date": abs_data.get("start_date"),  # string "YYYY-MM-DD"
+            "start_date": abs_data.get("start_date"),
             "end_date": abs_data.get("end_date") or abs_data.get("start_date"),
-            "status": abs_data.get("status")  # Approved / Rejected / In Progress
+            "status": abs_data.get("status")
         })
 
     if fk_group:
@@ -981,17 +983,15 @@ def student_attendance():
                 module_name = module_doc.to_dict().get("moduleName","Unknown Module")
                 modules_set.add(module_name)
 
-            # Attendance subcollections by date
             date_collections = db.collection("attendance").document(schedule_id).collections()
             for date_col in date_collections:
-                date_str = date_col.id  # e.g., "2025-10-14"
+                date_str = date_col.id
                 student_doc = date_col.document(uid).get()
                 if not student_doc.exists:
                     continue
                 data = student_doc.to_dict()
                 status = data.get("status","Not Marked Yet").capitalize()
 
-                # -------- Handle Absence Applications --------
                 remarks = ""
                 display_status = status
                 highlight_pending = False
@@ -1008,7 +1008,6 @@ def student_attendance():
                             end_dt = datetime.strptime(absence["end_date"], "%Y-%m-%d")
                         except:
                             continue
-                        # ✅ Only mark if attendance date is within absence application range
                         if start_dt.date() <= record_date_dt.date() <= end_dt.date():
                             abs_status = absence["status"].lower()
                             if abs_status == "approved":
@@ -1023,9 +1022,8 @@ def student_attendance():
                                 highlight_pending = True
                             else:
                                 remarks = absence["status"].capitalize() or ""
-                            break  # stop at first matching absence
+                            break
 
-                # --- Update Overall Attendance ---
                 overall_total += 1
                 if display_status=="Present":
                     overall_present += 1
@@ -1034,7 +1032,6 @@ def student_attendance():
                 elif display_status=="Late":
                     overall_late += 1
 
-                # --- Module Stats ---
                 if display_status=="Present":
                     module_stats[module_name]["present"] += 1
                 elif display_status=="Absent":
@@ -1042,8 +1039,7 @@ def student_attendance():
                 elif display_status=="Late":
                     module_stats[module_name]["late"] += 1
 
-                # --- Monthly Stats ---
-                month_key = record_date_dt.strftime("%Y-%m")
+                month_key = record_date_dt.strftime("%Y-%m") if record_date_dt else "Unknown"
                 monthly_stats_overall[month_key]["total"] += 1
                 if display_status=="Present":
                     monthly_stats_overall[month_key]["present"] += 1
@@ -1052,7 +1048,6 @@ def student_attendance():
                 elif display_status=="Late":
                     monthly_stats_overall[month_key]["late"] += 1
 
-                # --- Apply filters ---
                 if selected_module != "All" and module_name != selected_module:
                     continue
                 if selected_status != "All" and display_status != selected_status:
@@ -1084,7 +1079,6 @@ def student_attendance():
                     "_datetime": record_date_dt
                 })
 
-    # --- Sort records ---
     records.sort(key=lambda x: x["_datetime"] or datetime.min, reverse=True)
     for r in records:
         r.pop("_datetime", None)
@@ -1103,6 +1097,7 @@ def student_attendance():
         monthly_stats=monthly_stats_overall,
         module_stats=module_stats,
         full_name=full_name,
+        profile_pic_url=profile_pic_url,  # ✅ Added photo URL
         modules=sorted(list(modules_set)),
         selected_module=selected_module,
         selected_status=selected_status,
@@ -1139,9 +1134,16 @@ def student_schedule():
     print(f"🔍 Student UID: {uid}")
     print(f"🔍 Student group_id (fk_groupcode): {group_id}")
 
-    # Fetch full name
+    # -------- Fetch full name and photo URL --------
+    full_name = "Student"
+    profile_pic_url = url_for('static', filename='default_profile.png')  # fallback
     user_doc = db.collection("users").document(uid).get()
-    full_name = user_doc.to_dict().get("name", "Student").strip() if user_doc.exists else "Student"
+    if user_doc.exists:
+        user_data = user_doc.to_dict()
+        full_name = user_data.get("name") or " ".join(
+            filter(None, [user_data.get("first_name"), user_data.get("last_name")])
+        ) or "Student"
+        profile_pic_url = user_data.get("photo_url") or profile_pic_url  # add photo URL
 
     # Fetch mlmodule for module names
     mlmodules = {m.id: m.to_dict() for m in db.collection("mlmodule").stream()}
@@ -1174,8 +1176,10 @@ def student_schedule():
         "student/S_Schedule.html",
         schedules=schedules,
         full_name=full_name,
+        profile_pic_url=profile_pic_url,  # ✅ Added photo URL
         group_code=group_id
     )
+
 
 # ------------------ Student Absent Pages ------------------
 @app.route("/student/absentapp", methods=["GET", "POST"])
