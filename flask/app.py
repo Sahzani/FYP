@@ -201,41 +201,87 @@ def home():
 def forgot_password():
     if request.method == "POST":
         email = request.form.get("email", "").strip()
-
         if not email:
             flash("Please enter your email.", "error")
             return redirect(url_for("forgot_password"))
 
-        try:
-            # 🔍 Check if email exists in Firestore
-            user_docs = db.collection("users").where("email", "==", email).limit(1).stream()
-            user_doc = next(user_docs, None)
+        print(f"[DEBUG] forgot_password: requested email = '{email}'")
 
-            if not user_doc:
-                flash("No account found with this email.", "error")
+        # Primary: use Firebase Auth lookup (case-insensitive)
+        try:
+            auth_user = auth.get_user_by_email(email)
+            auth_email = auth_user.email or email
+            uid = auth_user.uid
+            print(f"[DEBUG] auth.get_user_by_email -> uid={uid} email={auth_email}")
+
+            # Try to fetch Firestore user by UID
+            user_doc = db.collection("users").document(uid).get()
+            if not user_doc.exists:
+                # Fallback: try case-insensitive match in Firestore (scan small sample)
+                found = None
+                try:
+                    for u in db.collection("users").stream():
+                        udata = u.to_dict()
+                        uemail = (udata.get("email") or "").strip()
+                        if uemail.lower() == auth_email.lower():
+                            found = u
+                            break
+                except Exception as e:
+                    print(f"[DEBUG] Firestore scan error: {e}")
+
+                if not found:
+                    print(f"[WARN] Auth user found but no Firestore doc for uid={uid}")
+                else:
+                    print(f"[DEBUG] Found Firestore doc via case-insensitive scan: {found.id}")
+
+            # Generate reset link using the canonical auth email
+            try:
+                reset_link = auth.generate_password_reset_link(auth_email)
+                print(f"[INFO] Password reset link generated for {auth_email}: {reset_link}")
+                flash(f"A password reset link has been generated for {auth_email}.", "success")
+                flash(f"Click here to reset: {reset_link}", "info")
+                return redirect(url_for("forgot_password"))
+            except Exception as e:
+                print(f"[ERROR] generate_password_reset_link: {e}")
+                flash("Failed to generate password reset link. Try again later.", "error")
                 return redirect(url_for("forgot_password"))
 
-            # ✅ Email found → Generate Firebase reset link
-            reset_link = auth.generate_password_reset_link(email)
-
-            # 🖨️ Print to your Flask terminal console
-            print("===========================================")
-            print(f"✅ Password reset link generated for: {email}")
-            print(f"🔗 {reset_link}")
-            print("===========================================")
-
-            # ✅ Show clickable link in browser (for testing)
-            flash(f"A password reset link has been generated for {email}.", "success")
-            flash(f"Click here to reset: {reset_link}", "info")
-
-            return redirect(url_for("forgot_password"))
-
         except auth.UserNotFoundError:
-            flash("No Firebase Auth account found for this email.", "error")
+            # Auth doesn't have the user — try a tolerant Firestore search (case-insensitive)
+            print(f"[DEBUG] auth.get_user_by_email: not found for '{email}', scanning Firestore (case-insensitive)")
+            try:
+                found_doc = None
+                for u in db.collection("users").stream():
+                    udata = u.to_dict()
+                    uemail = (udata.get("email") or "").strip()
+                    if uemail and uemail.lower() == email.lower():
+                        found_doc = u
+                        break
+                if found_doc:
+                    found_email = (found_doc.to_dict().get("email") or "").strip()
+                    try:
+                        reset_link = auth.generate_password_reset_link(found_email)
+                        print(f"[INFO] Password reset link (from Firestore email) for {found_email}: {reset_link}")
+                        flash(f"A password reset link has been generated for {found_email}.", "success")
+                        flash(f"Click here to reset: {reset_link}", "info")
+                        return redirect(url_for("forgot_password"))
+                    except Exception as e:
+                        print(f"[ERROR] generate_password_reset_link (from Firestore): {e}")
+                        flash("Failed to generate reset link. Try again later.", "error")
+                        return redirect(url_for("forgot_password"))
+                else:
+                    # Not found anywhere
+                    print(f"[DEBUG] No Firestore user found for '{email}' (case-insensitive scan empty)")
+                    flash("No account found with this email (check spelling and case).", "error")
+                    return redirect(url_for("forgot_password"))
+            except Exception as e:
+                print(f"[ERROR] scanning Firestore for email: {e}")
+                flash("Error checking account. Try again later.", "error")
+                return redirect(url_for("forgot_password"))
         except Exception as e:
-            flash(f"An error occurred: {str(e)}", "error")
-
-        return redirect(url_for("forgot_password"))
+            print(f"[ERROR] unexpected error in forgot_password: {e}")
+            flash("Error checking account. Try again later.", "error")
+            return redirect(url_for("forgot_password"))
 
     return render_template("combinePage/Forget Password.html")
 
