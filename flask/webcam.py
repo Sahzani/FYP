@@ -135,7 +135,7 @@ def mark_attendance(student_id):
 # ===== Camera Loop (Optimized) =====
 def camera_loop():
     global latest_frame, camera_running, frame_count
-    cam = cv2.VideoCapture(2)
+    cam = cv2.VideoCapture(0)
     if not cam.isOpened():
         print("[ERROR] Cannot open camera")
         camera_running = False
