@@ -1,249 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>iAttend Teacher Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>iAttend Teacher Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-  <style>
-    /* Main Content */
-    .main-content {
-      margin-left: 260px;
-      padding: 100px 30px 30px;
-      min-height: 100vh;
-      overflow-y: auto;
-      transition: margin-left 0.3s ease;
-      background: transparent;
-    }
-    .main-content.expanded {
-      margin-left: 80px;
-    }
+<style>
+/* Main Content */
+.main-content { 
+  margin-left:260px; 
+  padding:100px 30px 30px; 
+  min-height:100vh; 
+  overflow-y:auto; 
+  transition:margin-left 0.3s ease; 
+}
+.main-content.expanded { margin-left:80px; }
 
-    /* Welcome Heading */
-    .main-content h2 {
-      font-family: 'Poppins', sans-serif;
-      font-size: 36px;
-      font-weight: 700;
-      color: #444;
-      margin-bottom: 30px;
-    }
-    #teacher-name {
-      color: #4154F1;
-    }
+/* Welcome Heading */
+.main-content h2 { font-size:36px; font-weight:700; color:#444; margin-bottom:30px; }
+#teacher-name { color:#4154F1; }
 
-    /* Cards */
-    .card {
-      background: #fff;
-      padding: 22px;
-      border-radius: 15px;
-      box-shadow: 0 15px 30px rgba(0,0,0,0.05);
-      margin-bottom: 25px;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    }
+/* Card Base */
+.card { 
+  background:#fff; 
+  border-radius:15px; 
+  box-shadow:0 15px 30px rgba(0,0,0,0.05); 
+  transition: transform 0.3s, box-shadow 0.3s; 
+  padding:22px;
+  margin-bottom:25px;
+}
+.card:hover { transform:translateY(-8px); box-shadow:0 20px 40px rgba(0,0,0,0.1); }
 
-    /* Grid Layout */
-    .grid-container {
-      display: grid;
-      gap: 1.5rem;
-    }
-    .grid-container-lg-2 {
-      grid-template-columns: repeat(2, 1fr);
-    }
+/* Calendar */
+.calendar-container {
+  display:flex; justify-content:space-between; align-items:center;
+  background:#fff; border-radius:15px; box-shadow:0 15px 30px rgba(0,0,0,0.05);
+  padding:2rem; min-height:180px;
+}
+.calendar-info { display:flex; flex-direction:column; gap:12px; }
+.calendar-date { font-size:2rem; font-weight:700; color:#4154F1; }
+.calendar-time { font-size:1.3rem; color:#666; }
+.calendar-icon {
+  width:4.5rem; height:4.5rem;
+  background: linear-gradient(135deg, #4154F1, #5D5FEF);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  color:white; font-size:2rem;
+}
 
-    /* Calendar — Now Full Width */
-    .calendar-container {
-      background: #fff;
-      border-radius: 15px;
-      box-shadow: 0 15px 25px rgba(0,0,0,0.05);
-      padding: 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .calendar-container:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    }
-    .calendar-info {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .calendar-date {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #4154F1;
-    }
-    .calendar-time {
-      font-size: 1.1rem;
-      color: #666;
-    }
-    .calendar-icon {
-      width: 3.5rem;
-      height: 3.5rem;
-      background: linear-gradient(135deg, #4154F1, #5D5FEF);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.5rem;
-    }
+/* Notifications */
+.notification-card { 
+  display:flex; align-items:flex-start; gap:1rem; 
+  background:#fff; padding:1.5rem; border-radius:15px; box-shadow:0 15px 25px rgba(0,0,0,0.05);
+}
+.notification-icon { width:3rem; height:3rem; background:#4154F1; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; flex-shrink:0; }
+.notification-content { flex-grow:1; }
+.notification-title { font-size:1.2rem; font-weight:600; margin-bottom:0.5rem; color:#333; }
+.notification-text { color:#666; margin-bottom:1rem; font-size:14px; }
+.notification-btn { background:#4154F1; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer; transition:0.3s; font-size:14px; }
+.notification-btn:hover { background:#3a4cd0; transform:translateY(-2px); }
 
-    /* Notifications */
-    .notification-card {
-      background: #fff;
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      padding: 1.5rem;
-      border-radius: 15px;
-      box-shadow: 0 15px 25px rgba(0,0,0,0.05);
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .notification-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    }
-    .notification-icon {
-      width: 3rem;
-      height: 3rem;
-      background-color: #4154F1;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      flex-shrink: 0;
-    }
-    .notification-content {
-      flex-grow: 1;
-    }
-    .notification-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      color: #333;
-    }
-    .notification-text {
-      color: #666;
-      margin-bottom: 1rem;
-      font-size: 14px;
-    }
-    .notification-btn {
-      background: #4154F1;
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.3s, transform 0.3s;
-      font-size: 14px;
-    }
-    .notification-btn:hover {
-      background: #3a4cd0;
-      transform: translateY(-2px);
-    }
+/* Low Attendance */
+.low-attendance-card { border-top:2px solid #4154F1; }
+.low-attendance-title { margin-bottom:1rem; font-size:1.2rem; color:#333; display:flex; align-items:center; gap:8px; }
+.low-attendance-list { list-style:none; padding:0; margin:0; }
+.low-attendance-item { padding:12px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
+.low-attendance-item:last-child { border-bottom:none; }
+.student-name { color:#4154F1; font-weight:600; cursor:pointer; text-decoration:underline; font-size:14px; }
+.student-name:hover { color:#3a4cd0; }
+.attendance-percentage { background:#ffebee; color:#c62828; padding:4px 10px; border-radius:20px; font-weight:600; font-size:14px; }
 
-    /* Low Attendance */
-    .low-attendance-card {
-      grid-column: 1 / -1;
-      border-top: 2px solid #4154F1;
-    }
-    .low-attendance-title {
-      margin-bottom: 1rem;
-      font-size: 1.2rem;
-      color: #333;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .low-attendance-list {
-      list-style: none;
-    }
-    .low-attendance-item {
-      padding: 12px 0;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .low-attendance-item:last-child {
-      border-bottom: none;
-    }
-    .student-name {
-      color: #4154F1;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: underline;
-      transition: color 0.2s;
-      font-size: 14px;
-    }
-    .student-name:hover {
-      color: #3a4cd0;
-    }
-    .attendance-percentage {
-      background: #ffebee;
-      color: #c62828;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    @media (max-width: 768px) {
-      .calendar-container {
-        flex-direction: column;
-        text-align: center;
-        gap: 1.5rem;
-      }
-      .notification-card {
-        flex-direction: column;
-      }
-      .notification-btn {
-        width: 100%;
-        margin-top: 1rem;
-      }
-    }
-  </style>
+@media(max-width:768px){
+  .calendar-container { flex-direction:column; text-align:center; gap:1rem; min-height:auto; }
+  .notification-card { flex-direction:column; }
+  .notification-btn { width:100%; margin-top:1rem; }
+}
+</style>
 </head>
 <body>
 
 <header>
   <span id="menu-toggle">&#9776;</span>
-  <div class="header-content">
+  <div class="header-content" style="display:flex; align-items:center; justify-content:space-between;">
     <a href="{{ url_for('teacher_dashboard') }}" class="title">iAttend</a>
-    <a href="{{ url_for('teacher_profile') }}" class="user-info">
+    <a href="{{ url_for('teacher_profile') }}" class="user-info" style="display:flex; align-items:center; gap:8px;">
       <span>{{ profile.firstName }} {{ profile.lastName }}</span>
-      <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile">
+      <img src="{% if profile.photo_name.startswith('http') %}{{ profile.photo_name }}{% else %}{{ url_for('static', filename=profile.photo_name) }}{% endif %}" alt="Teacher Profile" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1px solid #ccc;">
     </a>
   </div>
 </header>
 
 <div class="sidebar">
+  <!-- Sidebar content same as before -->
   <div class="sidebar-section">
     <a class="sidebar-link {% if request.endpoint == 'teacher_dashboard' %}active{% endif %}" href="{{ url_for('teacher_dashboard') }}">
       <i class="fas fa-home"></i><span>Dashboard</span>
     </a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">Reports</div>
     <a class="sidebar-link {% if request.endpoint == 'teacher_attendance' %}active{% endif %}" href="{{ url_for('teacher_attendance') }}">
       <i class="fas fa-chart-bar"></i><span>Attendance Report</span>
     </a>
   </div>
-
   <div class="sidebar-section">
     <div class="sidebar-section-title">Manage</div>
     <a class="sidebar-link" href="{{ url_for('teacher_schedules') }}"><i class="fas fa-calendar"></i><span>Class Schedule</span></a>
@@ -251,7 +114,6 @@
     <a class="sidebar-link" href="{{ url_for('teacher_manage_absent') }}"><i class="fas fa-calendar-alt"></i><span>Absences Application</span></a>
     <a class="sidebar-link" href="{{ url_for('teacher_individual_summary') }}"><i class="fas fa-address-card"></i><span>Individual Attendance</span></a>
   </div>
-
   {% if profile.is_gc %}
   <div class="sidebar-section">
     <div class="sidebar-section-title">Group Coordinator</div>
@@ -259,7 +121,6 @@
     <a class="sidebar-link" href="{{ url_for('gc_group_report') }}"><i class="fas fa-file-alt"></i><span>Group Report</span></a>
   </div>
   {% endif %}
-
   <div class="sidebar-section">
     <a class="sidebar-link" href="{{ url_for('teacher_logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
   </div>
@@ -268,48 +129,39 @@
 <div class="main-content">
   <h2>Welcome, <span id="teacher-name">{{ profile.firstName }} {{ profile.lastName }}</span>!</h2>
 
-  <!-- Calendar — Full Width -->
-  <div class="card">
-    <div class="calendar-container">
-      <div class="calendar-info">
-        <div class="calendar-date" id="current-date">Wednesday, June 12</div>
-        <div class="calendar-time" id="current-time">10:45 AM</div>
-      </div>
-      <div class="calendar-icon"><i class="fas fa-calendar-day"></i></div>
-    </div>
+  <!-- Calendar Card (Full Width, Moderate Size like Student Dashboard) -->
+<div class="card calendar-container" style="padding:1.5rem; min-height:140px;">
+  <div class="calendar-info">
+    <div class="calendar-date" id="current-date" style="font-size:1.6rem; font-weight:700;">Wednesday, June 12</div>
+    <div class="calendar-time" id="current-time" style="font-size:1.2rem; color:#666;">10:45 AM</div>
   </div>
+  <div class="calendar-icon" style="width:4rem; height:4rem; font-size:1.6rem;"><i class="fas fa-calendar-day"></i></div>
+</div>
 
-  <!-- Notifications -->
-  <div class="grid-container-lg-2 grid-container card-spacing">
-    <div class="notification-card">
-      <div class="notification-icon"><i class="fas fa-bell"></i></div>
-      <div class="notification-content">
-        <div class="notification-title">Pending Absence Requests</div>
-        {% if pending_count > 0 %}
-          <div class="notification-text">
-            You have <strong>{{ pending_count }} pending absence request{% if pending_count > 1 %}s{% endif %}</strong> that need your review.
-          </div>
-          <a href="{{ url_for('teacher_manage_absent') }}" class="notification-btn">Review Requests</a>
-        {% else %}
-          <div class="notification-text">No pending absence requests at the moment.</div>
-        {% endif %}
+ <!-- Notifications Card (Slightly Wider for Consistency) -->
+<div class="card notification-card" style="width:650px; max-width:95%; margin-top:20px; min-height:140px;">
+  <div class="notification-icon"><i class="fas fa-bell"></i></div>
+  <div class="notification-content">
+    <div class="notification-title">Pending Absence Requests</div>
+    {% if pending_count > 0 %}
+      <div class="notification-text">
+        You have <strong>{{ pending_count }} pending absence request{% if pending_count > 1 %}s{% endif %}</strong> that need your review.
       </div>
-    </div>
+      <a href="{{ url_for('teacher_manage_absent') }}" class="notification-btn">Review Requests</a>
+    {% else %}
+      <div class="notification-text">No pending absence requests at the moment.</div>
+    {% endif %}
   </div>
+</div>
+
 <!-- Low Attendance Students -->
-<div class="card low-attendance-card">
+<div class="card low-attendance-card" style="margin-top:20px;">
   <div class="low-attendance-title"><i class="fas fa-exclamation-triangle"></i> Students with Attendance Below 75%</div>
   {% if low_attendance_students %}
     <ul class="low-attendance-list">
       {% for student in low_attendance_students %}
         <li class="low-attendance-item">
-          <a href="{{ url_for('teacher_individual_summary', 
-                              student_id=student.id, 
-                              month=month, 
-                              year=year) }}" 
-             class="student-name">
-            {{ student.name }}
-          </a>
+          <a href="{{ url_for('teacher_individual_summary', student_id=student.id, month=month, year=year) }}" class="student-name">{{ student.name }}</a>
           <span class="attendance-percentage">{{ student.attendance_pct }}%</span>
         </li>
       {% endfor %}
