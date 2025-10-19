@@ -361,7 +361,7 @@
           {% elif 'Rejected' in remarks %}
             {% set display_status = 'Absent' %}
           {% elif 'In Progress' in remarks %}
-            {% set display_status = 'Pending' %}
+            {% set display_status = 'Absent' %}
           {% endif %}
           <tr>
             <td>{{ record.date }}</td>
