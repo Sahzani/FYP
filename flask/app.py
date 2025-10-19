@@ -467,6 +467,26 @@ def student_dashboard():
         status_icon=status_icon
     )       
 
+#------------------ Teacher - Load student encodings ------------------      
+# ------------------ Helper: Get cached attendance % (FLAT CACHE) ------------------
+def get_student_attendance_percent_cached(teacher_id, student_id, year, month):
+    # Use FLAT collection: teacher_attendance_cache
+    doc_id = f"{teacher_id}_{student_id}_{year}_{month:02d}"
+    doc = db.collection("teacher_attendance_cache").document(doc_id).get()
+    if doc.exists:
+        data = doc.to_dict()
+        total_present = 0
+        total_sessions = 0
+        for mod_data in data.get("summary", {}).values():
+            total_present += mod_data.get("Present", 0)
+            total_sessions += (
+                mod_data.get("Present", 0) +
+                mod_data.get("Absent", 0) +
+                mod_data.get("Late", 0)
+            )
+        if total_sessions > 0:
+            return round((total_present / total_sessions) * 100, 1)
+    return None  # Not cached yet
 #------------------ Teacher Dashboard ------------------
 @app.route("/teacher_dashboard")
 def teacher_dashboard():
@@ -561,56 +581,30 @@ def teacher_dashboard():
             for doc in pending_query.stream():
                 pending_count += 1
 
-    # ------------------ Helper Function ------------------
-    def calculate_student_attendance_percentage(teacher_id, student_id, start_date=None, end_date=None):
-        total_sessions = 0
-        present_count = 0
-
-        schedules_ref = db.collection("schedules").where("fk_teacher", "==", teacher_id).stream()
-        for sched_doc in schedules_ref:
-            schedule_id = sched_doc.id
-            date_collections = db.collection("attendance").document(schedule_id).collections()
-            for date_col in date_collections:
-                date_str = date_col.id
-                try:
-                    att_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                except ValueError:
-                    continue
-
-                if start_date and att_date < start_date:
-                    continue
-                if end_date and att_date > end_date:
-                    continue
-
-                stu_doc = date_col.document(student_id).get()
-                if not stu_doc.exists:
-                    continue
-
-                total_sessions += 1
-                if stu_doc.to_dict().get("status") == "Present":
-                    present_count += 1
-
-        if total_sessions == 0:
-            return 0
-        return (present_count / total_sessions) * 100
-
-    # ------------------ Find Students with <75% Attendance ------------------
+    #------------------ Find Students with <75% Attendance (USING CACHE) ------------------
     low_attendance_students = []
+    now = datetime.now()
+    current_year = now.year
+    current_month = now.month
+
     users_ref = db.collection("users").where("role_type", "==", 1).stream()
     for u in users_ref:
         udata = u.to_dict()
         role_doc = db.collection("users").document(u.id).collection("roles").document("student").get()
         if role_doc.exists:
             rdata = role_doc.to_dict()
-            # Student's group is in 'fk_groupcode'; teacher's groups are in 'group_ids' (from schedule.fk_group)
             if rdata.get("fk_groupcode") in group_ids:
-                pct = calculate_student_attendance_percentage(teacher_uid, u.id)
-                if pct < 75:
+                # ✅ USE CACHED PERCENTAGE (FAST!)
+                pct = get_student_attendance_percent_cached(teacher_uid, u.id, current_year, current_month)
+                # Only show if cached AND below 75%
+                if pct is not None and pct < 75:
                     low_attendance_students.append({
                         "id": u.id,
                         "name": udata.get("name", "Student"),
-                        "attendance_pct": round(pct, 1)
+                        "attendance_pct": pct
                     })
+
+    
 
     # ------------------ Render Template ------------------
     now = datetime.now()
@@ -727,6 +721,20 @@ def teacher_individual_summary():
 
             chart_labels.append(module_name)
             chart_percents.append(percent)
+
+                  # ✅ WRITE TO FIRESTORE FOR CACHING
+        # 👇 ADD THE CACHING BLOCK HERE 👇
+        doc_id = f"{teacher_id}_{student_id}_{year}_{month:02d}"
+        db.collection("teacher_attendance_cache").document(doc_id).set({
+            "teacher_id": teacher_id,
+            "student_id": student_id,
+            "year": year,
+            "month": month,
+            "summary": summary,
+            "chart_labels": chart_labels,
+            "chart_percents": chart_percents,
+            "last_updated": firestore.SERVER_TIMESTAMP
+        })
 
     return render_template(
         "teacher/T_individual_summary.html",

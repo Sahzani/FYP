@@ -88,6 +88,11 @@
       min-width: 140px;
       white-space: nowrap;
     }
+
+    /* Loading spinner */
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 
@@ -183,6 +188,10 @@
 
     <div class="card">
       <h2>Attendance Table</h2>
+      <div id="loading" class="text-center py-4 hidden">
+        <div class="inline-block w-6 h-6 border-4 border-t-blue-600 border-solid rounded-full animate-spin"></div>
+        <p class="mt-2 text-gray-600">Loading attendance data...</p>
+      </div>
       <div class="overflow-x-auto">
         <table id="attendance-table">
           <thead>
@@ -218,6 +227,7 @@
     const videoContainer = document.getElementById('video-container');
     const webcamFeed = document.getElementById('webcam-feed');
     const attendanceTable = document.querySelector('#attendance-table tbody');
+    const loadingIndicator = document.getElementById('loading');
     let refreshInterval = null;
 
     // === FETCH SCHEDULES VIA AJAX ===
@@ -304,6 +314,11 @@
       }
       if (filtered.length === 1) {
         scheduleId = filtered[0].docId;
+
+        // Show loading
+        loadingIndicator.classList.remove('hidden');
+        attendanceTable.innerHTML = '';
+
         startCameraWithSchedule(scheduleId);
       } else {
         alert("Multiple classes match. Please refine filters.");
@@ -319,108 +334,102 @@
     });
 
     document.getElementById('stopCamera').addEventListener('click', () => {
-  // Stop auto-refresh
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
-  }
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+      }
 
-  // Hide video
-  videoContainer.style.display = "none";
-  webcamFeed.src = "";
+      videoContainer.style.display = "none";
+      webcamFeed.src = "";
 
-  // ✅ Mark undetected students as "Absent"
-  if (scheduleId) {
-    fetch("/api/mark_absent_on_stop", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ schedule_id: scheduleId })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        alert(`Camera stopped. ${data.absent_marked} students marked as Absent.`);
-        // Optional: refresh table one last time
+      if (scheduleId) {
+        fetch("/api/mark_absent_on_stop", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ schedule_id: scheduleId })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert(`Camera stopped. ${data.absent_marked} students marked as Absent.`);
+            fetchAttendance(scheduleId);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to mark absent students:", err);
+          alert("Camera stopped, but failed to update attendance.");
+        });
+      }
+    });
+
+    function startCameraWithSchedule(scheduleId) {
+      fetch(`${WEBCAM_URL}/start_camera`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `schedule=${encodeURIComponent(scheduleId)}`
+      })
+      .then(() => {
+        videoContainer.style.display = "block";
+        webcamFeed.src = `${WEBCAM_URL}/video_feed`;
+
         fetchAttendance(scheduleId);
-      }
-    })
-    .catch(err => {
-      console.error("Failed to mark absent students:", err);
-      alert("Camera stopped, but failed to update attendance.");
-    });
-  }
-});
-function startCameraWithSchedule(scheduleId) {
-  fetch(`${WEBCAM_URL}/start_camera`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `schedule=${encodeURIComponent(scheduleId)}`
-  })
-  .then(() => {
-    videoContainer.style.display = "block";
-    webcamFeed.src = `${WEBCAM_URL}/video_feed`;
 
-    // Initial fetch immediately
-    fetchAttendance(scheduleId);
+        if (refreshInterval) clearInterval(refreshInterval);
+        refreshInterval = setInterval(() => {
+          fetchAttendance(scheduleId);
+        }, 2000);
+      })
+      .catch(err => console.error("Failed to start camera:", err));
+    }
 
-    // 🔁 Start auto-refresh every 2 seconds for real-time updates
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(() => {
-      fetchAttendance(scheduleId);
-    }, 2000); // faster refresh
-  })
-  .catch(err => console.error("Failed to start camera:", err));
-}
+    function fetchAttendance(scheduleId) {
+      fetch(`/api/attendance/${scheduleId}`)
+        .then(res => res.json())
+        .then(data => {
+          // Hide loading
+          loadingIndicator.classList.add('hidden');
 
-function fetchAttendance(scheduleId) {
-  fetch(`/api/attendance/${scheduleId}`)
-    .then(res => res.json())
-    .then(data => {
-      if (!data.students || data.students.length === 0) {
-        attendanceTable.innerHTML = `<tr><td colspan="6" class="text-center py-4">No students found</td></tr>`;
-        return;
-      }
+          if (!data.students || data.students.length === 0) {
+            attendanceTable.innerHTML = `<tr><td colspan="6" class="text-center py-4">No students found</td></tr>`;
+            return;
+          }
 
-      // Create a map of current table students for quick lookup
-      const currentStudents = {};
-      attendanceTable.querySelectorAll('tr').forEach(tr => {
-        const email = tr.querySelector('td:nth-child(2)').textContent;
-        currentStudents[email] = tr;
-      });
+          const currentStudents = {};
+          attendanceTable.querySelectorAll('tr').forEach(tr => {
+            const email = tr.querySelector('td:nth-child(2)').textContent;
+            currentStudents[email] = tr;
+          });
 
-      data.students.forEach(student => {
-        const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
+          data.students.forEach(student => {
+            const moduleName = student.module && student.module !== "-" ? student.module : "Unknown Module";
 
-        if (currentStudents[student.email]) {
-          // Update existing row if status/time changed
-          const tr = currentStudents[student.email];
-          tr.querySelector('td:nth-child(3)').textContent = student.time || "-";
-          const statusSpan = tr.querySelector('td:nth-child(4) span');
-          statusSpan.textContent = student.status;
-          statusSpan.className = `status-badge status-${student.status}`;
-        } else {
-          // Add new student row
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${student.name || "Unknown Student"}</td>
-            <td>${student.email || "-"}</td>
-            <td>${student.time || "-"}</td>
-            <td><span class="status-badge status-${student.status}">${student.status}</span></td>
-            <td>${student.program || "-"}</td>
-            <td>${moduleName}</td>
-          `;
-          attendanceTable.appendChild(tr);
-        }
-      });
-    })
-    .catch(err => {
-      console.error("Failed to fetch attendance:", err);
-      attendanceTable.innerHTML = `<tr><td colspan="6" class="text-center py-4">Error loading data</td></tr>`;
-    });
-}
+            if (currentStudents[student.email]) {
+              const tr = currentStudents[student.email];
+              tr.querySelector('td:nth-child(3)').textContent = student.time || "-";
+              const statusSpan = tr.querySelector('td:nth-child(4) span');
+              statusSpan.textContent = student.status;
+              statusSpan.className = `status-badge status-${student.status}`;
+            } else {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${student.name || "Unknown Student"}</td>
+                <td>${student.email || "-"}</td>
+                <td>${student.time || "-"}</td>
+                <td><span class="status-badge status-${student.status}">${student.status}</span></td>
+                <td>${student.program || "-"}</td>
+                <td>${moduleName}</td>
+              `;
+              attendanceTable.appendChild(tr);
+            }
+          });
+        })
+        .catch(err => {
+          console.error("Failed to fetch attendance:", err);
+          loadingIndicator.classList.add('hidden');
+          attendanceTable.innerHTML = `<tr><td colspan="6" class="text-center py-4">Error loading data</td></tr>`;
+        });
+    }
 
-
-    // Load schedules when page is ready
     document.addEventListener('DOMContentLoaded', loadSchedules);
   </script>
 </body>
