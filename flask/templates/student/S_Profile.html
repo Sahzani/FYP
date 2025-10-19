@@ -16,26 +16,18 @@
 .profile-name { font-size:28px; font-weight:600; color:#4154F1; margin-bottom:10px; }
 .profile-sub { font-size:16px; color:#555; margin-bottom:35px; }
 .info-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:25px; justify-items:center; width:100%; }
-.info-item { background:#fdfdfd; border-radius:12px; padding:20px 25px; box-shadow:0 3px 12px rgba(0,0,0,0.05); display:flex; align-items:center; gap:15px; width:100%; max-width:250px; transition:transform 0.3s ease, box-shadow 0.3s ease; text-align:left; }
+.info-item { background:#fdfdfd; border-radius:12px; padding:20px 25px; box-shadow:0 3px 12px rgba(0,0,0,0.05); display:flex; align-items:center; gap:15px; width:100%; max-width:250px; transition:transform 0.3s ease, box-shadow 0.3s ease; text-align:left; min-width:0; }
 .info-item:hover { transform:translateY(-6px); box-shadow:0 8px 20px rgba(0,0,0,0.12); }
 .info-item i { color:#4154F1; font-size:22px; }
 .info-text { display:flex; flex-direction:column; }
 .info-label { font-size:13px; font-weight:600; color:#888; margin-bottom:4px; }
-.info-value { font-size:16px; font-weight:500; color:#333; }
+.info-value { font-size:16px; font-weight:500; color:#333; word-break:break-word; overflow-wrap:anywhere; white-space:normal; max-width:100%; }
 .edit-btn { display:inline-flex; align-items:center; gap:8px; padding:12px 24px; background-color:#4154F1; color:#fff; font-weight:600; border-radius:8px; text-decoration:none; margin-top:35px; transition:all 0.3s ease; }
 .edit-btn i { transition:transform 0.3s ease; }
 .edit-btn:hover { background-color:#3a4cd0; transform:translateY(-2px); }
 .edit-btn:hover i { transform:rotate(20deg); }
-
-/* Second row: horizontally centered, no stacking */
-.second-row {
-  grid-column: 1 / -1; /* span all columns */
-  display: flex;
-  justify-content: center;
-  gap: 25px;
-  flex-wrap: nowrap; /* prevent stacking */
-}
-
+.second-row { grid-column:1/-1; display:flex; justify-content:center; gap:25px; flex-wrap:nowrap; }
+.second-row .info-item { flex:1; min-width:0; }
 @media(max-width:768px) {
   .main-content { margin-left:0; padding:20px 15px; }
   .profile-card { padding:30px 20px; }
@@ -44,7 +36,7 @@
   .profile-sub { font-size:14px; margin-bottom:25px; }
   .info-grid { grid-template-columns:1fr; gap:20px; justify-items:center; }
   .info-item { flex-direction:column; align-items:center; gap:10px; text-align:center; max-width:100%; justify-self:center !important; }
-  .second-row { flex-direction:row; gap:15px; } /* keep horizontal on mobile */
+  .second-row { flex-direction:row; gap:15px; }
 }
 </style>
 </head>
