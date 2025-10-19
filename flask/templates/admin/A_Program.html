@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
   <style>
     /* Main Content */
@@ -119,6 +119,26 @@
       font-weight: 600;
       cursor: pointer;
       margin-right: 10px;
+    }
+
+    /* Dropdown Styles */
+    .sidebar-dropdown .dropdown-menu {
+      display: none;
+      margin-left: 20px;
+      margin-top: 4px;
+    }
+    .sidebar-dropdown.active .dropdown-menu {
+      display: block;
+    }
+    .sidebar-dropdown .dropdown-toggle::after {
+      content: "\f078";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      margin-left: auto;
+      font-size: 12px;
+    }
+    .sidebar-dropdown.active .dropdown-toggle::after {
+      content: "\f077";
     }
 
     /* Responsive */

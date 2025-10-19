@@ -141,6 +141,26 @@
       display: block;
     }
 
+    /* Dropdown Styles */
+    .sidebar-dropdown .dropdown-menu {
+      display: none;
+      margin-left: 20px;
+      margin-top: 4px;
+    }
+    .sidebar-dropdown.active .dropdown-menu {
+      display: block;
+    }
+    .sidebar-dropdown .dropdown-toggle::after {
+      content: "\f078";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      margin-left: auto;
+      font-size: 12px;
+    }
+    .sidebar-dropdown.active .dropdown-toggle::after {
+      content: "\f077";
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar { left: -260px; }
@@ -183,7 +203,18 @@
   <div class="sidebar-section">
     <div class="sidebar-section-title">Management</div>
     <a class="sidebar-link" href="{{ url_for('admin_student_add') }}"><i class="fas fa-user-graduate"></i><span>Students</span></a>
-    <a class="sidebar-link" href="{{ url_for('admin_teacher_add') }}"><i class="fas fa-chalkboard-teacher"></i><span>Teachers</span></a>
+
+    <!-- Teachers Dropdown -->
+    <div class="sidebar-dropdown {% if request.endpoint in ['admin_teacher_add','admin_teacher_assign'] %}active{% endif %}">
+      <a class="sidebar-link dropdown-toggle">
+        <i class="fas fa-chalkboard-teacher"></i><span>Teachers</span>
+      </a>
+      <div class="dropdown-menu">
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_add' %}active{% endif %}" href="{{ url_for('admin_teacher_add') }}"><span>Add Teacher</span></a>
+        <a class="sidebar-link {% if request.endpoint == 'admin_teacher_assign' %}active{% endif %}" href="{{ url_for('admin_teacher_assign') }}"><span>Assign Modules</span></a>
+      </div>
+    </div>
+
     <a class="sidebar-link" href="{{ url_for('admin_programs') }}"><i class="fas fa-layer-group"></i><span>Programs</span></a>
     <a class="sidebar-link" href="{{ url_for('admin_groups') }}"><i class="fas fa-users"></i><span>Groups</span></a>
     <a class="sidebar-link" href="{{ url_for('admin_modules') }}"><i class="fas fa-book"></i><span>Modules</span></a>
@@ -254,9 +285,17 @@ document.getElementById('menu-toggle').addEventListener('click', () => {
   document.querySelector('.sidebar').classList.toggle('collapsed');
   document.querySelector('.main-content').classList.toggle('expanded');
 });
+
+// Dropdown toggle
+document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+  toggle.addEventListener('click', e => {
+    e.preventDefault();
+    toggle.parentElement.classList.toggle('active');
+  });
+});
 </script>
 
-<!-- ✅ FIXED: No extra spaces in CDN URL -->
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -270,11 +309,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   new Chart(chartEl, {
     type: 'bar',
-    data: {  // ✅ FIXED: Added "data:" key
+    data: {
       labels: ['Present', 'Absent', 'Late'],
       datasets: [{
         label: 'This Month',
-        data: [present, absent, late],  // ✅ FIXED: Added "data:" key
+        data: [present, absent, late],
         backgroundColor: ['#4CAF50', '#F44336', '#FFC107'],
         borderWidth: 1
       }]

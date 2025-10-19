@@ -121,6 +121,26 @@
       margin-right: 10px;
     }
 
+    /* Dropdown Styles */
+    .sidebar-dropdown .dropdown-menu {
+      display: none;
+      margin-left: 20px;
+      margin-top: 4px;
+    }
+    .sidebar-dropdown.active .dropdown-menu {
+      display: block;
+    }
+    .sidebar-dropdown .dropdown-toggle::after {
+      content: "\f078";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      margin-left: auto;
+      font-size: 12px;
+    }
+    .sidebar-dropdown.active .dropdown-toggle::after {
+      content: "\f077";
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar { left: -260px; }
@@ -323,13 +343,11 @@
 
     // Auto-open dropdown if a child link is active
     if (menu.querySelector('.active')) {
-      menu.classList.remove('hidden');
       parent.classList.add('active');
     }
 
     toggle.addEventListener('click', e => {
       e.preventDefault();
-      menu.classList.toggle('hidden');
       parent.classList.toggle('active');
     });
   });
@@ -405,7 +423,6 @@ ${examples}`;
     URL.revokeObjectURL(url);
   }
 </script>
-
 
 <!-- Hidden upload form -->
 <form id="uploadForm" method="POST" action="{{ url_for('admin_student_upload') }}" enctype="multipart/form-data" style="display:none;">
